@@ -3,31 +3,60 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Balafon — Demo</title>
-  <link rel="stylesheet" href="balafon.css" />
+  <title>Bantu Instruments — WebAudio Plugins</title>
+  <meta name="description" content="Démos WebAudio : Balafon, effets, etc." />
+  <style>
+    :root{--bg:#0b0d12;--panel:#121624;--text:#e7e9ee;--muted:#a7adbd;--border:#232a3d;--accent:#7c5cff;}
+    *{box-sizing:border-box} body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:var(--bg);color:var(--text);}
+    a{color:inherit;text-decoration:none} a:hover{text-decoration:underline}
+    .wrap{width:min(980px,calc(100% - 2rem));margin:0 auto;padding:28px 0 64px}
+    header{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap}
+    h1{margin:0;font-size:28px} .muted{color:var(--muted)}
+    .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;margin-top:18px}
+    @media (max-width:720px){.grid{grid-template-columns:1fr}}
+    .card{background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:16px;padding:14px}
+    .tag{display:inline-block;border:1px solid var(--border);border-radius:999px;padding:2px 8px;margin:6px 6px 0 0;color:var(--muted);font-size:12px}
+    .btn{display:inline-block;margin-top:12px;padding:10px 12px;border-radius:12px;border:1px solid var(--border);background:rgba(124,92,255,.18)}
+    .btn:hover{text-decoration:none;border-color:rgba(124,92,255,.55)}
+    footer{margin-top:26px;padding-top:16px;border-top:1px solid var(--border)}
+  </style>
 </head>
 <body>
-  <header style="padding:16px; display:flex; justify-content:space-between; align-items:center;">
-    <h1 style="margin:0;">Balafon (WebAudio)</h1>
-    <a href="../../" style="color:inherit;">← Retour</a>
-  </header>
+  <div class="wrap">
+    <header>
+      <div>
+        <h1>Bantu Instruments</h1>
+        <div class="muted">Plugins WebAudio — démos jouables dans le navigateur</div>
+      </div>
+      <div class="muted">GitHub Pages</div>
+    </header>
 
-  <main style="padding:16px; max-width:980px; margin:0 auto;">
-    <p>Cliquer “Start Audio” pour autoriser l’audio, puis jouer.</p>
+    <section class="grid">
+      <article class="card">
+        <h2 style="margin:0 0 6px 0;font-size:18px;">Balafon</h2>
+        <div class="muted">Synthèse additive inharmonique + FX (Moog filter, Space Echo, Tape Sat)</div>
+        <div>
+          <span class="tag">Instrument</span>
+          <span class="tag">WebAudio</span>
+          <span class="tag">Additive</span>
+          <span class="tag">FX Chain</span>
+        </div>
+        <a class="btn" href="./plugins/balafon/">Open demo →</a>
+      </article>
 
-    <button id="startBtn">Start Audio</button>
+      <!-- Tu ajouteras d'autres cards ici (echo, saturation, etc.) -->
+      <article class="card">
+        <h2 style="margin:0 0 6px 0;font-size:18px;">À venir</h2>
+        <div class="muted">Ajoute tes autres plugins dans /plugins/nom-plugin/</div>
+        <div><span class="tag">Roadmap</span></div>
+      </article>
+    </section>
 
-    <div style="margin-top:16px;">
-      <button data-note="A4">A4</button>
-      <button data-note="C5">C5</button>
-      <button data-note="D5">D5</button>
-      <button data-note="E5">E5</button>
-      <button data-note="G5">G5</button>
-    </div>
+    <footer class="muted">
+      © <span id="y"></span> — Bantu Instruments
+    </footer>
+  </div>
 
-    <pre id="status" style="margin-top:16px; opacity:.8;"></pre>
-  </main>
-
-  <script type="module" src="balafon.js"></script>
+  <script>document.getElementById('y').textContent=new Date().getFullYear();</script>
 </body>
 </html>
