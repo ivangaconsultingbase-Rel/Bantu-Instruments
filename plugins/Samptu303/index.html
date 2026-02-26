@@ -1,0 +1,687 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+<title>SamPtu303 Lite — 8 Samples + 4 TR Drums</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;600;700&family=Share+Tech+Mono&display=swap');
+
+  :root{
+    --bg:#0e0a06;
+    --surface:#1a1208;
+    --surface2:#231a0d;
+    --line:#3a2a15;
+    --accent:#e8a030;
+    --accent2:#d4601a;
+    --cyan:#5dd4e8;
+    --text:#f0e0c0;
+    --text-dim:#886644;
+    --shadow: 0 30px 80px rgba(0,0,0,0.72), inset 0 1px 0 rgba(255,200,100,0.08);
+    --r:16px;
+  }
+
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    min-height:100vh;
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Rajdhani', sans-serif;
+    padding: max(18px, env(safe-area-inset-top)) 14px max(18px, env(safe-area-inset-bottom));
+    background-image:
+      radial-gradient(ellipse at 20% 0%, rgba(160,80,20,0.12) 0%, transparent 60%),
+      radial-gradient(ellipse at 80% 100%, rgba(80,40,10,0.15) 0%, transparent 60%);
+    display:flex;
+    justify-content:center;
+  }
+
+  .app{ width:min(980px,100%); display:flex; flex-direction:column; gap:12px; }
+
+  header{ text-align:center; padding:6px 6px 0; }
+  header h1{
+    font-family:'Share Tech Mono', monospace;
+    letter-spacing:0.22em;
+    font-size:16px;
+    color: var(--accent);
+    text-shadow: 0 0 30px rgba(232,160,48,0.2);
+  }
+  header .sub{
+    margin-top:8px;
+    font-size:11px;
+    letter-spacing:0.22em;
+    text-transform:uppercase;
+    color: var(--text-dim);
+  }
+
+  .frame{
+    border: 1px solid var(--line);
+    border-radius: var(--r);
+    overflow:hidden;
+    box-shadow: var(--shadow);
+    background: linear-gradient(160deg, #1e1610 0%, #120d08 100%);
+  }
+
+  .top{
+    padding: 12px 14px;
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+    border-bottom: 1px solid var(--line);
+    background: rgba(0,0,0,0.10);
+  }
+
+  .controls{
+    display:grid;
+    grid-template-columns: repeat(2, minmax(0,1fr));
+    gap: 10px;
+  }
+
+  .ctl{ display:flex; flex-direction:column; gap:6px; }
+  .ctl .name{
+    font-family:'Share Tech Mono', monospace;
+    font-size:10px;
+    letter-spacing:0.20em;
+    text-transform:uppercase;
+    display:flex;
+    justify-content:space-between;
+    color: rgba(240,224,192,0.78);
+  }
+  .ctl .val{ color: var(--accent); font-size:11px; letter-spacing:0.06em; }
+
+  input[type=range]{
+    -webkit-appearance:none;
+    width:100%;
+    height:6px;
+    border-radius:999px;
+    background: linear-gradient(90deg, var(--accent2) var(--pct,50%), rgba(0,0,0,0.35) var(--pct,50%));
+    outline:none;
+  }
+  input[type=range]::-webkit-slider-thumb{
+    -webkit-appearance:none;
+    width:18px; height:18px;
+    border-radius:50%;
+    background: radial-gradient(circle at 35% 35%, #e0b060, #9a6020);
+    border: 1px solid rgba(255,200,80,0.35);
+    box-shadow: 0 3px 10px rgba(0,0,0,0.55);
+  }
+
+  .pads{
+    padding: 12px 14px 14px;
+  }
+
+  .grid{
+    display:grid;
+    grid-template-columns: repeat(3, minmax(0,1fr));
+    gap: 10px;
+  }
+
+  .pad{
+    border: 1px solid rgba(0,0,0,0.55);
+    background: rgba(0,0,0,0.22);
+    border-radius: 16px;
+    padding: 12px;
+    min-height: 98px;
+    display:flex;
+    flex-direction:column;
+    justify-content:space-between;
+    gap: 10px;
+    user-select:none;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+  }
+  .pad:active, .pad.active{
+    border-color: rgba(232,160,48,0.7);
+    box-shadow: 0 0 18px rgba(232,160,48,0.10);
+    background: rgba(232,160,48,0.08);
+  }
+
+  .pad.drum{
+    border-color: rgba(93,212,232,0.35);
+    background: rgba(93,212,232,0.08);
+  }
+  .pad.drum:active, .pad.drum.active{
+    border-color: rgba(93,212,232,0.85);
+    box-shadow: 0 0 18px rgba(93,212,232,0.12);
+  }
+
+  .padTop{ display:flex; align-items:flex-start; justify-content:space-between; gap:10px; }
+  .padId{
+    font-family:'Share Tech Mono', monospace;
+    font-size: 11px;
+    letter-spacing:0.14em;
+    color: rgba(240,224,192,0.85);
+  }
+  .padKey{
+    font-family:'Share Tech Mono', monospace;
+    font-size: 11px;
+    letter-spacing:0.14em;
+    color: var(--text-dim);
+  }
+
+  .padName{
+    font-family:'Share Tech Mono', monospace;
+    font-size: 12px;
+    letter-spacing:0.06em;
+    color: rgba(240,224,192,0.92);
+    line-height: 1.1;
+  }
+  .padMeta{
+    font-size: 11px;
+    color: var(--text-dim);
+    letter-spacing:0.06em;
+  }
+
+  .padBtn{
+    display:inline-flex;
+    gap:8px;
+    align-items:center;
+    justify-content:center;
+    border: 1px solid rgba(58,42,21,0.9);
+    background: rgba(0,0,0,0.25);
+    color: rgba(240,224,192,0.85);
+    border-radius: 12px;
+    padding: 8px 10px;
+    font-family:'Share Tech Mono', monospace;
+    font-size: 11px;
+    letter-spacing:0.12em;
+    text-transform:uppercase;
+    cursor:pointer;
+  }
+  .padBtn:active{ transform: translateY(1px); }
+  .padBtn small{ color: var(--accent); letter-spacing:0.06em; text-transform:none; }
+
+  .hint{
+    padding: 0 14px 12px;
+    font-size: 11px;
+    letter-spacing:0.12em;
+    color: var(--text-dim);
+    text-align:center;
+  }
+
+  @media (max-width: 430px){
+    .grid{ grid-template-columns: repeat(2, minmax(0,1fr)); }
+    .controls{ grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+
+<body>
+<div class="app">
+  <header>
+    <h1>SP404 LITE</h1>
+    <div class="sub">8 SAMPLE PADS + 4 TR DRUMS · POLY · MOBILE-FIRST</div>
+  </header>
+
+  <div class="frame">
+    <div class="top">
+      <div class="controls">
+        <div class="ctl">
+          <div class="name">MASTER <span class="val" id="v-master">0.85</span></div>
+          <input type="range" id="master" min="0" max="100" value="85">
+        </div>
+        <div class="ctl">
+          <div class="name">FILTER <span class="val" id="v-cutoff">12000</span></div>
+          <input type="range" id="cutoff" min="80" max="18000" value="12000">
+        </div>
+        <div class="ctl">
+          <div class="name">DELAY <span class="val" id="v-delaymix">0.20</span></div>
+          <input type="range" id="delaymix" min="0" max="100" value="20">
+        </div>
+        <div class="ctl">
+          <div class="name">DELAY TIME <span class="val" id="v-delaytime">280ms</span></div>
+          <input type="range" id="delaytime" min="30" max="900" value="280">
+        </div>
+      </div>
+    </div>
+
+    <div class="pads">
+      <div class="grid" id="grid"></div>
+    </div>
+
+    <div class="hint">
+      Touch/click pads. Keyboard: 1–8 = samples, Q W E R = drums. (iPhone: tap)
+    </div>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   Audio graph (poly)
+============================================================ */
+let actx = null;
+let masterGain, filter, delay, delayFb, delayWet, delayDry;
+
+function setSliderVisual(el){
+  const v = parseFloat(el.value), min = parseFloat(el.min), max = parseFloat(el.max);
+  const pct = ((v - min) / (max - min) * 100).toFixed(1) + "%";
+  el.style.setProperty("--pct", pct);
+}
+
+function smooth(param, value, t=0.02){
+  if(!actx) return;
+  const now = actx.currentTime;
+  try{
+    param.cancelScheduledValues(now);
+    param.setTargetAtTime(value, now, t);
+  }catch{}
+}
+
+function initAudio(){
+  if(actx) return;
+  actx = new (window.AudioContext || window.webkitAudioContext)();
+
+  masterGain = actx.createGain();
+  masterGain.gain.value = 0.85;
+
+  // master filter
+  filter = actx.createBiquadFilter();
+  filter.type = "lowpass";
+  filter.frequency.value = 12000;
+  filter.Q.value = 0.7;
+
+  // delay
+  delay = actx.createDelay(2.0);
+  delay.delayTime.value = 0.28;
+  delayFb = actx.createGain();
+  delayFb.gain.value = 0.35;
+  delayWet = actx.createGain();
+  delayWet.gain.value = 0.20;
+  delayDry = actx.createGain();
+  delayDry.gain.value = 0.80;
+
+  // feedback loop
+  delay.connect(delayFb);
+  delayFb.connect(delay);
+
+  // routing: filter -> (dry + delay->wet) -> master -> out
+  filter.connect(delayDry);
+  filter.connect(delay);
+  delay.connect(delayWet);
+
+  delayDry.connect(masterGain);
+  delayWet.connect(masterGain);
+
+  masterGain.connect(actx.destination);
+}
+
+/* ============================================================
+   Pads model
+============================================================ */
+const pads = [
+  // 8 samples
+  { id:"S1", type:"sample", name:"Sample 1", key:"1", buffer:null },
+  { id:"S2", type:"sample", name:"Sample 2", key:"2", buffer:null },
+  { id:"S3", type:"sample", name:"Sample 3", key:"3", buffer:null },
+  { id:"S4", type:"sample", name:"Sample 4", key:"4", buffer:null },
+  { id:"S5", type:"sample", name:"Sample 5", key:"5", buffer:null },
+  { id:"S6", type:"sample", name:"Sample 6", key:"6", buffer:null },
+  { id:"S7", type:"sample", name:"Sample 7", key:"7", buffer:null },
+  { id:"S8", type:"sample", name:"Sample 8", key:"8", buffer:null },
+
+  // 4 TR drums (bottom row vibe)
+  { id:"KICK", type:"drum", name:"TR Kick", key:"q" },
+  { id:"SNAR", type:"drum", name:"TR Snare", key:"w" },
+  { id:"HAT",  type:"drum", name:"TR HiHat", key:"e" },
+  { id:"COW",  type:"drum", name:"Cowbell", key:"r" },
+];
+
+const grid = document.getElementById("grid");
+
+function renderPads(){
+  grid.innerHTML = "";
+  pads.forEach((p, idx) => {
+    const el = document.createElement("div");
+    el.className = "pad" + (p.type === "drum" ? " drum" : "");
+    el.dataset.idx = idx;
+
+    const meta = (p.type === "sample")
+      ? (p.buffer ? `${(p.buffer.duration).toFixed(2)}s` : "empty")
+      : "synth";
+
+    el.innerHTML = `
+      <div class="padTop">
+        <div class="padId">${p.id}</div>
+        <div class="padKey">${p.key.toUpperCase()}</div>
+      </div>
+      <div>
+        <div class="padName">${p.name}</div>
+        <div class="padMeta">${meta}</div>
+      </div>
+      ${p.type === "sample"
+        ? `<button class="padBtn" type="button" data-load="${idx}">LOAD <small>.wav/.mp3</small></button>`
+        : `<button class="padBtn" type="button" data-hit="${idx}">HIT</button>`
+      }
+    `;
+
+    const trigger = () => hitPad(idx, el);
+
+    el.addEventListener("touchstart", (e)=>{ e.preventDefault(); trigger(); }, {passive:false});
+    el.addEventListener("mousedown", (e)=>{ e.preventDefault(); trigger(); });
+
+    // prevent button click from also triggering twice
+    el.querySelectorAll("button").forEach(b=>{
+      b.addEventListener("click", (e)=> e.stopPropagation());
+    });
+
+    grid.appendChild(el);
+  });
+}
+renderPads();
+
+/* ============================================================
+   Sample loading
+============================================================ */
+async function loadSampleToPad(index, file){
+  initAudio();
+  if (actx.state === "suspended") await actx.resume();
+
+  const arr = await file.arrayBuffer();
+  const buf = await actx.decodeAudioData(arr);
+  pads[index].buffer = buf;
+  pads[index].name = file.name.replace(/\.[^/.]+$/, "");
+  renderPads();
+}
+
+grid.addEventListener("click", async (e)=>{
+  const btn = e.target.closest("[data-load]");
+  if(!btn) return;
+  const idx = parseInt(btn.dataset.load, 10);
+
+  const input = document.createElement("input");
+  input.type = "file";
+  input.accept = "audio/*";
+  input.onchange = async () => {
+    const file = input.files?.[0];
+    if(file) await loadSampleToPad(idx, file);
+  };
+  input.click();
+});
+
+/* ============================================================
+   Voice utils (anti-click envelopes)
+============================================================ */
+function voiceGainEnvelope(g, now, a=0.002, r=0.06, peak=1.0){
+  g.gain.cancelScheduledValues(now);
+  g.gain.setValueAtTime(0.0001, now);
+  g.gain.exponentialRampToValueAtTime(Math.max(0.0002, peak), now + a);
+  // release called separately
+}
+
+function voiceRelease(g, now, r=0.06){
+  try{
+    g.gain.cancelScheduledValues(now);
+    g.gain.setValueAtTime(Math.max(0.0002, g.gain.value || 0.2), now);
+    g.gain.exponentialRampToValueAtTime(0.0001, now + r);
+  }catch{}
+}
+
+/* ============================================================
+   Drum synth (TR-ish) voices (poly)
+============================================================ */
+let hatChoke = null; // choke group for hat (optional)
+
+function trigKick(){
+  const now = actx.currentTime;
+
+  const osc = actx.createOscillator();
+  osc.type = "sine";
+
+  const g = actx.createGain();
+  const v = actx.createGain();
+
+  // pitch sweep
+  osc.frequency.setValueAtTime(120, now);
+  osc.frequency.exponentialRampToValueAtTime(45, now + 0.12);
+
+  // amp env
+  v.gain.setValueAtTime(0.0001, now);
+  v.gain.exponentialRampToValueAtTime(1.0, now + 0.003);
+  v.gain.exponentialRampToValueAtTime(0.0001, now + 0.35);
+
+  // click
+  g.gain.setValueAtTime(0.6, now);
+  g.gain.exponentialRampToValueAtTime(0.0001, now + 0.02);
+
+  // click source
+  const click = actx.createBufferSource();
+  const b = actx.createBuffer(1, actx.sampleRate * 0.03, actx.sampleRate);
+  const d = b.getChannelData(0);
+  for(let i=0;i<d.length;i++) d[i] = (Math.random()*2-1) * Math.exp(-i/(d.length*0.2));
+  click.buffer = b;
+
+  const clickHP = actx.createBiquadFilter();
+  clickHP.type = "highpass";
+  clickHP.frequency.value = 2000;
+
+  // mix
+  osc.connect(v);
+  click.connect(clickHP);
+  clickHP.connect(g);
+
+  const sum = actx.createGain();
+  v.connect(sum);
+  g.connect(sum);
+
+  sum.connect(filter);
+
+  osc.start(now);
+  click.start(now);
+  osc.stop(now + 0.5);
+  click.stop(now + 0.08);
+}
+
+function trigSnare(){
+  const now = actx.currentTime;
+
+  // noise
+  const noise = actx.createBufferSource();
+  const b = actx.createBuffer(1, actx.sampleRate * 0.6, actx.sampleRate);
+  const d = b.getChannelData(0);
+  for(let i=0;i<d.length;i++) d[i] = (Math.random()*2-1);
+  noise.buffer = b;
+
+  const bp = actx.createBiquadFilter();
+  bp.type = "bandpass";
+  bp.frequency.value = 1800;
+  bp.Q.value = 0.8;
+
+  const ng = actx.createGain();
+  ng.gain.setValueAtTime(0.0001, now);
+  ng.gain.exponentialRampToValueAtTime(0.9, now + 0.002);
+  ng.gain.exponentialRampToValueAtTime(0.0001, now + 0.18);
+
+  // body osc
+  const osc = actx.createOscillator();
+  osc.type = "triangle";
+  osc.frequency.setValueAtTime(220, now);
+  osc.frequency.exponentialRampToValueAtTime(140, now + 0.08);
+
+  const og = actx.createGain();
+  og.gain.setValueAtTime(0.0001, now);
+  og.gain.exponentialRampToValueAtTime(0.5, now + 0.003);
+  og.gain.exponentialRampToValueAtTime(0.0001, now + 0.14);
+
+  noise.connect(bp);
+  bp.connect(ng);
+
+  osc.connect(og);
+
+  const sum = actx.createGain();
+  ng.connect(sum);
+  og.connect(sum);
+
+  sum.connect(filter);
+
+  noise.start(now);
+  osc.start(now);
+  noise.stop(now + 0.25);
+  osc.stop(now + 0.25);
+}
+
+function trigHat(){
+  const now = actx.currentTime;
+
+  // choke previous hat
+  if (hatChoke) {
+    try { voiceRelease(hatChoke, now, 0.02); } catch {}
+  }
+
+  const noise = actx.createBufferSource();
+  const b = actx.createBuffer(1, actx.sampleRate * 0.25, actx.sampleRate);
+  const d = b.getChannelData(0);
+  for(let i=0;i<d.length;i++) d[i] = (Math.random()*2-1);
+  noise.buffer = b;
+
+  const hp = actx.createBiquadFilter();
+  hp.type = "highpass";
+  hp.frequency.value = 6000;
+  hp.Q.value = 0.7;
+
+  const g = actx.createGain();
+  g.gain.setValueAtTime(0.0001, now);
+  g.gain.exponentialRampToValueAtTime(0.7, now + 0.001);
+  g.gain.exponentialRampToValueAtTime(0.0001, now + 0.08);
+
+  hatChoke = g;
+
+  noise.connect(hp);
+  hp.connect(g);
+  g.connect(filter);
+
+  noise.start(now);
+  noise.stop(now + 0.12);
+}
+
+function trigCowbell(){
+  const now = actx.currentTime;
+
+  const o1 = actx.createOscillator();
+  const o2 = actx.createOscillator();
+  o1.type = "square";
+  o2.type = "square";
+  o1.frequency.value = 540;
+  o2.frequency.value = 800;
+
+  const sum = actx.createGain();
+  const bp = actx.createBiquadFilter();
+  bp.type = "bandpass";
+  bp.frequency.value = 1200;
+  bp.Q.value = 3.0;
+
+  const g = actx.createGain();
+  g.gain.setValueAtTime(0.0001, now);
+  g.gain.exponentialRampToValueAtTime(0.6, now + 0.002);
+  g.gain.exponentialRampToValueAtTime(0.0001, now + 0.20);
+
+  o1.connect(sum);
+  o2.connect(sum);
+  sum.connect(bp);
+  bp.connect(g);
+  g.connect(filter);
+
+  o1.start(now); o2.start(now);
+  o1.stop(now + 0.25); o2.stop(now + 0.25);
+}
+
+/* ============================================================
+   Sample pad trigger (poly)
+============================================================ */
+function trigSample(buffer){
+  const now = actx.currentTime;
+
+  const src = actx.createBufferSource();
+  src.buffer = buffer;
+
+  const g = actx.createGain();
+  voiceGainEnvelope(g, now, 0.002, 0.06, 1.0);
+
+  // quick release automatically near end for safety
+  src.onended = () => {
+    try { src.disconnect(); g.disconnect(); } catch {}
+  };
+
+  src.connect(g);
+  g.connect(filter);
+
+  src.start(now);
+}
+
+/* ============================================================
+   Hit pad
+============================================================ */
+function flash(el){
+  el.classList.add("active");
+  setTimeout(()=> el.classList.remove("active"), 120);
+}
+
+function hitPad(idx, el){
+  initAudio();
+  if (actx.state === "suspended") actx.resume();
+
+  flash(el);
+
+  const p = pads[idx];
+  if(p.type === "sample"){
+    if(!p.buffer) return; // empty pad
+    trigSample(p.buffer);
+  } else {
+    if(p.id === "KICK") trigKick();
+    if(p.id === "SNAR") trigSnare();
+    if(p.id === "HAT")  trigHat();
+    if(p.id === "COW")  trigCowbell();
+  }
+}
+
+/* ============================================================
+   Controls
+============================================================ */
+function bindRange(id, fn){
+  const el = document.getElementById(id);
+  setSliderVisual(el);
+  el.addEventListener("input", ()=>{ setSliderVisual(el); fn(parseFloat(el.value)); });
+}
+
+bindRange("master", (v)=>{
+  const val = v/100;
+  document.getElementById("v-master").textContent = val.toFixed(2);
+  initAudio();
+  smooth(masterGain.gain, val, 0.03);
+});
+
+bindRange("cutoff", (v)=>{
+  document.getElementById("v-cutoff").textContent = Math.round(v);
+  initAudio();
+  smooth(filter.frequency, v, 0.03);
+});
+
+bindRange("delaymix", (v)=>{
+  const mix = v/100;
+  document.getElementById("v-delaymix").textContent = mix.toFixed(2);
+  initAudio();
+  smooth(delayWet.gain, mix, 0.03);
+  smooth(delayDry.gain, 1 - mix, 0.03);
+});
+
+bindRange("delaytime", (v)=>{
+  document.getElementById("v-delaytime").textContent = Math.round(v) + "ms";
+  initAudio();
+  smooth(delay.delayTime, v/1000, 0.03);
+});
+
+/* ============================================================
+   Keyboard shortcuts
+============================================================ */
+const keyToPad = {};
+pads.forEach((p,i)=> keyToPad[p.key] = i);
+
+document.addEventListener("keydown", (e)=>{
+  if(e.repeat) return;
+  const k = e.key.toLowerCase();
+  if(keyToPad[k] !== undefined){
+    const el = grid.querySelector(`.pad[data-idx="${keyToPad[k]}"]`);
+    hitPad(keyToPad[k], el);
+  }
+});
+</script>
+</body>
+</html>
