@@ -1,0 +1,799 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>CS01 — Plaits Oscillator (Mono)</title>
+
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;600;700&family=Share+Tech+Mono&display=swap');
+
+  :root{
+    --bg:#0e0a06;
+    --surface:#1a1208;
+    --surface2:#231a0d;
+    --line:#3a2a15;
+    --accent:#e8a030;
+    --accent2:#d4601a;
+    --text:#f0e0c0;
+    --text-dim:#886644;
+    --led:#88ff44;
+
+    /* CS01 cyan conservé (vintage synth) */
+    --cs-cyan:#5dd4e8;
+  }
+
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Rajdhani', sans-serif;
+    min-height:100vh;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    padding:24px;
+    background-image:
+      radial-gradient(ellipse at 20% 0%, rgba(160,80,20,0.12) 0%, transparent 60%),
+      radial-gradient(ellipse at 80% 100%, rgba(80,40,10,0.15) 0%, transparent 60%);
+  }
+
+  .synth-wrapper{
+    width: min(1120px, 100%);
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+  }
+
+  header{
+    text-align:center;
+    margin-bottom:8px;
+  }
+  header h1{
+    font-family:'Share Tech Mono', monospace;
+    letter-spacing:0.28em;
+    font-size:22px;
+    color:var(--accent);
+    text-shadow: 0 0 30px rgba(232,160,48,0.22);
+  }
+  header .sub{
+    margin-top:6px;
+    font-size:12px;
+    letter-spacing:0.24em;
+    color:var(--text-dim);
+    text-transform:uppercase;
+  }
+
+  .frame{
+    border:1px solid var(--line);
+    border-radius:12px;
+    overflow:hidden;
+    box-shadow: 0 30px 80px rgba(0,0,0,0.7), inset 0 1px 0 rgba(255,200,100,0.08);
+    background: linear-gradient(160deg, #1e1610 0%, #120d08 100%);
+  }
+
+  /* --- ton layout CS01 original, recoloré --- */
+  .synth-body{
+    background: linear-gradient(180deg, rgba(255,255,255,0.06), rgba(0,0,0,0.12));
+    padding: 14px 16px 16px;
+    border-bottom:1px solid var(--line);
+  }
+  .top-panel{display:flex;gap:10px;align-items:stretch}
+
+  .section{
+    background: rgba(0,0,0,0.18);
+    border: 1px solid rgba(0,0,0,0.35);
+    border-radius: 6px;
+    padding: 10px;
+    display:flex;
+    flex-direction:column;
+  }
+
+  .section-label{
+    color: var(--cs-cyan);
+    font-family:'Share Tech Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+    text-align:center;
+  }
+
+  .pitch-mod-section{width:130px;flex-shrink:0}
+  .pitch-mod-inner{display:flex;gap:8px;flex:1}
+  .ribbon-container{flex:1;display:flex;flex-direction:column;align-items:center;gap:6px}
+  .ribbon-label{color:var(--cs-cyan);font-size:8px;letter-spacing:1px;text-transform:uppercase}
+  .ribbon{
+    width:36px;flex:1;min-height:90px;
+    background: linear-gradient(180deg, rgba(255,255,255,0.22), rgba(0,0,0,0.35));
+    border-radius:4px;
+    border:1px solid rgba(0,0,0,0.6);
+    cursor:ns-resize;
+    position:relative;
+    overflow:hidden;
+  }
+  .ribbon::after{
+    content:'';
+    position:absolute;left:50%;top:50%;
+    transform:translate(-50%,-50%);
+    width:26px;height:3px;background:rgba(255,255,255,0.35);
+    border-radius:2px;
+  }
+
+  .toggle-switch{
+    display:flex;
+    background: rgba(0,0,0,0.35);
+    border:1px solid rgba(0,0,0,0.55);
+    border-radius:4px;
+    overflow:hidden;
+    margin-top:10px;
+    justify-content:center;
+  }
+  .toggle-opt{
+    padding:3px 8px;
+    font-size:9px;
+    letter-spacing:1px;
+    color:var(--text-dim);
+    cursor:pointer;
+    user-select:none;
+    font-family:'Share Tech Mono', monospace;
+  }
+  .toggle-opt.active{
+    background: rgba(93,212,232,0.95);
+    color:#000;
+  }
+
+  .sliders-row{display:flex;gap:8px;align-items:flex-end;flex:1}
+  .slider-col{display:flex;flex-direction:column;align-items:center;gap:6px}
+  .slider-col label{
+    color: rgba(240,224,192,0.75);
+    font-size: 9px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    text-align:center;
+    line-height:1.2;
+    font-family:'Share Tech Mono', monospace;
+  }
+
+  .vslider-track{
+    width:18px;height:92px;
+    background: linear-gradient(180deg, rgba(0,0,0,0.65), rgba(0,0,0,0.25));
+    border-radius:4px;
+    border:1px solid rgba(0,0,0,0.7);
+    position:relative;
+    box-shadow: inset 0 2px 6px rgba(0,0,0,0.55);
+  }
+  .vslider-handle{
+    position:absolute;left:-4px;right:-4px;height:14px;
+    background: linear-gradient(180deg, rgba(255,255,255,0.75), rgba(120,120,120,0.8));
+    border-radius:3px;
+    border:1px solid rgba(0,0,0,0.55);
+    box-shadow: 0 2px 6px rgba(0,0,0,0.55);
+    cursor: ns-resize;
+  }
+  .vslider-handle::after{
+    content:'';
+    position:absolute;left:2px;right:2px;top:50%;
+    transform:translateY(-50%);
+    height:2px;background: var(--cs-cyan);
+    border-radius:2px;
+  }
+
+  .wave-buttons{display:flex;flex-direction:column;gap:6px;margin-top:4px}
+  .wave-btn{
+    background: rgba(0,0,0,0.35);
+    border:1px solid rgba(0,0,0,0.6);
+    color: rgba(240,224,192,0.8);
+    font-size: 10px;
+    padding: 3px 8px;
+    border-radius:4px;
+    cursor:pointer;
+    text-align:center;
+    font-family:'Share Tech Mono', monospace;
+    transition: all .12s ease;
+    user-select:none;
+  }
+  .wave-btn.active, .wave-btn:hover{
+    background: var(--cs-cyan);
+    color:#000;
+    border-color: var(--cs-cyan);
+  }
+
+  /* Keyboard */
+  .keyboard-section{
+    background: rgba(0,0,0,0.18);
+    display:flex;
+    gap:0;
+    overflow:hidden;
+    border-top:1px solid var(--line);
+  }
+  .brand-panel{
+    width:240px;
+    padding:12px 14px;
+    border-right:1px solid var(--line);
+  }
+  .brand-yamaha{
+    font-family:'Share Tech Mono', monospace;
+    color: rgba(240,224,192,0.9);
+    letter-spacing:0.14em;
+    font-size:12px;
+  }
+  .brand-cs01{
+    font-family:'Share Tech Mono', monospace;
+    color: var(--accent);
+    font-size:32px;
+    letter-spacing:-1px;
+    margin-top:6px;
+  }
+  .brand-synth{
+    color: var(--text-dim);
+    font-size:10px;
+    letter-spacing:0.28em;
+    text-transform:uppercase;
+    margin-top:4px;
+  }
+  .note-display{
+    margin-top:12px;
+    background: rgba(0,0,0,0.55);
+    border:1px solid rgba(93,212,232,0.6);
+    border-radius:6px;
+    padding:6px 10px;
+    color: var(--cs-cyan);
+    font-family:'Share Tech Mono', monospace;
+    font-size: 12px;
+    width: fit-content;
+    min-width: 70px;
+    text-align:center;
+  }
+
+  .piano{flex:1;height:170px;position:relative;background:#0b0806}
+  .white-keys{display:flex;height:100%;gap:1px;padding:1px}
+  .white-key{
+    flex:1;
+    background: linear-gradient(180deg, #f5f5f5 0%, #e8e8e8 100%);
+    border-radius:0 0 6px 6px;
+    border:1px solid #ccc;
+    cursor:pointer;
+    box-shadow: 0 6px 12px rgba(0,0,0,0.35);
+  }
+  .white-key:hover,.white-key.active{
+    background: linear-gradient(180deg, #f7e4c1 0%, #f0d39b 100%);
+  }
+  .black-keys{
+    position:absolute;top:0;left:0;right:0;height:60%;
+    pointer-events:none;
+  }
+  .black-key{
+    pointer-events:all;
+    position:absolute;
+    height:100%;
+    background: linear-gradient(180deg, #222 0%, #111 100%);
+    border-radius:0 0 5px 5px;
+    cursor:pointer;
+    border:1px solid #000;
+    box-shadow: 2px 6px 10px rgba(0,0,0,0.6);
+    z-index:2;
+  }
+  .black-key:hover,.black-key.active{
+    background: linear-gradient(180deg, #3a2a15 0%, #1a1208 100%);
+  }
+
+  .footer{
+    text-align:center;
+    padding:10px 0 0;
+    color: var(--text-dim);
+    font-size:10px;
+    letter-spacing:0.24em;
+    text-transform:uppercase;
+  }
+
+  @media (max-width: 980px){
+    .synth-wrapper{transform: scale(0.86); transform-origin: top center;}
+  }
+</style>
+</head>
+
+<body>
+  <div class="synth-wrapper">
+
+    <header>
+      <h1>CS01 / PLAITS (MONO)</h1>
+      <div class="sub">UI CS01 · Oscillateur Plaits en WASM · WebAudio</div>
+    </header>
+
+    <div class="frame">
+      <div class="synth-body">
+        <div class="top-panel">
+
+          <!-- PITCH BEND / MOD -->
+          <div class="section pitch-mod-section">
+            <div class="section-label" style="display:flex;gap:14px;justify-content:center;">
+              <span>PITCH</span>
+              <span>MOD</span>
+            </div>
+            <div class="pitch-mod-inner">
+              <div class="ribbon-container">
+                <div class="ribbon" id="pitchRibbon" title="Pitch Bend"></div>
+                <span style="color:rgba(240,224,192,0.7);font-size:9px;font-family:'Share Tech Mono', monospace;">0</span>
+              </div>
+              <div class="ribbon-container">
+                <div class="ribbon" id="modRibbon" title="Modulation"></div>
+                <span style="color:rgba(240,224,192,0.7);font-size:9px;font-family:'Share Tech Mono', monospace;">0</span>
+              </div>
+            </div>
+            <div class="toggle-switch">
+              <div class="toggle-opt active" id="sw-vco" onclick="setSwitch('vco')">VCO</div>
+              <div class="toggle-opt" id="sw-vcf" onclick="setSwitch('vcf')">VCF</div>
+            </div>
+          </div>
+
+          <!-- VCO (mappé vers Plaits) -->
+          <div class="section" style="flex:1;">
+            <div class="section-label">VCO (PLAITs)</div>
+            <div class="sliders-row" style="justify-content:space-around;">
+              <div class="slider-col">
+                <label>PITCH</label>
+                <div class="vslider-track" data-param="pitch" data-min="-12" data-max="12" data-val="0">
+                  <div class="vslider-handle" style="bottom:50%;"></div>
+                </div>
+              </div>
+
+              <div class="slider-col">
+                <label>FEET</label>
+                <div class="wave-buttons" style="margin-bottom:4px;">
+                  <div class="wave-btn" onclick="setFeet(4,this)">4'</div>
+                  <div class="wave-btn active" onclick="setFeet(8,this)">8'</div>
+                  <div class="wave-btn" onclick="setFeet(16,this)">16'</div>
+                  <div class="wave-btn" onclick="setFeet(32,this)">32'</div>
+                </div>
+              </div>
+
+              <div class="slider-col">
+                <label>WAVE</label>
+                <div class="wave-buttons" style="margin-bottom:4px;">
+                  <div class="wave-btn active" data-wave="sawtooth" onclick="setWave('sawtooth',this)">⊿</div>
+                  <div class="wave-btn" data-wave="triangle" onclick="setWave('triangle',this)">△</div>
+                  <div class="wave-btn" data-wave="square" onclick="setWave('square',this)">⊓</div>
+                  <div class="wave-btn" data-wave="sine" onclick="setWave('sine',this)">∿</div>
+                </div>
+              </div>
+
+              <div class="slider-col">
+                <label>TIMBRE</label>
+                <div class="vslider-track" data-param="plaitsTimbre" data-min="0" data-max="1" data-val="0.5">
+                  <div class="vslider-handle" style="bottom:38px;"></div>
+                </div>
+              </div>
+
+              <div class="slider-col">
+                <label>HARM</label>
+                <div class="vslider-track" data-param="plaitsHarm" data-min="0" data-max="1" data-val="0.5">
+                  <div class="vslider-handle" style="bottom:38px;"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- VCF -->
+          <div class="section" style="flex:0.9;">
+            <div class="section-label">VCF (HOST)</div>
+            <div class="sliders-row" style="justify-content:space-around;">
+              <div class="slider-col">
+                <label>CUTOFF</label>
+                <div class="vslider-track" data-param="cutoff" data-min="40" data-max="18000" data-val="8000">
+                  <div class="vslider-handle" style="bottom:54px;"></div>
+                </div>
+              </div>
+              <div class="slider-col">
+                <label>RESO</label>
+                <div class="vslider-track" data-param="resonance" data-min="0.1" data-max="18" data-val="1">
+                  <div class="vslider-handle" style="bottom:6px;"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- EG -->
+          <div class="section" style="flex:1;">
+            <div class="section-label">EG (HOST)</div>
+            <div class="sliders-row" style="justify-content:space-around;">
+              <div class="slider-col">
+                <label>ATTACK</label>
+                <div class="vslider-track" data-param="attack" data-min="0.001" data-max="4" data-val="0.01">
+                  <div class="vslider-handle" style="bottom:3px;"></div>
+                </div>
+              </div>
+              <div class="slider-col">
+                <label>DECAY</label>
+                <div class="vslider-track" data-param="decay" data-min="0.001" data-max="4" data-val="0.3">
+                  <div class="vslider-handle" style="bottom:16px;"></div>
+                </div>
+              </div>
+              <div class="slider-col">
+                <label>SUSTAIN</label>
+                <div class="vslider-track" data-param="sustain" data-min="0" data-max="1" data-val="0.7">
+                  <div class="vslider-handle" style="bottom:53px;"></div>
+                </div>
+              </div>
+              <div class="slider-col">
+                <label>RELEASE</label>
+                <div class="vslider-track" data-param="release" data-min="0.001" data-max="6" data-val="0.5">
+                  <div class="vslider-handle" style="bottom:18px;"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- VOLUME -->
+          <div class="section" style="width:110px;">
+            <div class="section-label">VOLUME</div>
+            <div class="sliders-row" style="justify-content:center;">
+              <div class="slider-col">
+                <label>LEVEL</label>
+                <div class="vslider-track" data-param="volume" data-min="0" data-max="1" data-val="0.7">
+                  <div class="vslider-handle" style="bottom:54px;"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <div class="keyboard-section">
+        <div class="brand-panel">
+          <div class="brand-yamaha">YAMAHA</div>
+          <div class="brand-synth">SYNTHESIZER</div>
+          <div class="brand-cs01">CS01</div>
+          <div class="note-display" id="noteDisplay">---</div>
+        </div>
+
+        <div class="piano" id="piano">
+          <div class="white-keys" id="whiteKeys"></div>
+          <div class="black-keys" id="blackKeys"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer">Oscillateur : Plaits (WASM) · Filtre + EG : Host WebAudio · Mono</div>
+  </div>
+
+<script>
+/* ============================================================
+   AUDIO HOST (Plaits via AudioWorklet)
+============================================================ */
+let audioCtx, workletNode, filterNode, ampGain;
+let currentNote = null;
+
+const params = {
+  // host synth params
+  pitch: 0,          // semitones
+  octaveMul: 1,      // 4' => 2, 8' => 1, 16' => 0.5, 32' => 0.25
+  attack: 0.01,
+  decay: 0.3,
+  sustain: 0.7,
+  release: 0.5,
+  cutoff: 8000,
+  resonance: 1,
+  volume: 0.7,
+
+  // plaits params
+  plaitsHarm: 0.5,
+  plaitsTimbre: 0.5,
+  plaitsMorph: 0.2,
+  plaitsEngine: 0
+};
+
+function initAudio() {
+  if (audioCtx) return;
+
+  audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+  filterNode = audioCtx.createBiquadFilter();
+  filterNode.type = 'lowpass';
+  filterNode.frequency.value = params.cutoff;
+  filterNode.Q.value = params.resonance;
+
+  ampGain = audioCtx.createGain();
+  ampGain.gain.value = 0;
+
+  // chain: worklet -> filter -> amp -> dest
+  audioCtx.audioWorklet.addModule('./plaits-worklet.js').then(() => {
+    workletNode = new AudioWorkletNode(audioCtx, 'plaits-processor', {
+      numberOfInputs: 0,
+      numberOfOutputs: 1,
+      outputChannelCount: [1]
+    });
+
+    workletNode.connect(filterNode);
+    filterNode.connect(ampGain);
+    ampGain.connect(audioCtx.destination);
+
+    // init params
+    sendPlaitsParam("engine", params.plaitsEngine);
+    sendPlaitsParam("harmonics", params.plaitsHarm);
+    sendPlaitsParam("timbre", params.plaitsTimbre);
+    sendPlaitsParam("morph", params.plaitsMorph);
+    sendPlaitsParam("level", params.volume);
+
+    applyHostParams();
+  });
+}
+
+function sendPlaitsParam(name, value){
+  if (!workletNode) return;
+  workletNode.port.postMessage({ type:"param", name, value });
+}
+
+function noteToFreq(midi) { return 440 * Math.pow(2, (midi - 69)/12); }
+
+function midiToName(midi) {
+  const names = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+  return names[midi % 12] + Math.floor(midi/12 - 1);
+}
+
+function applyHostParams(){
+  if (!filterNode) return;
+  filterNode.frequency.value = params.cutoff;
+  filterNode.Q.value = params.resonance;
+  sendPlaitsParam("level", params.volume);
+}
+
+function gateOn(vel=1){
+  const now = audioCtx.currentTime;
+  ampGain.gain.cancelScheduledValues(now);
+  ampGain.gain.setValueAtTime(ampGain.gain.value, now);
+  ampGain.gain.linearRampToValueAtTime(params.volume * vel, now + params.attack);
+  ampGain.gain.linearRampToValueAtTime(params.volume * vel * params.sustain, now + params.attack + params.decay);
+}
+
+function gateOff(){
+  const now = audioCtx.currentTime;
+  ampGain.gain.cancelScheduledValues(now);
+  ampGain.gain.setValueAtTime(ampGain.gain.value, now);
+  ampGain.gain.linearRampToValueAtTime(0, now + params.release);
+}
+
+/* Mono: on envoie juste la note MIDI au worklet */
+function playNote(midi){
+  initAudio();
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+
+  currentNote = midi;
+  document.getElementById('noteDisplay').textContent = midiToName(midi);
+
+  // transpose feet + pitch
+  const semis = params.pitch;
+  const base = midi + semis;
+
+  // convert octaveMul to semitone offset:
+  // 4' (2x) => +12 ; 16' (0.5x) => -12 ; 32' => -24
+  let octShift = 0;
+  if (params.octaveMul === 2) octShift = 12;
+  if (params.octaveMul === 0.5) octShift = -12;
+  if (params.octaveMul === 0.25) octShift = -24;
+
+  const plaitsMidi = Math.max(0, Math.min(127, base + octShift));
+  workletNode?.port.postMessage({ type:"noteOn", midi: plaitsMidi });
+
+  gateOn(1);
+}
+
+function stopNote(){
+  if (!audioCtx) return;
+  gateOff();
+  workletNode?.port.postMessage({ type:"noteOff" });
+  document.getElementById('noteDisplay').textContent = '---';
+  currentNote = null;
+}
+
+/* ============================================================
+   KEYBOARD BUILD (identique à ton code)
+============================================================ */
+const startMidi = 48;
+const numOctaves = 3;
+const whitePattern = [0,2,4,5,7,9,11];
+const blackPattern = [1,3,null,6,8,10,null];
+
+const whiteKeysEl = document.getElementById('whiteKeys');
+const blackKeysEl = document.getElementById('blackKeys');
+
+let totalWhites = numOctaves * 7;
+
+for (let o=0;o<numOctaves;o++){
+  for (let i=0;i<7;i++){
+    const midi = startMidi + o*12 + whitePattern[i];
+    const key = document.createElement('div');
+    key.className = 'white-key';
+    key.dataset.midi = midi;
+
+    key.addEventListener('mousedown', () => { playNote(midi); key.classList.add('active'); });
+    key.addEventListener('mouseup',   () => { stopNote(); key.classList.remove('active'); });
+    key.addEventListener('mouseleave',() => { if(currentNote===midi) stopNote(); key.classList.remove('active'); });
+
+    key.addEventListener('touchstart', e => { e.preventDefault(); playNote(midi); key.classList.add('active'); }, {passive:false});
+    key.addEventListener('touchend',   e => { e.preventDefault(); stopNote(); key.classList.remove('active'); }, {passive:false});
+
+    whiteKeysEl.appendChild(key);
+  }
+}
+
+function buildBlackKeys(){
+  const pianoEl = document.getElementById('piano');
+  const pianoW = pianoEl.offsetWidth || 800;
+  const whiteW = pianoW / totalWhites;
+
+  let whiteIdx = 0;
+  for (let o=0;o<numOctaves;o++){
+    for (let i=0;i<7;i++){
+      const semi = blackPattern[i];
+      if (semi !== null){
+        const midi = startMidi + o*12 + semi;
+        const leftPct = ((whiteIdx + 0.65) * whiteW / pianoW * 100);
+        const widthPct = (whiteW * 0.6 / pianoW * 100);
+
+        const key = document.createElement('div');
+        key.className='black-key';
+        key.dataset.midi=midi;
+        key.style.left = leftPct + '%';
+        key.style.width = widthPct + '%';
+
+        key.addEventListener('mousedown', e => { e.stopPropagation(); playNote(midi); key.classList.add('active'); });
+        key.addEventListener('mouseup',   () => { stopNote(); key.classList.remove('active'); });
+        key.addEventListener('mouseleave',() => { if(currentNote===midi) stopNote(); key.classList.remove('active'); });
+
+        key.addEventListener('touchstart', e => { e.preventDefault(); e.stopPropagation(); playNote(midi); key.classList.add('active'); }, {passive:false});
+        key.addEventListener('touchend',   e => { e.preventDefault(); stopNote(); key.classList.remove('active'); }, {passive:false});
+
+        blackKeysEl.appendChild(key);
+      }
+      whiteIdx++;
+    }
+  }
+}
+window.addEventListener('load', buildBlackKeys);
+
+/* ============================================================
+   KEYBOARD SHORTCUTS (comme ton code)
+============================================================ */
+const keyMap = {
+  'a': 48, 'w': 49, 's': 50, 'e': 51, 'd': 52, 'f': 53,
+  't': 54, 'g': 55, 'y': 56, 'h': 57, 'u': 58, 'j': 59,
+  'k': 60, 'o': 61, 'l': 62, 'p': 63, ';': 64
+};
+document.addEventListener('keydown', e => { if(e.repeat) return; const midi = keyMap[e.key.toLowerCase()]; if(midi!==undefined) playNote(midi); });
+document.addEventListener('keyup',   e => { const midi = keyMap[e.key.toLowerCase()]; if(midi!==undefined && currentNote===midi) stopNote(); });
+
+/* ============================================================
+   SLIDERS (réutilise ta logique, + mapping Plaits)
+============================================================ */
+document.querySelectorAll('.vslider-track').forEach(track => {
+  const handle = track.querySelector('.vslider-handle');
+  const param = track.dataset.param;
+  const min = parseFloat(track.dataset.min);
+  const max = parseFloat(track.dataset.max);
+  const initVal = parseFloat(track.dataset.val);
+
+  // init pos
+  const pct = (initVal - min) / (max - min);
+  handle.style.bottom = (pct * 76) + 'px';
+
+  let dragging=false, startY=0, startBottom=0;
+
+  const onDown = (e) => {
+    dragging = true;
+    startY = e.touches ? e.touches[0].clientY : e.clientY;
+    startBottom = parseInt(handle.style.bottom) || 0;
+    e.preventDefault();
+  };
+
+  const onMove = (e) => {
+    if(!dragging) return;
+    const y = e.touches ? e.touches[0].clientY : e.clientY;
+    const dy = startY - y;
+    const newBottom = Math.max(0, Math.min(76, startBottom + dy));
+    handle.style.bottom = newBottom + 'px';
+    const val = min + (newBottom/76) * (max-min);
+    applyParam(param, val);
+    e.preventDefault();
+  };
+
+  const onUp = () => { dragging=false; };
+
+  handle.addEventListener('mousedown', onDown);
+  window.addEventListener('mousemove', onMove);
+  window.addEventListener('mouseup', onUp);
+
+  handle.addEventListener('touchstart', onDown, {passive:false});
+  window.addEventListener('touchmove', onMove, {passive:false});
+  window.addEventListener('touchend', onUp);
+
+  applyParam(param, initVal);
+});
+
+function applyParam(param, val){
+  params[param] = val;
+
+  // host
+  if (param === 'cutoff' && filterNode) filterNode.frequency.value = val;
+  if (param === 'resonance' && filterNode) filterNode.Q.value = val;
+  if (param === 'volume') {
+    params.volume = val;
+    sendPlaitsParam("level", val);
+  }
+
+  // Plaits mappings
+  if (param === 'plaitsTimbre') sendPlaitsParam("timbre", val);
+  if (param === 'plaitsHarm')   sendPlaitsParam("harmonics", val);
+
+  // pitch is host-side semis (applied when noteOn)
+}
+
+/* WAVE buttons: mappé -> Plaits MORPH (0..1) */
+function setWave(wave, el){
+  document.querySelectorAll('[data-wave]').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+
+  let morph = 0.2;
+  if (wave === 'sawtooth') morph = 0.15;
+  if (wave === 'triangle') morph = 0.45;
+  if (wave === 'square')   morph = 0.75;
+  if (wave === 'sine')     morph = 0.95;
+
+  params.plaitsMorph = morph;
+  sendPlaitsParam("morph", morph);
+}
+
+function setFeet(feet, el){
+  const multipliers = { 4:2, 8:1, 16:0.5, 32:0.25 };
+  params.octaveMul = multipliers[feet];
+  document.querySelectorAll('.wave-btn').forEach(b => {
+    if (["4'","8'","16'","32'"].includes(b.textContent)) b.classList.remove('active');
+  });
+  el.classList.add('active');
+}
+
+/* switch (UI only pour l’instant) */
+let switchState='vco';
+function setSwitch(sw){
+  switchState=sw;
+  document.getElementById('sw-vco').classList.toggle('active', sw==='vco');
+  document.getElementById('sw-vcf').classList.toggle('active', sw==='vcf');
+}
+
+/* Pitch ribbon: bend +/- 24 semis (transitoire) */
+const pitchRibbon = document.getElementById('pitchRibbon');
+let ribbonDragging=false;
+let pitchBend=0;
+
+pitchRibbon.addEventListener('mousedown', e => {
+  ribbonDragging=true;
+  const r = pitchRibbon.getBoundingClientRect();
+  pitchBend = ((r.bottom - e.clientY)/r.height - 0.5) * 24;
+  params.pitchBend = pitchBend;
+  e.preventDefault();
+});
+window.addEventListener('mousemove', e => {
+  if(!ribbonDragging) return;
+  const r = pitchRibbon.getBoundingClientRect();
+  pitchBend = ((r.bottom - e.clientY)/r.height - 0.5) * 24;
+  params.pitchBend = pitchBend;
+});
+window.addEventListener('mouseup', () => {
+  if(!ribbonDragging) return;
+  ribbonDragging=false;
+  params.pitchBend = 0;
+});
+
+/* On applique pitch bend au moment du noteOn (simple) */
+const _origPlayNote = playNote;
+playNote = function(midi){
+  const bend = params.pitchBend || 0;
+  const saved = params.pitch;
+  params.pitch = saved + bend;
+  _origPlayNote(midi);
+  params.pitch = saved;
+};
+</script>
+</body>
+</html>
