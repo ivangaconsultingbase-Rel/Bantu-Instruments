@@ -46,10 +46,7 @@
       url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.012'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
   }
 
-  header {
-    text-align: center;
-    margin-bottom: 28px;
-  }
+  header { text-align: center; margin-bottom: 28px; }
 
   header h1 {
     font-family: 'Playfair Display', serif;
@@ -81,7 +78,6 @@
     overflow: hidden;
   }
 
-  /* ─── BALAFON KEYBOARD ─── */
   .keyboard-section {
     padding: 24px 24px 0;
     background: linear-gradient(180deg, #1a1208 0%, #151008 100%);
@@ -122,9 +118,7 @@
   }
 
   .bar-wrapper:hover .note-label,
-  .bar-wrapper.active .note-label {
-    color: var(--accent);
-  }
+  .bar-wrapper.active .note-label { color: var(--accent); }
 
   .bar {
     border-radius: 6px 6px 4px 4px;
@@ -132,12 +126,7 @@
     transition: transform 0.08s ease, filter 0.08s ease;
     cursor: pointer;
     background:
-      linear-gradient(180deg,
-        #d4922e 0%,
-        #b87020 25%,
-        #9a5e18 60%,
-        #7a4a12 100%
-      );
+      linear-gradient(180deg, #d4922e 0%, #b87020 25%, #9a5e18 60%, #7a4a12 100%);
     box-shadow:
       inset 0 2px 0 rgba(255,220,120,0.4),
       inset 0 -2px 0 rgba(0,0,0,0.5),
@@ -183,7 +172,6 @@
     border-radius: 50%;
   }
 
-  /* ─── CONTROLS ZONE ─── */
   .controls-zone {
     display: grid;
     grid-template-columns: 200px 1fr 1fr 1fr;
@@ -196,7 +184,6 @@
     border-right: 1px solid #2a1e0e;
     position: relative;
   }
-
   .panel:last-child { border-right: none; }
 
   .panel-title {
@@ -217,18 +204,9 @@
     background: #2a1e0e;
   }
 
-  /* ─── INSTRUMENT CONTROLS ─── */
-  .instr-controls {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-  }
+  .instr-controls { display: flex; flex-direction: column; gap: 12px; }
 
-  .control-row {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-  }
+  .control-row { display: flex; flex-direction: column; gap: 4px; }
 
   .control-label {
     font-size: 0.5rem;
@@ -237,12 +215,7 @@
     text-transform: uppercase;
   }
 
-  .slider-container {
-    position: relative;
-    height: 20px;
-    display: flex;
-    align-items: center;
-  }
+  .slider-container { position: relative; height: 20px; display: flex; align-items: center; }
 
   input[type=range] {
     -webkit-appearance: none;
@@ -264,10 +237,7 @@
     cursor: pointer;
     transition: transform 0.1s;
   }
-
-  input[type=range]::-webkit-slider-thumb:hover {
-    transform: scale(1.2);
-  }
+  input[type=range]::-webkit-slider-thumb:hover { transform: scale(1.2); }
 
   .value-display {
     font-size: 0.55rem;
@@ -277,7 +247,6 @@
     margin-left: 6px;
   }
 
-  /* ─── KNOBS ─── */
   .knobs-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -285,12 +254,7 @@
     align-content: start;
   }
 
-  .knob-wrap {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 6px;
-  }
+  .knob-wrap { display: flex; flex-direction: column; align-items: center; gap: 6px; }
 
   .knob-label {
     font-size: 0.48rem;
@@ -346,7 +310,6 @@
     letter-spacing: 0.1em;
   }
 
-  /* ─── BYPASS TOGGLE ─── */
   .bypass-btn {
     display: flex;
     align-items: center;
@@ -383,14 +346,7 @@
     box-shadow: 0 0 8px var(--led-green);
   }
 
-  /* ─── VU METER ─── */
-  .vu-meter {
-    display: flex;
-    gap: 2px;
-    height: 80px;
-    align-items: flex-end;
-    margin-top: 8px;
-  }
+  .vu-meter { display: flex; gap: 2px; height: 80px; align-items: flex-end; margin-top: 8px; }
 
   .vu-bar {
     flex: 1;
@@ -409,7 +365,6 @@
     height: 0%;
   }
 
-  /* ─── SCOPE ─── */
   canvas#scope {
     width: 100%;
     height: 60px;
@@ -420,7 +375,6 @@
     margin-top: 8px;
   }
 
-  /* ─── KEYBOARD SHORTCUTS LEGEND ─── */
   .keys-legend {
     padding: 10px 24px;
     display: flex;
@@ -454,7 +408,6 @@
     color: var(--accent);
   }
 
-  /* ─── STATUS BAR ─── */
   .status-bar {
     padding: 6px 24px;
     background: #080604;
@@ -476,14 +429,30 @@
     margin-right: 5px;
   }
 
-  /* ─── SCROLLBAR ─── */
   ::-webkit-scrollbar { width: 6px; }
   ::-webkit-scrollbar-track { background: #0e0a06; }
   ::-webkit-scrollbar-thumb { background: #3a2a15; border-radius: 3px; }
 
-  .panel-col {
-    display: flex;
-    flex-direction: column;
+  .panel-col { display: flex; flex-direction: column; }
+
+  .mode-btn {
+    background: #1e1610;
+    border: 1px solid #3a2a15;
+    color: var(--text-dim);
+    font-family: 'Space Mono', monospace;
+    font-size: 0.48rem;
+    padding: 3px 8px;
+    border-radius: 3px;
+    cursor: pointer;
+    transition: all 0.15s;
+    letter-spacing: 0.1em;
+  }
+  .mode-btn:hover { border-color: var(--accent2); color: var(--accent2); }
+  .mode-btn.active {
+    background: #2a1e10;
+    border-color: var(--accent);
+    color: var(--accent);
+    box-shadow: 0 0 8px rgba(232,160,48,0.2);
   }
 </style>
 </head>
@@ -496,13 +465,11 @@
 
 <div class="plugin-frame">
 
-  <!-- KEYBOARD -->
   <div class="keyboard-section">
     <div class="bars-container" id="barsContainer"></div>
     <div style="height:20px;"></div>
   </div>
 
-  <!-- CONTROLS -->
   <div class="controls-zone">
 
     <!-- INSTRUMENT -->
@@ -537,16 +504,8 @@
             <span class="value-display" id="resonance-val">40</span>
           </div>
         </div>
-        <div class="control-row">
-          <div class="control-label">Pitch Bend</div>
-          <div class="slider-container">
-            <input type="range" id="pitch" min="-100" max="100" value="0" oninput="updateSlider(this,'pitch')">
-            <span class="value-display" id="pitch-val">0</span>
-          </div>
-        </div>
       </div>
 
-      <!-- VU Meter + Scope -->
       <div style="margin-top:auto; padding-top:12px;">
         <div class="panel-title">Output</div>
         <div class="vu-meter">
@@ -561,7 +520,7 @@
     <div class="panel panel-col">
       <div class="panel-title">Moog Multimode Filter</div>
       <button class="bypass-btn active" id="filter-bypass" onclick="toggleBypass('filter')">
-        <span class="led"></span>ON
+        <span class="led"></span><span class="bypass-label">ON</span>
       </button>
       <div class="knobs-grid">
         <div class="knob-wrap">
@@ -611,7 +570,7 @@
     <div class="panel panel-col">
       <div class="panel-title">Space Echo</div>
       <button class="bypass-btn active" id="echo-bypass" onclick="toggleBypass('echo')">
-        <span class="led"></span>ON
+        <span class="led"></span><span class="bypass-label">ON</span>
       </button>
       <div class="knobs-grid">
         <div class="knob-wrap">
@@ -661,7 +620,7 @@
     <div class="panel panel-col">
       <div class="panel-title">Tape Saturation</div>
       <button class="bypass-btn active" id="tape-bypass" onclick="toggleBypass('tape')">
-        <span class="led"></span>ON
+        <span class="led"></span><span class="bypass-label">ON</span>
       </button>
       <div class="knobs-grid">
         <div class="knob-wrap">
@@ -707,12 +666,10 @@
       </div>
     </div>
 
-  </div><!-- /controls-zone -->
+  </div>
 
-  <!-- KEYBOARD SHORTCUTS -->
   <div class="keys-legend" id="keysLegend"></div>
 
-  <!-- STATUS BAR -->
   <div class="status-bar">
     <span><span class="status-led"></span>AUDIO ENGINE ACTIF</span>
     <span id="status-note">— Sélectionnez une note —</span>
@@ -721,36 +678,13 @@
 
 </div>
 
-<style>
-  .mode-btn {
-    background: #1e1610;
-    border: 1px solid #3a2a15;
-    color: var(--text-dim);
-    font-family: 'Space Mono', monospace;
-    font-size: 0.48rem;
-    padding: 3px 8px;
-    border-radius: 3px;
-    cursor: pointer;
-    transition: all 0.15s;
-    letter-spacing: 0.1em;
-  }
-  .mode-btn:hover { border-color: var(--accent2); color: var(--accent2); }
-  .mode-btn.active {
-    background: #2a1e10;
-    border-color: var(--accent);
-    color: var(--accent);
-    box-shadow: 0 0 8px rgba(232,160,48,0.2);
-  }
-</style>
-
 <script>
 // ─────────────────────────────────────────────────────────────────────────────
-// BALAFON — Audio Plugin Engine
+// BALAFON — Audio Plugin Engine (refacto bus propre + bypass instantané)
 // ─────────────────────────────────────────────────────────────────────────────
 
 const NOTE_NAMES = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
 
-// Balafon pentatonic scale (2 octaves, African-ish)
 const BALAFON_NOTES = [
   {note:'C',  oct:4, key:'a'},
   {note:'D',  oct:4, key:'z'},
@@ -780,19 +714,25 @@ const P = {
   decay: 0.65,
   hardness: 0.5,
   resonance: 0.4,
-  pitch: 0,
+  pitch: 0, // cents
+
+  // filter
   filterCutoff: 0.6,
   filterRes: 0.3,
   filterDrive: 0.2,
   filterEnv: 0.4,
   filterActive: true,
   filterMode: 'lowpass',
+
+  // echo
   echoTime: 0.35,
   echoFeedback: 0.45,
   echoMix: 0.4,
   echoMod: 0.25,
   echoActive: true,
   echoSync: 'quarter',
+
+  // tape
   tapeSat: 0.3,
   tapeBias: 0.5,
   tapeHiss: 0.2,
@@ -801,78 +741,39 @@ const P = {
   tapeSpeed: '7ips',
 };
 
-// ─── AUDIO CONTEXT ────────────────────────────────────────────────────────
+// ─── AUDIO CONTEXT & BUSES ────────────────────────────────────────────────
 let actx = null;
-let masterGain, filterNode, filterType = 'lowpass';
-let delayNode, delayFeedback, delayMix, delayDryGain;
-let shaperNode, tapeGain;
-let analyser;
-let hissNode, hissGain;
 
-function initAudio() {
-  if (actx) return;
-  actx = new (window.AudioContext || window.webkitAudioContext)();
+// output / metering
+let masterOut, analyser;
 
-  masterGain = actx.createGain();
-  masterGain.gain.value = P.volume;
+// instrument bus (notes connect here)
+let instrumentBus;
 
-  // ── Moog-style ladder filter (emulated with biquad)
-  filterNode = actx.createBiquadFilter();
-  filterNode.type = 'lowpass';
-  filterNode.frequency.value = getCutoffHz();
-  filterNode.Q.value = P.filterRes * 30;
+// FILTER block
+let filterIn, filterDry, filterWet, filterOut;
+let filterType = 'lowpass';
+let filterNode, filterDriveGain;
 
-  // ── Space Echo delay
-  delayNode = actx.createDelay(4.0);
-  delayNode.delayTime.value = P.echoTime;
-  delayFeedback = actx.createGain();
-  delayFeedback.gain.value = P.echoFeedback;
-  delayMix = actx.createGain();
-  delayMix.gain.value = P.echoMix;
-  delayDryGain = actx.createGain();
-  delayDryGain.gain.value = 1 - P.echoMix;
+// TAPE block
+let tapeIn, tapeDry, tapeWet, tapeOut;
+let shaperNode, tapePreGain, tapePostGain;
+let tapeFlutterDelay, tapeFlutterLFO, tapeFlutterDepth;
+let hissGain, hissFilter, hissSource;
 
-  // Delay feedback loop
-  delayNode.connect(delayFeedback);
-  delayFeedback.connect(delayNode);
+// ECHO block
+let echoIn, echoDry, echoWet, echoOut;
+let delayNode, delayFeedback, echoWetGain;
+let wowLFO, wowDepth;
 
-  // ── Tape saturation (waveshaper)
-  shaperNode = actx.createWaveShaper();
-  shaperNode.curve = makeSatCurve(P.tapeSat, P.tapeBias);
-  shaperNode.oversample = '4x';
-  tapeGain = actx.createGain();
-  tapeGain.gain.value = 0.8;
-
-  // ── Tape hiss
-  hissNode = actx.createOscillator(); // will replace with buffer noise
-  hissGain = actx.createGain();
-  hissGain.gain.value = P.tapeHiss * 0.02;
-  const hissBuffer = actx.createBuffer(1, actx.sampleRate * 2, actx.sampleRate);
-  const hissData = hissBuffer.getChannelData(0);
-  for (let i = 0; i < hissData.length; i++) hissData[i] = Math.random() * 2 - 1;
-  const hissSource = actx.createBufferSource();
-  hissSource.buffer = hissBuffer;
-  hissSource.loop = true;
-  const hissFilter = actx.createBiquadFilter();
-  hissFilter.type = 'bandpass';
-  hissFilter.frequency.value = 6000;
-  hissFilter.Q.value = 0.5;
-  hissSource.connect(hissFilter);
-  hissFilter.connect(hissGain);
-  hissGain.connect(masterGain);
-  hissSource.start();
-
-  // ── Analyser
-  analyser = actx.createAnalyser();
-  analyser.fftSize = 1024;
-  analyser.smoothingTimeConstant = 0.8;
-
-  // ── Signal chain: source → filter → dry → tape → delay(wet/dry) → master → out
-  masterGain.connect(analyser);
-  analyser.connect(actx.destination);
-
-  startScope();
-  startVU();
+// Smooth param helper
+function setSmooth(param, value, t = 0.02) {
+  if (!actx) return;
+  const now = actx.currentTime;
+  try {
+    param.cancelScheduledValues(now);
+    param.setTargetAtTime(value, now, t);
+  } catch {}
 }
 
 function getCutoffHz() {
@@ -880,18 +781,235 @@ function getCutoffHz() {
 }
 
 function makeSatCurve(amount, bias) {
-  const n = 512;
+  const n = 1024;
   const curve = new Float32Array(n);
   const k = amount * 80 + 1;
   const b = (bias - 0.5) * 0.5;
   for (let i = 0; i < n; i++) {
-    const x = (i * 2 / n - 1) + b;
+    const x = (i * 2 / (n - 1) - 1) + b;
     curve[i] = (Math.PI + k) * x / (Math.PI + k * Math.abs(x));
   }
   return curve;
 }
 
-// ─── PLAY NOTE ────────────────────────────────────────────────────────────
+function initAudio() {
+  if (actx) return;
+
+  actx = new (window.AudioContext || window.webkitAudioContext)();
+
+  // MASTER OUT
+  masterOut = actx.createGain();
+  masterOut.gain.value = P.volume;
+
+  analyser = actx.createAnalyser();
+  analyser.fftSize = 1024;
+  analyser.smoothingTimeConstant = 0.8;
+
+  masterOut.connect(analyser);
+  analyser.connect(actx.destination);
+
+  // INSTRUMENT BUS
+  instrumentBus = actx.createGain();
+  instrumentBus.gain.value = 1.0;
+
+  // ─────────────────────────────
+  // FILTER BLOCK (bus)
+  // in → [dry] →\
+  //    → [drive→filter] → [wet] →/ → out
+  // ─────────────────────────────
+  filterIn = actx.createGain();
+  filterDry = actx.createGain();
+  filterWet = actx.createGain();
+  filterOut = actx.createGain();
+
+  filterDriveGain = actx.createGain();
+  filterDriveGain.gain.value = 1 + P.filterDrive * 4;
+
+  filterNode = actx.createBiquadFilter();
+  filterNode.type = P.filterMode;
+  filterNode.frequency.value = getCutoffHz();
+  filterNode.Q.value = P.filterRes * 30;
+
+  filterIn.connect(filterDry);
+  filterIn.connect(filterDriveGain);
+  filterDriveGain.connect(filterNode);
+  filterNode.connect(filterWet);
+
+  filterDry.connect(filterOut);
+  filterWet.connect(filterOut);
+
+  // ─────────────────────────────
+  // TAPE BLOCK (bus)
+  // in → [dry] →\
+  //    → [pre→flutterDelay→shaper→post] → [wet] →/ → out
+  // + hiss (gain controlled) injected to tapeOut
+  // ─────────────────────────────
+  tapeIn = actx.createGain();
+  tapeDry = actx.createGain();
+  tapeWet = actx.createGain();
+  tapeOut = actx.createGain();
+
+  tapePreGain = actx.createGain();
+  tapePreGain.gain.value = 1 + P.tapeSat * 3.0;
+
+  // flutter via very small modulated delay
+  tapeFlutterDelay = actx.createDelay(0.05); // 50ms max
+  tapeFlutterDelay.delayTime.value = 0.0;
+
+  tapeFlutterLFO = actx.createOscillator();
+  tapeFlutterLFO.type = 'sine';
+  tapeFlutterDepth = actx.createGain();
+  tapeFlutterDepth.gain.value = 0.0;
+
+  tapeFlutterLFO.connect(tapeFlutterDepth);
+  tapeFlutterDepth.connect(tapeFlutterDelay.delayTime);
+  tapeFlutterLFO.start();
+
+  shaperNode = actx.createWaveShaper();
+  shaperNode.curve = makeSatCurve(P.tapeSat, P.tapeBias);
+  shaperNode.oversample = '4x';
+
+  tapePostGain = actx.createGain();
+  tapePostGain.gain.value = 0.85;
+
+  tapeIn.connect(tapeDry);
+  tapeIn.connect(tapePreGain);
+  tapePreGain.connect(tapeFlutterDelay);
+  tapeFlutterDelay.connect(shaperNode);
+  shaperNode.connect(tapePostGain);
+  tapePostGain.connect(tapeWet);
+
+  tapeDry.connect(tapeOut);
+  tapeWet.connect(tapeOut);
+
+  // hiss (buffer noise)
+  const hissBuffer = actx.createBuffer(1, actx.sampleRate * 2, actx.sampleRate);
+  const data = hissBuffer.getChannelData(0);
+  for (let i = 0; i < data.length; i++) data[i] = Math.random() * 2 - 1;
+  hissSource = actx.createBufferSource();
+  hissSource.buffer = hissBuffer;
+  hissSource.loop = true;
+
+  hissFilter = actx.createBiquadFilter();
+  hissFilter.type = 'bandpass';
+  hissFilter.frequency.value = 6000;
+  hissFilter.Q.value = 0.5;
+
+  hissGain = actx.createGain();
+  hissGain.gain.value = 0.0; // set in syncFX()
+
+  hissSource.connect(hissFilter);
+  hissFilter.connect(hissGain);
+  hissGain.connect(tapeOut);
+  hissSource.start();
+
+  // ─────────────────────────────
+  // ECHO BLOCK (bus)
+  // in → [dry] →\
+  //    → delay→wetGain → [wet] →/ → out
+  // delay feedback loop inside; wet level controlled by echoMix
+  // Bypass is dry-only crossfade
+  // ─────────────────────────────
+  echoIn = actx.createGain();
+  echoDry = actx.createGain();
+  echoWet = actx.createGain();
+  echoOut = actx.createGain();
+
+  delayNode = actx.createDelay(4.0);
+  delayNode.delayTime.value = P.echoTime;
+
+  delayFeedback = actx.createGain();
+  delayFeedback.gain.value = P.echoFeedback;
+
+  echoWetGain = actx.createGain();
+  echoWetGain.gain.value = 1.0;
+
+  // wow (modulate delayTime slightly)
+  wowLFO = actx.createOscillator();
+  wowLFO.type = 'sine';
+  wowLFO.frequency.value = 2.2;
+  wowDepth = actx.createGain();
+  wowDepth.gain.value = 0.0;
+
+  wowLFO.connect(wowDepth);
+  wowDepth.connect(delayNode.delayTime);
+  wowLFO.start();
+
+  // feedback loop
+  delayNode.connect(delayFeedback);
+  delayFeedback.connect(delayNode);
+
+  echoIn.connect(echoDry);
+  echoIn.connect(delayNode);
+  delayNode.connect(echoWetGain);
+  echoWetGain.connect(echoWet);
+
+  echoDry.connect(echoOut);
+  echoWet.connect(echoOut);
+
+  // ─────────────────────────────
+  // CHAIN
+  // instrumentBus → filterIn → filterOut → tapeIn → tapeOut → echoIn → echoOut → masterOut
+  // ─────────────────────────────
+  instrumentBus.connect(filterIn);
+  filterOut.connect(tapeIn);
+  tapeOut.connect(echoIn);
+  echoOut.connect(masterOut);
+
+  // Apply bypass/mix initial states
+  syncFX();
+  syncBypassUI();
+
+  startScope();
+  startVU();
+}
+
+// Apply all “bus-level” params (bypass + mix) without reconnecting
+function syncFX() {
+  if (!actx) return;
+
+  // FILTER
+  filterNode.type = filterType;
+  setSmooth(filterNode.frequency, getCutoffHz(), 0.03);
+  setSmooth(filterNode.Q, P.filterRes * 30, 0.03);
+  setSmooth(filterDriveGain.gain, 1 + P.filterDrive * 4, 0.03);
+
+  // bypass crossfade
+  const fWet = P.filterActive ? 1 : 0;
+  const fDry = 1 - fWet;
+  setSmooth(filterWet.gain, fWet, 0.02);
+  setSmooth(filterDry.gain, fDry, 0.02);
+
+  // TAPE
+  shaperNode.curve = makeSatCurve(P.tapeSat, P.tapeBias);
+  setSmooth(tapePreGain.gain, 1 + P.tapeSat * 3.0, 0.02);
+
+  // tape flutter speed by ips
+  const ipsRate = (P.tapeSpeed === '30ips') ? 6.0 : (P.tapeSpeed === '15ips' ? 4.2 : 2.8);
+  setSmooth(tapeFlutterDepth.gain, P.tapeFlutter * 0.004, 0.05); // seconds
+  tapeFlutterLFO.frequency.setValueAtTime(ipsRate, actx.currentTime);
+
+  const tWet = P.tapeActive ? 1 : 0;
+  const tDry = 1 - tWet;
+  setSmooth(tapeWet.gain, tWet, 0.02);
+  setSmooth(tapeDry.gain, tDry, 0.02);
+
+  // hiss only when tape active (sinon 0)
+  setSmooth(hissGain.gain, (P.tapeActive ? (P.tapeHiss * 0.02) : 0.0), 0.08);
+
+  // ECHO
+  setSmooth(delayNode.delayTime, P.echoTime, 0.03);
+  setSmooth(delayFeedback.gain, P.echoFeedback, 0.03);
+  // wow depth (seconds modulation)
+  setSmooth(wowDepth.gain, P.echoMod * 0.01, 0.08);
+
+  const eWet = (P.echoActive ? P.echoMix : 0);
+  const eDry = (P.echoActive ? (1 - P.echoMix) : 1);
+  setSmooth(echoWet.gain, eWet, 0.02);
+  setSmooth(echoDry.gain, eDry, 0.02);
+}
+
+// ─── PLAY NOTE (connect to instrumentBus only) ─────────────────────────────
 function playNote(freq) {
   initAudio();
   if (actx.state === 'suspended') actx.resume();
@@ -901,14 +1019,14 @@ function playNote(freq) {
   const hardness = P.hardness;
   const pitchMult = Math.pow(2, P.pitch / 1200);
 
-  // ── Synthesize balafon: fundamental + harmonics (inharmonic partials)
+  // oscillators
   const osc1 = actx.createOscillator();
   const osc2 = actx.createOscillator();
   const osc3 = actx.createOscillator();
   const osc4 = actx.createOscillator();
 
   osc1.frequency.value = freq * pitchMult;
-  osc2.frequency.value = freq * pitchMult * 3.92; // inharmonic partial
+  osc2.frequency.value = freq * pitchMult * 3.92;
   osc3.frequency.value = freq * pitchMult * 9.72;
   osc4.frequency.value = freq * pitchMult * 2.01;
 
@@ -922,8 +1040,8 @@ function playNote(freq) {
   const g3 = actx.createGain();
   const g4 = actx.createGain();
 
-  // Amplitude envelopes
   const vel = 0.6 + hardness * 0.4;
+
   g1.gain.setValueAtTime(vel * 0.7, now);
   g1.gain.exponentialRampToValueAtTime(0.0001, now + decay * 1.0);
 
@@ -936,61 +1054,45 @@ function playNote(freq) {
   g4.gain.setValueAtTime(vel * 0.15, now);
   g4.gain.exponentialRampToValueAtTime(0.0001, now + decay * 0.6);
 
-  // Resonator simulation: amplitude modulation with slow decay
+  // resonator “hit” gain
   const resMod = actx.createGain();
   resMod.gain.setValueAtTime(1 + P.resonance * 0.5, now);
   resMod.gain.linearRampToValueAtTime(1, now + 0.08);
 
-  // Merge
-  const merger = actx.createGain();
-  merger.gain.value = P.volume;
+  const voice = actx.createGain();
+  voice.gain.value = 1.0;
 
-  osc1.connect(g1); g1.connect(merger);
-  osc2.connect(g2); g2.connect(merger);
-  osc3.connect(g3); g3.connect(merger);
-  osc4.connect(g4); g4.connect(merger);
-  merger.connect(resMod);
+  osc1.connect(g1); g1.connect(voice);
+  osc2.connect(g2); g2.connect(voice);
+  osc3.connect(g3); g3.connect(voice);
+  osc4.connect(g4); g4.connect(voice);
 
-  // ── Filter (conditional)
-  let chainNode = resMod;
-  if (P.filterActive) {
-    filterNode.type = filterType;
-    filterNode.frequency.setValueAtTime(getCutoffHz() * (1 + P.filterEnv * 2), now);
-    filterNode.frequency.exponentialRampToValueAtTime(getCutoffHz(), now + 0.15);
-    filterNode.Q.value = P.filterRes * 30;
-    chainNode.connect(filterNode);
-    chainNode = filterNode;
+  voice.connect(resMod);
+  resMod.connect(instrumentBus);
+
+  // Per-note filter envelope (works even if filter bypassed; it will affect wet path)
+  // This makes the "Env Amt" feel consistent
+  if (filterNode) {
+    const base = getCutoffHz();
+    const peak = Math.min(18000, base * (1 + P.filterEnv * 2));
+    filterNode.frequency.cancelScheduledValues(now);
+    filterNode.frequency.setValueAtTime(peak, now);
+    filterNode.frequency.exponentialRampToValueAtTime(base, now + 0.15);
   }
 
-  // ── Tape saturation (conditional)
-  if (P.tapeActive) {
-    shaperNode.curve = makeSatCurve(P.tapeSat, P.tapeBias);
-    chainNode.connect(shaperNode);
-    shaperNode.connect(tapeGain);
-    chainNode = tapeGain;
-  }
-
-  // ── Space Echo (conditional)
-  if (P.echoActive) {
-    // Dry
-    const dryG = actx.createGain();
-    dryG.gain.value = 1 - P.echoMix;
-    chainNode.connect(dryG);
-    dryG.connect(masterGain);
-    // Wet
-    const wetG = actx.createGain();
-    wetG.gain.value = P.echoMix;
-    chainNode.connect(delayNode);
-    delayNode.connect(wetG);
-    wetG.connect(masterGain);
-  } else {
-    chainNode.connect(masterGain);
-  }
-
+  // stop
   osc1.start(now); osc1.stop(now + decay + 0.1);
   osc2.start(now); osc2.stop(now + decay + 0.1);
   osc3.start(now); osc3.stop(now + decay + 0.1);
   osc4.start(now); osc4.stop(now + decay + 0.1);
+
+  // cleanup
+  const stopAt = (decay + 0.2) * 1000;
+  setTimeout(() => {
+    try { osc1.disconnect(); osc2.disconnect(); osc3.disconnect(); osc4.disconnect(); } catch {}
+    try { g1.disconnect(); g2.disconnect(); g3.disconnect(); g4.disconnect(); } catch {}
+    try { voice.disconnect(); resMod.disconnect(); } catch {}
+  }, stopAt);
 }
 
 // ─── BUILD KEYBOARD ───────────────────────────────────────────────────────
@@ -999,7 +1101,7 @@ const keysLegend = document.getElementById('keysLegend');
 
 BALAFON_NOTES.forEach((n, i) => {
   const pct = i / (BALAFON_NOTES.length - 1);
-  const barH = 120 + (1 - pct) * 80; // higher notes = shorter bars
+  const barH = 120 + (1 - pct) * 80;
   const barW = 28 + (1 - pct) * 14;
   const resH = 40 + (1 - pct) * 50;
   const freq = noteToFreq(n.note, n.oct);
@@ -1026,7 +1128,6 @@ BALAFON_NOTES.forEach((n, i) => {
 
   container.appendChild(wrapper);
 
-  // Key legend
   const chip = document.createElement('div');
   chip.className = 'key-chip';
   chip.innerHTML = `<kbd>${n.key.toUpperCase()}</kbd>${n.note}${n.oct}`;
@@ -1044,9 +1145,10 @@ document.addEventListener('keydown', e => {
     const wrapper = document.getElementById(`bar-${idx}`);
     if (wrapper) {
       const n = BALAFON_NOTES[idx];
+      const f = noteToFreq(n.note, n.oct);
       wrapper.classList.add('active');
-      playNote(noteToFreq(n.note, n.oct));
-      document.getElementById('status-note').textContent = `♩ ${n.note}${n.oct} — ${Math.round(noteToFreq(n.note, n.oct))} Hz`;
+      playNote(f);
+      document.getElementById('status-note').textContent = `♩ ${n.note}${n.oct} — ${Math.round(f)} Hz`;
       setTimeout(() => wrapper.classList.remove('active'), 200);
     }
   }
@@ -1059,11 +1161,14 @@ function updateSlider(el, id) {
   el.style.setProperty('--pct', pct + '%');
   document.getElementById(id + '-val').textContent = v;
 
-  if (id === 'vol') { P.volume = v/100; if (masterGain) masterGain.gain.value = P.volume; }
+  if (id === 'vol') {
+    P.volume = v/100;
+    if (masterOut) setSmooth(masterOut.gain, P.volume, 0.03);
+  }
   if (id === 'decay') P.decay = v/100;
   if (id === 'hardness') P.hardness = v/100;
   if (id === 'resonance') P.resonance = v/100;
-  if (id === 'pitch') P.pitch = v * 100;
+  if (id === 'pitch') P.pitch = v * 100; // cents
 }
 
 // Init slider visual state
@@ -1079,10 +1184,12 @@ const knobDefs = {
   'resonance': {param:'filterRes',   min:0, max:1, fmt: v => v.toFixed(2), valId:'kv-resonance'},
   'drive':     {param:'filterDrive', min:0, max:1, fmt: v => v.toFixed(2), valId:'kv-drive'},
   'envamt':    {param:'filterEnv',   min:0, max:1, fmt: v => v.toFixed(2), valId:'kv-envamt'},
+
   'etime':     {param:'echoTime',    min:0.01, max:2, fmt: v => Math.round(v*1000) + 'ms', valId:'kv-etime'},
   'efeed':     {param:'echoFeedback',min:0, max:0.95, fmt: v => v.toFixed(2), valId:'kv-efeed'},
   'emix':      {param:'echoMix',     min:0, max:1, fmt: v => v.toFixed(2), valId:'kv-emix'},
   'emod':      {param:'echoMod',     min:0, max:1, fmt: v => v.toFixed(2), valId:'kv-emod'},
+
   'tsat':      {param:'tapeSat',     min:0, max:1, fmt: v => v.toFixed(2), valId:'kv-tsat'},
   'tbias':     {param:'tapeBias',    min:0, max:1, fmt: v => v.toFixed(2), valId:'kv-tbias'},
   'thiss':     {param:'tapeHiss',    min:0, max:1, fmt: v => v.toFixed(2), valId:'kv-thiss'},
@@ -1101,25 +1208,18 @@ function setupKnob(el) {
     value = Math.max(def.min, Math.min(def.max, v));
     const norm = (value - def.min) / (def.max - def.min);
     const angleDeg = -140 + norm * 280;
+
     el.querySelector('.knob-dot').style.transform = `translateX(-50%) rotate(${angleDeg}deg)`;
     el.querySelector('.knob-dot').style.transformOrigin = '50% calc(50% + 16px)';
 
-    // Ring arc
-    const arcAngle = norm * 252; // 252deg total sweep
+    const arcAngle = norm * 252;
     el.querySelector('.knob-ring').style.setProperty('--angle', arcAngle + 'deg');
 
     P[def.param] = value;
     document.getElementById(def.valId).textContent = def.fmt(value);
 
-    // Live update audio params
-    if (actx) {
-      if (def.param === 'filterCutoff') filterNode.frequency.value = getCutoffHz();
-      if (def.param === 'filterRes') filterNode.Q.value = value * 30;
-      if (def.param === 'echoTime') delayNode.delayTime.value = value;
-      if (def.param === 'echoFeedback') delayFeedback.gain.value = value;
-      if (def.param === 'echoMix') { delayMix.gain.value = value; }
-      if (def.param === 'tapeHiss' && hissGain) hissGain.gain.value = value * 0.02;
-    }
+    // Apply live to buses (if audio ready)
+    if (actx) syncFX();
   }
 
   function onMouseMove(e) {
@@ -1155,28 +1255,41 @@ function setupKnob(el) {
   }, {passive:false});
 
   el.addEventListener('dblclick', () => {
-    // reset to default
     const norm = parseFloat(el.dataset.value);
     updateKnob(def.min + norm * (def.max - def.min));
   });
 
-  // Init
   updateKnob(value);
 }
 
 document.querySelectorAll('.knob').forEach(setupKnob);
 
-// ─── BYPASS ───────────────────────────────────────────────────────────────
+// ─── BYPASS (robuste + bus) ───────────────────────────────────────────────
 function toggleBypass(fx) {
-  const btn = document.getElementById(fx + '-bypass');
+  const btn = document.getElementById(`${fx}-bypass`);
+  if (!btn) return;
+
   const isActive = btn.classList.toggle('active');
-  btn.querySelector('.led').style.background = isActive ? 'var(--led-green)' : '#333';
-  btn.querySelector('.led').style.boxShadow = isActive ? '0 0 8px var(--led-green)' : 'none';
-  btn.childNodes[1].textContent = isActive ? 'ON' : 'OFF';
+  const label = btn.querySelector('.bypass-label');
+  if (label) label.textContent = isActive ? 'ON' : 'OFF';
+  btn.setAttribute('aria-pressed', String(isActive));
 
   if (fx === 'filter') P.filterActive = isActive;
-  if (fx === 'echo') P.echoActive = isActive;
-  if (fx === 'tape') P.tapeActive = isActive;
+  if (fx === 'echo')   P.echoActive   = isActive;
+  if (fx === 'tape')   P.tapeActive   = isActive;
+
+  if (actx) syncFX(); // instant effect on tails
+}
+
+function syncBypassUI() {
+  [['filter', P.filterActive], ['echo', P.echoActive], ['tape', P.tapeActive]].forEach(([fx, on]) => {
+    const btn = document.getElementById(`${fx}-bypass`);
+    if (!btn) return;
+    btn.classList.toggle('active', !!on);
+    const label = btn.querySelector('.bypass-label');
+    if (label) label.textContent = on ? 'ON' : 'OFF';
+    btn.setAttribute('aria-pressed', String(!!on));
+  });
 }
 
 // ─── MODE BUTTONS ─────────────────────────────────────────────────────────
@@ -1185,24 +1298,29 @@ function setFilterMode(mode, btn) {
   P.filterMode = mode;
   btn.closest('.panel').querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
-  if (filterNode) filterNode.type = mode;
+  if (actx) syncFX();
 }
 
 function setEchoSync(mode, btn) {
   P.echoSync = mode;
   btn.closest('.panel').querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
+
+  // BPM hardcodé comme dans ton code initial (tu pourras le lier à un BPM global ensuite)
   const bpm = 120;
   if (mode === 'quarter') P.echoTime = 60/bpm;
-  if (mode === 'dotted') P.echoTime = 60/bpm * 1.5;
-  if (actx && delayNode) delayNode.delayTime.value = P.echoTime;
+  if (mode === 'dotted')  P.echoTime = 60/bpm * 1.5;
+  // free: on ne change pas
+
   document.getElementById('kv-etime').textContent = Math.round(P.echoTime * 1000) + 'ms';
+  if (actx) syncFX();
 }
 
 function setTapeSpeed(speed, btn) {
   P.tapeSpeed = speed;
   btn.closest('.panel').querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
+  if (actx) syncFX();
 }
 
 // ─── OSCILLOSCOPE ─────────────────────────────────────────────────────────
@@ -1218,7 +1336,7 @@ function startScope() {
     scopeCtx.clearRect(0, 0, scopeCanvas.width, scopeCanvas.height);
     scopeCtx.fillStyle = '#080604';
     scopeCtx.fillRect(0, 0, scopeCanvas.width, scopeCanvas.height);
-    // Grid
+
     scopeCtx.strokeStyle = 'rgba(58,42,20,0.5)';
     scopeCtx.lineWidth = 0.5;
     scopeCtx.beginPath();
