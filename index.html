@@ -1,62 +1,34 @@
 <!doctype html>
 <html lang="fr">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Bantu Instruments — WebAudio Plugins</title>
-  <meta name="description" content="Démos WebAudio : Balafon, effets, etc." />
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Bantu Instruments</title>
   <style>
-    :root{--bg:#0b0d12;--panel:#121624;--text:#e7e9ee;--muted:#a7adbd;--border:#232a3d;--accent:#7c5cff;}
-    *{box-sizing:border-box} body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:var(--bg);color:var(--text);}
-    a{color:inherit;text-decoration:none} a:hover{text-decoration:underline}
-    .wrap{width:min(980px,calc(100% - 2rem));margin:0 auto;padding:28px 0 64px}
-    header{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap}
-    h1{margin:0;font-size:28px} .muted{color:var(--muted)}
-    .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;margin-top:18px}
-    @media (max-width:720px){.grid{grid-template-columns:1fr}}
-    .card{background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:16px;padding:14px}
-    .tag{display:inline-block;border:1px solid var(--border);border-radius:999px;padding:2px 8px;margin:6px 6px 0 0;color:var(--muted);font-size:12px}
-    .btn{display:inline-block;margin-top:12px;padding:10px 12px;border-radius:12px;border:1px solid var(--border);background:rgba(124,92,255,.18)}
-    .btn:hover{text-decoration:none;border-color:rgba(124,92,255,.55)}
-    footer{margin-top:26px;padding-top:16px;border-top:1px solid var(--border)}
+    body{margin:0;font-family:system-ui;background:#0e0a06;color:#f0e0c0;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:28px}
+    .wrap{width:min(900px,100%);border:1px solid #3a2a15;border-radius:14px;padding:22px;background:linear-gradient(160deg,#1e1610,#120d08);box-shadow:0 30px 80px rgba(0,0,0,.7)}
+    h1{margin:0 0 10px;letter-spacing:.18em}
+    a{color:#e8a030;text-decoration:none}
+    a:hover{text-decoration:underline}
+    .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;margin-top:14px}
+    .card{border:1px solid #3a2a15;border-radius:12px;padding:14px;background:rgba(0,0,0,.18)}
+    .meta{color:#886644;font-size:12px;letter-spacing:.12em;text-transform:uppercase;margin-top:6px}
   </style>
 </head>
 <body>
   <div class="wrap">
-    <header>
-      <div>
-        <h1>Bantu Instruments</h1>
-        <div class="muted">Plugins WebAudio — démos jouables dans le navigateur</div>
+    <h1>BANTU INSTRUMENTS</h1>
+    <div class="meta">WebAudio plugins · GitHub Pages</div>
+    <div class="grid">
+      <div class="card">
+        <div><a href="./plugins/balafon/">Balafon</a></div>
+        <div class="meta">Additive · FX chain</div>
       </div>
-      <div class="muted">GitHub Pages</div>
-    </header>
-
-    <section class="grid">
-      <article class="card">
-        <h2 style="margin:0 0 6px 0;font-size:18px;">Balafon</h2>
-        <div class="muted">Synthèse additive inharmonique + FX (Moog filter, Space Echo, Tape Sat)</div>
-        <div>
-          <span class="tag">Instrument</span>
-          <span class="tag">WebAudio</span>
-          <span class="tag">Additive</span>
-          <span class="tag">FX Chain</span>
-        </div>
-        <a class="btn" href="./plugins/balafon/">Open demo →</a>
-      </article>
-
-      <!-- Tu ajouteras d'autres cards ici (echo, saturation, etc.) -->
-      <article class="card">
-        <h2 style="margin:0 0 6px 0;font-size:18px;">À venir</h2>
-        <div class="muted">Ajoute tes autres plugins dans /plugins/nom-plugin/</div>
-        <div><span class="tag">Roadmap</span></div>
-      </article>
-    </section>
-
-    <footer class="muted">
-      © <span id="y"></span> — Bantu Instruments
-    </footer>
+      <div class="card">
+        <div><a href="./plugins/cs01/">CS01 (Plaits OSC)</a></div>
+        <div class="meta">Mono · AudioWorklet · WASM</div>
+      </div>
+    </div>
   </div>
-
-  <script>document.getElementById('y').textContent=new Date().getFullYear();</script>
 </body>
 </html>
