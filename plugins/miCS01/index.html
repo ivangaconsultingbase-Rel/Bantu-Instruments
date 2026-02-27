@@ -149,6 +149,13 @@ input[type=range].slider-h::-webkit-slider-thumb{-webkit-appearance:none;width:1
   }
   body.fx-open .fx-unit { border-right:none; border-bottom:1px solid #1a1e1e; }
   body.fx-open .fx-unit:last-child { border-bottom:none; }
+
+  /* PM (Pitch/Mod) masqué par défaut sur mobile */
+  .pitch-mod-section { display:none; }
+
+  /* PM visible quand ouvert */
+  body.pm-open .pitch-mod-section { display:flex; }
+
 }
 </style>
 </head>
@@ -366,13 +373,17 @@ input[type=range].slider-h::-webkit-slider-thumb{-webkit-appearance:none;width:1
           <div class="icon-btn" onclick="scrollOctave(-1)">▼</div>
         </div>
 
-        <!-- FX button (mobile) -->
-        <button class="seq-btn" id="btnFx" onclick="toggleFxPanel()">FX</button>
-
         <div class="seq-ctrl-group" style="margin-left:auto;gap:5px;">
           <button class="seq-btn" onclick="clearGrid()">CLEAR</button>
           <button class="seq-btn" onclick="randomize()">RAND</button>
         </div>
+
+        <!-- FX button (mobile) -->
+        <button class="seq-btn" id="btnFx" onclick="toggleFxPanel()">FX</button>
+
+        <!-- PM button (mobile) -->
+                     <button class="seq-btn" id="btnPM" onclick="togglePmPanel()">PM</button>
+
       </div>
       <div class="seq-step-headers" id="stepHeaders"></div>
       <div class="seq-grid-wrapper" id="seqGrid"></div>
@@ -1370,6 +1381,22 @@ function toggleFxPanel() {
 }
 
 // ════════════════════════════════════════════════════════
+//  PM PANEL toggle (mobile)
+// ════════════════════════════════════════════════════════
+function togglePmPanel() {
+  const open = document.body.classList.toggle('pm-open');
+  const btn = document.getElementById('btnPM');
+  if (btn) {
+    btn.classList.toggle('playing', open);
+    btn.textContent = open ? 'PM ✓' : 'PM';
+  }
+  if (open) {
+    const pm = document.querySelector('.pitch-mod-section');
+    if (pm) pm.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+}
+
+// ════════════════════════════════════════════════════════
 //  FX CONTROLS
 // ════════════════════════════════════════════════════════
 function syncFxBypassUI() {
@@ -1553,6 +1580,10 @@ window.addEventListener('DOMContentLoaded', () => {
 
   const btnFx = document.getElementById('btnFx');
   if (btnFx) { btnFx.textContent = 'FX'; btnFx.classList.remove('playing'); }
+
+     const btnPM = document.getElementById('btnPM');
+     if (btnPM) { btnPM.textContent = 'PM'; btnPM.classList.remove('playing'); }
+
 });
 </script>
 </body>
