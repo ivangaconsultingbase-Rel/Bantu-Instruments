@@ -178,7 +178,6 @@
     margin:0 0 8px 0;
   }
 
-  /* Pads list */
   .padList{ display:flex; flex-direction:column; gap:10px; }
 
   .padRow{
@@ -273,6 +272,7 @@
     gap:8px;
     margin-top:10px;
     flex-wrap:wrap;
+    align-items:flex-start;
   }
   .tinyBtn{
     border:1px solid var(--line);
@@ -288,7 +288,39 @@
   }
   .tinyBtn.on{ background:rgba(0,0,0,.08); }
 
-  /* Sequencer */
+  .sctl{
+    flex:1;
+    min-width: 160px;
+    border:1px solid var(--line);
+    border-radius:12px;
+    padding:8px 10px;
+    background:rgba(255,255,255,.20);
+  }
+  .sctl .row{
+    display:flex;
+    justify-content:space-between;
+    gap:10px;
+    align-items:baseline;
+    margin-bottom:6px;
+  }
+  .sctl .lab{
+    font-size:11px;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+    color:var(--muted);
+  }
+  .sctl .v{
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    font-size:11px;
+    color:var(--ink);
+    opacity:.85;
+  }
+  .sctl input[type="range"]{
+    width:100%;
+    accent-color:#111;
+    touch-action: pan-y;
+  }
+
   .seqHeader{
     display:flex;
     align-items:center;
@@ -362,7 +394,7 @@
     background:var(--stepOff);
     cursor:pointer;
     position:relative;
-    touch-action:manipulation;
+    touch-action:none;
     user-select:none;
   }
   .step.on{
@@ -392,7 +424,6 @@
   }
   .step.on.beat::before{ background:rgba(255,255,255,.35); }
 
-  /* FX panel */
   .fxPanel{ margin-top:12px; overflow:hidden; }
   .fxHeader{
     display:flex;
@@ -443,7 +474,6 @@
     margin-top:8px;
   }
 
-  /* Bottom utilities */
   .bottomBar{
     margin-top:12px;
     display:flex;
@@ -467,10 +497,10 @@
     letter-spacing:.08em;
     text-transform:uppercase;
     cursor:pointer;
+    touch-action:manipulation;
   }
   .patBtn.active{ background:rgba(0,0,0,.08); }
 
-  /* Loading overlay */
   .loading-msg{
     position: fixed; inset: 0;
     background: rgba(0,0,0,0.55);
@@ -486,7 +516,6 @@
   }
   .loading-msg.show{ opacity:1; pointer-events:auto; }
 
-  /* Mobile */
   @media (max-width: 900px){
     .grid{ grid-template-columns: 1fr; }
     .leftCol,.rightCol{ padding:8px; }
@@ -498,17 +527,17 @@
     .steps{ gap:5px; }
     .steps .step{ height:28px; border-radius:9px; }
     .padBtn{ padding:12px 10px; }
+    .sctl{ min-width: 140px; }
   }
 </style>
 </head>
 
 <body>
   <div class="wrap">
-
     <div class="topbar">
       <div class="title">
         <h1>SamPtu 303 — LoFi Sampler · Drum Machine</h1>
-        <div class="sub">Blueprint UI · 6 pads · 6 lanes TR · FX chain (lofi / tape / vinyl)</div>
+        <div class="sub">Blueprint UI · 6 pads · TR 16 · FX chain · per-sample vol/pitch · time-stretch pitch</div>
       </div>
 
       <div class="panel controls" aria-label="Transport">
@@ -520,6 +549,8 @@
           <div class="digits" id="ledDisplay">---</div>
           <div class="label">Step</div>
         </div>
+
+        <button id="tsToggleBtn" class="btn on" title="Pitch sans changer la durée (time-stretch)">Time-Stretch</button>
 
         <div class="knobs">
           <div class="knob">
@@ -558,14 +589,13 @@
               <span><span class="dot"></span> off</span>
               <span><span class="dot on"></span> on</span>
               <span><span class="dot ph"></span> playhead</span>
-              <span style="opacity:.85;">Tap steps · drag paint</span>
+              <span style="opacity:.85;">Tap steps · drag paint (touch OK)</span>
             </div>
           </div>
           <div id="seqTable" class="seqTable"></div>
         </div>
       </div>
 
-      <!-- FX -->
       <div class="panel fxPanel">
         <div class="fxHeader">
           <p class="sectionTitle">Global FX</p>
@@ -577,7 +607,6 @@
 
         <div id="fxBody" class="fxBody">
           <div class="fxGrid">
-
             <div class="fxCard">
               <div class="fxCardTop">
                 <div>
@@ -586,7 +615,6 @@
                 </div>
                 <button id="lofi-bypass" class="btn">Off</button>
               </div>
-
               <div class="fxRow knob">
                 <label><span>Bits</span><span class="val" id="bitsVal">12</span></label>
                 <input id="bits" type="range" min="4" max="16" step="1" value="12" />
@@ -609,7 +637,6 @@
                 </div>
                 <button id="tape-bypass" class="btn">Off</button>
               </div>
-
               <div class="fxRow knob">
                 <label><span>Drive</span><span class="val" id="tapedriveVal">3</span></label>
                 <input id="tapedrive" type="range" min="1" max="20" step="0.1" value="3" />
@@ -632,7 +659,6 @@
                 </div>
                 <button id="vinyl-bypass" class="btn">Off</button>
               </div>
-
               <div class="fxRow knob">
                 <label><span>Crackle</span><span class="val" id="vinylcrackleVal">0.25</span></label>
                 <input id="vinylcrackle" type="range" min="0" max="1" step="0.01" value="0.25" />
@@ -646,7 +672,6 @@
                 <input id="vinylmix" type="range" min="0" max="1" step="0.01" value="0.40" />
               </div>
             </div>
-
           </div>
 
           <div style="margin-top:10px; color:var(--muted); font-size:12px; line-height:1.35;">
@@ -655,7 +680,6 @@
         </div>
       </div>
 
-      <!-- Bottom -->
       <div class="bottomBar">
         <div class="patBtns">
           <span class="patLabel">Bank</span>
@@ -670,7 +694,6 @@
           <button id="btnFill" class="btn">Fill</button>
         </div>
       </div>
-
     </div>
   </div>
 
@@ -694,18 +717,176 @@ const PAD_CONFIG = [
 ];
 
 /* =========================================================================
-   AUDIO ENGINE (inchangé sur le fond, juste branché à la nouvelle UI)
+   PER-SAMPLE PARAMS
+   ========================================================================= */
+const SAMPLE_PARAMS = [
+  { vol: 0.90, semi: 0 },
+  { vol: 0.90, semi: 0 },
+  { vol: 0.90, semi: 0 },
+];
+function semiToRate(semi){ return Math.pow(2, semi / 12); }
+
+/* =========================================================================
+   TIME-STRETCH PITCH (Jungle) — pitch shift without changing duration
+   - lightweight time-domain pitch shifter (dual delay + crossfade)
+   - good enough for SP/MPC-ish one-shots and Safari iOS
+   ========================================================================= */
+class Jungle {
+  constructor(context) {
+    this.context = context;
+
+    // internal nodes
+    this.input = context.createGain();
+    this.output = context.createGain();
+
+    this.delay1 = context.createDelay();
+    this.delay2 = context.createDelay();
+    this.gain1 = context.createGain();
+    this.gain2 = context.createGain();
+
+    // Crossfade
+    this.crossfade = context.createGain();
+
+    // Modulation
+    this.mod1 = context.createBufferSource();
+    this.mod2 = context.createBufferSource();
+    this.modGain1 = context.createGain();
+    this.modGain2 = context.createGain();
+
+    // Defaults
+    this.windowTime = 0.1;   // 100ms window
+    this.delayTime = 0.1;    // base delay
+    this._pitch = 1.0;
+
+    this.delay1.delayTime.value = this.delayTime;
+    this.delay2.delayTime.value = this.delayTime;
+
+    // Build modulation buffers
+    const fadeBuffer = Jungle._createFadeBuffer(context, this.windowTime);
+    const shiftBuffer = Jungle._createShiftBuffer(context, this.windowTime);
+
+    this.mod1.buffer = shiftBuffer;
+    this.mod2.buffer = shiftBuffer;
+    this.mod1.loop = true;
+    this.mod2.loop = true;
+
+    // Offset second mod by half window
+    this.mod2.start(0, this.windowTime / 2);
+
+    // connect mod to delays
+    this.modGain1.gain.value = 0.0;
+    this.modGain2.gain.value = 0.0;
+    this.mod1.connect(this.modGain1);
+    this.mod2.connect(this.modGain2);
+    this.modGain1.connect(this.delay1.delayTime);
+    this.modGain2.connect(this.delay2.delayTime);
+
+    // Crossfade envelopes
+    this.fade1 = context.createBufferSource();
+    this.fade2 = context.createBufferSource();
+    this.fadeGain1 = context.createGain();
+    this.fadeGain2 = context.createGain();
+
+    this.fade1.buffer = fadeBuffer;
+    this.fade2.buffer = fadeBuffer;
+    this.fade1.loop = true;
+    this.fade2.loop = true;
+
+    this.fade2.start(0, this.windowTime / 2);
+
+    this.fade1.connect(this.fadeGain1.gain);
+    this.fade2.connect(this.fadeGain2.gain);
+
+    // signal routing
+    this.input.connect(this.delay1);
+    this.input.connect(this.delay2);
+    this.delay1.connect(this.gain1);
+    this.delay2.connect(this.gain2);
+
+    this.gain1.connect(this.output);
+    this.gain2.connect(this.output);
+
+    // apply fades
+    this.gain1.gain.value = 0.5;
+    this.gain2.gain.value = 0.5;
+    this.fadeGain1.gain.value = 0.0;
+    this.fadeGain2.gain.value = 0.0;
+
+    // feed fade to gains
+    this.fade1.connect(this.fadeGain1);
+    this.fade2.connect(this.fadeGain2);
+    this.fadeGain1.connect(this.gain1.gain);
+    this.fadeGain2.connect(this.gain2.gain);
+
+    // start sources
+    this.mod1.start(0);
+    // mod2 already started above
+    this.fade1.start(0);
+    // fade2 already started above
+
+    this.setPitchOffset(1.0);
+  }
+
+  static _createFadeBuffer(context, windowTime) {
+    const length = Math.floor(windowTime * context.sampleRate);
+    const buffer = context.createBuffer(1, length, context.sampleRate);
+    const data = buffer.getChannelData(0);
+    for (let i = 0; i < length; i++) {
+      // Hann
+      data[i] = 0.5 * (1 - Math.cos(2 * Math.PI * i / (length - 1)));
+    }
+    return buffer;
+  }
+
+  static _createShiftBuffer(context, windowTime) {
+    // ramp 0..1 then wrap, used to mod delay time
+    const length = Math.floor(windowTime * context.sampleRate);
+    const buffer = context.createBuffer(1, length, context.sampleRate);
+    const data = buffer.getChannelData(0);
+    for (let i = 0; i < length; i++) data[i] = i / (length - 1);
+    return buffer;
+  }
+
+  setPitchOffset(pitch) {
+    // pitch > 1 => shift up, pitch < 1 => shift down
+    this._pitch = pitch;
+
+    // The modulation depth changes based on pitch shift direction.
+    // This is a practical tuning for stable results on one-shots.
+    const maxDelay = this.windowTime;
+    const minDelay = 0.0;
+
+    // amount of delay modulation
+    // upshift: shorten delay; downshift: lengthen delay
+    const modRange = maxDelay - minDelay;
+    const shift = (pitch - 1);
+
+    // depth controls; keep it gentle for iOS
+    const depth = Math.min(modRange * 0.95, Math.abs(shift) * modRange * 1.2);
+    const sign = shift >= 0 ? -1 : 1;
+
+    this.modGain1.gain.value = sign * depth;
+    this.modGain2.gain.value = sign * depth;
+
+    // base delay centered
+    const base = this.delayTime;
+    this.delay1.delayTime.value = base;
+    this.delay2.delayTime.value = base;
+  }
+}
+
+/* =========================================================================
+   AUDIO ENGINE
    ========================================================================= */
 let audioCtx = null;
 let masterGain, filterNode, masterOut;
+
 let lofiScriptNode, tapeWaveshaper, tapeInputGain, tapeDryGain, tapeWetGain;
 let tapeWowOsc, tapeWowGain, tapeToneFilter;
 let vinylCrackleNode, vinylWarpOsc, vinylWarpGain, vinylDryGain, vinylWetGain;
 
 const FX = {
-  // 👉 OFF by default (tu peux remettre true si tu veux)
   lofiOn: false, tapeOn: false, vinylOn: false,
-
   bits: 12, srate: 26000, lofimix: 0.5,
   tapedrive: 3, tapewow: 0.15, tapemix: 0.45,
   vinylcrackle: 0.25, vinylwarp: 0.2, vinylmix: 0.4,
@@ -713,7 +894,11 @@ const FX = {
 
 const sampleBuffers = [null, null, null];
 
-function clamp(x,a,b){ return x < a ? a : x > b ? b : x; }
+// NEW: Time-stretch toggle
+let TIME_STRETCH_ON = true;
+
+// NEW: jungle instances (one per sample pad)
+const jungleNodes = [null, null, null];
 
 function makeSatCurve(drive) {
   const n = 512, curve = new Float32Array(n);
@@ -740,7 +925,7 @@ function initAudio() {
   masterOut = audioCtx.createGain();
   masterOut.gain.value = 0.85;
 
-  // LoFi via ScriptProcessor (comme ton code)
+  // LoFi via ScriptProcessor
   lofiScriptNode = audioCtx.createScriptProcessor(512, 1, 1);
   lofiScriptNode.onaudioprocess = (e) => {
     const inp = e.inputBuffer.getChannelData(0);
@@ -835,13 +1020,15 @@ function initAudio() {
 
   vinylCrackleNode.start();
 
+  // init Jungle nodes for samples
+  for (let i = 0; i < 3; i++) jungleNodes[i] = new Jungle(audioCtx);
+
   updateFxGains();
 }
 
 function updateFxGains() {
   if (!tapeDryGain) return;
 
-  // Tape
   if (FX.tapeOn) { tapeDryGain.gain.value = 1 - FX.tapemix; tapeWetGain.gain.value = FX.tapemix; }
   else { tapeDryGain.gain.value = 1; tapeWetGain.gain.value = 0; }
 
@@ -849,13 +1036,12 @@ function updateFxGains() {
   tapeWaveshaper.curve = makeSatCurve(FX.tapedrive * 6);
   tapeWowGain.gain.value = FX.tapewow * 300;
 
-  // Vinyl
   if (FX.vinylOn) { vinylDryGain.gain.value = 1 - FX.vinylmix; vinylWetGain.gain.value = FX.vinylmix; }
   else { vinylDryGain.gain.value = 1; vinylWetGain.gain.value = 0; }
 }
 
 /* =========================================================================
-   808 DRUMS (inchangé)
+   808 DRUMS
    ========================================================================= */
 function playKick808(time) {
   const ac = audioCtx;
@@ -927,15 +1113,49 @@ function playDrum(drumType, time) {
 }
 
 /* =========================================================================
-   SAMPLES
+   SAMPLES (per-sample vol + pitch)
+   - TIME_STRETCH_ON: pitch via Jungle, duration unchanged
+   - else: playbackRate, duration changes
    ========================================================================= */
 function playSample(padIdx, time) {
   const buf = sampleBuffers[padIdx];
   if (!buf) return;
+
+  const p = SAMPLE_PARAMS[padIdx] || { vol: 1, semi: 0 };
+  const t = time || audioCtx.currentTime;
+
   const src = audioCtx.createBufferSource();
   src.buffer = buf;
-  src.connect(masterGain);
-  src.start(time || audioCtx.currentTime);
+
+  const g = audioCtx.createGain();
+  g.gain.setValueAtTime(p.vol, t);
+
+  if (TIME_STRETCH_ON) {
+    // Keep playbackRate at 1.0 (tempo/duration constant),
+    // pitch-shift in the Jungle node.
+    src.playbackRate.setValueAtTime(1.0, t);
+    const j = jungleNodes[padIdx];
+    if (j) j.setPitchOffset(semiToRate(p.semi));
+
+    src.connect(j.input);
+    j.output.connect(g);
+    g.connect(masterGain);
+
+    // cleanup (disconnect to avoid graph accumulating)
+    const stopAt = t + buf.duration + 0.2;
+    src.start(t);
+    src.stop(stopAt);
+    src.onended = () => {
+      try { src.disconnect(); } catch {}
+      try { j.output.disconnect(g); } catch {}
+      try { g.disconnect(); } catch {}
+    };
+  } else {
+    // Classic: pitch changes duration
+    src.playbackRate.setValueAtTime(semiToRate(p.semi), t);
+    src.connect(g).connect(masterGain);
+    src.start(t);
+  }
 }
 
 function setDisplay(txt) {
@@ -951,10 +1171,8 @@ async function loadSampleFile(file, padIdx) {
     const decoded = await audioCtx.decodeAudioData(arrayBuf);
     sampleBuffers[padIdx] = decoded;
 
-    // Draw waveform
     drawWaveform(padIdx, decoded);
 
-    // UI: show name
     const label = document.querySelector(`[data-sample-label="${padIdx}"]`);
     if (label) label.textContent = file.name.length > 26 ? file.name.slice(0,26) + "…" : file.name;
 
@@ -1106,26 +1324,18 @@ function clearPattern() {
 
 function randomize() {
   clearPattern();
-  // Kick
   [0,4,8,12].forEach(s => { if (Math.random() > 0.25) { getPattern()[3][s] = true; } });
   [2,6,10,14].forEach(s => { if (Math.random() > 0.7) { getPattern()[3][s] = true; } });
-
-  // Snare
   [4,12].forEach(s => { getPattern()[4][s] = true; });
   [2,6,10,14].forEach(s => { if (Math.random() > 0.75) { getPattern()[4][s] = true; } });
-
-  // Hat
   for (let s=0;s<16;s++){
     if (s % 2 === 0 || Math.random() > 0.55) getPattern()[5][s] = true;
   }
-
-  // Samples sparse
   for (let p=0;p<3;p++){
     for (let s=0;s<16;s++){
       if (Math.random() > 0.82) getPattern()[p][s] = true;
     }
   }
-
   refreshAllCells();
 }
 
@@ -1159,7 +1369,6 @@ function applyFxFromUI(){
   FX.vinylwarp = +document.getElementById('vinylwarp').value;
   FX.vinylmix = +document.getElementById('vinylmix').value;
 
-  // reflect labels
   document.getElementById('bitsVal').textContent = FX.bits.toFixed(0);
   document.getElementById('srateVal').textContent = FX.srate.toFixed(0);
   document.getElementById('lofimixVal').textContent = FX.lofimix.toFixed(2);
@@ -1180,7 +1389,6 @@ function toggleFx(type){
   if (type === 'tape') FX.tapeOn = !FX.tapeOn;
   if (type === 'vinyl') FX.vinylOn = !FX.vinylOn;
 
-  // global bypass overrides
   if (fxAllBypass){
     setFxButtonState('lofi-bypass', false);
     setFxButtonState('tape-bypass', false);
@@ -1197,7 +1405,7 @@ function toggleFx(type){
 }
 
 /* =========================================================================
-   BUILD UI (Blueprint)
+   BUILD UI + per-sample controls
    ========================================================================= */
 function buildPadsAndTracks(){
   const padList = document.getElementById('padList');
@@ -1206,7 +1414,6 @@ function buildPadsAndTracks(){
   seqTable.innerHTML = '';
 
   PAD_CONFIG.forEach((cfg, padIdx) => {
-    // LEFT: pad card
     const row = document.createElement('div');
     row.className = 'padRow';
 
@@ -1226,7 +1433,7 @@ function buildPadsAndTracks(){
 
     const pill = document.createElement('div');
     pill.className = 'pill';
-    pill.textContent = cfg.type === 'sample' ? cfg.label : cfg.label;
+    pill.textContent = cfg.label;
 
     top.appendChild(meta);
     top.appendChild(pill);
@@ -1235,13 +1442,15 @@ function buildPadsAndTracks(){
     padBtn.className = 'padBtn';
     padBtn.id = `padbtn-${padIdx}`;
     padBtn.innerHTML = `
-      ${cfg.type === 'sample' ? 'Pad' : 'Pad'} ${padIdx+1}
+      Pad ${padIdx+1}
       <span class="small" data-sample-label="${cfg.type==='sample'?padIdx:''}">
         ${cfg.type==='sample' ? 'no sample' : (cfg.label + ' · ' + cfg.name)}
       </span>
     `;
 
-    // waveform container for sample pads
+    row.appendChild(top);
+    row.appendChild(padBtn);
+
     if (cfg.type === 'sample'){
       const wave = document.createElement('div');
       wave.className = 'wave';
@@ -1250,6 +1459,7 @@ function buildPadsAndTracks(){
       canvas.className = 'waveform-canvas';
       canvas.width = 240; canvas.height = 44;
       wave.appendChild(canvas);
+      row.appendChild(wave);
 
       const mini = document.createElement('div');
       mini.className = 'mini';
@@ -1276,52 +1486,75 @@ function buildPadsAndTracks(){
         input.value = '';
       });
 
+      const volBox = document.createElement('div');
+      volBox.className = 'sctl';
+      volBox.innerHTML = `
+        <div class="row"><span class="lab">Vol</span><span class="v" id="svolv-${padIdx}">${Math.round(SAMPLE_PARAMS[padIdx].vol*100)}%</span></div>
+        <input id="svol-${padIdx}" type="range" min="0" max="1" step="0.01" value="${SAMPLE_PARAMS[padIdx].vol}">
+      `;
+
+      const pitBox = document.createElement('div');
+      pitBox.className = 'sctl';
+      pitBox.innerHTML = `
+        <div class="row"><span class="lab">Pitch</span><span class="v" id="spitv-${padIdx}">${SAMPLE_PARAMS[padIdx].semi >= 0 ? '+' : ''}${SAMPLE_PARAMS[padIdx].semi} st</span></div>
+        <input id="spit-${padIdx}" type="range" min="-24" max="24" step="1" value="${SAMPLE_PARAMS[padIdx].semi}">
+      `;
+
       mini.appendChild(loadBtn);
       mini.appendChild(input);
-
-      row.appendChild(top);
-      row.appendChild(padBtn);
-      row.appendChild(wave);
+      mini.appendChild(volBox);
+      mini.appendChild(pitBox);
       row.appendChild(mini);
 
-      // pad click = preview (if loaded)
-      padBtn.addEventListener('click', async () => {
+      volBox.querySelector(`#svol-${padIdx}`).addEventListener('input', (e) => {
+        SAMPLE_PARAMS[padIdx].vol = +e.target.value;
+        const lab = document.getElementById(`svolv-${padIdx}`);
+        if (lab) lab.textContent = `${Math.round(SAMPLE_PARAMS[padIdx].vol*100)}%`;
+      });
+
+      pitBox.querySelector(`#spit-${padIdx}`).addEventListener('input', (e) => {
+        SAMPLE_PARAMS[padIdx].semi = +e.target.value;
+        const lab = document.getElementById(`spitv-${padIdx}`);
+        const s = SAMPLE_PARAMS[padIdx].semi;
+        if (lab) lab.textContent = `${s >= 0 ? '+' : ''}${s} st`;
+      });
+
+      padBtn.addEventListener('pointerdown', async (e) => {
+        e.preventDefault();
         initAudio();
         if (audioCtx.state !== "running") await audioCtx.resume();
-        const now = audioCtx.currentTime;
-        playSample(padIdx, now);
+        playSample(padIdx, audioCtx.currentTime);
         flashPad(padIdx);
-      });
+      }, { passive:false });
+
     } else {
       const mini = document.createElement('div');
       mini.className = 'mini';
       const trigBtn = document.createElement('button');
       trigBtn.className = 'tinyBtn';
       trigBtn.textContent = 'Trig';
-      trigBtn.addEventListener('click', async (e) => {
+      trigBtn.addEventListener('pointerdown', async (e) => {
+        e.preventDefault();
         e.stopPropagation();
         initAudio();
         if (audioCtx.state !== "running") await audioCtx.resume();
         playDrum(cfg.drumType, audioCtx.currentTime);
         flashPad(padIdx);
-      });
+      }, { passive:false });
       mini.appendChild(trigBtn);
-
-      row.appendChild(top);
-      row.appendChild(padBtn);
       row.appendChild(mini);
 
-      padBtn.addEventListener('click', async () => {
+      padBtn.addEventListener('pointerdown', async (e) => {
+        e.preventDefault();
         initAudio();
         if (audioCtx.state !== "running") await audioCtx.resume();
         playDrum(cfg.drumType, audioCtx.currentTime);
         flashPad(padIdx);
-      });
+      }, { passive:false });
     }
 
     padList.appendChild(row);
 
-    // RIGHT: track lane
     const track = document.createElement('div');
     track.className = 'track';
 
@@ -1348,19 +1581,26 @@ function buildPadsAndTracks(){
 
     const steps = document.createElement('div');
     steps.className = 'steps';
-    steps.dataset.track = String(padIdx);
 
-    let dragVal = null;
+    let painting = false;
+    let paintTo = null;
+
+    const applyPaint = (sIdx) => {
+      if (paintTo === null) return;
+      if (cellOn(padIdx, sIdx) !== paintTo) toggleCell(padIdx, sIdx);
+    };
 
     for (let s=0;s<NUM_STEPS;s++){
       const st = document.createElement('div');
       st.className = 'step' + ((s % 4 === 0) ? ' beat' : '');
       st.id = `step-${padIdx}-${s}`;
-      st.dataset.step = String(s);
 
-      st.addEventListener('mousedown', async (e) => {
+      st.addEventListener('pointerdown', async (e) => {
         e.preventDefault();
-        dragVal = !cellOn(padIdx, s);
+        st.setPointerCapture(e.pointerId);
+
+        painting = true;
+        paintTo = !cellOn(padIdx, s);
         toggleCell(padIdx, s);
 
         initAudio();
@@ -1370,22 +1610,26 @@ function buildPadsAndTracks(){
         else playSample(padIdx, audioCtx.currentTime);
 
         flashPad(padIdx);
+      }, { passive:false });
+
+      st.addEventListener('pointermove', (e) => {
+        if (!painting) return;
+        const el = document.elementFromPoint(e.clientX, e.clientY);
+        if (!el || !el.id) return;
+        if (!el.id.startsWith(`step-${padIdx}-`)) return;
+        const sIdx = parseInt(el.id.split('-')[2], 10);
+        if (Number.isFinite(sIdx)) applyPaint(sIdx);
       });
 
-      st.addEventListener('mouseenter', (e) => {
-        if (e.buttons === 1 && dragVal !== null) {
-          if (cellOn(padIdx, s) !== dragVal) toggleCell(padIdx, s);
-        }
-      });
+      st.addEventListener('pointerup', () => { painting = false; paintTo = null; });
+      st.addEventListener('pointercancel', () => { painting = false; paintTo = null; });
 
       steps.appendChild(st);
     }
 
-    window.addEventListener('mouseup', () => { dragVal = null; }, { passive:true });
-
     track.appendChild(ttop);
     track.appendChild(steps);
-    seqTable.appendChild(track);
+    document.getElementById('seqTable').appendChild(track);
   });
 
   refreshAllCells();
@@ -1400,18 +1644,31 @@ function fmtHz(v){
 }
 
 function wireUI(){
-  // FX panel
   const fxToggleBtn = document.getElementById('fxToggleBtn');
   const fxBody = document.getElementById('fxBody');
   fxToggleBtn.addEventListener('click', () => fxBody.classList.toggle('open'));
 
-  // Transport
   document.getElementById('btnPlay').addEventListener('click', seqToggle);
   document.getElementById('btnStop').addEventListener('click', seqStop);
 
   document.getElementById('btnClear').addEventListener('click', () => {
     clearPattern();
     seqStop();
+  });
+
+  // Time-stretch toggle
+  const tsBtn = document.getElementById('tsToggleBtn');
+  const syncTsBtn = () => {
+    tsBtn.classList.toggle('on', TIME_STRETCH_ON);
+    tsBtn.textContent = TIME_STRETCH_ON ? 'Time-Stretch' : 'Rate Pitch';
+    tsBtn.title = TIME_STRETCH_ON
+      ? 'Pitch sans changer la durée (time-stretch)'
+      : 'Pitch via playbackRate (durée change)';
+  };
+  syncTsBtn();
+  tsBtn.addEventListener('click', () => {
+    TIME_STRETCH_ON = !TIME_STRETCH_ON;
+    syncTsBtn();
   });
 
   // BPM
@@ -1474,7 +1731,7 @@ function wireUI(){
     b.classList.toggle('on', fxAllBypass);
     b.textContent = fxAllBypass ? "Bypassed" : "Bypass";
     if (audioCtx) updateFxGains();
-    // reflect per-fx buttons (display only)
+
     setFxButtonState('lofi-bypass', !fxAllBypass && FX.lofiOn);
     setFxButtonState('tape-bypass', !fxAllBypass && FX.tapeOn);
     setFxButtonState('vinyl-bypass', !fxAllBypass && FX.vinylOn);
@@ -1484,7 +1741,6 @@ function wireUI(){
   const fxInputs = ['bits','srate','lofimix','tapedrive','tapewow','tapemix','vinylcrackle','vinylwarp','vinylmix'];
   fxInputs.forEach(id => document.getElementById(id).addEventListener('input', applyFxFromUI));
 
-  // init labels
   applyFxFromUI();
   setFxButtonState('lofi-bypass', FX.lofiOn);
   setFxButtonState('tape-bypass', FX.tapeOn);
@@ -1515,11 +1771,20 @@ window.addEventListener('DOMContentLoaded', () => {
   setDisplay('---');
 
   // Default pattern: basic 808 groove
-  getPattern()[3][0] = true; getPattern()[3][8] = true;     // kick
-  getPattern()[4][4] = true; getPattern()[4][12] = true;    // snare
-  for (let s = 0; s < 16; s += 2) getPattern()[5][s] = true; // hihat 8ths
+  getPattern()[3][0] = true; getPattern()[3][8] = true;
+  getPattern()[4][4] = true; getPattern()[4][12] = true;
+  for (let s = 0; s < 16; s += 2) getPattern()[5][s] = true;
   refreshAllCells();
 });
+
+/* =========================================================================
+   Pattern mgmt
+   ========================================================================= */
+function loadPattern(idx) {
+  currentPatIdx = idx;
+  document.querySelectorAll('.patBtn').forEach(b => b.classList.toggle('active', +b.dataset.pat === idx));
+  refreshAllCells();
+}
 </script>
 </body>
 </html>
