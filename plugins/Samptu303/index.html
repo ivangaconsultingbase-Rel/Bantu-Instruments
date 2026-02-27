@@ -4,6 +4,10 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
 <title>SamPtu303 Lite — 8 Samples + 4 TR Drums</title>
+
+<!-- Optional: avoid favicon 404 -->
+<link rel="icon" href="data:,">
+
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;600;700&family=Share+Tech+Mono&display=swap');
 
@@ -365,7 +369,6 @@ function applyVintage(){
   smooth(vintageLP.frequency, lp, 0.05);
 
   // wow/flutter (delay modulation)
-  // base delay (ms) + depth (ms)
   const base = 0.0015 + a * 0.0035; // 1.5ms -> 5ms
   const depth = a * 0.004;          // 0 -> 4ms
   smooth(wowDelay.delayTime, base, 0.08);
@@ -496,46 +499,6 @@ const pads = [
 
 const grid = document.getElementById("grid");
 
-function renderPads(){
-  grid.innerHTML = "";
-  pads.forEach((p, idx) => {
-    const el = document.createElement("div");
-    el.className = "pad" + (p.type === "drum" ? " drum" : "");
-    el.dataset.idx = idx;
-
-    const meta = (p.type === "sample")
-      ? (p.buffer ? `${(p.buffer.duration).toFixed(2)}s` : "empty")
-      : "synth";
-
-    el.innerHTML = `
-      <div class="padTop">
-        <div class="padId">${p.id}</div>
-        <div class="padKey">${p.key.toUpperCase()}</div>
-      </div>
-      <div>
-        <div class="padName">${p.name}</div>
-        <div class="padMeta">${meta}</div>
-      </div>
-      ${p.type === "sample"
-        ? `<button class="padBtn" type="button" data-load="${idx}">LOAD <small>.wav/.mp3</small></button>`
-        : `<button class="padBtn" type="button" data-hit="${idx}">HIT</button>`
-      }
-    `;
-
-    const trigger = () => hitPad(idx, el);
-
-    el.addEventListener("touchstart", (e)=>{ e.preventDefault(); trigger(); }, {passive:false});
-    el.addEventListener("mousedown", (e)=>{ e.preventDefault(); trigger(); });
-
-    el.querySelectorAll("button").forEach(b=>{
-      b.addEventListener("click", (e)=> e.stopPropagation());
-    });
-
-    grid.appendChild(el);
-  });
-}
-renderPads();
-
 /* ============================================================
    Sample loading
 ============================================================ */
@@ -543,27 +506,17 @@ async function loadSampleToPad(index, file){
   initAudio();
   if (actx.state === "suspended") await actx.resume();
 
-  const arr = await file.arrayBuffer();
-  const buf = await actx.decodeAudioData(arr);
-  pads[index].buffer = buf;
-  pads[index].name = file.name.replace(/\.[^/.]+$/, "");
-  renderPads();
+  try{
+    const arr = await file.arrayBuffer();
+    const buf = await actx.decodeAudioData(arr);
+    pads[index].buffer = buf;
+    pads[index].name = file.name.replace(/\.[^/.]+$/, "");
+    renderPads();
+  }catch(err){
+    console.error("decodeAudioData failed:", err);
+    alert("Impossible de décoder ce fichier audio. Essaie un WAV 16-bit ou MP3 standard.");
+  }
 }
-
-grid.addEventListener("click", async (e)=>{
-  const btn = e.target.closest("[data-load]");
-  if(!btn) return;
-  const idx = parseInt(btn.dataset.load, 10);
-
-  const input = document.createElement("input");
-  input.type = "file";
-  input.accept = "audio/*";
-  input.onchange = async () => {
-    const file = input.files?.[0];
-    if(file) await loadSampleToPad(idx, file);
-  };
-  input.click();
-});
 
 /* ============================================================
    Drum synth voices (scheduled)
@@ -850,8 +803,7 @@ function tickScheduler(){
 
     if(nextStep >= TOTAL_STEPS){
       nextStep = 0;
-      // keep tight loop by advancing from playStart
-      // (avoid drift)
+      // keep tight loop by advancing from playStart (avoid drift)
       const elapsed = now - playStart;
       const loops = Math.floor(elapsed / loopDur) + 1;
       playStart = playStart + loops * loopDur;
@@ -973,24 +925,8 @@ btnClear.addEventListener("click", ()=>{
 document.getElementById("bpmTxt").textContent = BPM;
 
 /* ============================================================
-   Pad UI + load/hit buttons + keyboard
+   Pads render (fixed: buttons don't trigger pad mousedown)
 ============================================================ */
-grid.addEventListener("click", async (e)=>{
-  const btn = e.target.closest("[data-load]");
-  if(!btn) return;
-  const idx = parseInt(btn.dataset.load, 10);
-
-  const input = document.createElement("input");
-  input.type = "file";
-  input.accept = "audio/*";
-  input.onchange = async () => {
-    const file = input.files?.[0];
-    if(file) await loadSampleToPad(idx, file);
-  };
-  input.click();
-});
-
-function renderPadsAgain(){ renderPads(); }
 function renderPads(){
   grid.innerHTML = "";
   pads.forEach((p, idx) => {
@@ -1019,19 +955,73 @@ function renderPads(){
 
     const trigger = () => hitPad(idx, el);
 
-    el.addEventListener("touchstart", (e)=>{ e.preventDefault(); trigger(); }, {passive:false});
-    el.addEventListener("mousedown", (e)=>{ e.preventDefault(); trigger(); });
+    // IMPORTANT: ignore clicks on buttons (LOAD/HIT)
+    el.addEventListener("touchstart", (e)=>{
+      if (e.target.closest("button")) return;
+      e.preventDefault();
+      trigger();
+    }, {passive:false});
 
+    el.addEventListener("mousedown", (e)=>{
+      if (e.target.closest("button")) return;
+      e.preventDefault();
+      trigger();
+    });
+
+    // extra-robust: stop propagation early on button down
     el.querySelectorAll("button").forEach(b=>{
+      b.addEventListener("mousedown", (e)=> e.stopPropagation());
+      b.addEventListener("touchstart", (e)=> e.stopPropagation(), {passive:false});
       b.addEventListener("click", (e)=> e.stopPropagation());
     });
 
     grid.appendChild(el);
   });
 }
-renderPadsAgain();
+renderPads();
 
-// Keyboard shortcuts
+/* ============================================================
+   Pad buttons (ONE global handler): LOAD + HIT
+============================================================ */
+grid.addEventListener("click", async (e)=>{
+  const btnLoad = e.target.closest("[data-load]");
+  if(btnLoad){
+    const idx = parseInt(btnLoad.dataset.load, 10);
+
+    initAudio();
+    if (actx.state === "suspended") await actx.resume();
+
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = "audio/*";
+    input.style.display = "none";
+    document.body.appendChild(input);
+
+    input.onchange = async () => {
+      try{
+        const file = input.files?.[0];
+        if(!file) return;
+        await loadSampleToPad(idx, file);
+      } finally {
+        input.remove();
+      }
+    };
+
+    input.click();
+    return;
+  }
+
+  const btnHit = e.target.closest("[data-hit]");
+  if(btnHit){
+    const idx = parseInt(btnHit.dataset.hit, 10);
+    const el = grid.querySelector(`.pad[data-idx="${idx}"]`);
+    hitPad(idx, el);
+  }
+});
+
+/* ============================================================
+   Keyboard shortcuts
+============================================================ */
 const keyToPad = {};
 pads.forEach((p,i)=> keyToPad[p.key] = i);
 
