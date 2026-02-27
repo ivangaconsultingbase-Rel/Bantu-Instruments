@@ -1177,7 +1177,7 @@ class PlaitsVoice {
 // ────────────────────────────────────────────────────────
 // Globals / Params
 // ────────────────────────────────────────────────────────
-const voicePool = new Map(); // midi -> PlaitsVoice
+const voicePool = new Map(); // midi -> PlaitsVoice[]
 const DSP_PARAMS = {
   engineIdx: 0,
   harmonics: 0.5, timbre: 0.5, morph: 0.5,
@@ -1253,10 +1253,14 @@ function initAudio() {
     const buf = new Float32Array(size);
 
     // render voices
-    for (const [midi, voice] of voicePool) {
-      if (!voice.alive) { voicePool.delete(midi); continue; }
-      voice.render(DSP_PARAMS, buf, size);
-    }
+ for (const [midi, voices] of voicePool) {
+  for (let i = voices.length - 1; i >= 0; i--) {
+    const v = voices[i];
+    if (!v.alive) { voices.splice(i, 1); continue; }
+    v.render(DSP_PARAMS, buf, size);
+  }
+  if (voices.length === 0) voicePool.delete(midi);
+}
 
     // simple post-filter EG ping (acts on juno cutoff)
     if (junoFilter) {
@@ -1395,20 +1399,39 @@ function midiToName(midi) {
 
 function playNote(midi) {
   if (!audioCtx) return;
-  const old = voicePool.get(midi);
-  if (old) old.alive = false;
+
+  // si une voix existe déjà sur ce midi, on la met en release (pas kill)
+  const arr = voicePool.get(midi);
+  if (arr && arr.length) arr.forEach(v => v.noteOff());
 
   const voice = new PlaitsVoice(audioCtx.sampleRate, midi, DSP_PARAMS.engineIdx);
-  voicePool.set(midi, voice);
+
+  if (!voicePool.has(midi)) voicePool.set(midi, []);
+  voicePool.get(midi).push(voice);
+
   document.getElementById('noteDisplay').textContent = midiToName(midi);
 
-  // ping for post-filter EG
+  // ping pour post-filter EG
   vcfPing = Math.min(1, vcfPing + 0.35);
 }
 
+function stopNote(midi, immediate = false) {
+  const arr = voicePool.get(midi);
+  if (!arr) return;
+
+  if (immediate) {
+    voicePool.delete(midi);
+  } else {
+    arr.forEach(v => v.noteOff());
+  }
+}
+
 function stopAllNotes(immediate = false) {
-  if (immediate) voicePool.clear();
-  else voicePool.forEach(v => v.noteOff());
+  if (immediate) {
+    voicePool.clear();
+  } else {
+    for (const [midi, voices] of voicePool) voices.forEach(v => v.noteOff());
+  }
   document.getElementById('noteDisplay').textContent = '---';
 }
 
@@ -1456,24 +1479,48 @@ function highlightStep(step) {
   });
 }
 
+const noteOffTimers = new Map(); // midi -> timeoutId
+const GATE = 0.90;               // 90% de la durée du step
+
 function tick() {
   if (!seqRunning) return;
+
   clearStepHighlights();
   highlightStep(currentStep);
 
+  const now = audioCtx.currentTime;
+
+  // durée du pas (avec swing) : on calcule d'abord s16 puis delay (ms)
+  const s16 = 60000 / bpm / 4;
+  const sw = (swing - 0.5) * 0.6;
+  const delayMs = currentStep % 2 === 0 ? s16 * (1 + sw) : s16 * (1 - sw);
+  const gateMs = Math.max(10, delayMs * GATE);
+
+  // notes actives sur ce step
   const notesOn = [];
   getGrid().forEach((row, midi) => { if (row[currentStep]) notesOn.push(midi); });
 
-  stopAllNotes(true);
-  notesOn.forEach(m => playNote(m));
-  if (!notesOn.length) document.getElementById('noteDisplay').textContent = '---';
+  // si rien, on laisse juste les releases continuer
+  if (!notesOn.length) {
+    document.getElementById('noteDisplay').textContent = '---';
+  }
 
-  const s16 = 60000 / bpm / 4;
-  const sw = (swing - 0.5) * 0.6;
-  const delay = currentStep % 2 === 0 ? s16 * (1 + sw) : s16 * (1 - sw);
+  // retrigger + noteOff programmé (pour que release fonctionne)
+  for (const midi of notesOn) {
+    // retrigger: met l'ancienne voix en release puis crée une nouvelle
+    playNote(midi);
+
+    // refresh timer de noteOff (gate)
+    if (noteOffTimers.has(midi)) clearTimeout(noteOffTimers.get(midi));
+    noteOffTimers.set(midi, setTimeout(() => {
+      // noteOff doux (release)
+      stopNote(midi, false);
+      noteOffTimers.delete(midi);
+    }, gateMs));
+  }
 
   currentStep = (currentStep + 1) % numSteps;
-  stepTimer = setTimeout(tick, delay);
+  stepTimer = setTimeout(tick, delayMs);
 }
 
 async function seqToggle() {
