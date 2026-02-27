@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover" />
 <title>Bantu Ins. miCS01 — Plaits Engines</title>
 <style>
 /* NOTE:
@@ -344,20 +344,46 @@ input[type=range].slider-h::-webkit-slider-thumb{-webkit-appearance:none;width:1
   text-align:center;
 }
 
-/* iPhone 14 / small screens */
-@media (max-width: 430px){
-  body{padding:12px 10px;}
-  .synth-body{padding:10px 10px;}
-  .top-panel{flex-wrap:wrap;}
-  .pitch-mod-section{width:100%;}
-  .plaits-section{flex:1;min-width:0;}
-  .engine-grid{gap:4px;}
-  .brand-panel{width:132px;padding:10px 10px;}
-  .brand-cs01{font-size:24px;}
-  .sequencer{padding:8px 10px 10px;}
-  .seq-controls{gap:6px;}
-  input[type=range].slider-h{width:56px;}
-  .seq-grid-wrapper{max-height:clamp(180px, 42vh, 380px);}
+/* --- RESPONSIVE FIX --- */
+@media (max-width: 600px) {
+  body { padding: 10px 5px; }
+  
+  .synth-wrapper { width: 100%; }
+
+  /* On réduit la taille des titres pour gagner de l'espace */
+  .title h1 { font-size: 14px; }
+  .title .sub { font-size: 10px; }
+
+  /* On empile les éléments de la barre du haut */
+  .top-panel { 
+    flex-direction: column; 
+    gap: 15px; 
+    align-items: stretch;
+  }
+
+  .knobs-row { 
+    justify-content: space-around; 
+    width: 100%;
+  }
+
+  /* --- GRID FIX --- */
+  /* On réduit le nombre de colonnes de pads pour qu'ils ne soient pas écrasés */
+  .grid {
+    grid-template-columns: repeat(4, 1fr) !important; 
+    gap: 6px;
+  }
+
+  /* On réduit la hauteur des pads pour qu'ils tiennent tous à l'écran */
+  .pad-btn {
+    height: 50px;
+    font-size: 10px;
+  }
+
+  /* On adapte les rubans de pitch/mod */
+  .ribbon-section {
+    height: 80px;
+    margin-top: 10px;
+  }
 }
 </style>
 </head>
@@ -1402,7 +1428,19 @@ function stopAllNotes(immediate = false) {
 const MAX_STEPS = 32;
 let NUM_ROWS = 25;
 const isSmall = () => window.matchMedia && window.matchMedia('(max-width: 430px)').matches;
-function setRowsForScreen(){ NUM_ROWS = isSmall() ? 15 : 25; }
+function setRowsForScreen() {
+  const h = window.innerHeight;
+  const w = window.innerWidth;
+  
+  // Si on est en mode Portrait (hauteur > largeur)
+  if (h > w) {
+    NUM_ROWS = 12; // On limite à 6 lignes pour éviter de scroller à l'infini
+    NUM_COLS = 4; // 4 colonnes max en portrait
+  } else {
+    NUM_ROWS = 15;
+    NUM_COLS = 8;
+  }
+}
 
 let viewBase = 48;
 let numSteps = 16, bpm = 120, swing = 0.5;
