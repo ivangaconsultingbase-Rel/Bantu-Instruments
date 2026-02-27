@@ -1381,7 +1381,7 @@ function buildTracks(){
 
       const input = document.createElement('input');
       input.type = 'file';
-      input.accept = 'audio/*';
+      input.accept = 'audio/*, .wav, .mp3, .m4a, .aif, .aiff';
       input.style.display = 'none';
 
       loadBtn.addEventListener('click', async (e) => {
