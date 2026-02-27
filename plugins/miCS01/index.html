@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Yamaha CS01 — Plaits Engines</title>
+<title> CS01 — Plaits Engines</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;600;700&family=Share+Tech+Mono&display=swap');
 *{box-sizing:border-box;margin:0;padding:0;}
@@ -119,6 +119,37 @@ input[type=range].slider-h::-webkit-slider-thumb{-webkit-appearance:none;width:1
 .echo-viz{width:88px;height:58px;background:rgba(0,0,0,0.4);border:1px solid #1a3050;border-radius:3px;overflow:hidden;margin-left:auto;}
 
 .synth-footer{text-align:center;color:#2a2a2a;font-size:9px;letter-spacing:2px;margin-top:5px;text-transform:uppercase;}
+
+/* ─────────────────────────────────────────────
+   FX derrière un bouton sur iPhone (et mobiles)
+   ───────────────────────────────────────────── */
+#btnFx { display:none; }
+@media (max-width: 820px) {
+  #btnFx { display:inline-flex; align-items:center; justify-content:center; }
+
+  /* Layout global plus friendly */
+  body { padding: 12px 10px; }
+  .top-panel { flex-wrap: wrap; }
+  .pitch-mod-section { width: 100%; }
+  .section { flex: 1 1 auto; }
+
+  /* Séquenceur : réduire la hauteur des notes visibles */
+  .seq-grid-wrapper { max-height: 180px; }
+  .seq-row { height: 16px; }
+  .seq-cell { height: 15px; }
+  .seq-row-label { font-size: 8px; width: 30px; }
+
+  /* FX masqués par défaut */
+  .fx-panel { display:none; }
+
+  /* FX visibles quand ouvert */
+  body.fx-open .fx-panel {
+    display:flex;
+    flex-direction:column;
+  }
+  body.fx-open .fx-unit { border-right:none; border-bottom:1px solid #1a1e1e; }
+  body.fx-open .fx-unit:last-child { border-bottom:none; }
+}
 </style>
 </head>
 <body>
@@ -280,9 +311,9 @@ input[type=range].slider-h::-webkit-slider-thumb{-webkit-appearance:none;width:1
   <div class="seq-panel">
     <div class="brand-panel">
       <div>
-        <div class="brand-yamaha">YAMAHA</div>
+        <div class="brand-yamaha">Bantu Ins</div>
         <div class="brand-synth">SYNTHESIZER</div>
-        <div class="brand-cs01">CS01</div>
+        <div class="brand-cs01">miCS01</div>
       </div>
       <div class="knob-group">
         <div class="knob-label">VOLUME</div>
@@ -307,12 +338,14 @@ input[type=range].slider-h::-webkit-slider-thumb{-webkit-appearance:none;width:1
       <div class="seq-controls">
         <button class="seq-btn" id="btnPlay" onclick="seqToggle()">▶ PLAY</button>
         <button class="seq-btn" onclick="seqStop()">■ STOP</button>
+
         <div class="seq-ctrl-group">
           <span class="seq-ctrl-label">BPM</span>
           <div class="icon-btn" onmousedown="startBpmChange(-1)" onmouseup="stopBpmChange()" onmouseleave="stopBpmChange()">−</div>
           <div class="bpm-display" id="bpmDisplay">120</div>
           <div class="icon-btn" onmousedown="startBpmChange(1)" onmouseup="stopBpmChange()" onmouseleave="stopBpmChange()">+</div>
         </div>
+
         <div class="seq-ctrl-group">
           <span class="seq-ctrl-label">STEPS</span>
           <select class="steps-select" onchange="setNumSteps(+this.value)">
@@ -320,16 +353,22 @@ input[type=range].slider-h::-webkit-slider-thumb{-webkit-appearance:none;width:1
             <option value="16" selected>16</option><option value="24">24</option><option value="32">32</option>
           </select>
         </div>
+
         <div class="seq-ctrl-group">
           <span class="seq-ctrl-label">SWING</span>
           <input type="range" class="slider-h" id="swingSlider" min="0" max="100" value="50" oninput="swing=this.value/100">
         </div>
+
         <div class="seq-ctrl-group">
           <span class="seq-ctrl-label">OCT</span>
           <div class="icon-btn" onclick="scrollOctave(1)">▲</div>
           <div style="color:#ccc;font-family:'Share Tech Mono',monospace;font-size:10px;min-width:26px;text-align:center;" id="octLabel">C3</div>
           <div class="icon-btn" onclick="scrollOctave(-1)">▼</div>
         </div>
+
+        <!-- FX button (mobile) -->
+        <button class="seq-btn" id="btnFx" onclick="toggleFxPanel()">FX</button>
+
         <div class="seq-ctrl-group" style="margin-left:auto;gap:5px;">
           <button class="seq-btn" onclick="clearGrid()">CLEAR</button>
           <button class="seq-btn" onclick="randomize()">RAND</button>
@@ -346,7 +385,8 @@ input[type=range].slider-h::-webkit-slider-thumb{-webkit-appearance:none;width:1
     <div class="fx-unit fx-tape">
       <div class="fx-unit-header">
         <div class="fx-unit-name">⊛ Tape Saturation</div>
-        <button class="fx-bypass-btn active" id="tapeBypass" onclick="toggleFx('tape')">ON</button>
+        <!-- OFF by default -->
+        <button class="fx-bypass-btn" id="tapeBypass" onclick="toggleFx('tape')">OFF</button>
       </div>
       <div class="fx-controls">
         <div class="fx-knob-group">
@@ -376,7 +416,8 @@ input[type=range].slider-h::-webkit-slider-thumb{-webkit-appearance:none;width:1
     <div class="fx-unit fx-echo">
       <div class="fx-unit-header">
         <div class="fx-unit-name">◎ Space Echo</div>
-        <button class="fx-bypass-btn active" id="echoBypass" onclick="toggleFx('echo')">ON</button>
+        <!-- OFF by default -->
+        <button class="fx-bypass-btn" id="echoBypass" onclick="toggleFx('echo')">OFF</button>
       </div>
       <div class="fx-controls">
         <div class="fx-knob-group">
@@ -409,7 +450,7 @@ input[type=range].slider-h::-webkit-slider-thumb{-webkit-appearance:none;width:1
     </div>
   </div>
 
-  <div class="synth-footer">Yamaha CS01 · Mutable Instruments Plaits Engines (MIT) · Web Audio API</div>
+  <div class="synth-footer"> CS01 · Mutable Instruments Plaits Engines (MIT) · Web Audio API</div>
 </div>
 
 <script>
@@ -435,7 +476,6 @@ function noteToFreq(midi) { return 440 * Math.pow(2, (midi - 69) / 12); }
 
 // ════════════════════════════════════════════════════════
 //  ENGINE 0 — Virtual Analog (dual detuned osc, var waveform)
-//  Based on plaits/dsp/engine/virtual_analog_engine.cc (MIT)
 // ════════════════════════════════════════════════════════
 class VirtualAnalogEngine {
   constructor(sr) {
@@ -447,25 +487,20 @@ class VirtualAnalogEngine {
 
   render(freq, harmonics, timbre, morph, out, size) {
     const sr = this.sr;
-    // harmonics: detune amount (0=unison, 1=semitone)
     const detuneSemitones = harmonics * 1.0;
     const f1 = clamp(freq / sr, 0.00001, 0.499);
     const f2 = clamp(freq * Math.pow(2, detuneSemitones / 12) / sr, 0.00001, 0.499);
-    // timbre: pulse-width (0=saw, 0.5=square, 1=saw-inv)
     const pw = clamp(timbre, 0.05, 0.95);
-    // morph: mix between osc1 and osc2
     const mix = morph;
 
     for (let i = 0; i < size; i++) {
       this.phase1 += f1; if (this.phase1 >= 1) this.phase1 -= 1;
       this.phase2 += f2; if (this.phase2 >= 1) this.phase2 -= 1;
 
-      // Bandlimited variable-width pulse (PolyBLEP)
       let s1 = this.phase1 < pw ? 1 : -1;
       s1 += polyblep(this.phase1, f1);
       s1 -= polyblep((this.phase1 + 1 - pw) % 1, f1);
-      // DC offset removal → integrate → sawtooth feel
-      s1 = s1 - pw * 2 + 1; // offset to center
+      s1 = s1 - pw * 2 + 1;
 
       let s2 = this.phase2 < pw ? 1 : -1;
       s2 += polyblep(this.phase2, f2);
@@ -478,8 +513,7 @@ class VirtualAnalogEngine {
 }
 
 // ════════════════════════════════════════════════════════
-//  ENGINE 1 — Waveshaper / Folder (Tides-style)
-//  Based on plaits/dsp/engine/waveshaping_engine.cc (MIT)
+//  ENGINE 1 — Waveshaper / Folder
 // ════════════════════════════════════════════════════════
 class WaveshapingEngine {
   constructor(sr) { this.sr = sr; this.phase = 0; this.integrator = 0; }
@@ -488,31 +522,24 @@ class WaveshapingEngine {
   render(freq, harmonics, timbre, morph, out, size) {
     const sr = this.sr;
     const f = clamp(freq / sr, 0.00001, 0.499);
-    // harmonics: shape selector (0=tri, 0.5=sine, 1=notch)
-    // timbre: fold amount
-    // morph: asymmetry
 
     for (let i = 0; i < size; i++) {
       this.phase += f;
       if (this.phase >= 1) this.phase -= 1;
 
-      // Asymmetric triangle (morph=asymmetry)
       const skew = clamp(0.05 + morph * 0.9, 0.05, 0.95);
       let tri = this.phase < skew
         ? this.phase / skew * 2 - 1
         : (1 - this.phase) / (1 - skew) * 2 - 1;
 
-      // waveshaper: harmonics blends shape
       const shape = harmonics;
       const folded = shape < 0.5
         ? lerp(tri, Math.sin(Math.PI * tri), shape * 2)
         : lerp(Math.sin(Math.PI * tri), Math.sin(Math.PI * 3 * tri) * 0.33 + Math.sin(Math.PI * tri) * 0.67, (shape - 0.5) * 2);
 
-      // wavefolder: timbre
       let fold = folded;
       const foldAmt = timbre * 4;
       fold = fold * (1 + foldAmt);
-      // Triangle wave fold
       fold = fold - 2 * Math.round(fold / 2);
       if (fold > 1) fold = 2 - fold;
       if (fold < -1) fold = -2 - fold;
@@ -523,8 +550,7 @@ class WaveshapingEngine {
 }
 
 // ════════════════════════════════════════════════════════
-//  ENGINE 2 — 2-op FM with variable feedback
-//  Based on plaits/dsp/engine/fm_engine.cc (MIT)
+//  ENGINE 2 — FM
 // ════════════════════════════════════════════════════════
 class FMEngine {
   constructor(sr) {
@@ -536,7 +562,6 @@ class FMEngine {
 
   render(freq, harmonics, timbre, morph, out, size) {
     const sr = this.sr;
-    // harmonics: ratio (0=1:1, 0.5=2:1, 1=7:1)
     const ratios = [0.5, 1, 1.5, 2, 3, 4, 5, 7, 8];
     const ri = harmonics * (ratios.length - 1);
     const r0 = ratios[Math.floor(ri)], r1 = ratios[Math.min(Math.ceil(ri), ratios.length-1)];
@@ -544,11 +569,10 @@ class FMEngine {
 
     const fc = clamp(freq / sr, 0.00001, 0.45);
     const fm = clamp(freq * ratio / sr, 0.00001, 0.49);
-    const modIdx = timbre * 8;   // timbre: modulation index
-    const fbAmt = morph;          // morph: feedback amount
+    const modIdx = timbre * 8;
+    const fbAmt = morph;
 
     for (let i = 0; i < size; i++) {
-      // Feedback FM
       const fbSample = this.fb * fbAmt * 4;
       this.phase_m += fm;
       if (this.phase_m >= 1) this.phase_m -= 1;
@@ -563,8 +587,7 @@ class FMEngine {
 }
 
 // ════════════════════════════════════════════════════════
-//  ENGINE 3 — Grainlet / VOSIM formant oscillator
-//  Based on plaits/dsp/oscillator/grainlet_oscillator.h (MIT)
+//  ENGINE 3 — Grainlet
 // ════════════════════════════════════════════════════════
 class GrainletEngine {
   constructor(sr) {
@@ -575,9 +598,7 @@ class GrainletEngine {
   reset() { this.carrierPhase = Math.random(); this.formantPhase = 0; }
 
   grainlet(carrierPhase, formantPhase, shape, bleed) {
-    // Shape: 0=sine, 0.5=VOSIM, 1=cosine squared window
     const carrier = Math.sin(2 * Math.PI * formantPhase);
-    // Window: raised cosine over carrier phase
     const window_ = Math.max(0, Math.cos(Math.PI * carrierPhase - Math.PI * 0.5));
     const grain = carrier * window_ * window_;
     return lerp(carrier, grain, shape) + carrierPhase * bleed;
@@ -586,7 +607,6 @@ class GrainletEngine {
   render(freq, harmonics, timbre, morph, out, size) {
     const sr = this.sr;
     const fc = clamp(freq / sr, 0.00001, 0.4);
-    // harmonics: formant-to-carrier ratio
     const formantRatio = 1 + harmonics * 8;
     const ff = clamp(fc * formantRatio, 0.00001, 0.499);
     const shape = timbre;
@@ -605,7 +625,6 @@ class GrainletEngine {
 
       const s = this.grainlet(this.carrierPhase, this.formantPhase, shape, bleed);
 
-      // PolyBLEP discontinuity at reset
       let blep = 0;
       if (reset) blep = polyblep(this.carrierPhase, fc) * 0.5;
 
@@ -615,9 +634,7 @@ class GrainletEngine {
 }
 
 // ════════════════════════════════════════════════════════
-//  ENGINE 4 — Additive / Harmonic oscillator
-//  Based on plaits/dsp/engine/additive_engine.cc (MIT)
-//  24 harmonically-related sines
+//  ENGINE 4 — Additive
 // ════════════════════════════════════════════════════════
 class AdditiveEngine {
   constructor(sr) {
@@ -630,21 +647,16 @@ class AdditiveEngine {
   render(freq, harmonics, timbre, morph, out, size) {
     const sr = this.sr;
     const numH = 24;
-    // harmonics: spectral centroid / bump position (0=low, 1=high)
-    // timbre: bump width (0=narrow, 1=spread)
-    // morph: bump shape (flat→peaked)
     const centroid = 1 + harmonics * (numH - 1);
     const width = 0.5 + timbre * numH * 0.5;
     const peak = morph;
 
-    // Precompute gains
     const gains = new Float32Array(numH);
     let totalGain = 0;
     for (let h = 0; h < numH; h++) {
       const n = h + 1;
       const dist = Math.abs(n - centroid);
       const g = Math.exp(-dist * dist / (width * width + 0.1));
-      // morph: raise to power for peakier shape
       gains[h] = Math.pow(g, 1 + peak * 4);
       totalGain += gains[h];
     }
@@ -666,15 +678,12 @@ class AdditiveEngine {
 }
 
 // ════════════════════════════════════════════════════════
-//  ENGINE 5 — Wavetable oscillator (8×8 bank, interpolated)
-//  Based on plaits/dsp/engine/wavetable_engine.cc (MIT)
-//  Single bank of 8 waveforms, morphed via timbre
+//  ENGINE 5 — Wavetable
 // ════════════════════════════════════════════════════════
 class WavetableEngine {
   constructor(sr) {
     this.sr = sr;
     this.phase = 0;
-    // Build 8 waveforms at 256 samples each
     this.WT_SIZE = 256;
     this.WT_COUNT = 8;
     this.tables = [];
@@ -684,17 +693,15 @@ class WavetableEngine {
         const ph = s / this.WT_SIZE;
         switch(t) {
           case 0: tbl[s] = Math.sin(2*Math.PI*ph); break;
-          case 1: tbl[s] = ph < 0.5 ? ph*4-1 : 3-ph*4; break; // triangle
-          case 2: tbl[s] = ph < 0.5 ? 1 : -1; break; // square
-          case 3: tbl[s] = ph * 2 - 1; break; // saw
-          case 4: tbl[s] = 1 - ph * 2; break; // ramp
+          case 1: tbl[s] = ph < 0.5 ? ph*4-1 : 3-ph*4; break;
+          case 2: tbl[s] = ph < 0.5 ? 1 : -1; break;
+          case 3: tbl[s] = ph * 2 - 1; break;
+          case 4: tbl[s] = 1 - ph * 2; break;
           case 5: tbl[s] = Math.sin(2*Math.PI*ph) + Math.sin(4*Math.PI*ph)*0.5 + Math.sin(6*Math.PI*ph)*0.25; break;
           case 6: tbl[s] = Math.sin(2*Math.PI*ph)*Math.sin(4*Math.PI*ph); break;
           case 7: tbl[s] = Math.sin(2*Math.PI*ph + Math.sin(4*Math.PI*ph)*1.5); break;
         }
-        // Normalize
       }
-      // Normalize each waveform
       let mx = 0;
       for (let s=0;s<this.WT_SIZE;s++) mx = Math.max(mx,Math.abs(tbl[s]));
       if (mx>0.001) for (let s=0;s<this.WT_SIZE;s++) tbl[s]/=mx;
@@ -714,21 +721,17 @@ class WavetableEngine {
   render(freq, harmonics, timbre, morph, out, size) {
     const sr = this.sr;
     const f = clamp(freq / sr, 0.00001, 0.499);
-    // timbre: wavetable position (0..WT_COUNT-1)
     const wtPos = timbre * (this.WT_COUNT - 1);
     const wt0 = Math.floor(wtPos);
     const wt1 = Math.min(wt0 + 1, this.WT_COUNT - 1);
     const wtFrac = wtPos - wt0;
-    // morph: sub-phase distortion
     const distort = morph;
-    // harmonics: octave fold
     const hFreq = f * (1 + Math.floor(harmonics * 3));
 
     for (let i = 0; i < size; i++) {
       this.phase += clamp(hFreq, 0.00001, 0.499);
       if (this.phase >= 1) this.phase -= 1;
 
-      // Phase distortion (Casio CZ style)
       let ph = this.phase;
       if (distort > 0.01) {
         ph = ph < 0.5
@@ -745,8 +748,7 @@ class WavetableEngine {
 }
 
 // ════════════════════════════════════════════════════════
-//  ENGINE 6 — Supersaw / Swarm (8 detuned saws)
-//  Based on plaits/dsp/engine/swarm_engine.cc (MIT)
+//  ENGINE 6 — Swarm
 // ════════════════════════════════════════════════════════
 class SwarmEngine {
   constructor(sr) {
@@ -756,18 +758,15 @@ class SwarmEngine {
     this.detunes = new Float32Array(this.N);
     for (let i = 0; i < this.N; i++) {
       this.phases[i] = Math.random();
-      this.detunes[i] = (i / (this.N - 1) - 0.5); // -0.5..0.5
+      this.detunes[i] = (i / (this.N - 1) - 0.5);
     }
   }
   reset() { for (let i = 0; i < this.N; i++) this.phases[i] = Math.random(); }
 
   render(freq, harmonics, timbre, morph, out, size) {
     const sr = this.sr;
-    // harmonics: detune spread (semitones)
-    const spread = harmonics * 0.5; // max ±0.5 semitone per voice
-    // timbre: grain density / pulse width
+    const spread = harmonics * 0.5;
     const pw = clamp(0.05 + timbre * 0.9, 0.05, 0.95);
-    // morph: saw vs square mix
     const sqMix = morph;
 
     for (let i = 0; i < size; i++) {
@@ -778,11 +777,9 @@ class SwarmEngine {
         this.phases[v] += f;
         if (this.phases[v] >= 1) this.phases[v] -= 1;
 
-        // Saw
         let saw = this.phases[v] * 2 - 1;
         saw -= polyblep(this.phases[v], f);
 
-        // Square (with polyblep)
         let sq = this.phases[v] < pw ? 1 : -1;
         sq += polyblep(this.phases[v], f);
         sq -= polyblep((this.phases[v] + 1 - pw) % 1, f);
@@ -795,50 +792,43 @@ class SwarmEngine {
 }
 
 // ════════════════════════════════════════════════════════
-//  ENGINE 7 — Chord generator (4-voice, string/organ style)
-//  Based on plaits/dsp/engine/chord_engine.cc (MIT)
+//  ENGINE 7 — Chord
 // ════════════════════════════════════════════════════════
 class ChordEngine {
   constructor(sr) {
     this.sr = sr;
     this.N = 4;
     this.phases = new Float32Array(this.N);
-    // Chord tables: intervals in semitones above root
     this.chords = [
-      [0, 7, 12, 19],    // power chord
-      [0, 4, 7, 12],     // major
-      [0, 3, 7, 12],     // minor
-      [0, 4, 7, 11],     // major 7
-      [0, 3, 7, 10],     // minor 7
-      [0, 4, 8, 12],     // augmented
-      [0, 3, 6, 12],     // diminished
-      [0, 5, 7, 12],     // sus4
-      [0, 2, 7, 12],     // sus2
-      [0, 4, 7, 14],     // major 9th
+      [0, 7, 12, 19],
+      [0, 4, 7, 12],
+      [0, 3, 7, 12],
+      [0, 4, 7, 11],
+      [0, 3, 7, 10],
+      [0, 4, 8, 12],
+      [0, 3, 6, 12],
+      [0, 5, 7, 12],
+      [0, 2, 7, 12],
+      [0, 4, 7, 14],
     ];
   }
   reset() { for (let i = 0; i < this.N; i++) this.phases[i] = Math.random(); }
 
   render(freq, harmonics, timbre, morph, out, size) {
     const sr = this.sr;
-    // harmonics: chord type
     const chordIdx = Math.floor(harmonics * (this.chords.length - 1));
     const chord = this.chords[clamp(chordIdx, 0, this.chords.length-1)];
-    // timbre: pulse width for all voices
     const pw = clamp(0.05 + timbre * 0.9, 0.05, 0.95);
-    // morph: detuning within chord
     const detune = morph * 0.005;
 
     for (let i = 0; i < size; i++) {
       let s = 0;
       for (let v = 0; v < this.N; v++) {
         const st = chord[v];
-        const dOct = v === 0 ? 0 : 0; // all voices at unison octave
         const f = clamp(freq * Math.pow(2, (st + (v * detune * 12)) / 12) / sr, 0.00001, 0.499);
         this.phases[v] += f;
         if (this.phases[v] >= 1) this.phases[v] -= 1;
 
-        // BL square
         let sq = this.phases[v] < pw ? 1 : -1;
         sq += polyblep(this.phases[v], f);
         sq -= polyblep((this.phases[v] + 1 - pw) % 1, f);
@@ -850,7 +840,7 @@ class ChordEngine {
 }
 
 // ════════════════════════════════════════════════════════
-//  PLAITS VOICE — wraps any engine + ADSR + filter
+//  PLAITS VOICE — wraps engine + ADSR + simple filter
 // ════════════════════════════════════════════════════════
 class PlaitsVoice {
   constructor(sr, midi, engineIdx) {
@@ -860,14 +850,10 @@ class PlaitsVoice {
     this.alive = true;
     this.releasing = false;
 
-    // ADSR state
     this.env = 0;
     this.envPhase = 'attack';
-
-    // Filter (1-pole lowpass for simplicity + speed)
     this.filterState = 0;
 
-    // Select engine
     const engines = [
       VirtualAnalogEngine, WaveshapingEngine, FMEngine,
       GrainletEngine, AdditiveEngine, WavetableEngine,
@@ -906,19 +892,12 @@ class PlaitsVoice {
     const tmpBuf = new Float32Array(size);
     const freq = this.freq * params.octaveMult * Math.pow(2, params.pitchSemi / 12);
 
-    this.engine.render(
-      freq,
-      params.harmonics, params.timbre, params.morph,
-      tmpBuf, size
-    );
+    this.engine.render(freq, params.harmonics, params.timbre, params.morph, tmpBuf, size);
 
-    // Apply envelope + filter
     for (let i = 0; i < size; i++) {
       const env = this.processADSR(params.attack, params.decay, params.sustain, params.release);
 
-      // 1-pole lowpass filter
       const cutoffNorm = clamp(params.cutoff / (this.sr * 0.5), 0.001, 0.999);
-      // Slightly overdrive filter cutoff with envelope
       const cutEg = cutoffNorm * (1 + params.filterEgDepth * env * 4);
       const coeff = clamp(1 - Math.exp(-2 * Math.PI * clamp(cutEg, 0.001, 0.499)), 0, 1);
       this.filterState += coeff * (tmpBuf[i] - this.filterState);
@@ -929,9 +908,9 @@ class PlaitsVoice {
 }
 
 // ════════════════════════════════════════════════════════
-//  VOICE POOL — main thread, driven by ScriptProcessorNode
+//  VOICE POOL — ScriptProcessor-driven
 // ════════════════════════════════════════════════════════
-const voicePool = new Map(); // midi → PlaitsVoice
+const voicePool = new Map();
 const DSP_PARAMS = {
   engineIdx: 0,
   harmonics: 0.5, timbre: 0.5, morph: 0.5,
@@ -940,11 +919,8 @@ const DSP_PARAMS = {
   vcaDepth: 0.8, octaveMult: 1, pitchSemi: 0,
 };
 
-// ════════════════════════════════════════════════════════
-//  MAIN AUDIO CONTEXT + ScriptProcessorNode + FX CHAIN
-// ════════════════════════════════════════════════════════
 let audioCtx = null;
-let scriptNode = null;  // ScriptProcessorNode — works everywhere, no HTTPS needed
+let scriptNode = null;
 let masterGain = null;
 
 const P = {
@@ -956,8 +932,9 @@ const P = {
   lfoSpeed: 3, volume: 0.7, gliss: true, glissTime: 0.08,
 };
 
+/* FX OFF by default */
 const FX = {
-  tapeOn: true, echoOn: true,
+  tapeOn: false, echoOn: false,
   tapeDrive: 4, tapeTone: 3000, tapeWow: 0.2, tapeMix: 0.6,
   echoTime: 0.375, echoFeedback: 0.4, reverbSize: 2.5, reverbMix: 0.3, echoMix: 0.4,
 };
@@ -995,26 +972,18 @@ function buildReverbIR(duration) {
 function initAudio() {
   if (audioCtx) return;
   audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-  const sr = audioCtx.sampleRate;
 
-  // ── ScriptProcessorNode: renders all Plaits voices ──
-  // Buffer size 512 gives good latency/performance balance
   scriptNode = audioCtx.createScriptProcessor(512, 0, 1);
   scriptNode.onaudioprocess = (e) => {
     const output = e.outputBuffer.getChannelData(0);
     const size = output.length;
     const buf = new Float32Array(size);
 
-    // Render each live voice
     for (const [midi, voice] of voicePool) {
       if (!voice.alive) { voicePool.delete(midi); continue; }
       voice.render(DSP_PARAMS, buf, size);
     }
-
-    // Clip to prevent distortion
-    for (let i = 0; i < size; i++) {
-      output[i] = clamp(buf[i], -1, 1);
-    }
+    for (let i = 0; i < size; i++) output[i] = clamp(buf[i], -1, 1);
   };
 
   masterGain = audioCtx.createGain();
@@ -1024,15 +993,17 @@ function initAudio() {
   fxOutputGain = audioCtx.createGain();
   fxOutputGain.connect(audioCtx.destination);
 
-  // ── Tape saturation ──
+  // ── Tape ──
   tapeInputGain = audioCtx.createGain();
   tapeInputGain.gain.value = FX.tapeDrive;
   tapeWaveshaper = audioCtx.createWaveShaper();
   tapeWaveshaper.curve = makeSatCurve(FX.tapeDrive * 8);
   tapeWaveshaper.oversample = '4x';
+
   tapeToneFilter = audioCtx.createBiquadFilter();
   tapeToneFilter.type = 'lowpass';
   tapeToneFilter.frequency.value = FX.tapeTone;
+
   tapeWowOsc = audioCtx.createOscillator();
   tapeWowOsc.type = 'sine';
   tapeWowOsc.frequency.value = 0.8;
@@ -1041,12 +1012,14 @@ function initAudio() {
   tapeWowOsc.connect(tapeWowGain);
   tapeWowGain.connect(tapeToneFilter.frequency);
   tapeWowOsc.start();
+
   tapeDryGain = audioCtx.createGain();
-  tapeDryGain.gain.value = 1 - FX.tapeMix;
   tapeWetGain = audioCtx.createGain();
-  tapeWetGain.gain.value = FX.tapeMix;
   tapeOutGain = audioCtx.createGain();
   tapeOutGain.gain.value = 0.7;
+
+  tapeDryGain.gain.value = FX.tapeOn ? (1 - FX.tapeMix) : 1;
+  tapeWetGain.gain.value = FX.tapeOn ? FX.tapeMix : 0;
 
   // ── Delay ──
   delayNode = audioCtx.createDelay(2.0);
@@ -1056,22 +1029,24 @@ function initAudio() {
   delayDryGain = audioCtx.createGain();
   delayDryGain.gain.value = 1;
   delayWetGain = audioCtx.createGain();
-  delayWetGain.gain.value = FX.echoMix;
+  delayWetGain.gain.value = FX.echoOn ? FX.echoMix : 0;
 
   // ── Reverb ──
   reverbNode = audioCtx.createConvolver();
   reverbNode.buffer = buildReverbIR(FX.reverbSize);
   reverbDryGain = audioCtx.createGain();
-  reverbDryGain.gain.value = 1 - FX.reverbMix;
   reverbWetGain = audioCtx.createGain();
-  reverbWetGain.gain.value = FX.reverbMix;
+  reverbDryGain.gain.value = 1 - (FX.echoOn ? FX.reverbMix : 0);
+  reverbWetGain.gain.value = FX.echoOn ? FX.reverbMix : 0;
 
-  // ── Wire everything ──
+  // ── Wiring ──
   masterGain.connect(tapeInputGain);
   tapeInputGain.connect(tapeWaveshaper);
   tapeWaveshaper.connect(tapeToneFilter);
+
   masterGain.connect(tapeDryGain);
   tapeToneFilter.connect(tapeWetGain);
+
   tapeDryGain.connect(tapeOutGain);
   tapeWetGain.connect(tapeOutGain);
 
@@ -1084,25 +1059,16 @@ function initAudio() {
   const delayMix = audioCtx.createGain(); delayMix.gain.value = 1;
   delayDryGain.connect(delayMix);
   delayWetGain.connect(delayMix);
+
   delayMix.connect(reverbNode);
   delayMix.connect(reverbDryGain);
   reverbNode.connect(reverbWetGain);
+
   reverbDryGain.connect(fxOutputGain);
   reverbWetGain.connect(fxOutputGain);
 }
 
-function sendAllParams() {
-  // Direct update — DSP_PARAMS is read every audio callback
-  Object.assign(DSP_PARAMS, {
-    harmonics: P.harmonics, timbre: P.timbre, morph: P.morph,
-    attack: P.attack, decay: P.decay, sustain: P.sustain, release: P.release,
-    cutoff: P.cutoff, filterEgDepth: P.filterEgDepth,
-    vcaDepth: P.vcaDepth, octaveMult: P.octaveMult, pitchSemi: P.pitchSemi,
-  });
-}
-
 function sendParam(name, value) {
-  // Map UI params → DSP_PARAMS directly
   if (name in DSP_PARAMS) DSP_PARAMS[name] = value;
   if (name === 'pitchSemi') DSP_PARAMS.pitchSemi = value;
   if (name === 'octaveMult') DSP_PARAMS.octaveMult = value;
@@ -1116,23 +1082,18 @@ function playNote(midi) {
   voicePool.set(midi, voice);
   document.getElementById('noteDisplay').textContent = midiToName(midi);
 }
-function stopNote(midi) {
-  const v = voicePool.get(midi);
-  if (v) v.noteOff();
-}
 function stopAllNotes(immediate = false) {
   if (immediate) voicePool.clear();
   else voicePool.forEach(v => v.noteOff());
   document.getElementById('noteDisplay').textContent = '---';
 }
-
 function midiToName(midi) {
   const ns = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
   return ns[midi % 12] + (Math.floor(midi / 12) - 1);
 }
 
 // ════════════════════════════════════════════════════════
-//  SEQUENCER ENGINE
+//  SEQUENCER
 // ════════════════════════════════════════════════════════
 const MAX_STEPS = 32, NUM_ROWS = 25;
 let viewBase = 48;
@@ -1150,7 +1111,7 @@ function toggleCell(midi, step, forceVal) {
 let numSteps = 16, bpm = 120, swing = 0.5;
 let seqRunning = false, currentStep = 0, stepTimer = null, bpmInterval = null;
 
-function seqToggle() {
+async function seqToggle() {
   if (seqRunning) {
     seqRunning = false; clearTimeout(stepTimer); stopAllNotes(false);
     document.getElementById('btnPlay').textContent = '▶ PLAY';
@@ -1158,6 +1119,10 @@ function seqToggle() {
     clearStepHighlights();
   } else {
     initAudio();
+    // iOS: nécessaire pour sortir de "suspended"
+    if (audioCtx && audioCtx.state === 'suspended') {
+      try { await audioCtx.resume(); } catch(e) {}
+    }
     seqRunning = true; currentStep = 0;
     document.getElementById('btnPlay').textContent = '⏸ PAUSE';
     document.getElementById('btnPlay').classList.add('playing');
@@ -1191,7 +1156,10 @@ function tick() {
 
 function clearStepHighlights() { document.querySelectorAll('.seq-cell.playing').forEach(c => c.classList.remove('playing')); }
 function highlightStep(step) {
-  getViewNotes().forEach(midi => { const el = document.getElementById(`c-${midi}-${step}`); if (el) el.classList.add('playing'); });
+  getViewNotes().forEach(midi => {
+    const el = document.getElementById(`c-${midi}-${step}`);
+    if (el) el.classList.add('playing');
+  });
 }
 function getViewNotes() { const a=[]; for(let i=NUM_ROWS-1;i>=0;i--) a.push(viewBase+i); return a; }
 
@@ -1211,6 +1179,7 @@ function buildGrid() {
     lbl.className = 'seq-row-label' + (isC?' is-c':'') + (isSharp?' is-sharp':'');
     lbl.textContent = isSharp ? '♯' : name;
     row.appendChild(lbl);
+
     const cells = document.createElement('div'); cells.className = 'seq-cells';
     let dragVal = null;
     for (let s = 0; s < numSteps; s++) {
@@ -1218,8 +1187,23 @@ function buildGrid() {
       cell.className = 'seq-cell' + (s%4===0&&s>0?' beat-gap':'');
       cell.id = `c-${midi}-${s}`;
       if (cellOn(midi,s)) cell.classList.add('active');
+
       cell.addEventListener('mousedown', e => { e.preventDefault(); dragVal = !cellOn(midi,s); toggleCell(midi,s,dragVal); });
       cell.addEventListener('mouseenter', e => { if(e.buttons===1&&dragVal!==null) toggleCell(midi,s,dragVal); });
+
+      // Touch friendly
+      cell.addEventListener('touchstart', e => { e.preventDefault(); dragVal = !cellOn(midi,s); toggleCell(midi,s,dragVal); }, {passive:false});
+      cell.addEventListener('touchmove', e => {
+        e.preventDefault();
+        const t = e.touches[0];
+        const el = document.elementFromPoint(t.clientX, t.clientY);
+        if (el && el.classList.contains('seq-cell') && dragVal !== null) {
+          const [_, mm, ss] = el.id.split('-');
+          toggleCell(+mm, +ss, dragVal);
+        }
+      }, {passive:false});
+      cell.addEventListener('touchend', () => { dragVal = null; }, {passive:true});
+
       cells.appendChild(cell);
     }
     window.addEventListener('mouseup', () => { dragVal = null; }, { passive: true });
@@ -1228,7 +1212,10 @@ function buildGrid() {
   document.getElementById('octLabel').textContent = midiToName(viewBase);
 }
 
-function refreshCell(midi, step) { const el = document.getElementById(`c-${midi}-${step}`); if(el) el.classList.toggle('active', cellOn(midi,step)); }
+function refreshCell(midi, step) {
+  const el = document.getElementById(`c-${midi}-${step}`);
+  if(el) el.classList.toggle('active', cellOn(midi,step));
+}
 function scrollOctave(dir) { viewBase = Math.max(12, Math.min(72, viewBase + dir*12)); buildGrid(); }
 function setNumSteps(n) { numSteps = n; if(currentStep>=n) currentStep=0; buildGrid(); }
 function clearGrid() { getGrid().clear(); buildGrid(); }
@@ -1275,6 +1262,7 @@ function initSliders() {
     let pos = ((initVal-min)/(max-min))*H;
     handle.style.bottom = pos + 'px';
     P[param] = initVal;
+    sendParam(param, initVal);
 
     let dragging = false, startY, startPos;
     handle.addEventListener('mousedown', e => { dragging=true; startY=e.clientY; startPos=pos; e.preventDefault(); });
@@ -1286,6 +1274,7 @@ function initSliders() {
       applyParam(param, val);
     });
     window.addEventListener('mouseup', () => { dragging=false; });
+
     handle.addEventListener('touchstart', e => { dragging=true; startY=e.touches[0].clientY; startPos=pos; e.preventDefault(); },{passive:false});
     window.addEventListener('touchmove', e => {
       if (!dragging) return;
@@ -1296,11 +1285,9 @@ function initSliders() {
     window.addEventListener('touchend', ()=>{ dragging=false; });
   });
 }
-
 function applyParam(param, val) {
   P[param] = val;
   sendParam(param, val);
-  // Live VCF update via filter node if any
 }
 
 // Volume knob
@@ -1316,6 +1303,14 @@ function initVolumeKnob() {
     startY=e.clientY; setRot(val); P.volume=val;
     if(masterGain) masterGain.gain.value=val;
   });
+  knob.addEventListener('touchstart', e => { startY=e.touches[0].clientY; e.preventDefault(); }, {passive:false});
+  window.addEventListener('touchmove', e => {
+    if (startY===undefined) return;
+    val = Math.max(0,Math.min(1,val+(startY-e.touches[0].clientY)*0.006));
+    startY=e.touches[0].clientY; setRot(val); P.volume=val;
+    if(masterGain) masterGain.gain.value=val;
+  }, {passive:false});
+  window.addEventListener('touchend', ()=>{ startY=undefined; }, {passive:true});
 }
 
 // ════════════════════════════════════════════════════════
@@ -1334,17 +1329,16 @@ const ENGINE_LABELS = {
 
 function setEngine(idx, el) {
   P.engineIdx = idx;
+  DSP_PARAMS.engineIdx = idx;
   document.querySelectorAll('.eng-btn').forEach(b => b.classList.remove('active'));
   el.classList.add('active');
   document.getElementById('engDesc').textContent = el.dataset.desc || '';
-  // Update label names
   const lbl = ENGINE_LABELS[idx];
   if (lbl) {
     document.getElementById('lbl-harm').textContent = lbl.harm;
     document.getElementById('lbl-timb').textContent = lbl.timb;
     document.getElementById('lbl-morph').textContent = lbl.morph;
   }
-  // Kill all voices — new engine will be used for next notes
   stopAllNotes(true);
 }
 
@@ -1360,19 +1354,51 @@ function toggleGliss() { glissOn = !glissOn; P.gliss = glissOn; document.getElem
 function setSwitch(sw) { document.getElementById('sw-vco').classList.toggle('active',sw==='vco'); document.getElementById('sw-vcf').classList.toggle('active',sw==='vcf'); }
 
 // ════════════════════════════════════════════════════════
+//  FX PANEL toggle (mobile)
+// ════════════════════════════════════════════════════════
+function toggleFxPanel() {
+  const open = document.body.classList.toggle('fx-open');
+  const btn = document.getElementById('btnFx');
+  if (btn) {
+    btn.classList.toggle('playing', open);
+    btn.textContent = open ? 'FX ✓' : 'FX';
+  }
+  if (open) {
+    const fx = document.querySelector('.fx-panel');
+    if (fx) fx.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+}
+
+// ════════════════════════════════════════════════════════
 //  FX CONTROLS
 // ════════════════════════════════════════════════════════
+function syncFxBypassUI() {
+  const tapeBtn = document.getElementById('tapeBypass');
+  const echoBtn = document.getElementById('echoBypass');
+  if (tapeBtn) {
+    tapeBtn.textContent = FX.tapeOn ? 'ON' : 'OFF';
+    tapeBtn.classList.toggle('active', FX.tapeOn);
+  }
+  if (echoBtn) {
+    echoBtn.textContent = FX.echoOn ? 'ON' : 'OFF';
+    echoBtn.classList.toggle('active', FX.echoOn);
+  }
+}
+
 function toggleFx(type) {
   if (type==='tape') {
     FX.tapeOn = !FX.tapeOn;
-    const btn = document.getElementById('tapeBypass');
-    btn.textContent = FX.tapeOn ? 'ON' : 'OFF'; btn.classList.toggle('active', FX.tapeOn);
-    if (tapeDryGain) { tapeDryGain.gain.value = FX.tapeOn ? 1-FX.tapeMix : 1; tapeWetGain.gain.value = FX.tapeOn ? FX.tapeMix : 0; }
+    syncFxBypassUI();
+    if (tapeDryGain) {
+      tapeDryGain.gain.value = FX.tapeOn ? (1 - FX.tapeMix) : 1;
+      tapeWetGain.gain.value = FX.tapeOn ? FX.tapeMix : 0;
+    }
   } else {
     FX.echoOn = !FX.echoOn;
-    const btn = document.getElementById('echoBypass');
-    btn.textContent = FX.echoOn ? 'ON' : 'OFF'; btn.classList.toggle('active', FX.echoOn);
-    if (delayWetGain) { delayWetGain.gain.value = FX.echoOn ? FX.echoMix : 0; reverbWetGain.gain.value = FX.echoOn ? FX.reverbMix : 0; }
+    syncFxBypassUI();
+    if (delayWetGain) delayWetGain.gain.value = FX.echoOn ? FX.echoMix : 0;
+    if (reverbWetGain) reverbWetGain.gain.value = FX.echoOn ? FX.reverbMix : 0;
+    if (reverbDryGain) reverbDryGain.gain.value = 1 - (FX.echoOn ? FX.reverbMix : 0);
   }
 }
 
@@ -1389,15 +1415,36 @@ function applyFxParam(p, v) {
   FX[p] = v;
   if (!audioCtx) return;
   switch(p) {
-    case 'tapeDrive': tapeInputGain.gain.value=v; tapeWaveshaper.curve=makeSatCurve(v*8); break;
-    case 'tapeTone': tapeToneFilter.frequency.value=v; break;
-    case 'tapeWow': tapeWowGain.gain.value=v*5; break;
-    case 'tapeMix': if(FX.tapeOn){tapeDryGain.gain.value=1-v;tapeWetGain.gain.value=v;} break;
-    case 'echoTime': delayNode.delayTime.setTargetAtTime(v,audioCtx.currentTime,0.05); break;
-    case 'echoFeedback': delayFeedGain.gain.value=v; break;
-    case 'echoMix': if(FX.echoOn) delayWetGain.gain.value=v; break;
-    case 'reverbSize': reverbNode.buffer=buildReverbIR(v); break;
-    case 'reverbMix': if(FX.echoOn) reverbWetGain.gain.value=v; break;
+    case 'tapeDrive':
+      tapeInputGain.gain.value=v; tapeWaveshaper.curve=makeSatCurve(v*8);
+      break;
+    case 'tapeTone':
+      tapeToneFilter.frequency.value=v;
+      break;
+    case 'tapeWow':
+      tapeWowGain.gain.value=v*5;
+      break;
+    case 'tapeMix':
+      if(FX.tapeOn){ tapeDryGain.gain.value=1-v; tapeWetGain.gain.value=v; }
+      break;
+    case 'echoTime':
+      delayNode.delayTime.setTargetAtTime(v,audioCtx.currentTime,0.05);
+      break;
+    case 'echoFeedback':
+      delayFeedGain.gain.value=v;
+      break;
+    case 'echoMix':
+      if(FX.echoOn) delayWetGain.gain.value=v;
+      break;
+    case 'reverbSize':
+      reverbNode.buffer=buildReverbIR(v);
+      break;
+    case 'reverbMix':
+      if(FX.echoOn) {
+        reverbWetGain.gain.value=v;
+        reverbDryGain.gain.value=1-v;
+      }
+      break;
   }
 }
 
@@ -1419,12 +1466,20 @@ function initFxKnobs() {
       applyFxParam(p,val);
     };
     set(val);
+
     knob.addEventListener('mousedown', e => { startY=e.clientY; e.preventDefault(); });
     window.addEventListener('mousemove', e => {
       if (!e.buttons||startY===undefined) return;
       set(val+(startY-e.clientY)*(max-min)/160); startY=e.clientY;
     });
     knob.addEventListener('wheel', e => { e.preventDefault(); set(val+(e.deltaY<0?1:-1)*(max-min)/40); },{passive:false});
+
+    knob.addEventListener('touchstart', e => { startY=e.touches[0].clientY; e.preventDefault(); }, {passive:false});
+    window.addEventListener('touchmove', e => {
+      if (startY===undefined) return;
+      set(val+(startY-e.touches[0].clientY)*(max-min)/160); startY=e.touches[0].clientY;
+    }, {passive:false});
+    window.addEventListener('touchend', ()=>{ startY=undefined; }, {passive:true});
   });
 }
 
@@ -1446,7 +1501,7 @@ function initTapeReel() {
     }
     ctx.beginPath(); ctx.arc(cx,cy,r*0.22,0,Math.PI*2);
     ctx.fillStyle = seqRunning?'#8a5820':'#2a1a08'; ctx.fill();
-    if(seqRunning&&FX.tapeOn) angle+=0.04;
+    if(seqRunning && FX.tapeOn) angle+=0.04;
     requestAnimationFrame(draw);
   }
   draw();
@@ -1473,7 +1528,7 @@ function initEchoViz() {
       g.addColorStop(1,'rgba(122,184,232,0)');
       ctx.fillStyle=g; ctx.fillRect(0,0,w,h);
     }
-    if(seqRunning&&FX.echoOn) phase+=0.015;
+    if(seqRunning && FX.echoOn) phase+=0.015;
     requestAnimationFrame(draw);
   }
   draw();
@@ -1489,11 +1544,15 @@ window.addEventListener('DOMContentLoaded', () => {
   initFxKnobs();
   initTapeReel();
   initEchoViz();
-  // Set default engine label
+  syncFxBypassUI();
+
   const lbl = ENGINE_LABELS[0];
   document.getElementById('lbl-harm').textContent = lbl.harm;
   document.getElementById('lbl-timb').textContent = lbl.timb;
   document.getElementById('lbl-morph').textContent = lbl.morph;
+
+  const btnFx = document.getElementById('btnFx');
+  if (btnFx) { btnFx.textContent = 'FX'; btnFx.classList.remove('playing'); }
 });
 </script>
 </body>
