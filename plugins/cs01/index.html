@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-<title>RhS01 — MacroOSC (Mono) · Degree Chord Sequencer</title>
+<title>RhS01 — Braids (Classics + Direct Digital) · Degree Chord Sequencer</title>
 
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;600;700&family=Share+Tech+Mono&display=swap');
@@ -117,7 +117,7 @@
     background: rgba(58,42,21,0.8);
   }
 
-  /* Mode buttons (Wave -> Modes) */
+  /* Model buttons */
   .modes{
     display:grid;
     grid-template-columns: repeat(2, minmax(0,1fr));
@@ -161,7 +161,6 @@
     grid-template-columns: repeat(2, minmax(0,1fr));
     gap: 10px;
   }
-
   .ctl{
     display:flex;
     flex-direction:column;
@@ -444,37 +443,37 @@
 <body>
   <div class="app">
     <header>
-      <h1>RhS01 · MACRO OSC</h1>
-      <div class="sub">Vintage · Mono · Degree Chord Sequencer (House / Neo-Soul / Rhodes)</div>
+      <h1>RhS01 · BRAIDS (JS)</h1>
+      <div class="sub">Classics + Direct Digital · Degree Chord Sequencer · House / Neo-Soul / Rhodes</div>
     </header>
 
     <div class="frame">
       <div class="top">
 
         <div class="card">
-          <div class="title"><div class="label">WAVE → MODE</div><div class="line"></div></div>
+          <div class="title"><div class="label">BRAIDS → MODEL</div><div class="line"></div></div>
           <div class="modes" id="modeGrid"></div>
         </div>
 
         <div class="row">
           <div class="card">
-            <div class="title"><div class="label">OSC CONTROLS</div><div class="line"></div></div>
+            <div class="title"><div class="label">OSC (BRAIDS STYLE)</div><div class="line"></div></div>
             <div class="sliders">
               <div class="ctl">
                 <div class="name">TIMBRE <span class="val" id="v-timbre">0.50</span></div>
                 <input type="range" id="timbre" min="0" max="100" value="50">
               </div>
               <div class="ctl">
-                <div class="name">FM/FOLD <span class="val" id="v-fm">0.00</span></div>
-                <input type="range" id="fm" min="0" max="100" value="0">
+                <div class="name">COLOR <span class="val" id="v-color">0.35</span></div>
+                <input type="range" id="color" min="0" max="100" value="35">
               </div>
               <div class="ctl">
-                <div class="name">DETUNE <span class="val" id="v-detune">0.15</span></div>
-                <input type="range" id="detune" min="0" max="100" value="15">
+                <div class="name">DETUNE <span class="val" id="v-detune">0.10</span></div>
+                <input type="range" id="detune" min="0" max="100" value="10">
               </div>
               <div class="ctl">
-                <div class="name">PWM <span class="val" id="v-pw">0.50</span></div>
-                <input type="range" id="pw" min="5" max="95" value="50">
+                <div class="name">SUB <span class="val" id="v-sub">0.00</span></div>
+                <input type="range" id="sub" min="0" max="100" value="0">
               </div>
             </div>
           </div>
@@ -483,26 +482,26 @@
             <div class="title"><div class="label">FILTER + AMP</div><div class="line"></div></div>
             <div class="sliders">
               <div class="ctl">
-                <div class="name">CUTOFF <span class="val" id="v-cutoff">8000</span></div>
-                <input type="range" id="cutoff" min="40" max="18000" value="8000">
+                <div class="name">CUTOFF <span class="val" id="v-cutoff">9000</span></div>
+                <input type="range" id="cutoff" min="40" max="18000" value="9000">
               </div>
               <div class="ctl">
-                <div class="name">RESO <span class="val" id="v-reso">1.00</span></div>
-                <input type="range" id="resonance" min="10" max="1800" value="100">
+                <div class="name">RESO <span class="val" id="v-reso">0.90</span></div>
+                <input type="range" id="resonance" min="10" max="1800" value="90">
               </div>
 
               <div class="ctl">
                 <div class="name">ATTACK <span class="val" id="v-att">0.01</span></div>
-                <input type="range" id="attack" min="1" max="400" value="1">
+                <input type="range" id="attack" min="1" max="400" value="8">
               </div>
               <div class="ctl">
-                <div class="name">RELEASE <span class="val" id="v-rel">0.50</span></div>
-                <input type="range" id="release" min="1" max="600" value="50">
+                <div class="name">RELEASE <span class="val" id="v-rel">0.35</span></div>
+                <input type="range" id="release" min="1" max="600" value="35">
               </div>
 
               <div class="ctl">
-                <div class="name">SUSTAIN <span class="val" id="v-sus">0.70</span></div>
-                <input type="range" id="sustain" min="0" max="100" value="70">
+                <div class="name">SUSTAIN <span class="val" id="v-sus">0.75</span></div>
+                <input type="range" id="sustain" min="0" max="100" value="75">
               </div>
               <div class="ctl">
                 <div class="name">LEVEL <span class="val" id="v-level">0.70</span></div>
@@ -578,7 +577,7 @@
           <div class="brand">
             <div class="yam">BANTU Ins.</div>
             <div class="cs01">RhS01</div>
-            <div class="tag">MONO · WAVE MODES · KEYS/SEQ</div>
+            <div class="tag">MONO · BRAIDS MODELS · KEYS/SEQ</div>
           </div>
           <div class="note" id="noteDisplay">---</div>
         </div>
@@ -590,13 +589,18 @@
       </div>
     </div>
 
-    <div class="footer">Degrees drive chords · MacroOSC stays mono (strum/arp per step)</div>
+    <div class="footer">Braids-style models (subset) · Classics + Direct Digital · Mono synth + chord-degree sequencer</div>
   </div>
 
 <script>
 /* ============================================================
-   MACRO OSC host (mono) — no build
+   BRAIDS-STYLE OSCILLATOR (subset) via inline AudioWorklet
+   - Classics: Sine, Tri, Saw, Square, PWM
+   - Direct Digital: WT Morph, FM2OP, Bitcrush Saw
+   Notes:
+   - This is a "Braids-inspired" subset, not a bit-perfect port.
 ============================================================ */
+
 let audioCtx = null;
 let oscNode = null;
 let filterNode = null;
@@ -604,25 +608,30 @@ let ampNode = null;
 let currentNote = null;
 
 const params = {
-  mode: 0,
-  timbre: 0.5,
-  fm: 0.0,
-  detune: 0.15,
-  pw: 0.5,
-  cutoff: 8000,
-  resonance: 1.0,
-  attack: 0.01,
-  release: 0.5,
-  sustain: 0.7,
-  level: 0.7,
+  model: 3,        // default: WT MORPH
+  timbre: 0.50,    // 0..1
+  color: 0.35,     // 0..1
+  detune: 0.10,    // 0..1
+  sub: 0.00,       // 0..1
+  cutoff: 9000,
+  resonance: 0.90,
+  attack: 0.008,
+  release: 0.35,
+  sustain: 0.75,
+  level: 0.70,
 };
 
-const MODES = [
-  { id: 0, wave: "⊿", name: "VA SAW",    hint: "band-limited" },
-  { id: 1, wave: "⊓", name: "PWM PULSE", hint: "pwm + blep" },
-  { id: 2, wave: "≋", name: "SUPERSAW",  hint: "7 voices" },
-  { id: 3, wave: "FM", name: "FM 2-OP",  hint: "metal/keys" },
-  { id: 4, wave: "PD", name: "PD+FOLD",  hint: "cz/west" },
+const MODELS = [
+  // Classics
+  { id: 0, group: "CLASSICS", name: "SINE",  hint: "clean", icon: "∿" },
+  { id: 1, group: "CLASSICS", name: "TRI",   hint: "soft",  icon: "△" },
+  { id: 2, group: "CLASSICS", name: "SAW",   hint: "bright",icon: "⟋" },
+  { id: 3, group: "DIRECT",   name: "WT MORPH", hint: "wavetable", icon: "≋" },
+  { id: 4, group: "CLASSICS", name: "SQUARE",hint: "hollow",icon: "▢" },
+  { id: 5, group: "CLASSICS", name: "PWM",   hint: "pulse", icon: "▥" },
+  // Direct Digital
+  { id: 6, group: "DIRECT",   name: "FM 2-OP", hint: "keys/bell", icon: "FM" },
+  { id: 7, group: "DIRECT",   name: "CRUSH SAW", hint: "lofi", icon: "⌁" },
 ];
 
 function noteToFreq(midi){ return 440 * Math.pow(2, (midi - 69) / 12); }
@@ -631,13 +640,213 @@ function midiToName(midi){
   return names[midi % 12] + Math.floor(midi / 12 - 1);
 }
 
+function createBraidsWorkletURL(){
+  const code = `
+class BraidsOsc extends AudioWorkletProcessor {
+  static get parameterDescriptors(){
+    return [
+      { name: 'freq',    defaultValue: 440, minValue: 0,   maxValue: 20000, automationRate: 'a-rate' },
+      { name: 'gain',    defaultValue: 1.0, minValue: 0,   maxValue: 2.0,   automationRate: 'k-rate' },
+      { name: 'model',   defaultValue: 3,   minValue: 0,   maxValue: 7,     automationRate: 'k-rate' },
+      { name: 'timbre',  defaultValue: 0.5, minValue: 0,   maxValue: 1,     automationRate: 'k-rate' },
+      { name: 'color',   defaultValue: 0.35,minValue: 0,   maxValue: 1,     automationRate: 'k-rate' },
+      { name: 'detune',  defaultValue: 0.1, minValue: 0,   maxValue: 1,     automationRate: 'k-rate' },
+      { name: 'sub',     defaultValue: 0.0, minValue: 0,   maxValue: 1,     automationRate: 'k-rate' },
+    ];
+  }
+
+  constructor(){
+    super();
+    this.phase = 0;
+    this.subPhase = 0;
+    this.fmPhase = 0;
+
+    this.hold = 0;
+    this.srCounter = 0;
+
+    // a few band-limited-ish wavetables (small & cheap):
+    // 0:sine, 1:tri-ish, 2:saw-ish, 3:square-ish, 4:bright "organ", 5:formant-ish
+    this.tables = [];
+    const makeTable = (fn) => {
+      const N = 2048;
+      const t = new Float32Array(N);
+      for (let i=0;i<N;i++){
+        const ph = i / N;
+        t[i] = fn(ph);
+      }
+      return t;
+    };
+    const twoPi = 2*Math.PI;
+
+    this.tables.push(makeTable(ph => Math.sin(twoPi*ph))); // sine
+    this.tables.push(makeTable(ph => { // tri-ish
+      const x = 2*Math.abs(2*(ph - Math.floor(ph+0.5))) - 1;
+      return x * 0.9;
+    }));
+    this.tables.push(makeTable(ph => { // saw-ish
+      return (2*(ph - Math.floor(ph+0.5))) * 0.85;
+    }));
+    this.tables.push(makeTable(ph => { // square-ish
+      return ph < 0.5 ? 0.75 : -0.75;
+    }));
+    this.tables.push(makeTable(ph => { // organ-ish (odd harmonics)
+      let s=0;
+      for (let k=1;k<=15;k+=2) s += Math.sin(twoPi*k*ph)/k;
+      return (s * 0.95);
+    }));
+    this.tables.push(makeTable(ph => { // formant-ish (two sines)
+      return 0.55*Math.sin(twoPi*ph) + 0.45*Math.sin(twoPi*3*ph + 0.35);
+    }));
+  }
+
+  _wrap(p){ return p - Math.floor(p); }
+
+  _readTable(table, phase){
+    const N = table.length;
+    const x = phase * N;
+    const i = x|0;
+    const f = x - i;
+    const a = table[i % N];
+    const b = table[(i+1) % N];
+    return a + (b-a)*f;
+  }
+
+  _polyBLEP(t, dt){
+    // cheap polyBLEP to soften edges for saw/square/pwm (still not perfect)
+    if (t < dt){
+      t = t/dt;
+      return t + t - t*t - 1.0;
+    } else if (t > 1.0 - dt){
+      t = (t - 1.0)/dt;
+      return t*t + t + t + 1.0;
+    }
+    return 0.0;
+  }
+
+  process(inputs, outputs, parameters){
+    const out = outputs[0][0];
+    const sr = sampleRate;
+
+    const model = parameters.model.length ? parameters.model[0] : 3;
+    const timbre = parameters.timbre.length ? parameters.timbre[0] : 0.5;
+    const color = parameters.color.length ? parameters.color[0] : 0.35;
+    const detune = parameters.detune.length ? parameters.detune[0] : 0.1;
+    const sub = parameters.sub.length ? parameters.sub[0] : 0.0;
+    const gain = parameters.gain.length ? parameters.gain[0] : 1.0;
+
+    // detune as cents-ish
+    const detCents = (detune * 40) - 20; // -20..+20 cents
+    const detRatio = Math.pow(2, detCents / 1200);
+
+    // FM index & crush mapped
+    const fmIndex = 0.2 + color * 6.0;
+    const fmRatio = 1.0 + timbre * 7.0; // mod ratio
+
+    // crush: lower SR and bit depth
+    const crushBits = 4 + Math.floor((1.0 - timbre) * 12); // 4..16
+    const crushLevels = Math.pow(2, crushBits);
+    const srDiv = 1 + Math.floor((1.0 - color) * 30); // 1..31
+
+    for (let i=0;i<out.length;i++){
+      const freq = (parameters.freq.length ? parameters.freq[i] : parameters.freq[0]) * detRatio;
+      const dt = Math.min(0.49, freq / sr);
+
+      this.phase = this._wrap(this.phase + dt);
+      this.subPhase = this._wrap(this.subPhase + dt*0.5);
+      this.fmPhase  = this._wrap(this.fmPhase + dt*fmRatio);
+
+      let y = 0.0;
+
+      if (model === 0){
+        // SINE
+        y = Math.sin(2*Math.PI*this.phase);
+      } else if (model === 1){
+        // TRI
+        y = 2*Math.abs(2*(this.phase - Math.floor(this.phase+0.5))) - 1;
+        y *= 0.95;
+      } else if (model === 2){
+        // SAW (polyBLEP)
+        let s = 2*this.phase - 1;
+        s -= this._polyBLEP(this.phase, dt);
+        y = s * 0.90;
+      } else if (model === 4){
+        // SQUARE (polyBLEP)
+        let s = this.phase < 0.5 ? 1 : -1;
+        s += this._polyBLEP(this.phase, dt);
+        s -= this._polyBLEP(this._wrap(this.phase + 0.5), dt);
+        y = s * 0.78;
+      } else if (model === 5){
+        // PWM (polyBLEP), timbre controls width
+        const pw = 0.05 + timbre * 0.90;
+        let s = this.phase < pw ? 1 : -1;
+        // correct both edges
+        s += this._polyBLEP(this.phase, dt);
+        s -= this._polyBLEP(this._wrap(this.phase - pw), dt);
+        y = s * 0.78;
+      } else if (model === 3){
+        // WT MORPH (direct digital)
+        // timbre morph table index, color = bright warp
+        const t = timbre * (this.tables.length - 1);
+        const i0 = Math.floor(t);
+        const i1 = Math.min(this.tables.length - 1, i0 + 1);
+        const frac = t - i0;
+        const a = this._readTable(this.tables[i0], this.phase);
+        const b = this._readTable(this.tables[i1], this.phase);
+        let w = a + (b - a) * frac;
+
+        // bright warp (soft fold)
+        const drive = 1.0 + color * 3.5;
+        w *= drive;
+        // tanh-ish soft clip
+        w = w / (1.0 + 0.6*Math.abs(w));
+
+        y = w * 0.85;
+      } else if (model === 6){
+        // FM 2-OP (direct digital)
+        const mod = Math.sin(2*Math.PI*this.fmPhase) * fmIndex;
+        y = Math.sin(2*Math.PI*(this.phase + mod));
+        // bright/tilt with color (cheap waveshape)
+        const sh = 1.0 + color * 2.5;
+        y = (y * sh) / (1.0 + 0.7*Math.abs(y*sh));
+        y *= 0.88;
+      } else if (model === 7){
+        // CRUSH SAW (direct digital)
+        let s = 2*this.phase - 1;
+        // soften a bit
+        s -= this._polyBLEP(this.phase, dt);
+        // downsample hold
+        if (this.srCounter++ % srDiv === 0) this.hold = s;
+        let q = Math.round(this.hold * crushLevels) / crushLevels;
+        y = q * 0.95;
+      }
+
+      // SUB (pure sine at 1 octave down)
+      if (sub > 0.0001){
+        const subSin = Math.sin(2*Math.PI*this.subPhase);
+        y = y*(1.0 - sub*0.35) + subSin*(sub*0.35);
+      }
+
+      out[i] = y * gain;
+    }
+
+    return true;
+  }
+}
+
+registerProcessor('braids-osc', BraidsOsc);
+`;
+  return URL.createObjectURL(new Blob([code], { type: "application/javascript" }));
+}
+
 async function initAudio() {
   if (audioCtx) return;
   audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
-  await audioCtx.audioWorklet.addModule("./dsp/macro-osc.worklet.js");
+  const url = createBraidsWorkletURL();
+  await audioCtx.audioWorklet.addModule(url);
+  try { URL.revokeObjectURL(url); } catch {}
 
-  oscNode = new AudioWorkletNode(audioCtx, "macro-osc", {
+  oscNode = new AudioWorkletNode(audioCtx, "braids-osc", {
     numberOfInputs: 0,
     numberOfOutputs: 1,
     outputChannelCount: [1],
@@ -660,11 +869,12 @@ function oscParam(name){ return oscNode?.parameters?.get(name) || null; }
 
 function applyAllParams() {
   if (!audioCtx) return;
-  oscParam("mode")?.setValueAtTime(params.mode, audioCtx.currentTime);
+
+  oscParam("model")?.setValueAtTime(params.model, audioCtx.currentTime);
   oscParam("timbre")?.setValueAtTime(params.timbre, audioCtx.currentTime);
-  oscParam("fm")?.setValueAtTime(params.fm, audioCtx.currentTime);
+  oscParam("color")?.setValueAtTime(params.color, audioCtx.currentTime);
   oscParam("detune")?.setValueAtTime(params.detune, audioCtx.currentTime);
-  oscParam("pw")?.setValueAtTime(params.pw, audioCtx.currentTime);
+  oscParam("sub")?.setValueAtTime(params.sub, audioCtx.currentTime);
   oscParam("gain")?.setValueAtTime(1.0, audioCtx.currentTime);
 
   filterNode.frequency.setValueAtTime(params.cutoff, audioCtx.currentTime);
@@ -705,19 +915,19 @@ function stopNote() {
 }
 
 /* ============================================================
-   UI: Mode buttons
+   UI: Model buttons
 ============================================================ */
 const modeGrid = document.getElementById("modeGrid");
 function renderModes() {
   modeGrid.innerHTML = "";
-  MODES.forEach(m => {
+  MODELS.forEach(m => {
     const btn = document.createElement("button");
     btn.type = "button";
-    btn.className = "mode-btn" + (params.mode === m.id ? " active" : "");
-    btn.innerHTML = `<b>${m.wave} ${m.name}</b><span>${m.hint}</span>`;
+    btn.className = "mode-btn" + (params.model === m.id ? " active" : "");
+    btn.innerHTML = `<b>${m.icon} ${m.name}</b><span>${m.group} · ${m.hint}</span>`;
     btn.addEventListener("click", async () => {
-      params.mode = m.id;
-      if (audioCtx) oscParam("mode")?.setValueAtTime(params.mode, audioCtx.currentTime);
+      params.model = m.id;
+      if (audioCtx) oscParam("model")?.setValueAtTime(params.model, audioCtx.currentTime);
       renderModes();
     });
     modeGrid.appendChild(btn);
@@ -726,7 +936,7 @@ function renderModes() {
 renderModes();
 
 /* ============================================================
-   UI: Sliders helpers
+   UI: Slider helpers
 ============================================================ */
 function setRangeVisual(el) {
   const v = parseFloat(el.value);
@@ -744,26 +954,29 @@ function bindRange(id, onChange) {
   });
 }
 
+/* Braids params */
 bindRange("timbre", (v) => {
   params.timbre = v / 100;
   document.getElementById("v-timbre").textContent = params.timbre.toFixed(2);
   if (audioCtx) oscParam("timbre")?.setValueAtTime(params.timbre, audioCtx.currentTime);
 });
-bindRange("fm", (v) => {
-  params.fm = v / 100;
-  document.getElementById("v-fm").textContent = params.fm.toFixed(2);
-  if (audioCtx) oscParam("fm")?.setValueAtTime(params.fm, audioCtx.currentTime);
+bindRange("color", (v) => {
+  params.color = v / 100;
+  document.getElementById("v-color").textContent = params.color.toFixed(2);
+  if (audioCtx) oscParam("color")?.setValueAtTime(params.color, audioCtx.currentTime);
 });
 bindRange("detune", (v) => {
   params.detune = v / 100;
   document.getElementById("v-detune").textContent = params.detune.toFixed(2);
   if (audioCtx) oscParam("detune")?.setValueAtTime(params.detune, audioCtx.currentTime);
 });
-bindRange("pw", (v) => {
-  params.pw = Math.max(0.05, Math.min(0.95, v / 100));
-  document.getElementById("v-pw").textContent = params.pw.toFixed(2);
-  if (audioCtx) oscParam("pw")?.setValueAtTime(params.pw, audioCtx.currentTime);
+bindRange("sub", (v) => {
+  params.sub = v / 100;
+  document.getElementById("v-sub").textContent = params.sub.toFixed(2);
+  if (audioCtx) oscParam("sub")?.setValueAtTime(params.sub, audioCtx.currentTime);
 });
+
+/* Filter + amp */
 bindRange("cutoff", (v) => {
   params.cutoff = v;
   document.getElementById("v-cutoff").textContent = Math.round(v);
@@ -793,9 +1006,9 @@ bindRange("level", (v) => {
 
 /* init displayed values */
 document.getElementById("v-timbre").textContent = params.timbre.toFixed(2);
-document.getElementById("v-fm").textContent = params.fm.toFixed(2);
+document.getElementById("v-color").textContent = params.color.toFixed(2);
 document.getElementById("v-detune").textContent = params.detune.toFixed(2);
-document.getElementById("v-pw").textContent = params.pw.toFixed(2);
+document.getElementById("v-sub").textContent = params.sub.toFixed(2);
 document.getElementById("v-cutoff").textContent = Math.round(params.cutoff);
 document.getElementById("v-reso").textContent = params.resonance.toFixed(2);
 document.getElementById("v-att").textContent = params.attack.toFixed(3);
@@ -804,12 +1017,10 @@ document.getElementById("v-sus").textContent = params.sustain.toFixed(2);
 document.getElementById("v-level").textContent = params.level.toFixed(2);
 
 /* ============================================================
-   Degree Chord Sequencer (House / Neo-Soul / Rhodes)
+   Degree Chord Sequencer (unchanged logic from previous step)
 ============================================================ */
 const DEG_STEPS = 16;
 
-// degrees stored as: null (off) or degIdx 0..6 + quality flag per scale
-// we compute label from scale.
 const seq = {
   running:false,
   step:0,
@@ -817,94 +1028,65 @@ const seq = {
   bpm:122,
   swing:0.55,
   gate:0.60,
-  keyPc:0,      // 0..11
-  scale:"maj",  // "maj" | "min"
+  keyPc:0,
+  scale:"maj",
   playMode:"block", // "block" | "neo" | "rhodes"
-  steps: Array.from({length: DEG_STEPS}, () => null), // null or 0..6
+  steps: Array.from({length: DEG_STEPS}, () => null),
 };
 
-// Voice-leading memory for smooth/rhodes
 let lastVoicing = null;
 
-// Scale intervals in semitones from tonic
 const SCALE = {
   maj: [0,2,4,5,7,9,11],
-  min: [0,2,3,5,7,8,10], // natural minor
+  min: [0,2,3,5,7,8,10],
 };
 
-// Degree labels: uppercase for major triads, lowercase for minor, ° for diminished
 function degreeLabel(degIdx, scale){
-  if (scale === "maj"){
-    // I ii iii IV V vi vii°
-    const lab = ["I","ii","iii","IV","V","vi","vii°"][degIdx] || "-";
-    return lab;
-  } else {
-    // i ii° III iv v VI VII (natural minor)
-    const lab = ["i","ii°","III","iv","v","VI","VII"][degIdx] || "-";
-    return lab;
-  }
+  if (scale === "maj") return ["I","ii","iii","IV","V","vi","vii°"][degIdx] || "-";
+  return ["i","ii°","III","iv","v","VI","VII"][degIdx] || "-";
 }
-
 function chordRootMidiForDegree(degIdx){
-  // Put the tonic around C4 (60) + keyPc offset
-  const tonic = 60 + seq.keyPc; // tonic near octave 4
+  const tonic = 60 + seq.keyPc;
   const scaleInts = SCALE[seq.scale];
   return tonic + (scaleInts[degIdx] ?? 0);
 }
-
-// Triad qualities from scale
 function getTriadIntervals(degIdx){
-  // return intervals from root for triad (3 notes) in semitones
   if (seq.scale === "maj"){
-    // I, ii, iii, IV, V, vi, vii°
-    if (degIdx === 0 || degIdx === 3 || degIdx === 4) return [0,4,7]; // major
-    if (degIdx === 6) return [0,3,6]; // dim
-    return [0,3,7]; // minor
+    if (degIdx === 0 || degIdx === 3 || degIdx === 4) return [0,4,7];
+    if (degIdx === 6) return [0,3,6];
+    return [0,3,7];
   } else {
-    // natural minor: i, ii°, III, iv, v, VI, VII
-    if (degIdx === 2 || degIdx === 5 || degIdx === 6) return [0,4,7]; // major
-    if (degIdx === 1) return [0,3,6]; // dim
-    return [0,3,7]; // minor
+    if (degIdx === 2 || degIdx === 5 || degIdx === 6) return [0,4,7];
+    if (degIdx === 1) return [0,3,6];
+    return [0,3,7];
   }
 }
 
-/* ---------- NEO-SOUL (7/9 + drop2) ---------- */
-const VOICE_TARGET_MIDI = 64; // ~E4 center
+const VOICE_TARGET_MIDI = 64;
 
 function getNeoSoulChordIntervals(degIdx){
   const tri = getTriadIntervals(degIdx);
-
-  // 7th choice (diatonic-ish)
-  let seventh = 10; // default m7
+  let seventh = 10;
   if (seq.scale === "maj"){
-    if (degIdx === 0 || degIdx === 3) seventh = 11;      // I, IV maj7
-    else if (degIdx === 4) seventh = 10;                 // V7
-    else if (degIdx === 6) seventh = 10;                 // viiø-ish
-    else seventh = 10;                                   // ii/iii/vi m7
+    if (degIdx === 0 || degIdx === 3) seventh = 11;
+    else seventh = 10;
   } else {
-    // natural minor: i7, iiø7, IIImaj7, iv7, v7 (often), VImaj7, VII7-ish
-    if (degIdx === 2 || degIdx === 5) seventh = 11;      // III, VI maj7
-    else if (degIdx === 1) seventh = 10;                 // iiø
-    else seventh = 10;                                   // others m7/dom-ish
+    if (degIdx === 2 || degIdx === 5) seventh = 11;
+    else seventh = 10;
   }
-
   let intervals = [...tri, seventh];
 
-  // Add 9 color by swapping the 5th often (house keys)
   const add9 = Math.random() < 0.75;
   if (add9){
     const fifthIdx = intervals.indexOf(7);
     if (fifthIdx !== -1 && Math.random() < 0.70) intervals[fifthIdx] = 14;
-    else if (Math.random() < 0.45) intervals[0] = 14; // swap root to 9 sometimes
+    else if (Math.random() < 0.45) intervals[0] = 14;
   }
-
-  // Occasional sus2/sus4 for house neo-soul vibe
   if (Math.random() < 0.22){
-    const third = tri[1]; // 3 or 4
+    const third = tri[1];
     const thirdIdx = intervals.indexOf(third);
     if (thirdIdx !== -1) intervals[thirdIdx] = (Math.random() < 0.5 ? 2 : 5);
   }
-
   return intervals.map(x => Math.round(x));
 }
 
@@ -932,7 +1114,7 @@ function voiceLeadingCostFlexible(prev, next){
 
 function getNeoSoulVoicingForDegree(degIdx){
   const rootBase = chordRootMidiForDegree(degIdx);
-  const ints = getNeoSoulChordIntervals(degIdx); // 4 intervals (intended)
+  const ints = getNeoSoulChordIntervals(degIdx);
 
   const invs = [0,1,2,3];
   const octs = [-24,-12,0,12,24];
@@ -963,7 +1145,6 @@ function getNeoSoulVoicingForDegree(degIdx){
           ? voiceLeadingCostFlexible(lastVoicing, notes)
           : Math.abs(((notes[0]+notes[notes.length-1])/2) - VOICE_TARGET_MIDI);
 
-        // bias against too-tight voicings
         const spread = notes[notes.length-1] - notes[0];
         const spreadPenalty = Math.max(0, (24 - spread)) * 0.15;
         const finalCost = cost + spreadPenalty;
@@ -975,26 +1156,20 @@ function getNeoSoulVoicingForDegree(degIdx){
       }
     }
   }
-
   return best || ints.map(x => rootBase + x).sort((a,b)=>a-b);
 }
 
-/* ---------- RHODES MODE (wider, 10ths, drop2 bias) ---------- */
 function getRhodesVoicingForDegree(degIdx){
-  // Start from Neo chord tones
   const rootBase = chordRootMidiForDegree(degIdx);
   let ints = getNeoSoulChordIntervals(degIdx).slice();
-
-  // Ensure we have "3rd" available (for 10ths). If sus replaced the 3rd, bring it back sometimes.
   const tri = getTriadIntervals(degIdx);
+
   const hasThird = ints.includes(tri[1]);
   if (!hasThird && Math.random() < 0.65){
-    // replace a 2 or 5 with the original third
     const susIdx = ints.findIndex(x => x === 2 || x === 5);
     if (susIdx !== -1) ints[susIdx] = tri[1];
   }
 
-  // Build candidate voicings: prefer wide spread
   const octs = [-24,-12,0,12,24];
   const invs = [0,1,2,3];
 
@@ -1003,16 +1178,13 @@ function getRhodesVoicingForDegree(degIdx){
 
   for (const o of octs){
     for (const inv of invs){
-      // Base: 4 notes
       let notes = ints.map(x => rootBase + x + o).sort((a,b)=>a-b);
 
-      // Inversion
       for (let k = 0; k < inv; k++){
         notes[0] += 12;
         notes.sort((a,b)=>a-b);
       }
 
-      // Rhodes-ish trick: make a 10th by lifting the 3rd up an octave (if present)
       const third = tri[1];
       const thirdIdx = notes.findIndex(n => ((n - (rootBase+o)) % 12 + 12) % 12 === (third % 12));
       if (thirdIdx !== -1 && Math.random() < 0.85){
@@ -1020,7 +1192,6 @@ function getRhodesVoicingForDegree(degIdx){
         notes.sort((a,b)=>a-b);
       }
 
-      // Stronger drop2 tendency (Rhodes spread)
       if (notes.length >= 4){
         const idx = notes.length - 2;
         if (Math.random() < 0.80){
@@ -1029,22 +1200,18 @@ function getRhodesVoicingForDegree(degIdx){
         }
       }
 
-      // Keep in comfy register but slightly higher than Neo
       const target = VOICE_TARGET_MIDI + 2;
       notes = normalizeChordToTarget(notes, target);
 
-      // Enforce wider spread
       const spread = notes[notes.length-1] - notes[0];
-      const wantMin = 19; // ~a bit wider than an octave+fifth
+      const wantMin = 19;
       const spreadPenalty = spread < wantMin ? (wantMin - spread) * 1.2 : 0;
 
       const cost = lastVoicing
         ? voiceLeadingCostFlexible(lastVoicing, notes)
         : Math.abs(((notes[0]+notes[notes.length-1])/2) - target);
 
-      // Mild bonus for being wider (airy)
       const airyBonus = Math.max(0, 28 - spread) * 0.10;
-
       const finalCost = cost + spreadPenalty + airyBonus;
 
       if (finalCost < bestCost){
@@ -1053,19 +1220,14 @@ function getRhodesVoicingForDegree(degIdx){
       }
     }
   }
-
   return best || getNeoSoulVoicingForDegree(degIdx);
 }
 
-/* ---------- Scheduling helpers ---------- */
 function scheduleNote(midi, tStart, dur){
   if (!audioCtx) return;
-
-  // set freq
   const freq = noteToFreq(midi);
   oscParam("freq")?.setValueAtTime(freq, tStart);
 
-  // gate envelope (using amp gain scheduling)
   ampNode.gain.cancelScheduledValues(tStart);
   ampNode.gain.setValueAtTime(ampNode.gain.value, tStart);
 
@@ -1077,31 +1239,25 @@ function scheduleNote(midi, tStart, dur){
   ampNode.gain.linearRampToValueAtTime(peak, tStart + a);
   ampNode.gain.linearRampToValueAtTime(peak * sus, tStart + a + 0.08);
 
-  // release at note end
   const tOff = Math.max(tStart + 0.01, tStart + dur);
   ampNode.gain.setValueAtTime(ampNode.gain.value, tOff);
   ampNode.gain.linearRampToValueAtTime(0, tOff + rel);
 
-  // UI
   document.getElementById("noteDisplay").textContent = midiToName(midi);
 }
 
 function stepDurationSec(){
-  // 16th note
-  const spb = 60 / seq.bpm;         // seconds per beat (quarter)
-  return spb / 4;                   // 16th
+  const spb = 60 / seq.bpm;
+  return spb / 4;
 }
-
 function swingDelayForStep(stepIdx){
   const base = stepDurationSec();
-  const swingAmt = (seq.swing - 0.5) * 0.5; // -0.25..+0.25
+  const swingAmt = (seq.swing - 0.5) * 0.5;
   return (stepIdx % 2 === 0) ? base * (1 + swingAmt) : base * (1 - swingAmt);
 }
-
 function clearSeqHighlights(){
   document.querySelectorAll(".degStep.ph").forEach(el => el.classList.remove("ph"));
 }
-
 function setSeqLed(stepIdx){
   document.getElementById("seqLed").textContent = String(stepIdx+1).padStart(2,"0");
 }
@@ -1112,7 +1268,7 @@ async function seqTick(){
   if (audioCtx.state === "suspended") await audioCtx.resume();
 
   clearSeqHighlights();
-  const stepEl = document.querySelector(`.degStep[data-step="${seq.step}"]`);
+  const stepEl = document.querySelector(\`.degStep[data-step="\${seq.step}"]\`);
   if (stepEl) stepEl.classList.add("ph");
   setSeqLed(seq.step);
 
@@ -1124,10 +1280,8 @@ async function seqTick(){
 
   if (deg !== null){
     if (seq.playMode === "block"){
-      // Quick strum of a simple triad for punch
       const root = chordRootMidiForDegree(deg);
-      const tri = getTriadIntervals(deg).map(x => root + x);
-      tri.sort((a,b)=>a-b);
+      const tri = getTriadIntervals(deg).map(x => root + x).sort((a,b)=>a-b);
       const gap = Math.max(0.018, dur * 0.10);
       const nd = Math.max(0.04, gateDur * 0.55);
       scheduleNote(tri[0], now + 0*gap, nd);
@@ -1137,7 +1291,7 @@ async function seqTick(){
       document.getElementById("noteDisplay").textContent = degreeLabel(deg, seq.scale);
     }
     else if (seq.playMode === "neo"){
-      const voicing = getNeoSoulVoicingForDegree(deg); // 4 notes
+      const voicing = getNeoSoulVoicingForDegree(deg);
       const gap  = Math.max(0.02, dur * 0.16);
       const nDur = Math.max(0.04, gateDur * 0.55);
       scheduleNote(voicing[0], now + 0*gap, nDur);
@@ -1148,10 +1302,9 @@ async function seqTick(){
       document.getElementById("noteDisplay").textContent = degreeLabel(deg, seq.scale);
     }
     else if (seq.playMode === "rhodes"){
-      const voicing = getRhodesVoicingForDegree(deg); // 4 notes (wide)
+      const voicing = getRhodesVoicingForDegree(deg);
       const gap  = Math.max(0.02, dur * 0.17);
       const nDur = Math.max(0.05, gateDur * 0.62);
-      // Rhodes feel: slightly "rolled" but steadier
       scheduleNote(voicing[0], now + 0*gap, nDur);
       scheduleNote(voicing[1], now + 1*gap, nDur);
       scheduleNote(voicing[2], now + 2*gap, nDur);
@@ -1161,7 +1314,6 @@ async function seqTick(){
     }
   }
 
-  // schedule next tick
   const delay = swingDelayForStep(seq.step);
   seq.step = (seq.step + 1) % DEG_STEPS;
   seq.timer = setTimeout(seqTick, delay * 1000);
@@ -1181,7 +1333,6 @@ function seqStartStop(){
     btn.classList.remove("on");
     clearSeqHighlights();
     document.getElementById("seqLed").textContent = "--";
-    // release quickly
     if (audioCtx) gateOff(audioCtx.currentTime);
   }
 }
@@ -1198,7 +1349,6 @@ function seqStop(){
 }
 
 function cycleDegree(stepIdx){
-  // order: off -> 0..6 -> off
   const cur = seq.steps[stepIdx];
   const next = (cur === null) ? 0 : (cur + 1);
   seq.steps[stepIdx] = (next > 6) ? null : next;
@@ -1224,7 +1374,6 @@ function renderDegGrid(){
       e.preventDefault();
       cycleDegree(i);
 
-      // audition: play the current degree immediately
       const d = seq.steps[i];
       if (d !== null){
         await initAudio();
@@ -1282,12 +1431,10 @@ bindRange("gate", (v) => {
   document.getElementById("v-gate").textContent = Math.round(v) + "%";
 });
 
-// init seq values
 document.getElementById("v-bpm").textContent = seq.bpm;
 document.getElementById("v-swing").textContent = Math.round(seq.swing*100) + "%";
 document.getElementById("v-gate").textContent = Math.round(seq.gate*100) + "%";
 
-// Key/scale
 document.getElementById("keySel").addEventListener("change", (e) => {
   seq.keyPc = +e.target.value;
   lastVoicing = null;
@@ -1307,7 +1454,6 @@ document.getElementById("scaleMin").addEventListener("click", () => {
   renderDegGrid();
 });
 
-// Play modes
 function setPlayMode(m){
   seq.playMode = m;
   document.getElementById("pmBlock").classList.toggle("active", m==="block");
@@ -1321,10 +1467,9 @@ document.getElementById("pmRhodes").addEventListener("click", () => setPlayMode(
 
 renderDegGrid();
 
-/* Default pattern (house-ish) */
+/* Default pattern */
 (function seedPattern(){
-  // I - vi - ii - V (classic)
-  const prog = [0,5,1,4];
+  const prog = [0,5,1,4]; // I vi ii V
   for (let i=0;i<DEG_STEPS;i++){
     if (i % 4 === 0) seq.steps[i] = prog[(i/4)%prog.length];
     else seq.steps[i] = null;
@@ -1335,7 +1480,6 @@ renderDegGrid();
 /* ============================================================
    Keyboard (touch-first)
 ============================================================ */
-// 3 octaves starting at C3 (midi 48)
 const startMidi = 48;
 const numOctaves = 3;
 const whitePattern = [0,2,4,5,7,9,11];
@@ -1404,7 +1548,6 @@ function buildBlackKeys(){
 window.addEventListener("load", buildBlackKeys);
 window.addEventListener("resize", buildBlackKeys);
 
-/* Optional: keyboard shortcuts desktop */
 const keyMap = {
   'a': 48, 'w': 49, 's': 50, 'e': 51, 'd': 52, 'f': 53,
   't': 54, 'g': 55, 'y': 56, 'h': 57, 'u': 58, 'j': 59,
@@ -1412,14 +1555,11 @@ const keyMap = {
 };
 document.addEventListener("keydown", e => {
   if (e.repeat) return;
-
-  // Space toggles sequencer
   if (e.key === " "){
     e.preventDefault();
     seqStartStop();
     return;
   }
-
   const midi = keyMap[e.key.toLowerCase()];
   if (midi !== undefined) playNote(midi);
 });
