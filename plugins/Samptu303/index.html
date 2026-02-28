@@ -21,61 +21,61 @@
   --danger:#ff4b4b;
 }
 
-  body{ color-scheme: dark; }
+body{ color-scheme: dark; }
 
 .knob input[type="range"],
 .sctl input[type="range"]{
   accent-color: #e6e9ef;
 }
 
-  *{ box-sizing:border-box; }
-  html,body{ height:100%; }
-  body{
-    margin:0;
-    font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
-    background:var(--bg);
-    color:var(--ink);
-  }
+*{ box-sizing:border-box; }
+html,body{ height:100%; }
+body{
+  margin:0;
+  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
+  background:var(--bg);
+  color:var(--ink);
+}
 
-  .wrap{
-    max-width:1160px;
-    margin:0 auto;
-    padding:16px 14px 22px;
-    padding-bottom: calc(22px + env(safe-area-inset-bottom));
-  }
+.wrap{
+  max-width:1160px;
+  margin:0 auto;
+  padding:16px 14px 22px;
+  padding-bottom: calc(22px + env(safe-area-inset-bottom));
+}
 
-  .panel{
-    border:1px solid var(--line);
-    background:linear-gradient(180deg, var(--panel), var(--panel2));
-    border-radius:14px;
-    box-shadow:0 10px 26px var(--shadow);
-  }
+.panel{
+  border:1px solid var(--line);
+  background:linear-gradient(180deg, var(--panel), var(--panel2));
+  border-radius:14px;
+  box-shadow:0 10px 26px var(--shadow);
+}
 
-  .topbar{
-    display:flex;
-    gap:12px;
-    align-items:flex-start;
-    justify-content:space-between;
-    flex-wrap:wrap;
-    margin-bottom:12px;
-  }
-  .title{
-    display:flex;
-    flex-direction:column;
-    gap:4px;
-    min-width:260px;
-  }
-  .title h1{
-    margin:0;
-    font-size:16px;
-    letter-spacing:.08em;
-    text-transform:uppercase;
-  }
-  .title .sub{
-    font-size:12px;
-    color:var(--muted);
-    letter-spacing:.04em;
-  }
+.topbar{
+  display:flex;
+  gap:12px;
+  align-items:flex-start;
+  justify-content:space-between;
+  flex-wrap:wrap;
+  margin-bottom:12px;
+}
+.title{
+  display:flex;
+  flex-direction:column;
+  gap:4px;
+  min-width:260px;
+}
+.title h1{
+  margin:0;
+  font-size:16px;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+}
+.title .sub{
+  font-size:12px;
+  color:var(--muted);
+  letter-spacing:.04em;
+}
 
 .subRow{
   display:flex;
@@ -103,461 +103,469 @@
   background:rgba(80,160,255,.16);
   box-shadow: 0 0 0 2px rgba(80,160,255,.10);
 }
-  
-  .controls{
-    display:flex;
-    align-items:center;
-    gap:10px;
-    padding:10px;
-    flex-wrap:wrap;
-  }
-  .btn{
-    border:1px solid var(--line);
-    background:transparent;
-    color:var(--ink);
-    padding:10px 12px;
-    border-radius:12px;
-    font-weight:800;
-    letter-spacing:.04em;
-    text-transform:uppercase;
-    font-size:12px;
-    cursor:pointer;
-    user-select:none;
-    touch-action:manipulation;
-  }
-  .btn:active{ transform:translateY(1px); }
-  .btn.primary{ background:rgba(0,0,0,.06); }
-  .btn.danger{ border-color:rgba(192,24,24,.35); color:var(--danger); }
-  .btn.on{ background:rgba(0,0,0,.08); }
 
-  .led{
-    display:flex;
-    align-items:center;
-    gap:10px;
-    padding:10px 12px;
-    border-radius:12px;
-    border:1px solid var(--line);
-    background:rgba(255,255,255,.35);
-    min-height:42px;
-  }
-  .led .digits{
-    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Courier New", monospace;
-    font-weight:900;
-    letter-spacing:.12em;
-    background:rgba(0,0,0,.06);
-    border:1px solid var(--line2);
-    padding:8px 10px;
-    border-radius:10px;
-    min-width:78px;
-    text-align:center;
-  }
-  .led .label{
-    font-size:12px;
-    color:var(--muted);
-    letter-spacing:.06em;
-    text-transform:uppercase;
-    white-space:nowrap;
-  }
+.controls{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  padding:10px;
+  flex-wrap:wrap;
+}
+.btn{
+  border:1px solid var(--line);
+  background:transparent;
+  color:var(--ink);
+  padding:10px 12px;
+  border-radius:12px;
+  font-weight:800;
+  letter-spacing:.04em;
+  text-transform:uppercase;
+  font-size:12px;
+  cursor:pointer;
+  user-select:none;
+  touch-action:manipulation;
+}
+.btn:active{ transform:translateY(1px); }
+.btn.primary{ background:rgba(0,0,0,.06); }
+.btn.danger{ border-color:rgba(192,24,24,.35); color:var(--danger); }
+.btn.on{ background:rgba(0,0,0,.08); }
 
-  .knobs{
-    display:flex;
-    gap:10px;
-    align-items:center;
-    flex-wrap:wrap;
-  }
-  .knob{
-    display:flex;
-    flex-direction:column;
-    gap:6px;
-    padding:8px 10px;
-    border:1px solid var(--line);
-    border-radius:12px;
-    background:rgba(255,255,255,.25);
-    min-width:170px;
-  }
-  .knob label{
-    font-size:11px;
-    letter-spacing:.08em;
-    text-transform:uppercase;
-    color:var(--muted);
-    display:flex;
-    justify-content:space-between;
-    gap:10px;
-  }
-  .knob input[type="range"]{ width:100%; accent-color:#111; }
-  .knob .val{
-    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Courier New", monospace;
-    font-size:11px;
-    color:var(--ink);
-    opacity:.85;
-  }
+/* ✅ CORRECTION #2: style visible quand FX sont affichés */
+.btn.fx-on{
+  color: rgba(230,233,239,.95);
+  border-color: rgba(80,160,255,.55);
+  background: rgba(80,160,255,.16);
+  box-shadow: 0 0 0 2px rgba(80,160,255,.10);
+}
 
-  .main{ padding:12px; }
+.led{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  padding:10px 12px;
+  border-radius:12px;
+  border:1px solid var(--line);
+  background:rgba(255,255,255,.35);
+  min-height:42px;
+}
+.led .digits{
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Courier New", monospace;
+  font-weight:900;
+  letter-spacing:.12em;
+  background:rgba(0,0,0,.06);
+  border:1px solid var(--line2);
+  padding:8px 10px;
+  border-radius:10px;
+  min-width:78px;
+  text-align:center;
+}
+.led .label{
+  font-size:12px;
+  color:var(--muted);
+  letter-spacing:.06em;
+  text-transform:uppercase;
+  white-space:nowrap;
+}
 
-  /* --- TRACK ROWS (pad + steps aligned) --- */
-  .tracks{
-    display:flex;
-    flex-direction:column;
-    gap:10px;
-  }
+.knobs{
+  display:flex;
+  gap:10px;
+  align-items:center;
+  flex-wrap:wrap;
+}
+.knob{
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+  padding:8px 10px;
+  border:1px solid var(--line);
+  border-radius:12px;
+  background:rgba(255,255,255,.25);
+  min-width:170px;
+}
+.knob label{
+  font-size:11px;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  color:var(--muted);
+  display:flex;
+  justify-content:space-between;
+  gap:10px;
+}
+.knob input[type="range"]{ width:100%; accent-color:#111; }
+.knob .val{
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Courier New", monospace;
+  font-size:11px;
+  color:var(--ink);
+  opacity:.85;
+}
 
-  .track{
-    --trk: rgba(0,0,0,.85); /* fallback */
-    border:1px solid var(--line);
-    border-radius:14px;
-    background:rgba(255,255,255,.18);
-    padding:10px;
-  }
+.main{ padding:12px; }
 
-  .trackRow{
-    display:grid;
-    grid-template-columns: 300px 1fr;
-    gap:10px;
-    align-items:stretch;
-  }
+/* --- TRACK ROWS (pad + steps aligned) --- */
+.tracks{
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+}
 
-  .padBox{
-    border:1px solid var(--line);
-    border-radius:14px;
-    background:rgba(255,255,255,.22);
-    padding:10px;
-    display:flex;
-    flex-direction:column;
-    gap:8px;
-    position:relative;
-  }
-  .padBox::before{
-    content:"";
-    position:absolute;
-    inset:0;
-    border-radius:14px;
-    border:2px solid color-mix(in srgb, var(--trk) 55%, transparent);
-    pointer-events:none;
-    opacity:.65;
-  }
+.track{
+  --trk: rgba(0,0,0,.85); /* fallback */
+  border:1px solid var(--line);
+  border-radius:14px;
+  background:rgba(255,255,255,.18);
+  padding:10px;
+}
 
-  .padTop{
-    display:flex;
-    justify-content:space-between;
-    align-items:flex-start;
-    gap:10px;
-  }
-  .padMeta{
-    display:flex;
-    flex-direction:column;
-    gap:4px;
-  }
-  .padType{
-    font-size:11px;
-    letter-spacing:.12em;
-    text-transform:uppercase;
-    color:var(--muted);
-  }
-  .padName{
-    font-weight:900;
-    letter-spacing:.08em;
-    text-transform:uppercase;
-    font-size:12px;
-  }
-  .pill{
-    border:1px solid var(--line);
-    border-radius:999px;
-    padding:6px 8px;
-    background:rgba(255,255,255,.22);
-    white-space:nowrap;
-    font-size:11px;
-    letter-spacing:.06em;
-    text-transform:uppercase;
-    color:var(--muted);
-  }
+.trackRow{
+  display:grid;
+  grid-template-columns: 300px 1fr;
+  gap:10px;
+  align-items:stretch;
+}
 
-  .padBtn{
-    width:100%;
-    border:1px solid var(--line);
-    background:transparent;
-    border-radius:14px;
-    padding:12px 10px;
-    font-weight:900;
-    letter-spacing:.08em;
-    text-transform:uppercase;
-    font-size:12px;
-    cursor:pointer;
-    user-select:none;
-    touch-action:manipulation;
-    position:relative;
-  }
-  .padBtn:active{ transform:translateY(1px); }
-  .padBtn.on{ background: color-mix(in srgb, var(--trk) 12%, transparent); }
+.padBox{
+  border:1px solid var(--line);
+  border-radius:14px;
+  background:rgba(255,255,255,.22);
+  padding:10px;
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+  position:relative;
+}
+.padBox::before{
+  content:"";
+  position:absolute;
+  inset:0;
+  border-radius:14px;
+  border:2px solid color-mix(in srgb, var(--trk) 55%, transparent);
+  pointer-events:none;
+  opacity:.65;
+}
 
-  .padBtn .small{
-    display:block;
-    font-size:11px;
-    font-weight:800;
-    letter-spacing:.04em;
-    opacity:.75;
-    margin-top:4px;
-    text-transform:none;
-  }
+.padTop{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start;
+  gap:10px;
+}
+.padMeta{
+  display:flex;
+  flex-direction:column;
+  gap:4px;
+}
+.padType{
+  font-size:11px;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+  color:var(--muted);
+}
+.padName{
+  font-weight:900;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  font-size:12px;
+}
+.pill{
+  border:1px solid var(--line);
+  border-radius:999px;
+  padding:6px 8px;
+  background:rgba(255,255,255,.22);
+  white-space:nowrap;
+  font-size:11px;
+  letter-spacing:.06em;
+  text-transform:uppercase;
+  color:var(--muted);
+}
 
-  .miniRow{
-    display:flex;
-    gap:8px;
-    align-items:flex-start;
-    flex-wrap:wrap;
-  }
-  .tinyBtn{
-    border:1px solid var(--line);
-    background:transparent;
-    padding:8px 10px;
-    border-radius:12px;
-    font-size:11px;
-    font-weight:900;
-    letter-spacing:.06em;
-    text-transform:uppercase;
-    cursor:pointer;
-    touch-action:manipulation;
-  }
-  .tinyBtn.on{ background:rgba(0,0,0,.08); }
+.padBtn{
+  width:100%;
+  border:1px solid var(--line);
+  background:transparent;
+  border-radius:14px;
+  padding:12px 10px;
+  font-weight:900;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  font-size:12px;
+  cursor:pointer;
+  user-select:none;
+  touch-action:manipulation;
+  position:relative;
+}
+.padBtn:active{ transform:translateY(1px); }
+.padBtn.on{ background: color-mix(in srgb, var(--trk) 12%, transparent); }
 
-  .sctl{
-    flex:1;
-    min-width: 120px;
-    border:1px solid var(--line);
-    border-radius:12px;
-    padding:8px 10px;
-    background:rgba(255,255,255,.20);
-  }
-  .sctl .row{
-    display:flex;
-    justify-content:space-between;
-    gap:10px;
-    align-items:baseline;
-    margin-bottom:6px;
-  }
-  .sctl .lab{
-    font-size:11px;
-    letter-spacing:.08em;
-    text-transform:uppercase;
-    color:var(--muted);
-  }
-  .sctl .v{
-    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Courier New", monospace;
-    font-size:11px;
-    color:var(--ink);
-    opacity:.85;
-  }
-  .sctl input[type="range"]{
-    width:100%;
-    accent-color:#111;
-    touch-action: pan-y;
-  }
+.padBtn .small{
+  display:block;
+  font-size:11px;
+  font-weight:800;
+  letter-spacing:.04em;
+  opacity:.75;
+  margin-top:4px;
+  text-transform:none;
+}
 
-  .wave{
-    width:100%;
-    height:20px;
-    border-radius:10px;
-    border:1px solid var(--line2);
-    background:rgba(0,0,0,.03);
-    overflow:hidden;
-  }
-  canvas.waveform-canvas{
-    width:100%;
-    height:100%;
-    display:block;
-  }
+.miniRow{
+  display:flex;
+  gap:8px;
+  align-items:flex-start;
+  flex-wrap:wrap;
+}
+.tinyBtn{
+  border:1px solid var(--line);
+  background:transparent;
+  padding:8px 10px;
+  border-radius:12px;
+  font-size:11px;
+  font-weight:900;
+  letter-spacing:.06em;
+  text-transform:uppercase;
+  cursor:pointer;
+  touch-action:manipulation;
+}
+.tinyBtn.on{ background:rgba(0,0,0,.08); }
 
-  /* Steps */
-  .stepsWrap{
-    border:1px solid var(--line);
-    border-radius:14px;
-    background:rgba(255,255,255,.18);
-    padding:10px;
-    display:flex;
-    flex-direction:column;
-    gap:8px;
-  }
+.sctl{
+  flex:1;
+  min-width: 120px;
+  border:1px solid var(--line);
+  border-radius:12px;
+  padding:8px 10px;
+  background:rgba(255,255,255,.20);
+}
+.sctl .row{
+  display:flex;
+  justify-content:space-between;
+  gap:10px;
+  align-items:baseline;
+  margin-bottom:6px;
+}
+.sctl .lab{
+  font-size:11px;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  color:var(--muted);
+}
+.sctl .v{
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Courier New", monospace;
+  font-size:11px;
+  color:var(--ink);
+  opacity:.85;
+}
+.sctl input[type="range"]{
+  width:100%;
+  accent-color:#111;
+  touch-action: pan-y;
+}
 
-  .stepsHeader{
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-    gap:10px;
-    flex-wrap:wrap;
-  }
-  .trackLabel{
-    display:flex;
-    gap:8px;
-    align-items:center;
-    flex-wrap:wrap;
-    font-size:11px;
-    color:var(--muted);
-    letter-spacing:.04em;
-  }
-  .swatch{
-    width:12px; height:12px;
-    border-radius:4px;
-    background: var(--trk);
-    opacity:.85;
-    border:1px solid rgba(0,0,0,.25);
-  }
+.wave{
+  width:100%;
+  height:20px;
+  border-radius:10px;
+  border:1px solid var(--line2);
+  background:rgba(0,0,0,.03);
+  overflow:hidden;
+}
+canvas.waveform-canvas{
+  width:100%;
+  height:100%;
+  display:block;
+}
 
-  .steps{
-    display:grid;
-    grid-template-columns: repeat(16, 1fr);
-    gap:6px;
-  }
-  .step{
-    height:34px;
-    border-radius:10px;
-    border:1px solid var(--line2);
-    background:var(--stepOff);
-    cursor:pointer;
-    position:relative;
-    touch-action:none;
-    user-select:none;
-  }
-  .step.on{
-    background: color-mix(in srgb, var(--trk) 90%, #000);
-    border-color: color-mix(in srgb, var(--trk) 45%, rgba(0,0,0,.2));
-  }
-  .step.ph::after{
-    content:"";
-    position:absolute;
-    inset:-2px;
-    border-radius:12px;
-    outline:2px solid color-mix(in srgb, var(--trk) 55%, rgba(0,0,0,.15));
-    background:var(--playHead);
-    pointer-events:none;
-  }
-  .step.beat::before{
-    content:"";
-    position:absolute;
-    bottom:4px;
-    left:50%;
-    transform:translateX(-50%);
-    width:4px; height:4px;
-    border-radius:50%;
-    background:rgba(0,0,0,.20);
-  }
-  .step.on.beat::before{ background:rgba(255,255,255,.35); }
+/* Steps */
+.stepsWrap{
+  border:1px solid var(--line);
+  border-radius:14px;
+  background:rgba(255,255,255,.18);
+  padding:10px;
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
 
-  /* FX panel */
-  .fxPanel{ margin-top:12px; overflow:hidden; }
-  .fxHeader{
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-    gap:10px;
-    padding:10px;
-    border-bottom:1px solid var(--line);
-  }
-  .fxHeader .sectionTitle{
-    margin:0;
-    font-size:11px;
-    letter-spacing:.14em;
-    text-transform:uppercase;
-    color:var(--muted);
-  }
-  .fxBody{ padding:10px; display:none; }
-  .fxBody.open{ display:block; }
+.stepsHeader{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:10px;
+  flex-wrap:wrap;
+}
+.trackLabel{
+  display:flex;
+  gap:8px;
+  align-items:center;
+  flex-wrap:wrap;
+  font-size:11px;
+  color:var(--muted);
+  letter-spacing:.04em;
+}
+.swatch{
+  width:12px; height:12px;
+  border-radius:4px;
+  background: var(--trk);
+  opacity:.85;
+  border:1px solid rgba(0,0,0,.25);
+}
 
-  .fxGrid{
-    display:grid;
-    grid-template-columns: repeat(3, minmax(220px, 1fr));
-    gap:10px;
-  }
-  .fxCard{
-    border:1px solid var(--line);
-    border-radius:14px;
-    background:rgba(255,255,255,.20);
-    padding:10px;
-  }
-  .fxCardTop{
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-    gap:10px;
-    margin-bottom:10px;
-  }
-  .fxName{
-    font-weight:900;
-    letter-spacing:.08em;
-    text-transform:uppercase;
-    font-size:12px;
-  }
-  .fxSub{
-    font-size:11px;
-    color:var(--muted);
-    letter-spacing:.04em;
-  }
-  .fxRow{
-    display:flex;
-    flex-direction:column;
-    gap:6px;
-    margin-top:8px;
-  }
+.steps{
+  display:grid;
+  grid-template-columns: repeat(16, 1fr);
+  gap:6px;
+}
+.step{
+  height:34px;
+  border-radius:10px;
+  border:1px solid var(--line2);
+  background:var(--stepOff);
+  cursor:pointer;
+  position:relative;
+  touch-action:none;
+  user-select:none;
+}
+.step.on{
+  background: color-mix(in srgb, var(--trk) 90%, #000);
+  border-color: color-mix(in srgb, var(--trk) 45%, rgba(0,0,0,.2));
+}
+.step.ph::after{
+  content:"";
+  position:absolute;
+  inset:-2px;
+  border-radius:12px;
+  outline:2px solid color-mix(in srgb, var(--trk) 55%, rgba(0,0,0,.15));
+  background:var(--playHead);
+  pointer-events:none;
+}
+.step.beat::before{
+  content:"";
+  position:absolute;
+  bottom:4px;
+  left:50%;
+  transform:translateX(-50%);
+  width:4px; height:4px;
+  border-radius:50%;
+  background:rgba(0,0,0,.20);
+}
+.step.on.beat::before{ background:rgba(255,255,255,.35); }
 
-  /* Bottom */
-  .bottomBar{
-    margin-top:12px;
-    display:flex;
-    justify-content:space-between;
-    gap:10px;
-    flex-wrap:wrap;
-    padding:10px;
-    border:1px solid var(--line);
-    border-radius:14px;
-    background:rgba(255,255,255,.18);
-  }
-  .patBtns{ display:flex; gap:6px; align-items:center; flex-wrap:wrap; }
-  .patLabel{ font-size:11px; color:var(--muted); letter-spacing:.08em; text-transform:uppercase; }
-  .patBtn{
-    border:1px solid var(--line);
-    background:transparent;
-    padding:8px 10px;
-    border-radius:12px;
-    font-size:11px;
-    font-weight:900;
-    letter-spacing:.08em;
-    text-transform:uppercase;
-    cursor:pointer;
-    touch-action:manipulation;
-  }
-  .patBtn.active{ background:rgba(0,0,0,.08); }
+/* FX panel */
+.fxPanel{ margin-top:12px; overflow:hidden; }
+.fxHeader{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:10px;
+  padding:10px;
+  border-bottom:1px solid var(--line);
+}
+.fxHeader .sectionTitle{
+  margin:0;
+  font-size:11px;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:var(--muted);
+}
+.fxBody{ padding:10px; display:none; }
+.fxBody.open{ display:block; }
 
-  .sectionTitle{
-    font-size:11px;
-    letter-spacing:.14em;
-    text-transform:uppercase;
-    color:var(--muted);
-    margin:0;
-  }
+.fxGrid{
+  display:grid;
+  grid-template-columns: repeat(3, minmax(220px, 1fr));
+  gap:10px;
+}
+.fxCard{
+  border:1px solid var(--line);
+  border-radius:14px;
+  background:rgba(255,255,255,.20);
+  padding:10px;
+}
+.fxCardTop{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:10px;
+  margin-bottom:10px;
+}
+.fxName{
+  font-weight:900;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  font-size:12px;
+}
+.fxSub{
+  font-size:11px;
+  color:var(--muted);
+  letter-spacing:.04em;
+}
+.fxRow{
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+  margin-top:8px;
+}
 
-  .loading-msg{
-    position: fixed; inset: 0;
-    background: rgba(0,0,0,0.55);
-    display:flex; align-items:center; justify-content:center;
-    z-index: 9000;
-    font-weight:900;
-    letter-spacing:.14em;
-    text-transform:uppercase;
-    color:#fff;
-    opacity: 0;
-    pointer-events:none;
-    transition: opacity 0.2s;
-  }
-  .loading-msg.show{ opacity:1; pointer-events:auto; }
+/* Bottom */
+.bottomBar{
+  margin-top:12px;
+  display:flex;
+  justify-content:space-between;
+  gap:10px;
+  flex-wrap:wrap;
+  padding:10px;
+  border:1px solid var(--line);
+  border-radius:14px;
+  background:rgba(255,255,255,.18);
+}
+.patBtns{ display:flex; gap:6px; align-items:center; flex-wrap:wrap; }
+.patLabel{ font-size:11px; color:var(--muted); letter-spacing:.08em; text-transform:uppercase; }
+.patBtn{
+  border:1px solid var(--line);
+  background:transparent;
+  padding:8px 10px;
+  border-radius:12px;
+  font-size:11px;
+  font-weight:900;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  cursor:pointer;
+  touch-action:manipulation;
+}
+.patBtn.active{ background:rgba(0,0,0,.08); }
 
-  @media (max-width: 980px){
-    .trackRow{ grid-template-columns: 1fr; }
-  }
-  @media (max-width: 420px){
-    .knob{ min-width: 150px; }
-    .steps{ gap:5px; }
-    .step{ height:28px; border-radius:9px; }
-    .padBtn{ padding:11px 10px; }
-    .sctl{ min-width: 110px; }
-  }
+.sectionTitle{
+  font-size:11px;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:var(--muted);
+  margin:0;
+}
+
+.loading-msg{
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.55);
+  display:flex; align-items:center; justify-content:center;
+  z-index: 9000;
+  font-weight:900;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:#fff;
+  opacity: 0;
+  pointer-events:none;
+  transition: opacity 0.2s;
+}
+.loading-msg.show{ opacity:1; pointer-events:auto; }
+
+@media (max-width: 980px){
+  .trackRow{ grid-template-columns: 1fr; }
+}
+@media (max-width: 420px){
+  .knob{ min-width: 150px; }
+  .steps{ gap:5px; }
+  .step{ height:28px; border-radius:9px; }
+  .padBtn{ padding:11px 10px; }
+  .sctl{ min-width: 110px; }
+}
 </style>
 </head>
 
@@ -567,9 +575,9 @@
       <div class="title">
         <h1>SamPtu 303 — LoFi Sampler · Drum Machine</h1>
         <div class="subRow">
-  <span class="sub">1 track = 1 row · pad + controls aligned with sequencer · color-coded</span>
-  <span id="fxBadge" class="badge">FX Hidden</span>
-</div>
+          <span class="sub">1 track = 1 row · pad + controls aligned with sequencer · color-coded</span>
+          <span id="fxBadge" class="badge">FX Hidden</span>
+        </div>
       </div>
 
       <div class="panel controls" aria-label="Transport">
@@ -603,7 +611,7 @@
           </div>
         </div>
 
-        <button id="fxToggleBtn" class="btn">FX</button>
+        <button id="fxToggleBtn" class="btn" aria-expanded="false">FX</button>
       </div>
     </div>
 
@@ -952,29 +960,25 @@ function initAudio() {
   vinylCrackleNode.connect(vinylCrackleGain);
 
   // --- VINYL: wow + flutter -> micro delay time modulation ---
-  // Micro delay gives a pitch/time wobble WITHOUT volume pumping
   vinylWarpDelay = audioCtx.createDelay(0.05);   // max 50ms
-  vinylWarpDelay.delayTime.value = 0.0075;       // base ~7.5ms (subtle)
+  vinylWarpDelay.delayTime.value = 0.0075;       // base ~7.5ms
 
-  // WOW (slow)
   vinylWowOsc = audioCtx.createOscillator();
   vinylWowOsc.type = 'sine';
-  vinylWowOsc.frequency.value = 0.35; // ~0.35Hz
+  vinylWowOsc.frequency.value = 0.35;
 
   vinylWowGain = audioCtx.createGain();
-  vinylWowGain.gain.value = 0; // scaled in updateFxGains
+  vinylWowGain.gain.value = 0;
   vinylWowOsc.connect(vinylWowGain);
 
-  // FLUTTER (fast, subtle)
   vinylFlutterOsc = audioCtx.createOscillator();
   vinylFlutterOsc.type = 'sine';
-  vinylFlutterOsc.frequency.value = 6.0; // ~6Hz
+  vinylFlutterOsc.frequency.value = 6.0;
 
   vinylFlutterGain = audioCtx.createGain();
-  vinylFlutterGain.gain.value = 0; // scaled in updateFxGains
+  vinylFlutterGain.gain.value = 0;
   vinylFlutterOsc.connect(vinylFlutterGain);
 
-  // Both to delayTime
   vinylWowGain.connect(vinylWarpDelay.delayTime);
   vinylFlutterGain.connect(vinylWarpDelay.delayTime);
 
@@ -1009,7 +1013,6 @@ function initAudio() {
   vinylWetGain.connect(vinylWarpDelay);
   vinylWarpDelay.connect(vinylOut);
 
-  // Crackle injected but only audible when Vinyl ON (gain controlled)
   vinylCrackleGain.connect(vinylOut);
 
   vinylOut.connect(masterOut);
@@ -1037,28 +1040,18 @@ function updateFxGains() {
     vinylDryGain.gain.value = 1 - FX.vinylmix;
     vinylWetGain.gain.value = FX.vinylmix;
 
-    // Depth mapping (seconds):
-    // - wow is bigger, slow
-    // - flutter is smaller, fast
-    // warp knob scales both (nonlinear for nicer response)
     const w = Math.max(0, Math.min(1, FX.vinylwarp));
     const warp = Math.pow(w, 1.2);
 
-    // base delay stays constant; modulation adds on top
-    // wow depth: up to ~2.2ms
     vinylWowGain.gain.value = warp * 0.0022;
-
-    // flutter depth: up to ~0.35ms
     vinylFlutterGain.gain.value = warp * 0.00035;
 
-    // crackle only when vinyl ON
     if (vinylCrackleGain) vinylCrackleGain.gain.value = FX.vinylcrackle * 0.04;
   } else {
     vinylDryGain.gain.value = 1;
     vinylWetGain.gain.value = 0;
     if (vinylCrackleGain) vinylCrackleGain.gain.value = 0;
 
-    // no modulation when off
     vinylWowGain.gain.value = 0;
     vinylFlutterGain.gain.value = 0;
   }
@@ -1373,19 +1366,17 @@ function setFxUiOpen(isOpen){
 
   body.classList.toggle('open', isOpen);
 
-  // bouton FX (couleur)
   btn.classList.toggle('on', isOpen);
   btn.classList.toggle('fx-on', isOpen);
   btn.setAttribute('aria-expanded', String(isOpen));
   btn.textContent = isOpen ? 'FX On-Screen' : 'FX';
 
-  // badge FX (état)
   if (badge){
     badge.classList.toggle('on', isOpen);
     badge.textContent = isOpen ? 'FX Shown' : 'FX Hidden';
   }
 }
-  
+
 function applyFxFromUI(){
   FX.bits = +document.getElementById('bits').value;
   FX.srate = +document.getElementById('srate').value;
@@ -1446,7 +1437,6 @@ function buildTracks(){
     const row = document.createElement('div');
     row.className = 'trackRow';
 
-    // LEFT: pad box
     const padBox = document.createElement('div');
     padBox.className = 'padBox';
 
@@ -1570,7 +1560,6 @@ function buildTracks(){
       }, { passive:false });
     }
 
-    // RIGHT: steps wrap
     const stepsWrap = document.createElement('div');
     stepsWrap.className = 'stepsWrap';
 
@@ -1660,9 +1649,16 @@ function wireUI(){
     seqStop();
   });
 
+  // ✅ CORRECTION #1: utiliser setFxUiOpen() (sync bouton + badge)
   const fxToggleBtn = document.getElementById('fxToggleBtn');
   const fxBody = document.getElementById('fxBody');
-  fxToggleBtn.addEventListener('click', () => fxBody.classList.toggle('open'));
+
+  setFxUiOpen(false); // état initial fermé + badge/button sync
+
+  fxToggleBtn.addEventListener('click', () => {
+    const open = !fxBody.classList.contains('open');
+    setFxUiOpen(open);
+  });
 
   const tsBtn = document.getElementById('tsToggleBtn');
   const syncTsBtn = () => {
