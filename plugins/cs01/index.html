@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-<title>RhS01 — Braids Classics + Direct Digital · Degree Chord Sequencer</title>
+<title>RhS01 — Braids Classics + Direct Digital · Degree Chord Sequencer (POLY RHODES)</title>
 
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;600;700&family=Share+Tech+Mono&display=swap');
@@ -344,6 +344,7 @@
     border: 1px solid rgba(58,42,21,0.7);
     border-radius: 14px;
     overflow:hidden;
+    touch-action:none;
   }
   .white-keys{
     display:flex;
@@ -358,6 +359,7 @@
     border: 1px solid #ccc;
     cursor:pointer;
     box-shadow: 0 8px 14px rgba(0,0,0,0.28);
+    touch-action:none;
   }
   .white-key.active{ background: linear-gradient(180deg,#f7e4c1,#f0d39b); }
 
@@ -376,6 +378,7 @@
     border: 1px solid #000;
     box-shadow: 2px 10px 14px rgba(0,0,0,0.55);
     cursor:pointer;
+    touch-action:none;
   }
   .black-key.active{ background: linear-gradient(180deg,#3a2a15,#1a1208); }
 
@@ -403,7 +406,7 @@
   <div class="app">
     <header>
       <h1>RhS01 · BRAIDS (CLASSICS + DIRECT)</h1>
-      <div class="sub">8 modèles officiels (subset) · Degree Chord Sequencer · House / Neo-Soul / Rhodes</div>
+      <div class="sub">8 modèles officiels (subset) · Degree Chord Sequencer · House / Neo-Soul / Rhodes · POLY</div>
     </header>
 
     <div class="frame">
@@ -534,7 +537,7 @@
           <div class="brand">
             <div class="yam">BANTU Ins.</div>
             <div class="cs01">RhS01</div>
-            <div class="tag">MONO · BRAIDS MODELS · KEYS/SEQ</div>
+            <div class="tag">POLY · BRAIDS MODELS · KEYS/SEQ</div>
           </div>
           <div class="note" id="noteDisplay">---</div>
         </div>
@@ -546,7 +549,7 @@
       </div>
     </div>
 
-    <div class="footer">Braids models (8) · Classics + Direct Digital · Mono synth + chord-degree sequencer</div>
+    <div class="footer">Braids models (8) · Classics + Direct Digital · POLY Rhodes-ish + chord-degree sequencer</div>
   </div>
 
 <script>
@@ -734,30 +737,42 @@ var WORKLET_LINES = [
 '}',
 'registerProcessor("braids-8", Braids8);'
 ];
-
 var WORKLET_CODE = WORKLET_LINES.join('\n');
 
 /* ============================================================
-   Audio engine
+   POLY AUDIO ENGINE (Rhodes-ish) + helpers
 ============================================================ */
-var audioCtx   = null;
-var oscNode    = null;
-var filterNode = null;
-var ampNode    = null;
-var currentNote = null;
+var audioCtx = null;
+
+var MAX_VOICES = 10;
+var voices = [];
+var mixBus = null;
+var masterFilter = null;
+var masterGain = null;
+
+var chorusIn = null, chorusOut = null;
+var chDelayL = null, chDelayR = null;
+var chLfo = null, chLfoGainL = null, chLfoGainR = null;
+
+var tremLfo = null, tremLfoGain = null;
+var tremDepth = 0.18;
+
+var activeNotes = new Map(); // midi -> Set(voiceId)
+var currentPointers = new Map(); // pointerId -> midi
 
 var params = {
-  model:     1,
-  timbre:    0.50,
+  // Rhodes-ish defaults
+  model:     7,
+  timbre:    0.65,
   color:     0.35,
-  detune:    0.10,
+  detune:    0.18,
   sub:       0.00,
-  cutoff:    9000,
-  resonance: 0.90,
-  attack:    0.008,
-  release:   0.35,
-  sustain:   0.75,
-  level:     0.70,
+  cutoff:    7200,
+  resonance: 0.70,
+  attack:    0.004,
+  release:   0.55,
+  sustain:   0.32,
+  level:     0.75,
 };
 
 var MODELS = [
@@ -776,89 +791,240 @@ function midiToName(midi){
   var names=['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
   return names[midi%12] + Math.floor(midi/12 - 1);
 }
-
 function createWorkletURL(){
   return URL.createObjectURL(new Blob([WORKLET_CODE], { type:"application/javascript" }));
+}
+function oscParam(node, name){
+  if (!node || !node.parameters) return null;
+  return node.parameters.get(name);
+}
+
+function makeVoice(id){
+  return { id:id, node:null, gain:null, lastOn:0, midi:null, active:false };
 }
 
 async function initAudio(){
   if (audioCtx) return;
+
   audioCtx = new (window.AudioContext || window.webkitAudioContext)();
   var url = createWorkletURL();
   await audioCtx.audioWorklet.addModule(url);
   try { URL.revokeObjectURL(url); } catch(e){}
 
-  oscNode = new AudioWorkletNode(audioCtx, "braids-8", {
-    numberOfInputs: 0,
-    numberOfOutputs: 1,
-    outputChannelCount: [1],
-  });
+  mixBus = audioCtx.createGain();
+  mixBus.gain.value = 1.0;
 
-  filterNode = audioCtx.createBiquadFilter();
-  filterNode.type = "lowpass";
+  masterFilter = audioCtx.createBiquadFilter();
+  masterFilter.type = "lowpass";
 
-  ampNode = audioCtx.createGain();
-  ampNode.gain.value = 0;
+  // chorus
+  chorusIn = audioCtx.createGain();
+  chorusOut = audioCtx.createGain();
+  chDelayL = audioCtx.createDelay(0.05);
+  chDelayR = audioCtx.createDelay(0.05);
+  chDelayL.delayTime.value = 0.012;
+  chDelayR.delayTime.value = 0.017;
 
-  oscNode.connect(filterNode);
-  filterNode.connect(ampNode);
-  ampNode.connect(audioCtx.destination);
+  chLfo = audioCtx.createOscillator();
+  chLfo.frequency.value = 0.35;
+  chLfoGainL = audioCtx.createGain();
+  chLfoGainR = audioCtx.createGain();
+  chLfoGainL.gain.value = 0.0025;
+  chLfoGainR.gain.value = -0.0020;
+  chLfo.connect(chLfoGainL); chLfo.connect(chLfoGainR);
+  chLfoGainL.connect(chDelayL.delayTime);
+  chLfoGainR.connect(chDelayR.delayTime);
+  chLfo.start();
+
+  // tremolo
+  tremLfo = audioCtx.createOscillator();
+  tremLfo.frequency.value = 4.6;
+  tremLfoGain = audioCtx.createGain();
+  tremLfoGain.gain.value = tremDepth * 0.5;
+  tremLfo.connect(tremLfoGain);
+  tremLfo.start();
+
+  masterGain = audioCtx.createGain();
+  masterGain.gain.value = 0.95;
+
+  mixBus.connect(masterFilter);
+  masterFilter.connect(chorusIn);
+
+  // dry
+  chorusIn.connect(chorusOut);
+  // wet
+  chorusIn.connect(chDelayL); chorusIn.connect(chDelayR);
+  chDelayL.connect(chorusOut);
+  chDelayR.connect(chorusOut);
+
+  chorusOut.connect(masterGain);
+  masterGain.connect(audioCtx.destination);
+
+  // tremolo modulation
+  var tremBase = audioCtx.createConstantSource();
+  tremBase.offset.value = masterGain.gain.value * (1.0 - tremDepth * 0.5);
+  tremBase.start();
+  tremBase.connect(masterGain.gain);
+  tremLfoGain.connect(masterGain.gain);
+
+  // voices
+  voices = [];
+  for(var i=0;i<MAX_VOICES;i++){
+    var v = makeVoice(i);
+    v.node = new AudioWorkletNode(audioCtx, "braids-8", {
+      numberOfInputs: 0,
+      numberOfOutputs: 1,
+      outputChannelCount: [1],
+    });
+    v.gain = audioCtx.createGain();
+    v.gain.gain.value = 0;
+
+    v.node.connect(v.gain);
+    v.gain.connect(mixBus);
+
+    voices.push(v);
+  }
 
   applyAllParams();
-}
-
-function oscParam(name){
-  if (!oscNode || !oscNode.parameters) return null;
-  return oscNode.parameters.get(name);
 }
 
 function applyAllParams(){
   if (!audioCtx) return;
   var now = audioCtx.currentTime;
-  var p;
-  p = oscParam("model");  if(p) p.setValueAtTime(params.model,  now);
-  p = oscParam("timbre"); if(p) p.setValueAtTime(params.timbre, now);
-  p = oscParam("color");  if(p) p.setValueAtTime(params.color,  now);
-  p = oscParam("detune"); if(p) p.setValueAtTime(params.detune, now);
-  p = oscParam("sub");    if(p) p.setValueAtTime(params.sub,    now);
-  p = oscParam("gain");   if(p) p.setValueAtTime(1.0,           now);
-  filterNode.frequency.setValueAtTime(params.cutoff,     now);
-  filterNode.Q.setValueAtTime(params.resonance, now);
+
+  masterFilter.frequency.setValueAtTime(params.cutoff, now);
+  masterFilter.Q.setValueAtTime(params.resonance, now);
+
+  for(var i=0;i<voices.length;i++){
+    var n = voices[i].node;
+    var p;
+    p = oscParam(n,"model");  if(p) p.setValueAtTime(params.model,  now);
+    p = oscParam(n,"timbre"); if(p) p.setValueAtTime(params.timbre, now);
+    p = oscParam(n,"color");  if(p) p.setValueAtTime(params.color,  now);
+    p = oscParam(n,"detune"); if(p) p.setValueAtTime(params.detune, now);
+    p = oscParam(n,"sub");    if(p) p.setValueAtTime(params.sub,    now);
+    p = oscParam(n,"gain");   if(p) p.setValueAtTime(1.0,           now);
+  }
 }
 
-function gateOn(){
-  var now = audioCtx.currentTime;
-  var g = ampNode.gain;
-  g.cancelScheduledValues(now);
-  g.setValueAtTime(g.value, now);
-  g.linearRampToValueAtTime(params.level, now + params.attack);
-  g.linearRampToValueAtTime(params.level * params.sustain, now + params.attack + 0.10);
+function findFreeVoice(){
+  for(var i=0;i<voices.length;i++){
+    if(!voices[i].active) return voices[i];
+  }
+  // steal oldest
+  var oldest = voices[0];
+  for(var j=0;j<voices.length;j++){
+    if(voices[j].lastOn < oldest.lastOn) oldest = voices[j];
+  }
+  return oldest;
 }
 
-function gateOff(timeOverride){
-  if (!audioCtx) return;
-  var now = (timeOverride != null) ? timeOverride : audioCtx.currentTime;
-  var g = ampNode.gain;
-  g.cancelScheduledValues(now);
-  g.setValueAtTime(g.value, now);
-  g.linearRampToValueAtTime(0, now + params.release);
+function voiceGateOn(v, t, velocity){
+  var g = v.gain.gain;
+  var a = params.attack;
+  var peak = params.level * (0.55 + 0.45*(velocity||1.0));
+  var sus = peak * params.sustain;
+
+  g.cancelScheduledValues(t);
+  g.setValueAtTime(g.value, t);
+  g.linearRampToValueAtTime(peak, t + a);
+  g.linearRampToValueAtTime(sus, t + a + 0.06);
+  g.setTargetAtTime(sus, t + a + 0.06, 0.02);
+
+  v.active = true;
 }
 
-async function playNote(midi){
+function voiceGateOff(v, t){
+  var g = v.gain.gain;
+  var rel = params.release;
+
+  g.cancelScheduledValues(t);
+  g.setValueAtTime(g.value, t);
+  g.linearRampToValueAtTime(0.0, t + rel);
+
+  var offAt = t + rel + 0.02;
+  setTimeout(function(){
+    if(audioCtx && audioCtx.currentTime >= offAt - 0.01){
+      if(v.midi === null) v.active = false;
+    }
+  }, Math.max(0, (offAt - audioCtx.currentTime) * 1000));
+}
+
+async function noteOn(midi, velocity, timeOverride){
   await initAudio();
   if (audioCtx.state === "suspended") await audioCtx.resume();
-  currentNote = midi;
+
+  var t = (timeOverride!=null) ? timeOverride : audioCtx.currentTime;
+  var v = findFreeVoice();
+
+  // if stealing active voice, quick fade
+  if (v.active && v.midi !== null){
+    v.midi = null;
+    v.gain.gain.cancelScheduledValues(t);
+    v.gain.gain.setValueAtTime(v.gain.gain.value, t);
+    v.gain.gain.linearRampToValueAtTime(0.0, t + 0.01);
+  }
+
+  var p = oscParam(v.node, "freq");
+  if (p) p.setValueAtTime(noteToFreq(midi), t);
+
+  voiceGateOn(v, t, velocity||1.0);
+
+  v.midi = midi;
+  v.lastOn = t;
+
+  if(!activeNotes.has(midi)) activeNotes.set(midi, new Set());
+  activeNotes.get(midi).add(v.id);
+
   document.getElementById("noteDisplay").textContent = midiToName(midi);
-  var p = oscParam("freq");
-  if (p) p.setValueAtTime(noteToFreq(midi), audioCtx.currentTime);
-  gateOn();
 }
 
-function stopNote(){
-  if (!audioCtx) return;
-  gateOff();
-  currentNote = null;
+function noteOff(midi, timeOverride){
+  if(!audioCtx) return;
+  var t = (timeOverride!=null) ? timeOverride : audioCtx.currentTime;
+
+  var set = activeNotes.get(midi);
+  if(!set || set.size===0) return;
+
+  set.forEach(function(vid){
+    var v = voices[vid];
+    if(!v) return;
+    if(v.midi === midi){
+      v.midi = null;
+      voiceGateOff(v, t);
+    }
+  });
+
+  activeNotes.delete(midi);
+
+  if(activeNotes.size===0){
+    document.getElementById("noteDisplay").textContent = "---";
+  }
+}
+
+function allNotesOff(){
+  if(!audioCtx) return;
+  var now = audioCtx.currentTime;
+  activeNotes.forEach(function(_, midi){
+    noteOff(midi, now);
+  });
+  activeNotes.clear();
   document.getElementById("noteDisplay").textContent = "---";
+}
+
+/* Keep compatibility names */
+async function playNote(midi){ return noteOn(midi, 1.0, null); }
+function stopNote(midi){ return noteOff(midi, null); }
+
+/* Poly chord scheduling for sequencer */
+function scheduleChord(notes, tStart, durGate, gapSec){
+  if(!audioCtx || !notes || notes.length===0) return;
+  for(var i=0;i<notes.length;i++){
+    var tOn = tStart + i*gapSec;
+    var tOff = tStart + Math.max(0.01, durGate);
+    noteOn(notes[i], 0.95, tOn);
+    noteOff(notes[i], tOff);
+  }
 }
 
 /* ============================================================
@@ -875,7 +1041,7 @@ function renderModes(){
     btn.innerHTML = "<b>" + m.icon + " " + m.name + "</b><span>" + m.group + " \xB7 " + m.hint + "</span>";
     btn.addEventListener("click", function(){
       params.model = m.id;
-      if (audioCtx){ var p=oscParam("model"); if(p) p.setValueAtTime(params.model, audioCtx.currentTime); }
+      if (audioCtx){ applyAllParams(); }
       renderModes();
     });
     modeGrid.appendChild(btn);
@@ -892,7 +1058,6 @@ function setRangeVisual(el){
   var max = parseFloat(el.max);
   el.style.setProperty("--pct", ((v-min)/(max-min)*100).toFixed(1) + "%");
 }
-
 function bindRange(id, onChange){
   var el = document.getElementById(id);
   setRangeVisual(el);
@@ -905,32 +1070,32 @@ function bindRange(id, onChange){
 bindRange("timbre", function(v){
   params.timbre = v/100;
   document.getElementById("v-timbre").textContent = params.timbre.toFixed(2);
-  if(audioCtx){ var p=oscParam("timbre"); if(p) p.setValueAtTime(params.timbre, audioCtx.currentTime); }
+  if(audioCtx) applyAllParams();
 });
 bindRange("color", function(v){
   params.color = v/100;
   document.getElementById("v-color").textContent = params.color.toFixed(2);
-  if(audioCtx){ var p=oscParam("color"); if(p) p.setValueAtTime(params.color, audioCtx.currentTime); }
+  if(audioCtx) applyAllParams();
 });
 bindRange("detune", function(v){
   params.detune = v/100;
   document.getElementById("v-detune").textContent = params.detune.toFixed(2);
-  if(audioCtx){ var p=oscParam("detune"); if(p) p.setValueAtTime(params.detune, audioCtx.currentTime); }
+  if(audioCtx) applyAllParams();
 });
 bindRange("sub", function(v){
   params.sub = v/100;
   document.getElementById("v-sub").textContent = params.sub.toFixed(2);
-  if(audioCtx){ var p=oscParam("sub"); if(p) p.setValueAtTime(params.sub, audioCtx.currentTime); }
+  if(audioCtx) applyAllParams();
 });
 bindRange("cutoff", function(v){
   params.cutoff = v;
   document.getElementById("v-cutoff").textContent = Math.round(v);
-  if(audioCtx) filterNode.frequency.setValueAtTime(params.cutoff, audioCtx.currentTime);
+  if(audioCtx) masterFilter.frequency.setValueAtTime(params.cutoff, audioCtx.currentTime);
 });
 bindRange("resonance", function(v){
   params.resonance = parseFloat((v/100).toFixed(2));
   document.getElementById("v-reso").textContent = params.resonance.toFixed(2);
-  if(audioCtx) filterNode.Q.setValueAtTime(params.resonance, audioCtx.currentTime);
+  if(audioCtx) masterFilter.Q.setValueAtTime(params.resonance, audioCtx.currentTime);
 });
 bindRange("attack", function(v){
   params.attack = Math.max(0.001, v/1000);
@@ -962,7 +1127,7 @@ document.getElementById("v-sus").textContent    = params.sustain.toFixed(2);
 document.getElementById("v-level").textContent  = params.level.toFixed(2);
 
 /* ============================================================
-   Degree Chord Sequencer
+   Degree Chord Sequencer (inchangé sauf stop/allNotesOff)
 ============================================================ */
 var DEG_STEPS = 16;
 
@@ -1097,30 +1262,7 @@ function getRhodesVoicingForDegree(degIdx){
   return best||getNeoSoulVoicingForDegree(degIdx);
 }
 
-/* Schedule a chord: one amp envelope, multiple freq changes */
-function scheduleChord(notes, tStart, durGate, gapSec){
-  if(!audioCtx||notes.length===0) return;
-  var g=ampNode.gain;
-  var a=params.attack, rel=params.release, peak=params.level, sus=params.sustain;
-
-  // Set freq for each note at staggered times
-  for(var i=0;i<notes.length;i++){
-    var p=oscParam("freq");
-    if(p) p.setValueAtTime(noteToFreq(notes[i]), tStart + i*gapSec);
-  }
-
-  // Single amp envelope from tStart
-  g.cancelScheduledValues(tStart-0.001);
-  g.setValueAtTime(0, tStart);
-  g.linearRampToValueAtTime(peak, tStart+a);
-  g.linearRampToValueAtTime(peak*sus, tStart+a+0.08);
-  var tOff=Math.max(tStart+0.01, tStart+durGate);
-  g.setValueAtTime(peak*sus, tOff);
-  g.linearRampToValueAtTime(0, tOff+rel);
-}
-
 function stepDurationSec(){ return (60/seq.bpm)/4; }
-
 function swingDelayForStep(stepIdx){
   var base=stepDurationSec();
   var amt=(seq.swing-0.5)*0.5;
@@ -1131,7 +1273,6 @@ function clearSeqHighlights(){
   var els=document.querySelectorAll(".degStep.ph");
   for(var i=0;i<els.length;i++) els[i].classList.remove("ph");
 }
-
 function setSeqLed(stepIdx){
   document.getElementById("seqLed").textContent = String(stepIdx+1).padStart(2,"0");
 }
@@ -1162,9 +1303,9 @@ async function seqTick(){
       scheduleChord(v, now, Math.max(0.04,gateDur*0.55), Math.max(0.02,dur*0.16));
       lastVoicing=v.slice();
     } else {
-      var v=getRhodesVoicingForDegree(deg);
-      scheduleChord(v, now, Math.max(0.05,gateDur*0.62), Math.max(0.02,dur*0.17));
-      lastVoicing=v.slice();
+      var vr=getRhodesVoicingForDegree(deg);
+      scheduleChord(vr, now, Math.max(0.05,gateDur*0.62), Math.max(0.02,dur*0.17));
+      lastVoicing=vr.slice();
     }
     document.getElementById("noteDisplay").textContent = degreeLabel(deg, seq.scale);
   }
@@ -1188,7 +1329,7 @@ function seqStartStop(){
     btn.classList.remove("on");
     clearSeqHighlights();
     document.getElementById("seqLed").textContent="--";
-    if(audioCtx) gateOff(audioCtx.currentTime);
+    allNotesOff();
   }
 }
 
@@ -1201,7 +1342,7 @@ function seqStop(){
   clearSeqHighlights();
   document.getElementById("seqLed").textContent="--";
   lastVoicing=null;
-  if(audioCtx) gateOff(audioCtx.currentTime);
+  allNotesOff();
 }
 
 function cycleDegree(stepIdx){
@@ -1242,9 +1383,9 @@ function renderDegGrid(){
             scheduleChord(v, now, 0.16, 0.03);
             lastVoicing=v.slice();
           } else {
-            var v=getRhodesVoicingForDegree(d);
-            scheduleChord(v, now, 0.18, 0.03);
-            lastVoicing=v.slice();
+            var vr=getRhodesVoicingForDegree(d);
+            scheduleChord(vr, now, 0.18, 0.03);
+            lastVoicing=vr.slice();
           }
         }
       },{passive:false});
@@ -1308,7 +1449,7 @@ renderDegGrid();
 })();
 
 /* ============================================================
-   Piano keyboard
+   Piano keyboard (POLY, multi-touch via pointer events)
 ============================================================ */
 var startMidi=48, numOctaves=3;
 var whitePattern=[0,2,4,5,7,9,11];
@@ -1324,13 +1465,26 @@ for(var oct=0;oct<numOctaves;oct++){
       var key=document.createElement("div");
       key.className="white-key";
       key.dataset.midi=midi;
-      var down=function(e){ e.preventDefault(); playNote(midi); key.classList.add("active"); };
-      var up=function(e){ e.preventDefault(); stopNote(); key.classList.remove("active"); };
-      key.addEventListener("touchstart",down,{passive:false});
-      key.addEventListener("touchend",up,{passive:false});
-      key.addEventListener("mousedown",down);
-      key.addEventListener("mouseup",up);
-      key.addEventListener("mouseleave",function(){ key.classList.remove("active"); });
+
+      key.addEventListener("pointerdown", async function(e){
+        e.preventDefault();
+        key.setPointerCapture(e.pointerId);
+        currentPointers.set(e.pointerId, midi);
+        key.classList.add("active");
+        await noteOn(midi, 1.0, null);
+      }, {passive:false});
+
+      function upLike(e){
+        e.preventDefault();
+        var m = currentPointers.get(e.pointerId);
+        currentPointers.delete(e.pointerId);
+        key.classList.remove("active");
+        if(m!=null) noteOff(m, null);
+      }
+      key.addEventListener("pointerup", upLike, {passive:false});
+      key.addEventListener("pointercancel", upLike, {passive:false});
+      key.addEventListener("pointerleave", function(){ /* visual only */ });
+
       whiteKeysEl.appendChild(key);
     })(startMidi + oct*12 + whitePattern[wi]);
   }
@@ -1342,6 +1496,7 @@ function buildBlackKeys(){
   var pianoW=pianoEl.clientWidth||800;
   var whiteW=pianoW/totalWhites;
   var wIdx=0;
+
   for(var o=0;o<numOctaves;o++){
     for(var i=0;i<7;i++){
       var semi=blackPattern[i];
@@ -1354,13 +1509,25 @@ function buildBlackKeys(){
           key.dataset.midi=midi;
           key.style.left=leftPct+"%";
           key.style.width=widthPct+"%";
-          var down=function(e){ e.preventDefault(); e.stopPropagation(); playNote(midi); key.classList.add("active"); };
-          var up=function(e){ e.preventDefault(); stopNote(); key.classList.remove("active"); };
-          key.addEventListener("touchstart",down,{passive:false});
-          key.addEventListener("touchend",up,{passive:false});
-          key.addEventListener("mousedown",down);
-          key.addEventListener("mouseup",up);
-          key.addEventListener("mouseleave",function(){ key.classList.remove("active"); });
+
+          key.addEventListener("pointerdown", async function(e){
+            e.preventDefault(); e.stopPropagation();
+            key.setPointerCapture(e.pointerId);
+            currentPointers.set(e.pointerId, midi);
+            key.classList.add("active");
+            await noteOn(midi, 1.0, null);
+          }, {passive:false});
+
+          function upLike(e){
+            e.preventDefault();
+            var m = currentPointers.get(e.pointerId);
+            currentPointers.delete(e.pointerId);
+            key.classList.remove("active");
+            if(m!=null) noteOff(m, null);
+          }
+          key.addEventListener("pointerup", upLike, {passive:false});
+          key.addEventListener("pointercancel", upLike, {passive:false});
+
           blackKeysEl.appendChild(key);
         })(startMidi+o*12+semi, wIdx);
       }
@@ -1369,21 +1536,20 @@ function buildBlackKeys(){
   }
 }
 
-/* FIX: use requestAnimationFrame so layout is ready before measuring clientWidth */
 requestAnimationFrame(function(){ buildBlackKeys(); });
 window.addEventListener("resize", buildBlackKeys);
 
-/* QWERTY shortcuts */
+/* QWERTY shortcuts (poly) */
 var keyMap={'a':48,'w':49,'s':50,'e':51,'d':52,'f':53,'t':54,'g':55,'y':56,'h':57,'u':58,'j':59,'k':60,'o':61,'l':62,'p':63,';':64};
 document.addEventListener("keydown", function(e){
   if(e.repeat) return;
   if(e.key===" "){ e.preventDefault(); seqStartStop(); return; }
   var midi=keyMap[e.key.toLowerCase()];
-  if(midi!==undefined) playNote(midi);
+  if(midi!==undefined) noteOn(midi, 1.0, null);
 });
 document.addEventListener("keyup", function(e){
   var midi=keyMap[e.key.toLowerCase()];
-  if(midi!==undefined&&currentNote===midi) stopNote();
+  if(midi!==undefined) noteOff(midi, null);
 });
 </script>
 </body>
