@@ -924,6 +924,7 @@ function initAudio() {
   vinylWarpOsc.type = 'sine';
 
   vinylWarpGain = audioCtx.createGain();
+  vinylWarpGain.gain.value = 0; 
   vinylWarpOsc.connect(vinylWarpGain);
   vinylWarpOsc.start();
 
