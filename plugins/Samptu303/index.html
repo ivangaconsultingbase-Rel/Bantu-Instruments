@@ -6,20 +6,27 @@
 <title>SamPtu 303 — LoFi Sampler</title>
 
 <style>
-  :root{
-    --bg:#e9eaec;
-    --ink:#111;
-    --muted:#666;
-    --panel:#f3f4f6;
-    --panel2:#edf0f3;
-    --line:rgba(0,0,0,.22);
-    --line2:rgba(0,0,0,.14);
-    --shadow:rgba(0,0,0,.08);
+:root{
+  --bg:#0b0d12;
+  --ink:#eef1f6;
+  --muted:rgba(238,241,246,.68);
+  --panel:#121621;
+  --panel2:#0f1320;
+  --line:rgba(255,255,255,.16);
+  --line2:rgba(255,255,255,.10);
+  --shadow:rgba(0,0,0,.55);
 
-    --stepOff:rgba(0,0,0,.08);
-    --playHead:rgba(0,0,0,.14);
-    --danger:#c01818;
-  }
+  --stepOff:rgba(255,255,255,.08);
+  --playHead:rgba(255,255,255,.12);
+  --danger:#ff4b4b;
+}
+
+  body{ color-scheme: dark; }
+
+.knob input[type="range"],
+.sctl input[type="range"]{
+  accent-color: #e6e9ef;
+}
 
   *{ box-sizing:border-box; }
   html,body{ height:100%; }
@@ -70,6 +77,33 @@
     letter-spacing:.04em;
   }
 
+.subRow{
+  display:flex;
+  gap:10px;
+  align-items:center;
+  flex-wrap:wrap;
+}
+
+.badge{
+  border:1px solid var(--line);
+  background:rgba(255,255,255,.05);
+  color:var(--muted);
+  padding:6px 10px;
+  border-radius:999px;
+  font-size:11px;
+  font-weight:900;
+  letter-spacing:.10em;
+  text-transform:uppercase;
+  user-select:none;
+}
+
+.badge.on{
+  color:rgba(230,233,239,.95);
+  border-color:rgba(80,160,255,.55);
+  background:rgba(80,160,255,.16);
+  box-shadow: 0 0 0 2px rgba(80,160,255,.10);
+}
+  
   .controls{
     display:flex;
     align-items:center;
@@ -532,7 +566,10 @@
     <div class="topbar">
       <div class="title">
         <h1>SamPtu 303 — LoFi Sampler · Drum Machine</h1>
-        <div class="sub">1 track = 1 row · pad + controls aligned with sequencer · color-coded</div>
+        <div class="subRow">
+  <span class="sub">1 track = 1 row · pad + controls aligned with sequencer · color-coded</span>
+  <span id="fxBadge" class="badge">FX Hidden</span>
+</div>
       </div>
 
       <div class="panel controls" aria-label="Transport">
@@ -1327,6 +1364,28 @@ function setFxButtonState(id, on){
   b.textContent = on ? "On" : "Off";
   b.classList.toggle("on", on);
 }
+
+function setFxUiOpen(isOpen){
+  const btn = document.getElementById('fxToggleBtn');
+  const body = document.getElementById('fxBody');
+  const badge = document.getElementById('fxBadge');
+  if (!btn || !body) return;
+
+  body.classList.toggle('open', isOpen);
+
+  // bouton FX (couleur)
+  btn.classList.toggle('on', isOpen);
+  btn.classList.toggle('fx-on', isOpen);
+  btn.setAttribute('aria-expanded', String(isOpen));
+  btn.textContent = isOpen ? 'FX On-Screen' : 'FX';
+
+  // badge FX (état)
+  if (badge){
+    badge.classList.toggle('on', isOpen);
+    badge.textContent = isOpen ? 'FX Shown' : 'FX Hidden';
+  }
+}
+  
 function applyFxFromUI(){
   FX.bits = +document.getElementById('bits').value;
   FX.srate = +document.getElementById('srate').value;
