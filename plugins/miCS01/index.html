@@ -3,17 +3,16 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no" />
-<title>Bantu Ins. miCS01 — Elektron Minimal</title>
+<title>Bantu Ins. miCS01 — Elektron Minimal (SEQ Top)</title>
 
 <style>
 /* ─────────────────────────────────────────────
-   BASE (structure)
+   BASE (Elektron minimal)
 ───────────────────────────────────────────── */
 *{box-sizing:border-box;margin:0;padding:0;}
 :root{
   --vh: 1vh;
 
-  /* Elektron minimal palette */
   --bg:#0b0c0d;
   --panel:#111315;
   --panel2:#0f1112;
@@ -34,7 +33,7 @@ body{
   justify-content:center;
   align-items:flex-start;
   min-height:100dvh;
-  padding: max(18px, env(safe-area-inset-top)) 12px max(18px, env(safe-area-inset-bottom));
+  padding:max(18px, env(safe-area-inset-top)) 12px max(18px, env(safe-area-inset-bottom));
   font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
   color:var(--text);
   overflow-x:hidden;
@@ -49,13 +48,14 @@ body{
   gap:12px;
 }
 
-.block{
+.block, .seq-panel, .fx-panel, .start-card{
   background:var(--panel);
-  border-radius:var(--radius);
-  padding:12px;
   border:1px solid var(--line);
+  border-radius:var(--radius);
   box-shadow:none;
 }
+
+.block{ padding:12px; }
 
 .block-title{
   text-align:center;
@@ -83,11 +83,8 @@ body{
 }
 .start-card{
   width:min(520px, 92vw);
-  background:var(--panel);
-  border:1px solid var(--line);
-  border-radius:12px;
   padding:18px;
-  box-shadow:none;
+  border-radius:12px;
 }
 .start-title{
   color:var(--accent);
@@ -124,31 +121,6 @@ body{
 }
 
 /* ─────────────────────────────────────────────
-   QUICK BAR (sticky filter)
-───────────────────────────────────────────── */
-.quick-bar{
-  position:sticky;
-  top:0;
-  z-index:1200;
-  display:flex;
-  gap:10px;
-  padding:6px 10px;
-  background:#0a0b0c;
-  border-bottom:1px solid var(--line);
-  border-radius:10px;
-  margin-bottom:10px;
-}
-.quick-item{ flex:1; display:flex; flex-direction:column; gap:3px; }
-.quick-item span{
-  font-size:10px;
-  color:var(--accent);
-  font-weight:900;
-  letter-spacing:1px;
-  text-transform:uppercase;
-}
-.quick-item input[type="range"]{ width:100%; }
-
-/* ─────────────────────────────────────────────
    CONTROLS: buttons & sliders (minimal)
 ───────────────────────────────────────────── */
 .eng-btn, .wave-btn, .seq-btn, .icon-btn, .fx-bypass-btn{
@@ -159,7 +131,6 @@ body{
   cursor:pointer;
   user-select:none;
 }
-
 .eng-btn:hover, .wave-btn:hover, .seq-btn:hover, .icon-btn:hover, .fx-bypass-btn:hover{
   border-color:rgba(93,212,232,0.35);
 }
@@ -242,13 +213,127 @@ body{
 }
 
 /* ─────────────────────────────────────────────
+   SEQUENCER (TOP)
+───────────────────────────────────────────── */
+.seq-panel{
+  padding:12px;
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+}
+
+.seq-controls{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+  align-items:center;
+
+  /* Elektron feel: controls stay available while you scroll grid */
+  position:sticky;
+  top:0;
+  z-index:50;
+  background:var(--panel);
+  padding:10px 0 10px 0;
+  border-bottom:1px solid rgba(255,255,255,0.06);
+}
+
+.seq-btn{
+  padding:7px 12px;
+  text-transform:uppercase;
+  font-weight:900;
+  font-size:11px;
+}
+.seq-btn.playing{
+  color:var(--accent2);
+  border-color:rgba(93,212,232,0.75);
+  background:rgba(93,212,232,0.10);
+}
+
+.icon-btn{
+  width:28px;height:28px;
+  display:inline-flex;
+  justify-content:center;
+  align-items:center;
+  font-weight:900;
+  font-size:12px;
+}
+.bpm-display{
+  min-width:46px;
+  text-align:center;
+  padding:6px 8px;
+  border-radius:7px;
+  background:rgba(255,255,255,0.03);
+  border:1px solid var(--line);
+  color:var(--accent2);
+  font-weight:900;
+}
+.steps-select{
+  background:rgba(255,255,255,0.03);
+  border:1px solid var(--line);
+  color:var(--text);
+  border-radius:7px;
+  padding:6px 8px;
+}
+
+.seq-step-headers{ display:flex; gap:4px; }
+.seq-step-num{
+  flex:1;
+  text-align:center;
+  color:#5e666d;
+  font-size:9px;
+  padding:2px 0;
+}
+.seq-step-num.beat{ color:#7f8a93; font-weight:900; }
+.seq-step-num.beat-gap{ margin-left:4px; }
+
+.seq-grid-wrapper{
+  border:1px solid var(--line);
+  background:var(--panel2);
+  border-radius:10px;
+  overflow:auto;
+  max-height:54vh;
+}
+
+.seq-row{
+  display:flex;
+  align-items:stretch;
+  border-bottom:1px solid rgba(255,255,255,0.05);
+}
+.seq-row-label{
+  width:38px;
+  font-size:9px;
+  padding:6px 6px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  color:var(--muted);
+  background:#0c0e0f;
+  border-right:1px solid var(--line);
+}
+.seq-row-label.is-c{ color:var(--accent2); font-weight:900; }
+.seq-row-label.is-sharp{ color:#7a838a; }
+.seq-cells{ flex:1; display:flex; gap:4px; padding:6px; }
+.seq-cell{
+  flex:1;
+  height:16px;
+  border-radius:3px;
+  background:rgba(255,255,255,0.03);
+  border:1px solid rgba(255,255,255,0.06);
+}
+.seq-cell.beat-gap{ margin-left:4px; }
+.seq-cell.active{
+  background:rgba(93,212,232,0.22);
+  border-color:rgba(93,212,232,0.65);
+}
+.seq-cell.playing{
+  outline:2px solid rgba(93,212,232,0.65);
+  outline-offset:1px;
+}
+
+/* ─────────────────────────────────────────────
    OSC layout
 ───────────────────────────────────────────── */
-.osc-top{
-  display:flex;
-  gap:14px;
-  align-items:flex-start;
-}
+.osc-top{ display:flex; gap:14px; align-items:flex-start; }
 .engine-grid{
   display:grid;
   grid-template-columns:repeat(4,1fr);
@@ -268,15 +353,15 @@ body{
   margin-top:6px;
   font-style:italic;
 }
+@media (max-width: 520px){
+  #engDesc{ display:none; }
+  .block{ padding:10px; }
+  .seq-grid-wrapper{ max-height:58vh; }
+}
 
 /* ─────────────────────────────────────────────
-   SOUND layout (compact)
+   SOUND layout (compact + collapsible)
 ───────────────────────────────────────────── */
-.sound-grid{
-  display:grid;
-  grid-template-columns:1fr;
-  gap:10px;
-}
 .sound-section-title{
   text-align:center;
   color:var(--accent);
@@ -370,128 +455,13 @@ body{
 }
 
 /* ─────────────────────────────────────────────
-   SEQUENCER
-───────────────────────────────────────────── */
-.seq-panel{
-  background:var(--panel);
-  border-radius:var(--radius);
-  border:1px solid var(--line);
-  padding:12px;
-  display:flex;
-  flex-direction:column;
-  gap:12px;
-}
-.seq-controls{
-  display:flex;
-  flex-wrap:wrap;
-  gap:8px;
-  align-items:center;
-}
-.seq-btn{
-  padding:7px 12px;
-  text-transform:uppercase;
-  font-weight:900;
-  font-size:11px;
-}
-.seq-btn.playing{
-  color:var(--accent2);
-  border-color:rgba(93,212,232,0.75);
-  background:rgba(93,212,232,0.10);
-}
-
-.icon-btn{
-  width:28px;height:28px;
-  display:inline-flex;
-  justify-content:center;
-  align-items:center;
-  font-weight:900;
-  font-size:12px;
-}
-.bpm-display{
-  min-width:46px;
-  text-align:center;
-  padding:6px 8px;
-  border-radius:7px;
-  background:rgba(255,255,255,0.03);
-  border:1px solid var(--line);
-  color:var(--accent2);
-  font-weight:900;
-}
-.steps-select{
-  background:rgba(255,255,255,0.03);
-  border:1px solid var(--line);
-  color:var(--text);
-  border-radius:7px;
-  padding:6px 8px;
-}
-
-.seq-step-headers{ display:flex; gap:4px; }
-.seq-step-num{
-  flex:1;
-  text-align:center;
-  color:#5e666d;
-  font-size:9px;
-  padding:2px 0;
-}
-.seq-step-num.beat{ color:#7f8a93; font-weight:900; }
-.seq-step-num.beat-gap{ margin-left:4px; }
-
-.seq-grid-wrapper{
-  border:1px solid var(--line);
-  background:var(--panel2);
-  border-radius:10px;
-  overflow:auto;
-  max-height:48vh;
-}
-
-.seq-row{
-  display:flex;
-  align-items:stretch;
-  border-bottom:1px solid rgba(255,255,255,0.05);
-}
-.seq-row-label{
-  width:38px;
-  font-size:9px;
-  padding:6px 6px;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  color:var(--muted);
-  background:#0c0e0f;
-  border-right:1px solid var(--line);
-}
-.seq-row-label.is-c{ color:var(--accent2); font-weight:900; }
-.seq-row-label.is-sharp{ color:#7a838a; }
-.seq-cells{ flex:1; display:flex; gap:4px; padding:6px; }
-.seq-cell{
-  flex:1;
-  height:16px;
-  border-radius:3px;
-  background:rgba(255,255,255,0.03);
-  border:1px solid rgba(255,255,255,0.06);
-}
-.seq-cell.beat-gap{ margin-left:4px; }
-.seq-cell.active{
-  background:rgba(93,212,232,0.22);
-  border-color:rgba(93,212,232,0.65);
-}
-.seq-cell.playing{
-  outline:2px solid rgba(93,212,232,0.65);
-  outline-offset:1px;
-}
-
-/* ─────────────────────────────────────────────
-   FX PANEL
+   FX PANEL (collapsed)
 ───────────────────────────────────────────── */
 .fx-panel{
-  background:var(--panel);
-  border-radius:var(--radius);
   padding:12px;
-  border:1px solid var(--line);
   display:none;
 }
 .fx-panel.show{ display:block; }
-
 .fx-bypass-btn{
   padding:6px 12px;
   border-radius:8px;
@@ -502,7 +472,6 @@ body{
   color:var(--accent2);
   background:rgba(93,212,232,0.10);
 }
-
 .fx-knob-group{ display:flex; flex-direction:column; align-items:center; gap:6px; }
 .fx-knob-label{ font-size:10px; color:var(--muted); font-weight:900; letter-spacing:1px; text-transform:uppercase; }
 .fx-knob{
@@ -525,36 +494,10 @@ body{
   transform-origin:50% 190%;
 }
 .fx-knob-val{ font-size:10px; color:#b7c0c7; font-weight:800; min-width:48px; text-align:center; }
-
-/* hide engine desc on small for pure Elektron */
-@media (max-width: 520px){
-  #engDesc{ display:none; }
-  .block{ padding:10px; }
-  .seq-grid-wrapper{ max-height:52vh; }
-}
 </style>
 </head>
 
 <body>
-
-<!-- QUICK BAR (always visible) -->
-<div class="quick-bar">
-  <div class="quick-item">
-    <span>Cut</span>
-    <input id="quickCut" type="range" min="20" max="18000" value="8000" step="1"
-      oninput="applyParam('cutoff', +this.value)">
-  </div>
-  <div class="quick-item">
-    <span>Res</span>
-    <input id="quickRes" type="range" min="0.01" max="20" value="1" step="0.01"
-      oninput="applyParam('resonance', +this.value)">
-  </div>
-  <div class="quick-item">
-    <span>EG</span>
-    <input id="quickEg" type="range" min="0" max="1" value="0" step="0.01"
-      oninput="applyParam('filterEgDepth', +this.value)">
-  </div>
-</div>
 
 <!-- START AUDIO OVERLAY -->
 <div class="start-overlay" id="startOverlay">
@@ -571,180 +514,16 @@ body{
 
 <div class="synth-wrapper">
 
-  <!-- BLOCK 1 : OSC -->
-  <div class="block">
-    <div class="block-title">Oscillator</div>
-
-    <div class="osc-top">
-
-      <div style="flex:1;">
-        <div id="engineBtns" class="engine-grid">
-          <div class="eng-btn active" onclick="setEngine(0,this)" data-desc="VA dual">VA</div>
-          <div class="eng-btn" onclick="setEngine(1,this)" data-desc="Fold">FOLD</div>
-          <div class="eng-btn" onclick="setEngine(2,this)" data-desc="FM">FM</div>
-          <div class="eng-btn" onclick="setEngine(3,this)" data-desc="Grain">GRAIN</div>
-          <div class="eng-btn" onclick="setEngine(4,this)" data-desc="Additive">ADD</div>
-          <div class="eng-btn" onclick="setEngine(5,this)" data-desc="Wavetable">WT</div>
-          <div class="eng-btn" onclick="setEngine(6,this)" data-desc="Swarm">SWARM</div>
-          <div class="eng-btn" onclick="setEngine(7,this)" data-desc="Chord">CHORD</div>
-        </div>
-
-        <div id="engDesc">VA dual</div>
-
-        <!-- OSC PARAMETERS (under engine) -->
-        <div class="osc-params" style="margin-top:10px;">
-
-          <div class="slider-col">
-            <label id="lbl-harm">HARM</label>
-            <div class="vslider-track" data-param="harmonics" data-min="0" data-max="1" data-val="0.5">
-              <div class="vslider-handle"></div>
-            </div>
-          </div>
-
-          <div class="slider-col">
-            <label id="lbl-timb">TIMB</label>
-            <div class="vslider-track" data-param="timbre" data-min="0" data-max="1" data-val="0.5">
-              <div class="vslider-handle"></div>
-            </div>
-          </div>
-
-          <div class="slider-col">
-            <label id="lbl-morph">MORP</label>
-            <div class="vslider-track" data-param="morph" data-min="0" data-max="1" data-val="0.5">
-              <div class="vslider-handle"></div>
-            </div>
-          </div>
-
-          <div class="slider-col">
-            <label>FEET</label>
-            <div style="display:flex; flex-direction:column; gap:4px;">
-              <div class="wave-btn" onclick="setFeet(4,this)">4'</div>
-              <div class="wave-btn active" onclick="setFeet(8,this)">8'</div>
-              <div class="wave-btn" onclick="setFeet(16,this)">16'</div>
-              <div class="wave-btn" onclick="setFeet(32,this)">32'</div>
-            </div>
-          </div>
-
-        </div>
-      </div>
-
-    </div>
-  </div>
-
-  <!-- BLOCK 2 : SOUND -->
-  <div class="block">
-    <div class="block-title">Sound</div>
-
-    <!-- VCF (collapsible) -->
-    <div class="sound-section-title" onclick="toggleSection('vcfSection')">VCF ▾</div>
-    <div id="vcfSection">
-      <div class="compact-row">
-        <div class="slider-col">
-          <label>CUT</label>
-          <div class="vslider-track" data-param="cutoff" data-min="20" data-max="18000" data-val="8000">
-            <div class="vslider-handle"></div>
-          </div>
-        </div>
-
-        <div class="slider-col">
-          <label>RES</label>
-          <div class="vslider-track" data-param="resonance" data-min="0.01" data-max="20" data-val="1">
-            <div class="vslider-handle"></div>
-          </div>
-        </div>
-
-        <div class="slider-col">
-          <label>EG</label>
-          <div class="vslider-track" data-param="filterEgDepth" data-min="0" data-max="1" data-val="0">
-            <div class="vslider-handle"></div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div style="height:10px;"></div>
-
-    <!-- ENV (collapsible) -->
-    <div class="sound-section-title" onclick="toggleSection('envSection')">ENV ▾</div>
-    <div id="envSection">
-      <div class="env-grid">
-        <div class="slider-col">
-          <label>ATK</label>
-          <div class="vslider-track" data-param="attack" data-min="0.001" data-max="4" data-val="0.01">
-            <div class="vslider-handle"></div>
-          </div>
-        </div>
-        <div class="slider-col">
-          <label>DEC</label>
-          <div class="vslider-track" data-param="decay" data-min="0.001" data-max="4" data-val="0.3">
-            <div class="vslider-handle"></div>
-          </div>
-        </div>
-        <div class="slider-col">
-          <label>SUS</label>
-          <div class="vslider-track" data-param="sustain" data-min="0" data-max="1" data-val="0.7">
-            <div class="vslider-handle"></div>
-          </div>
-        </div>
-        <div class="slider-col">
-          <label>REL</label>
-          <div class="vslider-track" data-param="release" data-min="0.001" data-max="6" data-val="0.5">
-            <div class="vslider-handle"></div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div style="height:10px;"></div>
-
-    <!-- VCA -->
-    <div class="sound-section-title" onclick="toggleSection('vcaSection')">VCA ▾</div>
-    <div id="vcaSection">
-      <div class="vca-stack">
-        <div class="slider-col">
-          <label>DEP</label>
-          <div class="vslider-track" data-param="vcaDepth" data-min="0.05" data-max="1" data-val="0.8">
-            <div class="vslider-handle"></div>
-          </div>
-        </div>
-        <div class="note-display" id="noteDisplay">---</div>
-      </div>
-    </div>
-
-    <!-- VOLUME at the very end -->
-    <div style="display:flex; justify-content:center; margin-top:12px;">
-      <div class="slider-col">
-        <label style="color:var(--accent);">VOL</label>
-        <div class="knob" id="knob-vol" data-param="volume" data-min="0" data-max="1" data-val="0.7">
-          <div class="dot"></div>
-        </div>
-      </div>
-    </div>
-
-    <!-- PITCH/MOD (hidden by default) -->
-    <div id="pitchModSection" class="hidden" style="margin-top:12px;">
-      <div class="block-title" style="margin-bottom:6px; font-size:12px;">Pitch / Mod</div>
-
-      <div class="pm-wrap">
-        <div class="pm-col">
-          <div class="pm-title">Pitch (±2 st)</div>
-          <div id="pitchRibbon" class="ribbon"></div>
-          <div id="pitchVal" class="pm-val">0.00</div>
-        </div>
-        <div class="pm-col">
-          <div class="pm-title">Mod (vib+cut)</div>
-          <div id="modRibbon" class="ribbon"></div>
-          <div id="modVal" class="pm-val">0.00</div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- BLOCK 3 : SEQ -->
-  <div class="seq-panel">
+  <!-- ─────────────────────────────────────────
+       SEQ (NOW TOP)
+  ────────────────────────────────────────── -->
+  <div class="seq-panel" id="seqBlock">
     <div class="seq-controls">
       <button class="seq-btn" id="btnPlay" onclick="seqToggle()">▶ PLAY</button>
       <button class="seq-btn" onclick="seqStop()">■ STOP</button>
+
+      <button class="seq-btn" onclick="scrollToOsc()">OSC</button>
+      <button class="seq-btn" onclick="scrollToSound()">SOUND</button>
 
       <button class="seq-btn" id="btnPitchMod" onclick="togglePitchMod()">PITCH/MOD ▸</button>
       <button class="seq-btn" id="btnFxPanel" onclick="toggleFxPanel()">FX ▾</button>
@@ -786,7 +565,174 @@ body{
     <div class="seq-grid-wrapper" id="seqGrid"></div>
   </div>
 
-  <!-- BLOCK 4 : FX -->
+  <!-- ─────────────────────────────────────────
+       OSC
+  ────────────────────────────────────────── -->
+  <div class="block" id="oscBlock">
+    <div class="block-title">Oscillator</div>
+
+    <div class="osc-top">
+      <div style="flex:1;">
+        <div id="engineBtns" class="engine-grid">
+          <div class="eng-btn active" onclick="setEngine(0,this)" data-desc="VA dual">VA</div>
+          <div class="eng-btn" onclick="setEngine(1,this)" data-desc="Fold">FOLD</div>
+          <div class="eng-btn" onclick="setEngine(2,this)" data-desc="FM">FM</div>
+          <div class="eng-btn" onclick="setEngine(3,this)" data-desc="Grain">GRAIN</div>
+          <div class="eng-btn" onclick="setEngine(4,this)" data-desc="Additive">ADD</div>
+          <div class="eng-btn" onclick="setEngine(5,this)" data-desc="Wavetable">WT</div>
+          <div class="eng-btn" onclick="setEngine(6,this)" data-desc="Swarm">SWARM</div>
+          <div class="eng-btn" onclick="setEngine(7,this)" data-desc="Chord">CHORD</div>
+        </div>
+
+        <div id="engDesc">VA dual</div>
+
+        <div class="osc-params" style="margin-top:10px;">
+          <div class="slider-col">
+            <label id="lbl-harm">HARM</label>
+            <div class="vslider-track" data-param="harmonics" data-min="0" data-max="1" data-val="0.5">
+              <div class="vslider-handle"></div>
+            </div>
+          </div>
+
+          <div class="slider-col">
+            <label id="lbl-timb">TIMB</label>
+            <div class="vslider-track" data-param="timbre" data-min="0" data-max="1" data-val="0.5">
+              <div class="vslider-handle"></div>
+            </div>
+          </div>
+
+          <div class="slider-col">
+            <label id="lbl-morph">MORP</label>
+            <div class="vslider-track" data-param="morph" data-min="0" data-max="1" data-val="0.5">
+              <div class="vslider-handle"></div>
+            </div>
+          </div>
+
+          <div class="slider-col">
+            <label>FEET</label>
+            <div style="display:flex; flex-direction:column; gap:4px;">
+              <div class="wave-btn" onclick="setFeet(4,this)">4'</div>
+              <div class="wave-btn active" onclick="setFeet(8,this)">8'</div>
+              <div class="wave-btn" onclick="setFeet(16,this)">16'</div>
+              <div class="wave-btn" onclick="setFeet(32,this)">32'</div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- ─────────────────────────────────────────
+       SOUND
+  ────────────────────────────────────────── -->
+  <div class="block" id="soundBlock">
+    <div class="block-title">Sound</div>
+
+    <div class="sound-section-title" onclick="toggleSection('vcfSection')">VCF ▾</div>
+    <div id="vcfSection">
+      <div class="compact-row">
+        <div class="slider-col">
+          <label>CUT</label>
+          <div class="vslider-track" data-param="cutoff" data-min="20" data-max="18000" data-val="8000">
+            <div class="vslider-handle"></div>
+          </div>
+        </div>
+
+        <div class="slider-col">
+          <label>RES</label>
+          <div class="vslider-track" data-param="resonance" data-min="0.01" data-max="20" data-val="1">
+            <div class="vslider-handle"></div>
+          </div>
+        </div>
+
+        <div class="slider-col">
+          <label>EG</label>
+          <div class="vslider-track" data-param="filterEgDepth" data-min="0" data-max="1" data-val="0">
+            <div class="vslider-handle"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div style="height:10px;"></div>
+
+    <div class="sound-section-title" onclick="toggleSection('envSection')">ENV ▾</div>
+    <div id="envSection">
+      <div class="env-grid">
+        <div class="slider-col">
+          <label>ATK</label>
+          <div class="vslider-track" data-param="attack" data-min="0.001" data-max="4" data-val="0.01">
+            <div class="vslider-handle"></div>
+          </div>
+        </div>
+        <div class="slider-col">
+          <label>DEC</label>
+          <div class="vslider-track" data-param="decay" data-min="0.001" data-max="4" data-val="0.3">
+            <div class="vslider-handle"></div>
+          </div>
+        </div>
+        <div class="slider-col">
+          <label>SUS</label>
+          <div class="vslider-track" data-param="sustain" data-min="0" data-max="1" data-val="0.7">
+            <div class="vslider-handle"></div>
+          </div>
+        </div>
+        <div class="slider-col">
+          <label>REL</label>
+          <div class="vslider-track" data-param="release" data-min="0.001" data-max="6" data-val="0.5">
+            <div class="vslider-handle"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div style="height:10px;"></div>
+
+    <div class="sound-section-title" onclick="toggleSection('vcaSection')">VCA ▾</div>
+    <div id="vcaSection">
+      <div class="vca-stack">
+        <div class="slider-col">
+          <label>DEP</label>
+          <div class="vslider-track" data-param="vcaDepth" data-min="0.05" data-max="1" data-val="0.8">
+            <div class="vslider-handle"></div>
+          </div>
+        </div>
+        <div class="note-display" id="noteDisplay">---</div>
+      </div>
+    </div>
+
+    <!-- Volume at the very end -->
+    <div style="display:flex; justify-content:center; margin-top:12px;">
+      <div class="slider-col">
+        <label style="color:var(--accent);">VOL</label>
+        <div class="knob" id="knob-vol" data-param="volume" data-min="0" data-max="1" data-val="0.7">
+          <div class="dot"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Pitch/Mod (hidden by default) -->
+    <div id="pitchModSection" class="hidden" style="margin-top:12px;">
+      <div class="block-title" style="margin-bottom:6px; font-size:12px;">Pitch / Mod</div>
+      <div class="pm-wrap">
+        <div class="pm-col">
+          <div class="pm-title">Pitch (±2 st)</div>
+          <div id="pitchRibbon" class="ribbon"></div>
+          <div id="pitchVal" class="pm-val">0.00</div>
+        </div>
+        <div class="pm-col">
+          <div class="pm-title">Mod (vib+cut)</div>
+          <div id="modRibbon" class="ribbon"></div>
+          <div id="modVal" class="pm-val">0.00</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─────────────────────────────────────────
+       FX (collapsed)
+  ────────────────────────────────────────── -->
   <div class="fx-panel" id="fxPanel">
     <div style="display:flex;align-items:center;margin-bottom:10px;">
       <div style="color:#b7c0c7;font-weight:900;font-size:12px;letter-spacing:2px;text-transform:uppercase;">Tape</div>
@@ -851,8 +797,9 @@ body{
   </div>
 
   <div style="text-align:center;color:#3a4046;font-size:10px;margin-top:4px;">
-    miCS01 · Elektron minimal · Web Audio
+    miCS01 · Elektron minimal · SEQ top · Web Audio
   </div>
+
 </div>
 
 <script>
@@ -877,6 +824,17 @@ function polyblep(phase, dt){
 }
 function noteToFreq(midi){ return 440 * Math.pow(2, (midi - 69) / 12); }
 function softClip(x){ return Math.tanh(x); }
+
+/* Scroll helpers (SEQ top navigation) */
+function scrollToSound(){ const el=document.getElementById('soundBlock'); if(el) el.scrollIntoView({behavior:'smooth', block:'start'}); }
+function scrollToOsc(){ const el=document.getElementById('oscBlock'); if(el) el.scrollIntoView({behavior:'smooth', block:'start'}); }
+
+/* Collapsible sections */
+function toggleSection(id){
+  const el = document.getElementById(id);
+  if(!el) return;
+  el.style.display = (el.style.display==='none') ? 'block' : 'none';
+}
 
 /* Juno Post-Filter */
 class JunoPostFilter {
@@ -980,8 +938,7 @@ class WaveshapingEngine {
   constructor(sr){ this.sr=sr; this.phase=0; }
   reset(){ this.phase=Math.random(); }
   render(freq, harmonics, timbre, morph, out, size){
-    const sr=this.sr;
-    const f=clamp(freq/sr,0.00001,0.499);
+    const f=clamp(freq/this.sr,0.00001,0.499);
     for(let i=0;i<size;i++){
       this.phase += f; if(this.phase>=1) this.phase-=1;
       const skew = clamp(0.05 + morph*0.9, 0.05, 0.95);
@@ -1009,14 +966,13 @@ class FMEngine {
   constructor(sr){ this.sr=sr; this.phase_m=0; this.phase_c=0; this.fb=0; }
   reset(){ this.phase_m=0; this.phase_c=0; this.fb=0; }
   render(freq, harmonics, timbre, morph, out, size){
-    const sr=this.sr;
     const ratios=[0.5,1,1.5,2,3,4,5,7,8];
     const ri=harmonics*(ratios.length-1);
     const r0=ratios[Math.floor(ri)];
     const r1=ratios[Math.min(Math.ceil(ri), ratios.length-1)];
     const ratio=lerp(r0,r1, ri - Math.floor(ri));
-    const fc = clamp(freq/sr,0.00001,0.45);
-    const fm = clamp(freq*ratio/sr,0.00001,0.49);
+    const fc = clamp(freq/this.sr,0.00001,0.45);
+    const fm = clamp(freq*ratio/this.sr,0.00001,0.49);
     const modIdx=timbre*8;
     const fbAmt=morph;
     for(let i=0;i<size;i++){
@@ -1039,10 +995,8 @@ class GrainletEngine {
     return lerp(carrier, grain, shape) + carrierPhase*bleed;
   }
   render(freq, harmonics, timbre, morph, out, size){
-    const sr=this.sr;
-    const fc=clamp(freq/sr,0.00001,0.4);
-    const formantRatio=1 + harmonics*8;
-    const ff=clamp(fc*formantRatio,0.00001,0.499);
+    const fc=clamp(freq/this.sr,0.00001,0.4);
+    const ff=clamp(fc*(1 + harmonics*8),0.00001,0.499);
     const shape=timbre;
     const bleed=morph*0.1;
     for(let i=0;i<size;i++){
@@ -1064,7 +1018,7 @@ class AdditiveEngine {
   }
   reset(){ for(let i=0;i<24;i++) this.phases[i]=0; }
   render(freq, harmonics, timbre, morph, out, size){
-    const sr=this.sr, numH=24;
+    const numH=24;
     const centroid=1 + harmonics*(numH-1);
     const width=0.5 + timbre * numH*0.5;
     const peak=morph;
@@ -1083,7 +1037,7 @@ class AdditiveEngine {
       for(let h=0;h<numH;h++){
         if(gains[h]<0.001) continue;
         const n=h+1;
-        const f=clamp(freq*n/sr,0.00001,0.499);
+        const f=clamp(freq*n/this.sr,0.00001,0.499);
         this.phases[h]+=f; if(this.phases[h]>=1) this.phases[h]-=1;
         s += Math.sin(2*Math.PI*this.phases[h]) * gains[h] / totalGain;
       }
@@ -1093,11 +1047,7 @@ class AdditiveEngine {
 }
 class WavetableEngine {
   constructor(sr){
-    this.sr=sr;
-    this.phase=0;
-    this.WT_SIZE=256;
-    this.WT_COUNT=8;
-    this.tables=[];
+    this.sr=sr; this.phase=0; this.WT_SIZE=256; this.WT_COUNT=8; this.tables=[];
     for(let t=0;t<this.WT_COUNT;t++){
       const tbl=new Float32Array(this.WT_SIZE);
       for(let s=0;s<this.WT_SIZE;s++){
@@ -1113,8 +1063,7 @@ class WavetableEngine {
           case 7: tbl[s]=Math.sin(2*Math.PI*ph + Math.sin(4*Math.PI*ph)*1.5); break;
         }
       }
-      let mx=0;
-      for(let s=0;s<this.WT_SIZE;s++) mx=Math.max(mx,Math.abs(tbl[s]));
+      let mx=0; for(let s=0;s<this.WT_SIZE;s++) mx=Math.max(mx,Math.abs(tbl[s]));
       if(mx>0.001) for(let s=0;s<this.WT_SIZE;s++) tbl[s]/=mx;
       this.tables.push(tbl);
     }
@@ -1128,13 +1077,12 @@ class WavetableEngine {
     return lerp(tbl[i0], tbl[i1], pos - Math.floor(pos));
   }
   render(freq, harmonics, timbre, morph, out, size){
-    const sr=this.sr;
     const wtPos=timbre*(this.WT_COUNT-1);
     const wt0=Math.floor(wtPos);
     const wt1=Math.min(wt0+1, this.WT_COUNT-1);
     const wtFrac=wtPos-wt0;
     const distort=morph;
-    const f=clamp(freq/sr,0.00001,0.499);
+    const f=clamp(freq/this.sr,0.00001,0.499);
     const hFreq=f*(1 + Math.floor(harmonics*3));
     for(let i=0;i<size;i++){
       this.phase += clamp(hFreq,0.00001,0.499);
@@ -1159,7 +1107,6 @@ class SwarmEngine {
   }
   reset(){ for(let i=0;i<this.N;i++) this.phases[i]=Math.random(); }
   render(freq, harmonics, timbre, morph, out, size){
-    const sr=this.sr;
     const spread=harmonics*0.5;
     const pw=clamp(0.05+timbre*0.9,0.05,0.95);
     const sqMix=morph;
@@ -1167,7 +1114,7 @@ class SwarmEngine {
       let s=0;
       for(let v=0;v<this.N;v++){
         const detuneST=this.detunes[v]*spread*2;
-        const f=clamp(freq*Math.pow(2,detuneST/12)/sr,0.00001,0.499);
+        const f=clamp(freq*Math.pow(2,detuneST/12)/this.sr,0.00001,0.499);
         this.phases[v]+=f; if(this.phases[v]>=1) this.phases[v]-=1;
         let saw=this.phases[v]*2-1;
         saw -= polyblep(this.phases[v],f);
@@ -1188,7 +1135,6 @@ class ChordEngine {
   }
   reset(){ for(let i=0;i<this.N;i++) this.phases[i]=Math.random(); }
   render(freq, harmonics, timbre, morph, out, size){
-    const sr=this.sr;
     const chordIdx=Math.floor(harmonics*(this.chords.length-1));
     const chord=this.chords[clamp(chordIdx,0,this.chords.length-1)];
     const pw=clamp(0.05+timbre*0.9,0.05,0.95);
@@ -1197,7 +1143,7 @@ class ChordEngine {
       let s=0;
       for(let v=0;v<this.N;v++){
         const st=chord[v];
-        const f=clamp(freq*Math.pow(2,(st + v*detune*12)/12)/sr,0.00001,0.499);
+        const f=clamp(freq*Math.pow(2,(st + v*detune*12)/12)/this.sr,0.00001,0.499);
         this.phases[v]+=f; if(this.phases[v]>=1) this.phases[v]-=1;
         let sq=this.phases[v]<pw?1:-1;
         sq += polyblep(this.phases[v],f);
@@ -1494,7 +1440,6 @@ function midiToName(midi) {
 }
 function playNote(midi) {
   if (!audioCtx) return;
-
   const arr = voicePool.get(midi);
   if (arr && arr.length) arr.forEach(v => v.noteOff());
 
@@ -1576,9 +1521,7 @@ function tick() {
   const notesOn = [];
   getGrid().forEach((row, midi) => { if (row[currentStep]) notesOn.push(midi); });
 
-  if (!notesOn.length) {
-    document.getElementById('noteDisplay').textContent = '---';
-  }
+  if (!notesOn.length) document.getElementById('noteDisplay').textContent = '---';
 
   for (const midi of notesOn) {
     playNote(midi);
@@ -1731,7 +1674,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }, {passive:false});
 });
 
-/* Param application */
+/* Params */
 function applyParam(param, val) {
   P[param] = val;
   if (param === 'engineIdx') DSP_PARAMS.engineIdx = val;
@@ -1747,7 +1690,7 @@ function applyParam(param, val) {
   if (param === 'volume' && masterGain) masterGain.gain.value = val;
 }
 
-/* Slider UI init */
+/* Sliders */
 function initSliders() {
   document.querySelectorAll('.vslider-track').forEach(track => {
     const handle = track.querySelector('.vslider-handle');
@@ -1768,11 +1711,6 @@ function initSliders() {
       handle.style.bottom = pos+'px';
       const val = min+(pos/H)*(max-min);
       applyParam(param, val);
-
-      // keep quick bar synced for key params
-      if(param==='cutoff') document.getElementById('quickCut').value = String(Math.round(val));
-      if(param==='resonance') document.getElementById('quickRes').value = String(val);
-      if(param==='filterEgDepth') document.getElementById('quickEg').value = String(val);
     };
 
     handle.addEventListener('mousedown', e => { dragging=true; startY=e.clientY; startPos=pos; e.preventDefault(); });
@@ -1785,6 +1723,7 @@ function initSliders() {
   });
 }
 
+/* Volume knob */
 function initVolumeKnob() {
   const knob = document.getElementById('knob-vol');
   let val = parseFloat(knob.dataset.val || '0.7');
@@ -1821,7 +1760,7 @@ const ENGINE_LABELS = {
   3: { harm:'FORM', timb:'SHP',   morph:'BLD' },
   4: { harm:'CENT', timb:'WID',   morph:'PEAK' },
   5: { harm:'BANK', timb:'POS',   morph:'DST' },
-  6: { harm:'SPR',  timb:'PW',    morph:'XFADE' },
+  6: { harm:'SPR',  timb:'PW',    morph:'XFD' },
   7: { harm:'CHRD', timb:'PW',    morph:'DET' },
 };
 
@@ -1851,7 +1790,7 @@ function setFeet(feet, el) {
   applyParam('octaveMult', P.octaveMult);
 }
 
-/* Toggles */
+/* FX panel toggle + FX controls */
 function toggleFxPanel() {
   const panel = document.getElementById('fxPanel');
   const btn = document.getElementById('btnFxPanel');
@@ -1859,19 +1798,14 @@ function toggleFxPanel() {
   panel.classList.toggle('show', show);
   btn.textContent = show ? 'FX ▴' : 'FX ▾';
 }
+
 function togglePitchMod() {
   const sec = document.getElementById('pitchModSection');
   const btn = document.getElementById('btnPitchMod');
   const hidden = sec.classList.toggle('hidden');
   btn.textContent = hidden ? 'PITCH/MOD ▸' : 'PITCH/MOD ▾';
 }
-function toggleSection(id){
-  const el = document.getElementById(id);
-  if(!el) return;
-  el.style.display = (el.style.display==='none') ? 'block' : 'none';
-}
 
-/* FX */
 function toggleFx(type) {
   if (type==='tape') {
     FX.tapeOn = !FX.tapeOn;
@@ -1886,6 +1820,7 @@ function toggleFx(type) {
   }
   if (audioCtx) setFxStateFromFlags();
 }
+
 function fmtFxVal(p,v) {
   if (p==='tapeDrive') return v.toFixed(1);
   if (p==='tapeTone') return v>=1000 ? (v/1000).toFixed(1)+'k' : Math.round(v)+'Hz';
@@ -1894,6 +1829,7 @@ function fmtFxVal(p,v) {
   if (p==='reverbSize') return v.toFixed(1)+'s';
   return v.toFixed(2);
 }
+
 function applyFxParam(p, v) {
   FX[p] = v;
   if (!audioCtx) return;
@@ -1908,24 +1844,19 @@ function applyFxParam(p, v) {
     case 'tapeWow':
       tapeWowGain.gain.value=v*5;
       break;
-    case 'tapeMix':
-      break;
     case 'echoTime':
       delayNode.delayTime.setTargetAtTime(v,audioCtx.currentTime,0.05);
       break;
     case 'echoFeedback':
       delayFeedGain.gain.value=v;
       break;
-    case 'echoMix':
-      break;
     case 'reverbSize':
       reverbNode.buffer=buildReverbIR(v);
-      break;
-    case 'reverbMix':
       break;
   }
   setFxStateFromFlags();
 }
+
 function initFxKnobs() {
   document.querySelectorAll('.fx-knob').forEach(knob => {
     const p = knob.dataset.param;
@@ -1969,7 +1900,7 @@ function initFxKnobs() {
   });
 }
 
-/* Ribbons wired */
+/* Ribbons (wired) */
 function initRibbons() {
   const pitch = document.getElementById('pitchRibbon');
   const mod = document.getElementById('modRibbon');
@@ -2033,11 +1964,6 @@ window.addEventListener('DOMContentLoaded', () => {
 
   document.getElementById('tapeBypass').classList.toggle('active', FX.tapeOn);
   document.getElementById('echoBypass').classList.toggle('active', FX.echoOn);
-
-  // quick bar default sync
-  document.getElementById('quickCut').value = String(P.cutoff);
-  document.getElementById('quickRes').value = String(P.resonance);
-  document.getElementById('quickEg').value = String(P.filterEgDepth);
 
   window.addEventListener('resize', () => {
     const before = NUM_ROWS;
