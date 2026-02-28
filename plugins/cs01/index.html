@@ -117,7 +117,7 @@
     background: rgba(58,42,21,0.8);
   }
 
-  /* Mode buttons (Wave -> Modes) */
+  /* Mode buttons */
   .modes{
     display:grid;
     grid-template-columns: repeat(2, minmax(0,1fr));
@@ -199,6 +199,120 @@
     background: radial-gradient(circle at 35% 35%, #e0b060, #9a6020);
     border: 1px solid rgba(255,200,80,0.35);
     box-shadow: 0 3px 10px rgba(0,0,0,0.55);
+  }
+
+  /* --- CHORD SEQUENCER --- */
+  .seqTop{
+    display:flex;
+    gap:10px;
+    flex-wrap:wrap;
+    align-items:center;
+    justify-content:space-between;
+  }
+  .pillRow{
+    display:flex;
+    gap:8px;
+    flex-wrap:wrap;
+    align-items:center;
+  }
+  .pillCtl{
+    border:1px solid rgba(0,0,0,0.6);
+    background: rgba(0,0,0,0.25);
+    border-radius: 12px;
+    padding: 8px 10px;
+    display:flex;
+    flex-direction:column;
+    gap:6px;
+    min-width: 150px;
+  }
+  .pillCtl label{
+    font-family:'Share Tech Mono', monospace;
+    font-size: 10px;
+    letter-spacing:0.22em;
+    text-transform:uppercase;
+    color: rgba(240,224,192,0.70);
+  }
+  .pillCtl select{
+    appearance:none;
+    border:1px solid rgba(58,42,21,0.9);
+    background: rgba(0,0,0,0.45);
+    color: var(--text);
+    border-radius: 10px;
+    padding: 8px 10px;
+    font-family:'Share Tech Mono', monospace;
+    letter-spacing:0.08em;
+    font-size: 12px;
+    outline:none;
+  }
+  .seqBtns{
+    display:flex;
+    gap:8px;
+    flex-wrap:wrap;
+    align-items:center;
+  }
+  .btn{
+    border: 1px solid rgba(0,0,0,0.6);
+    background: rgba(0,0,0,0.28);
+    color: rgba(240,224,192,0.92);
+    border-radius: 12px;
+    padding: 10px 12px;
+    cursor:pointer;
+    user-select:none;
+    font-family:'Share Tech Mono', monospace;
+    letter-spacing:0.12em;
+    text-transform:uppercase;
+    font-size: 11px;
+  }
+  .btn:active{ transform: translateY(1px); }
+  .btn.on{
+    border-color: rgba(93,212,232,0.85);
+    background: rgba(93,212,232,0.12);
+    color: var(--cyan);
+    box-shadow: 0 0 16px rgba(93,212,232,0.10);
+  }
+
+  .seqGrid{
+    margin-top: 10px;
+    display:grid;
+    grid-template-columns: repeat(16, minmax(0,1fr));
+    gap: 8px;
+  }
+  .stepBtn{
+    border: 1px solid rgba(58,42,21,0.85);
+    background: rgba(0,0,0,0.34);
+    border-radius: 12px;
+    padding: 10px 6px;
+    cursor:pointer;
+    user-select:none;
+    text-align:center;
+    font-family:'Share Tech Mono', monospace;
+    font-size: 12px;
+    letter-spacing:0.10em;
+    color: rgba(240,224,192,0.9);
+    position:relative;
+    min-height: 42px;
+  }
+  .stepBtn small{
+    display:block;
+    margin-top: 4px;
+    font-size: 9px;
+    letter-spacing:0.22em;
+    text-transform:uppercase;
+    color: rgba(136,102,68,0.95);
+  }
+  .stepBtn.rest{
+    color: rgba(240,224,192,0.55);
+    border-style:dashed;
+    background: rgba(0,0,0,0.22);
+  }
+  .stepBtn.playing::after{
+    content:"";
+    position:absolute;
+    inset:-2px;
+    border-radius: 14px;
+    outline: 2px solid rgba(232,160,48,0.55);
+    box-shadow: 0 0 18px rgba(232,160,48,0.18);
+    pointer-events:none;
   }
 
   /* Keyboard */
@@ -284,11 +398,11 @@
     padding: 8px 0 0;
   }
 
-  /* iPhone-ish: keep it comfy */
   @media (max-width: 430px){
     .modes{ grid-template-columns: 1fr; }
     .sliders{ grid-template-columns: 1fr; }
     .piano{ height: 160px; }
+    .seqGrid{ grid-template-columns: repeat(8, minmax(0,1fr)); }
   }
 </style>
 </head>
@@ -305,9 +419,58 @@
 
         <div class="card">
           <div class="title"><div class="label">WAVE → MODE</div><div class="line"></div></div>
-          <div class="modes" id="modeGrid">
-            <!-- bound in JS -->
+          <div class="modes" id="modeGrid"></div>
+        </div>
+
+        <!-- CHORD SEQ -->
+        <div class="card">
+          <div class="title"><div class="label">CHORD SEQUENCER</div><div class="line"></div></div>
+
+          <div class="seqTop">
+            <div class="pillRow">
+              <div class="pillCtl">
+                <label>Key</label>
+                <select id="seqKey"></select>
+              </div>
+              <div class="pillCtl">
+                <label>Mode</label>
+                <select id="seqMode">
+                  <option value="major">Major</option>
+                  <option value="minor">Minor</option>
+                </select>
+              </div>
+              <div class="pillCtl">
+                <label>Minor flavor</label>
+                <select id="seqMinorFlavor">
+                  <option value="natural">Natural</option>
+                  <option value="harmonic">Harmonic</option>
+                </select>
+              </div>
+              <div class="pillCtl">
+                <label>Play</label>
+                <select id="seqPlayMode">
+                  <option value="arp">ARP (triad)</option>
+                  <option value="root">ROOT only</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="seqBtns">
+              <button id="seqPlayBtn" class="btn">Play</button>
+              <button id="seqStopBtn" class="btn">Stop</button>
+              <div class="pillCtl" style="min-width:140px">
+                <label>BPM</label>
+                <select id="seqBpm">
+                  <option>70</option><option>80</option><option>90</option><option>100</option>
+                  <option selected>110</option>
+                  <option>120</option><option>130</option><option>140</option><option>150</option>
+                </select>
+              </div>
+              <button id="seqClearBtn" class="btn">Clear</button>
+            </div>
           </div>
+
+          <div id="seqGrid" class="seqGrid"></div>
         </div>
 
         <div class="row">
@@ -385,7 +548,7 @@
       </div>
     </div>
 
-    <div class="footer">WAVE buttons control MacroOSC modes · iPhone-first layout</div>
+    <div class="footer">Chord Seq = degrees → mono arp/root · iPhone-first layout</div>
   </div>
 
 <script>
@@ -399,11 +562,11 @@ let ampNode = null;
 let currentNote = null;
 
 const params = {
-  mode: 0,           // 0..4
-  timbre: 0.5,       // 0..1
-  fm: 0.0,           // 0..1
-  detune: 0.15,      // 0..1
-  pw: 0.5,           // 0.05..0.95
+  mode: 0,
+  timbre: 0.5,
+  fm: 0.0,
+  detune: 0.15,
+  pw: 0.5,
   cutoff: 8000,
   resonance: 1.0,
   attack: 0.01,
@@ -432,7 +595,6 @@ async function initAudio() {
   if (audioCtx) return;
 
   audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-
   await audioCtx.audioWorklet.addModule("./dsp/macro-osc.worklet.js");
 
   oscNode = new AudioWorkletNode(audioCtx, "macro-osc", {
@@ -461,7 +623,6 @@ function oscParam(name) {
 function applyAllParams() {
   if (!audioCtx) return;
 
-  // osc
   oscParam("mode")?.setValueAtTime(params.mode, audioCtx.currentTime);
   oscParam("timbre")?.setValueAtTime(params.timbre, audioCtx.currentTime);
   oscParam("fm")?.setValueAtTime(params.fm, audioCtx.currentTime);
@@ -469,9 +630,35 @@ function applyAllParams() {
   oscParam("pw")?.setValueAtTime(params.pw, audioCtx.currentTime);
   oscParam("gain")?.setValueAtTime(1.0, audioCtx.currentTime);
 
-  // filter
   filterNode.frequency.setValueAtTime(params.cutoff, audioCtx.currentTime);
   filterNode.Q.setValueAtTime(params.resonance, audioCtx.currentTime);
+}
+
+/* --- ENVELOPES (manual scheduling for sequencer) --- */
+function scheduleNote(midi, t, durSec){
+  if (!audioCtx) return;
+
+  const freq = noteToFreq(midi);
+  const a = Math.max(0.001, params.attack);
+  const r = Math.max(0.001, params.release);
+
+  // mono: re-trigger the same amp node
+  oscParam("freq")?.setValueAtTime(freq, t);
+
+  // ensure we don't keep old ramps that would cause pumping
+  ampNode.gain.cancelScheduledValues(t);
+  ampNode.gain.setValueAtTime(ampNode.gain.value, t);
+
+  const peak = Math.max(0.0, Math.min(1.0, params.level));
+  const sus  = Math.max(0.0, Math.min(1.0, params.sustain));
+  const sustainLevel = peak * sus;
+
+  const sustainTime = Math.max(0.01, durSec - r);
+
+  ampNode.gain.linearRampToValueAtTime(peak, t + a);
+  ampNode.gain.linearRampToValueAtTime(sustainLevel, t + a + 0.08);
+  ampNode.gain.setValueAtTime(sustainLevel, t + sustainTime);
+  ampNode.gain.linearRampToValueAtTime(0.0, t + durSec);
 }
 
 function gateOn() {
@@ -510,10 +697,9 @@ function stopNote() {
 }
 
 /* ============================================================
-   UI: Mode buttons (WAVE -> MODE)
+   UI: Mode buttons
 ============================================================ */
 const modeGrid = document.getElementById("modeGrid");
-
 function renderModes() {
   modeGrid.innerHTML = "";
   MODES.forEach(m => {
@@ -523,7 +709,6 @@ function renderModes() {
     btn.innerHTML = `<b>${m.wave} ${m.name}</b><span>${m.hint}</span>`;
     btn.addEventListener("click", async () => {
       params.mode = m.id;
-      // Update immediately
       if (audioCtx) oscParam("mode")?.setValueAtTime(params.mode, audioCtx.currentTime);
       renderModes();
     });
@@ -583,20 +768,17 @@ bindRange("cutoff", (v) => {
 });
 
 bindRange("resonance", (v) => {
-  // slider 10..1800 -> Q 0.1..18
   params.resonance = (v / 100).toFixed(2) * 1;
   document.getElementById("v-reso").textContent = params.resonance.toFixed(2);
   if (audioCtx) filterNode.Q.setValueAtTime(params.resonance, audioCtx.currentTime);
 });
 
 bindRange("attack", (v) => {
-  // 1..400 -> 0.001..0.4
   params.attack = Math.max(0.001, v / 1000);
   document.getElementById("v-att").textContent = params.attack.toFixed(3);
 });
 
 bindRange("release", (v) => {
-  // 1..600 -> 0.001..0.6
   params.release = Math.max(0.001, v / 100);
   document.getElementById("v-rel").textContent = params.release.toFixed(2);
 });
@@ -611,7 +793,6 @@ bindRange("level", (v) => {
   document.getElementById("v-level").textContent = params.level.toFixed(2);
 });
 
-/* init displayed values */
 document.getElementById("v-timbre").textContent = params.timbre.toFixed(2);
 document.getElementById("v-fm").textContent = params.fm.toFixed(2);
 document.getElementById("v-detune").textContent = params.detune.toFixed(2);
@@ -624,9 +805,251 @@ document.getElementById("v-sus").textContent = params.sustain.toFixed(2);
 document.getElementById("v-level").textContent = params.level.toFixed(2);
 
 /* ============================================================
+   CHORD SEQUENCER (degrees -> mono arp/root)
+============================================================ */
+const NOTE_NAMES = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+
+const seqState = {
+  key: 0,                 // 0..11
+  mode: 'major',          // major/minor
+  minorFlavor: 'natural', // natural/harmonic
+  playMode: 'arp',        // arp/root
+  bpm: 110,
+  running: false,
+  step: 0,
+  timer: null,
+  // steps: -1 = rest, 0..6 = degree
+  steps: new Array(16).fill(-1),
+};
+
+// nice default progression: I - V - vi - IV (in major)
+seqState.steps[0]  = 0; // I
+seqState.steps[4]  = 4; // V
+seqState.steps[8]  = 5; // vi
+seqState.steps[12] = 3; // IV
+
+const DEG_ROMAN_MAJOR = ['I','ii','iii','IV','V','vi','vii°'];
+
+function getScaleSemis(){
+  if (seqState.mode === 'major') return [0,2,4,5,7,9,11];
+  if (seqState.minorFlavor === 'harmonic') return [0,2,3,5,7,8,11];
+  return [0,2,3,5,7,8,10];
+}
+
+// quality per degree (triads)
+function getTriadIntervals(degIdx){
+  if (seqState.mode === 'major'){
+    // I maj, ii min, iii min, IV maj, V maj, vi min, vii dim
+    const q = ['maj','min','min','maj','maj','min','dim'][degIdx] || 'maj';
+    return qToIntervals(q);
+  } else {
+    if (seqState.minorFlavor === 'harmonic'){
+      // i min, ii° dim, III+ aug, iv min, V maj, VI maj, vii° dim
+      const q = ['min','dim','aug','min','maj','maj','dim'][degIdx] || 'min';
+      return qToIntervals(q);
+    } else {
+      // natural minor: i min, ii° dim, III maj, iv min, v min, VI maj, VII maj
+      const q = ['min','dim','maj','min','min','maj','maj'][degIdx] || 'min';
+      return qToIntervals(q);
+    }
+  }
+}
+function qToIntervals(q){
+  if (q === 'maj') return [0,4,7];
+  if (q === 'min') return [0,3,7];
+  if (q === 'dim') return [0,3,6];
+  if (q === 'aug') return [0,4,8];
+  return [0,4,7];
+}
+
+function degreeLabel(degIdx){
+  if (degIdx < 0) return '—';
+  if (seqState.mode === 'major') return DEG_ROMAN_MAJOR[degIdx] || '?';
+
+  // minor: use i ii° III iv V VI vii° style
+  // we’ll mirror common practice: uppercase for major, lowercase for minor, ° for dim, + for aug
+  const q = (seqState.minorFlavor === 'harmonic')
+    ? ['min','dim','aug','min','maj','maj','dim'][degIdx]
+    : ['min','dim','maj','min','min','maj','maj'][degIdx];
+
+  const base = ['I','II','III','IV','V','VI','VII'][degIdx] || '?';
+  let roman = base;
+  if (q === 'min') roman = base.toLowerCase();
+  if (q === 'maj') roman = base;
+  if (q === 'dim') roman = base.toLowerCase() + '°';
+  if (q === 'aug') roman = base + '+';
+  // common harmonic minor: V is major (uppercase), good.
+  return roman;
+}
+
+function chordRootMidiForDegree(degIdx){
+  // center around C3 (48) + key
+  const base = 48 + seqState.key; // root note of key at C3-ish
+  const scale = getScaleSemis();
+  return base + (scale[degIdx] || 0);
+}
+
+function stepDurationSec(){
+  // 16th notes
+  const bps = seqState.bpm / 60;
+  return (1 / bps) / 4;
+}
+
+async function seqStart(){
+  await initAudio();
+  if (audioCtx.state === "suspended") await audioCtx.resume();
+  if (seqState.running) return;
+
+  seqState.running = true;
+  seqState.step = 0;
+
+  document.getElementById('seqPlayBtn').classList.add('on');
+  document.getElementById('seqPlayBtn').textContent = 'Playing';
+
+  seqTick();
+}
+
+function seqStop(){
+  seqState.running = false;
+  if (seqState.timer) clearTimeout(seqState.timer);
+  seqState.timer = null;
+  seqState.step = 0;
+  clearSeqHighlights();
+
+  document.getElementById('seqPlayBtn').classList.remove('on');
+  document.getElementById('seqPlayBtn').textContent = 'Play';
+}
+
+function clearSeqHighlights(){
+  document.querySelectorAll('.stepBtn.playing').forEach(el => el.classList.remove('playing'));
+}
+
+function highlightSeqStep(i){
+  clearSeqHighlights();
+  const el = document.getElementById(`seqStep-${i}`);
+  if (el) el.classList.add('playing');
+}
+
+function seqTick(){
+  if (!seqState.running) return;
+
+  const stepIdx = seqState.step;
+  highlightSeqStep(stepIdx);
+
+  const deg = seqState.steps[stepIdx];
+  const now = audioCtx.currentTime;
+  const dur = stepDurationSec();
+
+  if (deg >= 0){
+    const root = chordRootMidiForDegree(deg);
+
+    if (seqState.playMode === 'root'){
+      scheduleNote(root, now, Math.max(0.05, dur * 0.98));
+      document.getElementById("noteDisplay").textContent = midiToName(root);
+    } else {
+      // arp triad within the step
+      const tri = getTriadIntervals(deg).map(x => root + x);
+      const nDur = Math.max(0.04, dur * 0.42);
+      const gap = Math.max(0.02, dur * 0.18);
+
+      // up arp
+      scheduleNote(tri[0], now + 0 * gap, nDur);
+      scheduleNote(tri[1], now + 1 * gap, nDur);
+      scheduleNote(tri[2], now + 2 * gap, nDur);
+
+      document.getElementById("noteDisplay").textContent = degreeLabel(deg);
+    }
+  }
+
+  seqState.step = (seqState.step + 1) % 16;
+  seqState.timer = setTimeout(seqTick, dur * 1000);
+}
+
+/* Build sequencer UI */
+const seqKeyEl = document.getElementById('seqKey');
+NOTE_NAMES.forEach((n, i) => {
+  const opt = document.createElement('option');
+  opt.value = String(i);
+  opt.textContent = n;
+  seqKeyEl.appendChild(opt);
+});
+seqKeyEl.value = String(seqState.key);
+
+function renderSeqGrid(){
+  const grid = document.getElementById('seqGrid');
+  grid.innerHTML = '';
+
+  for (let i=0;i<16;i++){
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.id = `seqStep-${i}`;
+    b.className = 'stepBtn' + (seqState.steps[i] < 0 ? ' rest' : '');
+    const deg = seqState.steps[i];
+    b.innerHTML = `${degreeLabel(deg)}<small>${(i%4===0)?'BEAT':''}</small>`;
+
+    // click cycles: rest -> I -> II -> ... -> VII -> rest
+    b.addEventListener('click', () => {
+      const cur = seqState.steps[i];
+      const next = (cur < 0) ? 0 : (cur + 1);
+      seqState.steps[i] = (next > 6) ? -1 : next;
+      renderSeqGrid();
+    });
+
+    // right-click / long-press alternative (optional): go backwards
+    b.addEventListener('contextmenu', (e) => {
+      e.preventDefault();
+      const cur = seqState.steps[i];
+      if (cur < 0) seqState.steps[i] = 6;
+      else seqState.steps[i] = (cur - 1 < 0) ? -1 : (cur - 1);
+      renderSeqGrid();
+    });
+
+    grid.appendChild(b);
+  }
+}
+
+function syncSeqLabels(){
+  // re-render labels when key/mode changes
+  renderSeqGrid();
+}
+
+document.getElementById('seqMode').value = seqState.mode;
+document.getElementById('seqMinorFlavor').value = seqState.minorFlavor;
+document.getElementById('seqPlayMode').value = seqState.playMode;
+document.getElementById('seqBpm').value = String(seqState.bpm);
+
+seqKeyEl.addEventListener('change', () => {
+  seqState.key = +seqKeyEl.value;
+  syncSeqLabels();
+});
+document.getElementById('seqMode').addEventListener('change', (e) => {
+  seqState.mode = e.target.value;
+  syncSeqLabels();
+});
+document.getElementById('seqMinorFlavor').addEventListener('change', (e) => {
+  seqState.minorFlavor = e.target.value;
+  syncSeqLabels();
+});
+document.getElementById('seqPlayMode').addEventListener('change', (e) => {
+  seqState.playMode = e.target.value;
+});
+document.getElementById('seqBpm').addEventListener('change', (e) => {
+  seqState.bpm = +e.target.value;
+});
+document.getElementById('seqPlayBtn').addEventListener('click', () => {
+  if (seqState.running) seqStop(); else seqStart();
+});
+document.getElementById('seqStopBtn').addEventListener('click', seqStop);
+document.getElementById('seqClearBtn').addEventListener('click', () => {
+  seqState.steps.fill(-1);
+  syncSeqLabels();
+});
+
+renderSeqGrid();
+
+/* ============================================================
    Keyboard (touch-first)
 ============================================================ */
-// 3 octaves starting at C3 (midi 48)
 const startMidi = 48;
 const numOctaves = 3;
 const whitePattern = [0,2,4,5,7,9,11];
@@ -636,12 +1059,9 @@ const whiteKeysEl = document.getElementById("whiteKeys");
 const blackKeysEl = document.getElementById("blackKeys");
 const pianoEl = document.getElementById("piano");
 
-const whiteKeys = [];
 for (let o=0;o<numOctaves;o++){
   for (let i=0;i<7;i++){
     const midi = startMidi + o*12 + whitePattern[i];
-    whiteKeys.push(midi);
-
     const key = document.createElement("div");
     key.className = "white-key";
     key.dataset.midi = midi;
@@ -713,6 +1133,16 @@ document.addEventListener("keydown", e => {
 document.addEventListener("keyup", e => {
   const midi = keyMap[e.key.toLowerCase()];
   if (midi !== undefined && currentNote === midi) stopNote();
+});
+
+/* ============================================================
+   Space toggles sequencer play (nice)
+============================================================ */
+document.addEventListener('keydown', (e) => {
+  if (e.key === ' ') {
+    e.preventDefault();
+    if (seqState.running) seqStop(); else seqStart();
+  }
 });
 </script>
 </body>
