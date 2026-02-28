@@ -6,19 +6,28 @@
 <title>SamPtu 303 — LoFi Sampler</title>
 
 <style>
+  /* ============================================================
+     Elektron-minimal skin (harmonisé avec ton synthé)
+     ============================================================ */
   :root{
-    --bg:#e9eaec;
-    --ink:#111;
-    --muted:#666;
-    --panel:#f3f4f6;
-    --panel2:#edf0f3;
-    --line:rgba(0,0,0,.22);
-    --line2:rgba(0,0,0,.14);
-    --shadow:rgba(0,0,0,.08);
+    --bg:#0b0c0f;
+    --ink:#e9ecf2;
+    --muted:#a7afbf;
 
-    --stepOff:rgba(0,0,0,.08);
-    --playHead:rgba(0,0,0,.14);
-    --danger:#c01818;
+    --panel:#12141b;
+    --panel2:#0f1117;
+    --card:#151826;
+
+    --line:rgba(255,255,255,.10);
+    --line2:rgba(255,255,255,.06);
+    --shadow:rgba(0,0,0,.55);
+
+    --stepOff:rgba(255,255,255,.06);
+    --playHead:rgba(255,255,255,.11);
+    --danger:#ff4d4d;
+
+    --radius:14px;
+    --radius2:12px;
   }
 
   *{ box-sizing:border-box; }
@@ -26,24 +35,30 @@
   body{
     margin:0;
     font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
-    background:var(--bg);
+    background:
+      radial-gradient(1200px 600px at 25% -10%, rgba(255,255,255,.08), transparent 55%),
+      radial-gradient(900px 520px at 110% 0%, rgba(80,150,255,.10), transparent 55%),
+      var(--bg);
     color:var(--ink);
   }
 
   .wrap{
     max-width:1160px;
     margin:0 auto;
-    padding:16px 14px 22px;
-    padding-bottom: calc(22px + env(safe-area-inset-bottom));
+    padding:14px 12px 18px;
+    padding-bottom: calc(18px + env(safe-area-inset-bottom));
   }
 
   .panel{
     border:1px solid var(--line);
     background:linear-gradient(180deg, var(--panel), var(--panel2));
-    border-radius:14px;
-    box-shadow:0 10px 26px var(--shadow);
+    border-radius:var(--radius);
+    box-shadow:0 16px 44px var(--shadow);
   }
 
+  /* ============================================================
+     Top header / transport
+     ============================================================ */
   .topbar{
     display:flex;
     gap:12px;
@@ -52,22 +67,25 @@
     flex-wrap:wrap;
     margin-bottom:12px;
   }
+
   .title{
     display:flex;
     flex-direction:column;
     gap:4px;
-    min-width:260px;
+    min-width:240px;
   }
   .title h1{
     margin:0;
-    font-size:16px;
-    letter-spacing:.08em;
+    font-size:14px;
+    letter-spacing:.14em;
     text-transform:uppercase;
+    font-weight:900;
   }
   .title .sub{
-    font-size:12px;
+    font-size:11px;
     color:var(--muted);
-    letter-spacing:.04em;
+    letter-spacing:.08em;
+    text-transform:uppercase;
   }
 
   .controls{
@@ -77,40 +95,42 @@
     padding:10px;
     flex-wrap:wrap;
   }
+
   .btn{
     border:1px solid var(--line);
-    background:transparent;
+    background:rgba(255,255,255,.03);
     color:var(--ink);
     padding:10px 12px;
-    border-radius:12px;
-    font-weight:800;
-    letter-spacing:.04em;
+    border-radius:var(--radius2);
+    font-weight:900;
+    letter-spacing:.10em;
     text-transform:uppercase;
-    font-size:12px;
+    font-size:11px;
     cursor:pointer;
     user-select:none;
     touch-action:manipulation;
+    -webkit-tap-highlight-color: transparent;
   }
   .btn:active{ transform:translateY(1px); }
-  .btn.primary{ background:rgba(0,0,0,.06); }
-  .btn.danger{ border-color:rgba(192,24,24,.35); color:var(--danger); }
-  .btn.on{ background:rgba(0,0,0,.08); }
+  .btn.primary{ background:rgba(255,255,255,.06); }
+  .btn.danger{ border-color:rgba(255,77,77,.35); color:var(--danger); background:rgba(255,77,77,.05); }
+  .btn.on{ background:rgba(255,255,255,.10); }
 
   .led{
     display:flex;
     align-items:center;
     gap:10px;
     padding:10px 12px;
-    border-radius:12px;
+    border-radius:var(--radius2);
     border:1px solid var(--line);
-    background:rgba(255,255,255,.35);
-    min-height:42px;
+    background:rgba(255,255,255,.04);
+    min-height:40px;
   }
   .led .digits{
     font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Courier New", monospace;
     font-weight:900;
-    letter-spacing:.12em;
-    background:rgba(0,0,0,.06);
+    letter-spacing:.16em;
+    background:rgba(0,0,0,.25);
     border:1px solid var(--line2);
     padding:8px 10px;
     border-radius:10px;
@@ -118,9 +138,9 @@
     text-align:center;
   }
   .led .label{
-    font-size:12px;
+    font-size:11px;
     color:var(--muted);
-    letter-spacing:.06em;
+    letter-spacing:.12em;
     text-transform:uppercase;
     white-space:nowrap;
   }
@@ -131,36 +151,55 @@
     align-items:center;
     flex-wrap:wrap;
   }
+
   .knob{
     display:flex;
     flex-direction:column;
     gap:6px;
     padding:8px 10px;
     border:1px solid var(--line);
-    border-radius:12px;
-    background:rgba(255,255,255,.25);
+    border-radius:var(--radius2);
+    background:rgba(255,255,255,.03);
     min-width:170px;
   }
   .knob label{
-    font-size:11px;
-    letter-spacing:.08em;
+    font-size:10px;
+    letter-spacing:.14em;
     text-transform:uppercase;
     color:var(--muted);
     display:flex;
     justify-content:space-between;
     gap:10px;
   }
-  .knob input[type="range"]{ width:100%; accent-color:#111; }
   .knob .val{
     font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Courier New", monospace;
     font-size:11px;
     color:var(--ink);
-    opacity:.85;
+    opacity:.9;
+    letter-spacing:.06em;
+  }
+
+  /* Range: look Elektron-ish */
+  input[type="range"]{
+    width:100%;
+    accent-color: #e9ecf2;
+    touch-action: pan-y;
   }
 
   .main{ padding:12px; }
 
-  /* --- TRACK ROWS (pad + steps aligned) --- */
+  .sectionTitle{
+    font-size:10px;
+    letter-spacing:.18em;
+    text-transform:uppercase;
+    color:var(--muted);
+    margin:0;
+    font-weight:900;
+  }
+
+  /* ============================================================
+     Tracks layout (pad + steps aligned)
+     ============================================================ */
   .tracks{
     display:flex;
     flex-direction:column;
@@ -168,38 +207,39 @@
   }
 
   .track{
-    --trk: rgba(0,0,0,.85); /* fallback */
+    --trk: rgba(233,236,242,.85);
     border:1px solid var(--line);
-    border-radius:14px;
-    background:rgba(255,255,255,.18);
+    border-radius:var(--radius);
+    background:rgba(255,255,255,.02);
     padding:10px;
   }
 
   .trackRow{
     display:grid;
-    grid-template-columns: 300px 1fr;
+    grid-template-columns: 320px 1fr;
     gap:10px;
     align-items:stretch;
   }
 
   .padBox{
     border:1px solid var(--line);
-    border-radius:14px;
-    background:rgba(255,255,255,.22);
+    border-radius:var(--radius);
+    background:rgba(255,255,255,.03);
     padding:10px;
     display:flex;
     flex-direction:column;
     gap:8px;
     position:relative;
+    overflow:hidden;
   }
   .padBox::before{
     content:"";
     position:absolute;
     inset:0;
-    border-radius:14px;
+    border-radius:var(--radius);
     border:2px solid color-mix(in srgb, var(--trk) 55%, transparent);
     pointer-events:none;
-    opacity:.65;
+    opacity:.50;
   }
 
   .padTop{
@@ -214,25 +254,25 @@
     gap:4px;
   }
   .padType{
-    font-size:11px;
-    letter-spacing:.12em;
+    font-size:10px;
+    letter-spacing:.18em;
     text-transform:uppercase;
     color:var(--muted);
   }
   .padName{
     font-weight:900;
-    letter-spacing:.08em;
+    letter-spacing:.12em;
     text-transform:uppercase;
-    font-size:12px;
+    font-size:11px;
   }
   .pill{
     border:1px solid var(--line);
     border-radius:999px;
     padding:6px 8px;
-    background:rgba(255,255,255,.22);
+    background:rgba(255,255,255,.03);
     white-space:nowrap;
-    font-size:11px;
-    letter-spacing:.06em;
+    font-size:10px;
+    letter-spacing:.14em;
     text-transform:uppercase;
     color:var(--muted);
   }
@@ -240,29 +280,46 @@
   .padBtn{
     width:100%;
     border:1px solid var(--line);
-    background:transparent;
-    border-radius:14px;
+    background:rgba(0,0,0,.22);
+    border-radius:var(--radius);
     padding:12px 10px;
     font-weight:900;
-    letter-spacing:.08em;
+    letter-spacing:.12em;
     text-transform:uppercase;
-    font-size:12px;
+    font-size:11px;
     cursor:pointer;
     user-select:none;
     touch-action:manipulation;
     position:relative;
+    color:var(--ink);
+    -webkit-tap-highlight-color: transparent;
   }
   .padBtn:active{ transform:translateY(1px); }
-  .padBtn.on{ background: color-mix(in srgb, var(--trk) 12%, transparent); }
+  .padBtn.on{ background: color-mix(in srgb, var(--trk) 14%, rgba(0,0,0,.18)); }
 
   .padBtn .small{
     display:block;
-    font-size:11px;
+    font-size:10px;
     font-weight:800;
-    letter-spacing:.04em;
-    opacity:.75;
-    margin-top:4px;
+    letter-spacing:.06em;
+    opacity:.78;
+    margin-top:6px;
     text-transform:none;
+    color:var(--muted);
+  }
+
+  .wave{
+    width:100%;
+    height:22px;
+    border-radius:12px;
+    border:1px solid var(--line2);
+    background:rgba(255,255,255,.03);
+    overflow:hidden;
+  }
+  canvas.waveform-canvas{
+    width:100%;
+    height:100%;
+    display:block;
   }
 
   .miniRow{
@@ -271,27 +328,30 @@
     align-items:flex-start;
     flex-wrap:wrap;
   }
+
   .tinyBtn{
     border:1px solid var(--line);
-    background:transparent;
-    padding:8px 10px;
-    border-radius:12px;
-    font-size:11px;
+    background:rgba(255,255,255,.03);
+    color:var(--ink);
+    padding:9px 10px;
+    border-radius:var(--radius2);
+    font-size:10px;
     font-weight:900;
-    letter-spacing:.06em;
+    letter-spacing:.14em;
     text-transform:uppercase;
     cursor:pointer;
     touch-action:manipulation;
+    -webkit-tap-highlight-color: transparent;
   }
-  .tinyBtn.on{ background:rgba(0,0,0,.08); }
+  .tinyBtn.on{ background:rgba(255,255,255,.09); }
 
   .sctl{
     flex:1;
-    min-width: 120px;
+    min-width: 130px;
     border:1px solid var(--line);
-    border-radius:12px;
+    border-radius:var(--radius2);
     padding:8px 10px;
-    background:rgba(255,255,255,.20);
+    background:rgba(255,255,255,.03);
   }
   .sctl .row{
     display:flex;
@@ -301,46 +361,30 @@
     margin-bottom:6px;
   }
   .sctl .lab{
-    font-size:11px;
-    letter-spacing:.08em;
+    font-size:10px;
+    letter-spacing:.16em;
     text-transform:uppercase;
     color:var(--muted);
+    font-weight:900;
   }
   .sctl .v{
     font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Courier New", monospace;
     font-size:11px;
     color:var(--ink);
-    opacity:.85;
-  }
-  .sctl input[type="range"]{
-    width:100%;
-    accent-color:#111;
-    touch-action: pan-y;
+    opacity:.9;
+    letter-spacing:.06em;
   }
 
-  .wave{
-    width:100%;
-    height:20px;
-    border-radius:10px;
-    border:1px solid var(--line2);
-    background:rgba(0,0,0,.03);
-    overflow:hidden;
-  }
-  canvas.waveform-canvas{
-    width:100%;
-    height:100%;
-    display:block;
-  }
-
-  /* Steps */
+  /* Steps wrap */
   .stepsWrap{
     border:1px solid var(--line);
-    border-radius:14px;
-    background:rgba(255,255,255,.18);
+    border-radius:var(--radius);
+    background:rgba(255,255,255,.02);
     padding:10px;
     display:flex;
     flex-direction:column;
     gap:8px;
+    overflow:hidden;
   }
 
   .stepsHeader{
@@ -355,16 +399,18 @@
     gap:8px;
     align-items:center;
     flex-wrap:wrap;
-    font-size:11px;
+    font-size:10px;
     color:var(--muted);
-    letter-spacing:.04em;
+    letter-spacing:.12em;
+    text-transform:uppercase;
+    font-weight:900;
   }
   .swatch{
     width:12px; height:12px;
     border-radius:4px;
     background: var(--trk);
     opacity:.85;
-    border:1px solid rgba(0,0,0,.25);
+    border:1px solid rgba(0,0,0,.45);
   }
 
   .steps{
@@ -381,17 +427,18 @@
     position:relative;
     touch-action:none;
     user-select:none;
+    -webkit-tap-highlight-color: transparent;
   }
   .step.on{
-    background: color-mix(in srgb, var(--trk) 90%, #000);
-    border-color: color-mix(in srgb, var(--trk) 45%, rgba(0,0,0,.2));
+    background: color-mix(in srgb, var(--trk) 92%, #000);
+    border-color: color-mix(in srgb, var(--trk) 40%, rgba(255,255,255,.10));
   }
   .step.ph::after{
     content:"";
     position:absolute;
     inset:-2px;
     border-radius:12px;
-    outline:2px solid color-mix(in srgb, var(--trk) 55%, rgba(0,0,0,.15));
+    outline:2px solid color-mix(in srgb, var(--trk) 55%, rgba(0,0,0,.2));
     background:var(--playHead);
     pointer-events:none;
   }
@@ -403,11 +450,13 @@
     transform:translateX(-50%);
     width:4px; height:4px;
     border-radius:50%;
-    background:rgba(0,0,0,.20);
+    background:rgba(255,255,255,.15);
   }
-  .step.on.beat::before{ background:rgba(255,255,255,.35); }
+  .step.on.beat::before{ background:rgba(0,0,0,.25); }
 
-  /* FX panel */
+  /* ============================================================
+     FX panel (toujours OFF par défaut) - derrière bouton FX
+     ============================================================ */
   .fxPanel{ margin-top:12px; overflow:hidden; }
   .fxHeader{
     display:flex;
@@ -417,13 +466,8 @@
     padding:10px;
     border-bottom:1px solid var(--line);
   }
-  .fxHeader .sectionTitle{
-    margin:0;
-    font-size:11px;
-    letter-spacing:.14em;
-    text-transform:uppercase;
-    color:var(--muted);
-  }
+  .fxHeader .sectionTitle{ margin:0; }
+
   .fxBody{ padding:10px; display:none; }
   .fxBody.open{ display:block; }
 
@@ -434,8 +478,8 @@
   }
   .fxCard{
     border:1px solid var(--line);
-    border-radius:14px;
-    background:rgba(255,255,255,.20);
+    border-radius:var(--radius);
+    background:rgba(255,255,255,.02);
     padding:10px;
   }
   .fxCardTop{
@@ -447,23 +491,22 @@
   }
   .fxName{
     font-weight:900;
-    letter-spacing:.08em;
+    letter-spacing:.14em;
     text-transform:uppercase;
-    font-size:12px;
+    font-size:11px;
   }
   .fxSub{
-    font-size:11px;
+    font-size:10px;
     color:var(--muted);
-    letter-spacing:.04em;
+    letter-spacing:.10em;
+    text-transform:uppercase;
+    opacity:.9;
   }
-  .fxRow{
-    display:flex;
-    flex-direction:column;
-    gap:6px;
-    margin-top:8px;
-  }
+  .fxRow{ display:flex; flex-direction:column; gap:6px; margin-top:8px; }
 
-  /* Bottom */
+  /* ============================================================
+     Bottom bar
+     ============================================================ */
   .bottomBar{
     margin-top:12px;
     display:flex;
@@ -472,40 +515,41 @@
     flex-wrap:wrap;
     padding:10px;
     border:1px solid var(--line);
-    border-radius:14px;
-    background:rgba(255,255,255,.18);
+    border-radius:var(--radius);
+    background:rgba(255,255,255,.02);
   }
   .patBtns{ display:flex; gap:6px; align-items:center; flex-wrap:wrap; }
-  .patLabel{ font-size:11px; color:var(--muted); letter-spacing:.08em; text-transform:uppercase; }
+  .patLabel{
+    font-size:10px;
+    color:var(--muted);
+    letter-spacing:.18em;
+    text-transform:uppercase;
+    font-weight:900;
+  }
   .patBtn{
     border:1px solid var(--line);
-    background:transparent;
+    background:rgba(255,255,255,.03);
+    color:var(--ink);
     padding:8px 10px;
-    border-radius:12px;
-    font-size:11px;
+    border-radius:var(--radius2);
+    font-size:10px;
     font-weight:900;
-    letter-spacing:.08em;
+    letter-spacing:.14em;
     text-transform:uppercase;
     cursor:pointer;
     touch-action:manipulation;
+    -webkit-tap-highlight-color: transparent;
   }
-  .patBtn.active{ background:rgba(0,0,0,.08); }
+  .patBtn.active{ background:rgba(255,255,255,.10); }
 
-  .sectionTitle{
-    font-size:11px;
-    letter-spacing:.14em;
-    text-transform:uppercase;
-    color:var(--muted);
-    margin:0;
-  }
-
+  /* Loading */
   .loading-msg{
     position: fixed; inset: 0;
-    background: rgba(0,0,0,0.55);
+    background: rgba(0,0,0,0.65);
     display:flex; align-items:center; justify-content:center;
     z-index: 9000;
     font-weight:900;
-    letter-spacing:.14em;
+    letter-spacing:.18em;
     text-transform:uppercase;
     color:#fff;
     opacity: 0;
@@ -514,15 +558,40 @@
   }
   .loading-msg.show{ opacity:1; pointer-events:auto; }
 
+  /* ============================================================
+     Responsive: iPhone portrait = steps au-dessus du pad
+     ============================================================ */
   @media (max-width: 980px){
-    .trackRow{ grid-template-columns: 1fr; }
+    .trackRow{
+      display:flex;
+      flex-direction:column;
+    }
+    .stepsWrap{ order:1; }
+    .padBox{ order:2; }
   }
-  @media (max-width: 420px){
+
+  @media (max-width: 520px){
     .knob{ min-width: 150px; }
     .steps{ gap:5px; }
     .step{ height:28px; border-radius:9px; }
     .padBtn{ padding:11px 10px; }
-    .sctl{ min-width: 110px; }
+
+    /* mini controls plus “tight” */
+    .miniRow{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:8px;
+      align-items:stretch;
+    }
+    .tinyBtn{ grid-column: 1 / -1; }
+    .sctl{ min-width: 0; }
+    .wave{ height:20px; }
+  }
+
+  @media (max-width: 420px){
+    .title h1{ font-size:13px; }
+    .led .digits{ min-width:70px; }
+    .controls{ gap:8px; }
   }
 </style>
 </head>
@@ -531,8 +600,8 @@
   <div class="wrap">
     <div class="topbar">
       <div class="title">
-        <h1>SamPtu 303 — LoFi Sampler · Drum Machine</h1>
-        <div class="sub">1 track = 1 row · pad + controls aligned with sequencer · color-coded</div>
+        <h1>SamPtu 303 — LoFi Sampler</h1>
+        <div class="sub">pad + steps alignés · FX derrière bouton · mobile: steps au-dessus</div>
       </div>
 
       <div class="panel controls" aria-label="Transport">
@@ -573,8 +642,8 @@
     <div class="panel main">
       <div style="display:flex; justify-content:space-between; gap:10px; flex-wrap:wrap; align-items:center; margin-bottom:10px;">
         <p class="sectionTitle">Tracks</p>
-        <div style="font-size:11px; color:var(--muted); letter-spacing:.04em;">
-          Tap steps · drag paint (touch OK) · Space = play/pause
+        <div style="font-size:10px; color:var(--muted); letter-spacing:.14em; text-transform:uppercase; font-weight:900;">
+          tap steps · drag paint · space = play/pause
         </div>
       </div>
 
@@ -584,7 +653,7 @@
         <div class="fxHeader">
           <p class="sectionTitle">Global FX</p>
           <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
-            <span style="font-size:11px; color:var(--muted); letter-spacing:.06em; text-transform:uppercase;">Off by default</span>
+            <span style="font-size:10px; color:var(--muted); letter-spacing:.16em; text-transform:uppercase; font-weight:900;">OFF by default</span>
             <button id="fxAllBypassBtn" class="btn">Bypass</button>
           </div>
         </div>
@@ -595,7 +664,7 @@
               <div class="fxCardTop">
                 <div>
                   <div class="fxName">LOFI</div>
-                  <div class="fxSub">MPC60-ish bitcrush + SR</div>
+                  <div class="fxSub">bitcrush + SR</div>
                 </div>
                 <button id="lofi-bypass" class="btn">Off</button>
               </div>
@@ -617,7 +686,7 @@
               <div class="fxCardTop">
                 <div>
                   <div class="fxName">Tape</div>
-                  <div class="fxSub">Saturation + wow</div>
+                  <div class="fxSub">sat + wow</div>
                 </div>
                 <button id="tape-bypass" class="btn">Off</button>
               </div>
@@ -639,7 +708,7 @@
               <div class="fxCardTop">
                 <div>
                   <div class="fxName">Vinyl</div>
-                  <div class="fxSub">Crackle + warp</div>
+                  <div class="fxSub">crackle + warp</div>
                 </div>
                 <button id="vinyl-bypass" class="btn">Off</button>
               </div>
@@ -659,7 +728,7 @@
           </div>
 
           <div style="margin-top:10px; color:var(--muted); font-size:12px; line-height:1.35;">
-            Les FX sont globales. Active un FX via son bouton <strong>On</strong>, ou utilise <strong>Bypass</strong> pour tout couper.
+            FX globales — active via <strong>On</strong> sur chaque module, ou <strong>Bypass</strong> pour tout couper.
           </div>
         </div>
       </div>
@@ -819,7 +888,7 @@ let tapeWowOsc, tapeWowGain, tapeToneFilter;
 let vinylCrackleNode, vinylWarpOsc, vinylWarpGain, vinylDryGain, vinylWetGain;
 
 const FX = {
-  lofiOn: false, tapeOn: false, vinylOn: false,
+  lofiOn: false, tapeOn: false, vinylOn: false,   // OFF by default
   bits: 12, srate: 26000, lofimix: 0.5,
   tapedrive: 3, tapewow: 0.15, tapemix: 0.45,
   vinylcrackle: 0.25, vinylwarp: 0.2, vinylmix: 0.4,
@@ -1104,7 +1173,7 @@ function drawWaveform(padIdx, buffer) {
   const data = buffer.getChannelData(0);
   const step = Math.max(1, Math.floor(data.length / w));
 
-  ctx.strokeStyle = "rgba(0,0,0,.55)";
+  ctx.strokeStyle = "rgba(233,236,242,.65)";
   ctx.lineWidth = 1;
   ctx.beginPath();
   for (let x = 0; x < w; x++) {
@@ -1257,12 +1326,14 @@ function fillKick() {
    FX UI
    ========================================================================= */
 let fxAllBypass = false;
+
 function setFxButtonState(id, on){
   const b = document.getElementById(id);
   if (!b) return;
   b.textContent = on ? "On" : "Off";
   b.classList.toggle("on", on);
 }
+
 function applyFxFromUI(){
   FX.bits = +document.getElementById('bits').value;
   FX.srate = +document.getElementById('srate').value;
@@ -1290,6 +1361,7 @@ function applyFxFromUI(){
 
   if (audioCtx) updateFxGains();
 }
+
 function toggleFx(type){
   if (type === 'lofi') FX.lofiOn = !FX.lofiOn;
   if (type === 'tape') FX.tapeOn = !FX.tapeOn;
@@ -1329,14 +1401,18 @@ function buildTracks(){
 
     const padTop = document.createElement('div');
     padTop.className = 'padTop';
+
     const meta = document.createElement('div');
     meta.className = 'padMeta';
+
     const nm = document.createElement('div');
     nm.className = 'padName';
     nm.textContent = cfg.name;
+
     const tp = document.createElement('div');
     tp.className = 'padType';
     tp.textContent = cfg.type === 'sample' ? 'Sample' : 'Drum 808';
+
     meta.appendChild(nm);
     meta.appendChild(tp);
 
@@ -1537,6 +1613,7 @@ function wireUI(){
     seqStop();
   });
 
+  // FX behind button (closed by default)
   const fxToggleBtn = document.getElementById('fxToggleBtn');
   const fxBody = document.getElementById('fxBody');
   fxToggleBtn.addEventListener('click', () => fxBody.classList.toggle('open'));
