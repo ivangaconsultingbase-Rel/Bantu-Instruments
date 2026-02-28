@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no" />
-<title>Bantu Ins. miCS01 — App-Like (Portrait Compact + Wired Pitch/Mod)</title>
+<title>Bantu Ins. miCS01 — App-Like (Portrait Affiné)</title>
 
 <style>
 *{box-sizing:border-box;margin:0;padding:0;}
@@ -141,6 +141,17 @@ body{
 }
 .slider-col label{font-size:9px;letter-spacing:0.4px;}
 
+.note-display{
+  background:rgba(0,0,0,0.7);
+  border:1px solid var(--cyan);
+  border-radius:4px;
+  padding:4px 8px;
+  font-size:14px;
+  color:var(--cyan);
+  text-align:center;
+  margin-top:6px;
+}
+
 /* ENGINE */
 .engine-grid{
   display:grid;
@@ -176,22 +187,53 @@ body{
 }
 .wave-btn.active{ background:var(--cyan); color:#000; }
 
-.note-display{
-  background:rgba(0,0,0,0.7);
-  border:1px solid var(--cyan);
-  border-radius:4px;
-  padding:4px 8px;
-  font-size:14px;
-  color:var(--cyan);
-  text-align:center;
-  margin-top:6px;
+/* OSC layout helpers */
+.osc-top{
+  display:flex;
+  gap:18px;
+  align-items:flex-start;
+}
+.osc-engine{
+  flex:0.7;
+}
+.osc-params{
+  flex:1;
+  display:flex;
+  justify-content:space-around;
+  align-items:flex-start;
 }
 
-/* SOUND */
+/* SOUND base */
 .sound-grid{
   display:grid;
   grid-template-columns:repeat(3,1fr);
   gap:16px;
+}
+.sound-section-title{
+  text-align:center;
+  color:var(--cyan);
+  font-size:11px;
+  margin-bottom:6px;
+}
+
+/* Compact slider groups (used mainly in portrait) */
+.compact-row{
+  display:flex;
+  gap:12px;
+  justify-content:space-around;
+  align-items:flex-start;
+}
+.env-grid{
+  display:grid;
+  grid-template-columns:repeat(2,1fr);
+  gap:10px 12px;
+  justify-items:center;
+}
+.vca-stack{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:10px;
 }
 
 /* SEQ */
@@ -222,7 +264,6 @@ body{
   font-size:11px;
 }
 .seq-btn.playing{ border-color:var(--cyan); color:var(--cyan); }
-
 .icon-btn{
   width:28px;height:28px;
   display:inline-flex;
@@ -336,7 +377,7 @@ body{
 }
 .fx-knob-val{ font-size:10px; color:#bbb; min-width:48px; text-align:center; }
 
-/* PITCH/MOD (wired) */
+/* PITCH/MOD */
 .pm-wrap{
   display:flex;
   gap:14px;
@@ -378,17 +419,48 @@ body{
 }
 .hidden{ display:none !important; }
 
-/* ✅ PORTRAIT COMPACT (no rotate) */
+/* ✅ PORTRAIT AFFINÉ */
 @media (max-width: 520px){
   body{ padding-left:10px; padding-right:10px; }
   .block{ padding:10px; }
   .block-title{ font-size:12px; margin-bottom:8px; }
+
+  /* OSC: engine en haut, params sous la grille */
+  .osc-top{
+    flex-direction:column;
+    gap:10px;
+  }
   .engine-grid{ grid-template-columns:repeat(4,1fr); }
-  .sound-grid{ grid-template-columns:1fr; gap:12px; }
+  .osc-params{
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:10px;
+    justify-items:center;
+    align-items:start;
+  }
   .vslider-track{ height:84px; }
+
+  /* SOUND: plus compact (pas 1 colonne vide) */
+  .sound-grid{
+    grid-template-columns:1fr;
+    gap:12px;
+  }
+  .sound-section-title{ margin-bottom:8px; }
+
+  /* VCF row compact (3 faders) */
+  .compact-row{ gap:14px; }
+
+  /* ENV en 2x2 */
+  .env-grid{ gap:10px 14px; }
+
+  /* VCA compact */
+  .vca-stack{ gap:8px; }
+
+  /* place du sequencer */
   .seq-grid-wrapper{ max-height: 44vh; }
   .seq-row-label{ width:38px; font-size:9px; }
   .seq-cell{ height:16px; }
+
   .pm-wrap{ gap:10px; }
   .ribbon{ height:96px; }
 }
@@ -415,9 +487,10 @@ body{
   <div class="block">
     <div class="block-title">Oscillator · Mutable Instruments Plaits</div>
 
-    <div id="oscRow" style="display:flex; gap:18px; align-items:flex-start;">
+    <div class="osc-top">
 
-      <div style="flex:0.7;">
+      <!-- ENGINE SELECTOR -->
+      <div class="osc-engine">
         <div style="color:var(--gold);font-size:11px;text-align:center;margin-bottom:6px;">ENGINE</div>
 
         <div id="engineBtns" class="engine-grid">
@@ -436,7 +509,9 @@ body{
         </div>
       </div>
 
-      <div style="flex:1; display:flex; justify-content:space-around;">
+      <!-- OSC PARAMETERS (sous la grille en portrait via CSS) -->
+      <div class="osc-params">
+
         <div class="slider-col">
           <label id="lbl-harm" style="color:var(--gold)">HARMO</label>
           <div class="vslider-track" data-param="harmonics" data-min="0" data-max="1" data-val="0.5">
@@ -467,8 +542,8 @@ body{
             <div class="wave-btn" onclick="setFeet(32,this)">32'</div>
           </div>
         </div>
-      </div>
 
+      </div>
     </div>
   </div>
 
@@ -478,87 +553,96 @@ body{
 
     <div class="sound-grid">
 
+      <!-- VCF -->
       <div>
-        <div style="text-align:center;color:var(--cyan);font-size:11px;margin-bottom:6px;">VCF (JUNO)</div>
-
-        <div class="slider-col">
-          <label>CUTOFF</label>
-          <div class="vslider-track" data-param="cutoff" data-min="20" data-max="18000" data-val="8000">
-            <div class="vslider-handle"></div>
+        <div class="sound-section-title">VCF (JUNO)</div>
+        <div class="compact-row">
+          <div class="slider-col">
+            <label>CUTOFF</label>
+            <div class="vslider-track" data-param="cutoff" data-min="20" data-max="18000" data-val="8000">
+              <div class="vslider-handle"></div>
+            </div>
           </div>
-        </div>
 
-        <div class="slider-col" style="margin-top:8px;">
-          <label>RES</label>
-          <div class="vslider-track" data-param="resonance" data-min="0.01" data-max="20" data-val="1">
-            <div class="vslider-handle"></div>
+          <div class="slider-col">
+            <label>RES</label>
+            <div class="vslider-track" data-param="resonance" data-min="0.01" data-max="20" data-val="1">
+              <div class="vslider-handle"></div>
+            </div>
           </div>
-        </div>
 
-        <div class="slider-col" style="margin-top:8px;">
-          <label>EG</label>
-          <div class="vslider-track" data-param="filterEgDepth" data-min="0" data-max="1" data-val="0">
-            <div class="vslider-handle"></div>
+          <div class="slider-col">
+            <label>EG</label>
+            <div class="vslider-track" data-param="filterEgDepth" data-min="0" data-max="1" data-val="0">
+              <div class="vslider-handle"></div>
+            </div>
           </div>
         </div>
       </div>
 
+      <!-- VCA -->
       <div>
-        <div style="text-align:center;color:var(--cyan);font-size:11px;margin-bottom:6px;">VCA</div>
-
-        <div class="slider-col">
-          <label>DEPTH</label>
-          <div class="vslider-track" data-param="vcaDepth" data-min="0.05" data-max="1" data-val="0.8">
-            <div class="vslider-handle"></div>
+        <div class="sound-section-title">VCA</div>
+        <div class="vca-stack">
+          <div class="slider-col">
+            <label>DEPTH</label>
+            <div class="vslider-track" data-param="vcaDepth" data-min="0.05" data-max="1" data-val="0.8">
+              <div class="vslider-handle"></div>
+            </div>
           </div>
+          <div class="note-display" id="noteDisplay">---</div>
         </div>
-
-        <div class="slider-col" style="margin-top:12px;">
-          <label>VOL</label>
-          <div class="knob" id="knob-vol" data-param="volume" data-min="0" data-max="1" data-val="0.7"
-            style="width:48px;height:48px;border-radius:50%;background:radial-gradient(circle at 35% 35%,#444 0%,#111 100%);border:2px solid #0e0e0e;position:relative;cursor:pointer;">
-            <div style="position:absolute;width:6px;height:6px;background:#cc0000;border-radius:50%;top:4px;left:50%;transform:translateX(-50%);"></div>
-          </div>
-        </div>
-
-        <div class="note-display" id="noteDisplay">---</div>
       </div>
 
+      <!-- ENVELOPE -->
       <div>
-        <div style="text-align:center;color:var(--cyan);font-size:11px;margin-bottom:6px;">ENVELOPE</div>
+        <div class="sound-section-title">ENVELOPE</div>
 
-        <div class="slider-col">
-          <label>ATTACK</label>
-          <div class="vslider-track" data-param="attack" data-min="0.001" data-max="4" data-val="0.01">
-            <div class="vslider-handle"></div>
+        <div class="env-grid">
+          <div class="slider-col">
+            <label>ATTACK</label>
+            <div class="vslider-track" data-param="attack" data-min="0.001" data-max="4" data-val="0.01">
+              <div class="vslider-handle"></div>
+            </div>
           </div>
-        </div>
 
-        <div class="slider-col" style="margin-top:10px;">
-          <label>DECAY</label>
-          <div class="vslider-track" data-param="decay" data-min="0.001" data-max="4" data-val="0.3">
-            <div class="vslider-handle"></div>
+          <div class="slider-col">
+            <label>DECAY</label>
+            <div class="vslider-track" data-param="decay" data-min="0.001" data-max="4" data-val="0.3">
+              <div class="vslider-handle"></div>
+            </div>
           </div>
-        </div>
 
-        <div class="slider-col" style="margin-top:10px;">
-          <label>SUSTAIN</label>
-          <div class="vslider-track" data-param="sustain" data-min="0" data-max="1" data-val="0.7">
-            <div class="vslider-handle"></div>
+          <div class="slider-col">
+            <label>SUSTAIN</label>
+            <div class="vslider-track" data-param="sustain" data-min="0" data-max="1" data-val="0.7">
+              <div class="vslider-handle"></div>
+            </div>
           </div>
-        </div>
 
-        <div class="slider-col" style="margin-top:10px;">
-          <label>RELEASE</label>
-          <div class="vslider-track" data-param="release" data-min="0.001" data-max="6" data-val="0.5">
-            <div class="vslider-handle"></div>
+          <div class="slider-col">
+            <label>RELEASE</label>
+            <div class="vslider-track" data-param="release" data-min="0.001" data-max="6" data-val="0.5">
+              <div class="vslider-handle"></div>
+            </div>
           </div>
         </div>
       </div>
 
     </div>
 
-    <!-- PITCH/MOD wired (hidden by default, toggle in seq controls) -->
+    <!-- ✅ VOLUME À LA TOUTE FIN (comme demandé) -->
+    <div style="display:flex; justify-content:center; margin-top:12px;">
+      <div class="slider-col">
+        <label style="color:var(--cyan); font-weight:800;">VOLUME</label>
+        <div class="knob" id="knob-vol" data-param="volume" data-min="0" data-max="1" data-val="0.7"
+          style="width:54px;height:54px;border-radius:50%;background:radial-gradient(circle at 35% 35%,#444 0%,#111 100%);border:2px solid #0e0e0e;position:relative;cursor:pointer;">
+          <div style="position:absolute;width:6px;height:6px;background:#cc0000;border-radius:50%;top:5px;left:50%;transform:translateX(-50%);"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PITCH/MOD (hidden by default) -->
     <div id="pitchModSection" class="hidden" style="margin-top:12px;">
       <div class="block-title" style="margin-bottom:6px; font-size:12px;">Pitch / Mod (Wired)</div>
 
@@ -579,6 +663,7 @@ body{
         MOD → vibrato (LFO) + légère modulation de cutoff · PITCH → pitch bend global
       </div>
     </div>
+
   </div>
 
   <!-- BLOCK 3 : SEQUENCER -->
@@ -629,7 +714,6 @@ body{
 
   <!-- BLOCK 4 : FX PANEL -->
   <div class="fx-panel" id="fxPanel">
-
     <div class="fx-unit fx-tape" style="margin-bottom:18px;">
       <div style="display:flex;align-items:center;margin-bottom:10px;">
         <div style="color:#e8a44a;font-weight:800;font-size:13px;letter-spacing:2px;">⊛ Tape Saturation</div>
@@ -637,39 +721,26 @@ body{
       </div>
 
       <div style="display:flex;gap:18px;align-items:flex-end;flex-wrap:wrap;">
-
         <div class="fx-knob-group">
           <div class="fx-knob-label">DRIVE</div>
-          <div class="fx-knob" data-param="tapeDrive" data-min="1" data-max="30" data-val="4">
-            <div class="fx-knob-dot"></div>
-          </div>
+          <div class="fx-knob" data-param="tapeDrive" data-min="1" data-max="30" data-val="4"><div class="fx-knob-dot"></div></div>
           <div id="val-tapeDrive" class="fx-knob-val">4.0</div>
         </div>
-
         <div class="fx-knob-group">
           <div class="fx-knob-label">TONE</div>
-          <div class="fx-knob" data-param="tapeTone" data-min="200" data-max="8000" data-val="3000">
-            <div class="fx-knob-dot"></div>
-          </div>
+          <div class="fx-knob" data-param="tapeTone" data-min="200" data-max="8000" data-val="3000"><div class="fx-knob-dot"></div></div>
           <div id="val-tapeTone" class="fx-knob-val">3k</div>
         </div>
-
         <div class="fx-knob-group">
           <div class="fx-knob-label">WOW</div>
-          <div class="fx-knob" data-param="tapeWow" data-min="0" data-max="1" data-val="0.2">
-            <div class="fx-knob-dot"></div>
-          </div>
+          <div class="fx-knob" data-param="tapeWow" data-min="0" data-max="1" data-val="0.2"><div class="fx-knob-dot"></div></div>
           <div id="val-tapeWow" class="fx-knob-val">20%</div>
         </div>
-
         <div class="fx-knob-group">
           <div class="fx-knob-label">MIX</div>
-          <div class="fx-knob" data-param="tapeMix" data-min="0" data-max="1" data-val="0.6">
-            <div class="fx-knob-dot"></div>
-          </div>
+          <div class="fx-knob" data-param="tapeMix" data-min="0" data-max="1" data-val="0.6"><div class="fx-knob-dot"></div></div>
           <div id="val-tapeMix" class="fx-knob-val">60%</div>
         </div>
-
       </div>
     </div>
 
@@ -680,54 +751,37 @@ body{
       </div>
 
       <div style="display:flex;gap:18px;align-items:flex-end;flex-wrap:wrap;">
-
         <div class="fx-knob-group">
           <div class="fx-knob-label">DELAY</div>
-          <div class="fx-knob" data-param="echoTime" data-min="0.05" data-max="1.2" data-val="0.375">
-            <div class="fx-knob-dot"></div>
-          </div>
+          <div class="fx-knob" data-param="echoTime" data-min="0.05" data-max="1.2" data-val="0.375"><div class="fx-knob-dot"></div></div>
           <div id="val-echoTime" class="fx-knob-val">375ms</div>
         </div>
-
         <div class="fx-knob-group">
           <div class="fx-knob-label">FDBK</div>
-          <div class="fx-knob" data-param="echoFeedback" data-min="0" data-max="0.92" data-val="0.4">
-            <div class="fx-knob-dot"></div>
-          </div>
+          <div class="fx-knob" data-param="echoFeedback" data-min="0" data-max="0.92" data-val="0.4"><div class="fx-knob-dot"></div></div>
           <div id="val-echoFeedback" class="fx-knob-val">40%</div>
         </div>
-
         <div class="fx-knob-group">
           <div class="fx-knob-label">SPACE</div>
-          <div class="fx-knob" data-param="reverbSize" data-min="0.1" data-max="6" data-val="2.5">
-            <div class="fx-knob-dot"></div>
-          </div>
+          <div class="fx-knob" data-param="reverbSize" data-min="0.1" data-max="6" data-val="2.5"><div class="fx-knob-dot"></div></div>
           <div id="val-reverbSize" class="fx-knob-val">2.5s</div>
         </div>
-
         <div class="fx-knob-group">
           <div class="fx-knob-label">REV MIX</div>
-          <div class="fx-knob" data-param="reverbMix" data-min="0" data-max="1" data-val="0.3">
-            <div class="fx-knob-dot"></div>
-          </div>
+          <div class="fx-knob" data-param="reverbMix" data-min="0" data-max="1" data-val="0.3"><div class="fx-knob-dot"></div></div>
           <div id="val-reverbMix" class="fx-knob-val">30%</div>
         </div>
-
         <div class="fx-knob-group">
           <div class="fx-knob-label">ECHO MIX</div>
-          <div class="fx-knob" data-param="echoMix" data-min="0" data-max="1" data-val="0.4">
-            <div class="fx-knob-dot"></div>
-          </div>
+          <div class="fx-knob" data-param="echoMix" data-min="0" data-max="1" data-val="0.4"><div class="fx-knob-dot"></div></div>
           <div id="val-echoMix" class="fx-knob-val">40%</div>
         </div>
-
       </div>
     </div>
-
   </div>
 
   <div style="text-align:center;color:#333;font-size:10px;margin-top:6px;">
-    Bantu Inc. miCS01 · Portrait Compact + Wired Pitch/Mod · Web Audio API
+    Bantu Inc. miCS01 · Portrait Affiné · Web Audio API
   </div>
 
 </div>
@@ -1133,11 +1187,9 @@ class PlaitsVoice {
 
     for(let i=0;i<size;i++){
       const env=this.processADSR(params.attack, params.decay, params.sustain, params.release);
-
       const cutoffNorm=clamp(params.cutoff/(this.sr*0.5),0.001,0.999);
       const cutEg = cutoffNorm*(1 + params.filterEgDepth*env*4);
       const coeff=clamp(1 - Math.exp(-2*Math.PI*clamp(cutEg,0.001,0.499)),0,1);
-
       this.filterState += coeff * (tmp[i] - this.filterState);
       output[i] += this.filterState * env * params.vcaDepth;
     }
@@ -1169,7 +1221,7 @@ let reverbNode=null, reverbWetGain=null, reverbDryGain=null;
 
 let vcfPing = 0;
 
-/* ✅ Pitch/Mod wired globals */
+/* Pitch/Mod wired globals */
 let pitchBendSemi = 0;   // from ribbon PITCH (±2)
 let modAmt = 0;          // from ribbon MOD (0..1)
 let lfoPhase = 0;        // vibrato phase
@@ -1180,7 +1232,7 @@ const P={
   attack:0.01, decay:0.3, sustain:0.7, release:0.5,
   cutoff:8000, resonance:1, filterEgDepth:0,
   vcaDepth:0.8, octaveMult:1, pitchSemi:0,
-  lfoSpeed:4.5, volume:0.7, // lfoSpeed used by MOD vibrato
+  lfoSpeed:4.5, volume:0.7,
 };
 
 const FX={
@@ -1190,11 +1242,9 @@ const FX={
   reverbSize:2.5, reverbMix:0.3, echoMix:0.4,
 };
 
-/* Param sync */
 function sendParam(param, val){ if (param in DSP_PARAMS) DSP_PARAMS[param] = val; }
 function sendAllParams(){ Object.keys(DSP_PARAMS).forEach(k => { if (k in P) DSP_PARAMS[k] = P[k]; }); }
 
-/* FX helpers */
 function makeSatCurve(amount){
   const n = 1024;
   const curve = new Float32Array(n);
@@ -1238,11 +1288,9 @@ function initAudio(){
     const size=output.length;
     const buf=new Float32Array(size);
 
-    // ✅ MOD -> vibrato depth (semi) + cutoff wobble (Hz)
-    const vibDepthSemi = 0.35 * modAmt;          // ~0..0.35 st
-    const cutoffWobble = 1200 * modAmt;          // ~0..1200 Hz
+    const vibDepthSemi = 0.35 * modAmt;
+    const cutoffWobble = 1200 * modAmt;
     const lfoInc = (P.lfoSpeed / audioCtx.sampleRate);
-    // approximate LFO over block
     const lfoNow = Math.sin(2*Math.PI*lfoPhase);
     const pitchSemiAdd = pitchBendSemi + (lfoNow * vibDepthSemi);
 
@@ -1255,11 +1303,9 @@ function initAudio(){
       if(voices.length===0) voicePool.delete(midi);
     }
 
-    // advance LFO phase
     lfoPhase += lfoInc * size;
     lfoPhase -= Math.floor(lfoPhase);
 
-    // post-filter EG ping + mod cutoff wobble
     if(junoFilter){
       vcfPing*=0.92;
       const base=P.cutoff;
@@ -1278,11 +1324,9 @@ function initAudio(){
   junoFilter=new JunoPostFilter(audioCtx);
   masterGain.connect(junoFilter.input);
 
-  // FX graph
   fxInputGain = audioCtx.createGain();
   junoFilter.out.connect(fxInputGain);
 
-  // Tape
   tapeInputGain = audioCtx.createGain();
   tapeInputGain.gain.value = FX.tapeDrive;
 
@@ -1313,7 +1357,6 @@ function initAudio(){
   tapeDryGain = audioCtx.createGain();
   tapeWetGain = audioCtx.createGain();
 
-  // Echo/Reverb
   delayNode = audioCtx.createDelay(2.0);
   delayNode.delayTime.value = FX.echoTime;
 
@@ -1332,7 +1375,6 @@ function initAudio(){
   reverbDryGain = audioCtx.createGain();
   reverbDryGain.gain.value = 1;
 
-  // routing
   fxInputGain.connect(tapeDryGain);
 
   fxInputGain.connect(tapeInputGain);
@@ -1778,7 +1820,7 @@ function initFxKnobs(){
   });
 }
 
-/* ✅ Ribbons wired */
+/* Ribbons wired */
 function initRibbons(){
   const pitch=document.getElementById('pitchRibbon');
   const mod=document.getElementById('modRibbon');
@@ -1803,15 +1845,13 @@ function initRibbons(){
     window.addEventListener('touchend', ()=>{ dragging=false; },{passive:true});
   };
 
-  // PITCH: ±2 semitones
   attach(pitch, (v)=>{
     const semi = clamp(v, -1, 1) * 2;
     pitchBendSemi = semi;
-    DSP_PARAMS.pitchSemi = 0; // base (could be used later for other UI)
+    DSP_PARAMS.pitchSemi = 0;
     pitchValEl.textContent = semi.toFixed(2);
   });
 
-  // MOD: 0..1
   attach(mod, (v)=>{
     const a = clamp((v + 1) * 0.5, 0, 1);
     modAmt = a;
