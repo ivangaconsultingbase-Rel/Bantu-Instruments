@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-<title>RhS01 — Braids (Classics + Direct Digital) · Degree Chord Sequencer</title>
+<title>RhS01 — Braids Classics + Direct Digital · Degree Chord Sequencer</title>
 
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;600;700&family=Share+Tech+Mono&display=swap');
@@ -46,10 +46,7 @@
     gap: 12px;
   }
 
-  header{
-    text-align:center;
-    padding: 6px 6px 0;
-  }
+  header{ text-align:center; padding: 6px 6px 0; }
   header h1{
     font-family:'Share Tech Mono', monospace;
     letter-spacing:0.26em;
@@ -81,12 +78,7 @@
     border-bottom: 1px solid var(--line);
   }
 
-  .row{
-    display:flex;
-    gap:10px;
-    align-items:stretch;
-    flex-wrap:wrap;
-  }
+  .row{ display:flex; gap:10px; align-items:stretch; flex-wrap:wrap; }
 
   .card{
     background: rgba(0,0,0,0.18);
@@ -111,13 +103,8 @@
     text-transform: uppercase;
     white-space:nowrap;
   }
-  .title .line{
-    flex:1;
-    height:1px;
-    background: rgba(58,42,21,0.8);
-  }
+  .title .line{ flex:1; height:1px; background: rgba(58,42,21,0.8); }
 
-  /* Model buttons */
   .modes{
     display:grid;
     grid-template-columns: repeat(2, minmax(0,1fr));
@@ -155,17 +142,12 @@
   }
   .mode-btn.active b{ color: var(--cyan); }
 
-  /* Sliders */
   .sliders{
     display:grid;
     grid-template-columns: repeat(2, minmax(0,1fr));
     gap: 10px;
   }
-  .ctl{
-    display:flex;
-    flex-direction:column;
-    gap: 6px;
-  }
+  .ctl{ display:flex; flex-direction:column; gap: 6px; }
   .ctl .name{
     font-family:'Share Tech Mono', monospace;
     font-size: 10px;
@@ -176,11 +158,7 @@
     justify-content:space-between;
     gap: 8px;
   }
-  .ctl .val{
-    color: var(--accent);
-    letter-spacing:0.08em;
-    font-size: 11px;
-  }
+  .ctl .val{ color: var(--accent); letter-spacing:0.08em; font-size: 11px; }
 
   input[type=range]{
     -webkit-appearance:none;
@@ -200,7 +178,7 @@
     box-shadow: 0 3px 10px rgba(0,0,0,0.55);
   }
 
-  /* Sequencer */
+  /* Sequencer (degrees) */
   .seqTop{
     display:flex;
     align-items:center;
@@ -223,12 +201,7 @@
   }
   .pill b{ color: var(--cyan); font-weight:700; }
 
-  .btnRow{
-    display:flex;
-    gap:8px;
-    align-items:center;
-    flex-wrap:wrap;
-  }
+  .btnRow{ display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
   .btn{
     font-family:'Share Tech Mono', monospace;
     font-size: 11px;
@@ -318,9 +291,7 @@
     letter-spacing:0.14em;
     color: rgba(240,224,192,0.92);
   }
-  .degStep.off .txt{
-    color: rgba(136,102,68,0.85);
-  }
+  .degStep.off .txt{ color: rgba(136,102,68,0.85); }
   .degStep.on{
     border-color: rgba(232,160,48,0.55);
     background: rgba(232,160,48,0.10);
@@ -346,10 +317,7 @@
   .help b{ color: rgba(240,224,192,0.90); }
 
   /* Keyboard */
-  .kbd{
-    padding: 12px 14px 14px;
-    background: rgba(0,0,0,0.16);
-  }
+  .kbd{ padding: 12px 14px 14px; background: rgba(0,0,0,0.16); }
   .kbdTop{
     display:flex;
     align-items:center;
@@ -357,11 +325,7 @@
     gap: 10px;
     margin-bottom: 10px;
   }
-  .brand{
-    display:flex;
-    flex-direction:column;
-    gap: 4px;
-  }
+  .brand{ display:flex; flex-direction:column; gap: 4px; }
   .brand .yam{ font-family:'Share Tech Mono', monospace; font-size: 12px; letter-spacing:0.18em; color: rgba(240,224,192,0.95); }
   .brand .cs01{ font-family:'Share Tech Mono', monospace; font-size: 26px; letter-spacing:-1px; color: var(--accent); }
   .brand .tag{ font-size: 10px; letter-spacing:0.22em; text-transform:uppercase; color: var(--text-dim); }
@@ -428,7 +392,6 @@
     padding: 8px 0 0;
   }
 
-  /* iPhone-ish */
   @media (max-width: 430px){
     .modes{ grid-template-columns: 1fr; }
     .sliders{ grid-template-columns: 1fr; }
@@ -443,8 +406,8 @@
 <body>
   <div class="app">
     <header>
-      <h1>RhS01 · BRAIDS (JS)</h1>
-      <div class="sub">Classics + Direct Digital · Degree Chord Sequencer · House / Neo-Soul / Rhodes</div>
+      <h1>RhS01 · BRAIDS (CLASSICS + DIRECT)</h1>
+      <div class="sub">8 modèles officiels (subset) · Degree Chord Sequencer · House / Neo-Soul / Rhodes</div>
     </header>
 
     <div class="frame">
@@ -589,16 +552,21 @@
       </div>
     </div>
 
-    <div class="footer">Braids-style models (subset) · Classics + Direct Digital · Mono synth + chord-degree sequencer</div>
+    <div class="footer">Braids models (8) · Classics + Direct Digital · Mono synth + chord-degree sequencer</div>
   </div>
 
 <script>
 /* ============================================================
-   BRAIDS-STYLE OSCILLATOR (subset) via inline AudioWorklet
-   - Classics: Sine, Tri, Saw, Square, PWM
-   - Direct Digital: WT Morph, FM2OP, Bitcrush Saw
-   Notes:
-   - This is a "Braids-inspired" subset, not a bit-perfect port.
+   BRAIDS-STYLE OSCILLATOR — 8 models per your official list
+   Models:
+   0) CS-80 style saw with a notch
+   1) Morph TRI↔SAW↔SQUARE↔PULSE + character
+   2) Band-limited dual pulse train + detune
+   3) Supersaw (7 saws)
+   4) Circuit-bent saw + SR reduction + bit toggling
+   5) Filtered waveforms (Casio CZ style phase distortion)
+   6) Vowel/formant synthesis (lo-fi/hi-fi)
+   7) Harmonic oscillator (additive)
 ============================================================ */
 
 let audioCtx = null;
@@ -608,11 +576,12 @@ let ampNode = null;
 let currentNote = null;
 
 const params = {
-  model: 3,        // default: WT MORPH
-  timbre: 0.50,    // 0..1
-  color: 0.35,     // 0..1
-  detune: 0.10,    // 0..1
-  sub: 0.00,       // 0..1
+  model: 1,
+  timbre: 0.50,
+  color: 0.35,
+  detune: 0.10,
+  sub: 0.00,
+
   cutoff: 9000,
   resonance: 0.90,
   attack: 0.008,
@@ -622,16 +591,14 @@ const params = {
 };
 
 const MODELS = [
-  // Classics
-  { id: 0, group: "CLASSICS", name: "SINE",  hint: "clean", icon: "∿" },
-  { id: 1, group: "CLASSICS", name: "TRI",   hint: "soft",  icon: "△" },
-  { id: 2, group: "CLASSICS", name: "SAW",   hint: "bright",icon: "⟋" },
-  { id: 3, group: "DIRECT",   name: "WT MORPH", hint: "wavetable", icon: "≋" },
-  { id: 4, group: "CLASSICS", name: "SQUARE",hint: "hollow",icon: "▢" },
-  { id: 5, group: "CLASSICS", name: "PWM",   hint: "pulse", icon: "▥" },
-  // Direct Digital
-  { id: 6, group: "DIRECT",   name: "FM 2-OP", hint: "keys/bell", icon: "FM" },
-  { id: 7, group: "DIRECT",   name: "CRUSH SAW", hint: "lofi", icon: "⌁" },
+  { id: 0, group: "CLASSICS", name: "CS-80 NOTCH SAW", hint: "saw + notch", icon: "CS" },
+  { id: 1, group: "CLASSICS", name: "MORPH VCO", hint: "tri/saw/sq/pulse", icon: "↭" },
+  { id: 2, group: "CLASSICS", name: "DUAL PULSE", hint: "2 pulses detuned", icon: "||" },
+  { id: 3, group: "CLASSICS", name: "SUPERSAW", hint: "7 saw swarm", icon: "≋" },
+  { id: 4, group: "DIRECT",   name: "CIRCUIT-BENT SAW", hint: "SR + bit flip", icon: "⌁" },
+  { id: 5, group: "DIRECT",   name: "CZ PD", hint: "phase distortion", icon: "PD" },
+  { id: 6, group: "DIRECT",   name: "VOWEL / FORMANT", hint: "lo/hi-fi", icon: "OO" },
+  { id: 7, group: "DIRECT",   name: "HARMONIC OSC", hint: "additive", icon: "Σ" },
 ];
 
 function noteToFreq(midi){ return 440 * Math.pow(2, (midi - 69) / 12); }
@@ -640,18 +607,18 @@ function midiToName(midi){
   return names[midi % 12] + Math.floor(midi / 12 - 1);
 }
 
-function createBraidsWorkletURL(){
+function createWorkletURL(){
   const code = `
-class BraidsOsc extends AudioWorkletProcessor {
+class Braids8 extends AudioWorkletProcessor {
   static get parameterDescriptors(){
     return [
-      { name: 'freq',    defaultValue: 440, minValue: 0,   maxValue: 20000, automationRate: 'a-rate' },
-      { name: 'gain',    defaultValue: 1.0, minValue: 0,   maxValue: 2.0,   automationRate: 'k-rate' },
-      { name: 'model',   defaultValue: 3,   minValue: 0,   maxValue: 7,     automationRate: 'k-rate' },
-      { name: 'timbre',  defaultValue: 0.5, minValue: 0,   maxValue: 1,     automationRate: 'k-rate' },
-      { name: 'color',   defaultValue: 0.35,minValue: 0,   maxValue: 1,     automationRate: 'k-rate' },
-      { name: 'detune',  defaultValue: 0.1, minValue: 0,   maxValue: 1,     automationRate: 'k-rate' },
-      { name: 'sub',     defaultValue: 0.0, minValue: 0,   maxValue: 1,     automationRate: 'k-rate' },
+      { name:'freq',   defaultValue:440, minValue:0, maxValue:20000, automationRate:'a-rate' },
+      { name:'gain',   defaultValue:1.0, minValue:0, maxValue:2.0,   automationRate:'k-rate' },
+      { name:'model',  defaultValue:1,   minValue:0, maxValue:7,     automationRate:'k-rate' },
+      { name:'timbre', defaultValue:0.5, minValue:0, maxValue:1,     automationRate:'k-rate' },
+      { name:'color',  defaultValue:0.35,minValue:0, maxValue:1,     automationRate:'k-rate' },
+      { name:'detune', defaultValue:0.1, minValue:0, maxValue:1,     automationRate:'k-rate' },
+      { name:'sub',    defaultValue:0.0, minValue:0, maxValue:1,     automationRate:'k-rate' },
     ];
   }
 
@@ -659,60 +626,26 @@ class BraidsOsc extends AudioWorkletProcessor {
     super();
     this.phase = 0;
     this.subPhase = 0;
-    this.fmPhase = 0;
 
+    // for detuned voices
+    this.phases = new Float32Array(8);
+
+    // for circuit-bent
     this.hold = 0;
     this.srCounter = 0;
+    this.bitState = 0;
+    this.bitHold = 0;
 
-    // a few band-limited-ish wavetables (small & cheap):
-    // 0:sine, 1:tri-ish, 2:saw-ish, 3:square-ish, 4:bright "organ", 5:formant-ish
-    this.tables = [];
-    const makeTable = (fn) => {
-      const N = 2048;
-      const t = new Float32Array(N);
-      for (let i=0;i<N;i++){
-        const ph = i / N;
-        t[i] = fn(ph);
-      }
-      return t;
-    };
-    const twoPi = 2*Math.PI;
+    // for vowel model
+    this.vowelPhase = 0;
 
-    this.tables.push(makeTable(ph => Math.sin(twoPi*ph))); // sine
-    this.tables.push(makeTable(ph => { // tri-ish
-      const x = 2*Math.abs(2*(ph - Math.floor(ph+0.5))) - 1;
-      return x * 0.9;
-    }));
-    this.tables.push(makeTable(ph => { // saw-ish
-      return (2*(ph - Math.floor(ph+0.5))) * 0.85;
-    }));
-    this.tables.push(makeTable(ph => { // square-ish
-      return ph < 0.5 ? 0.75 : -0.75;
-    }));
-    this.tables.push(makeTable(ph => { // organ-ish (odd harmonics)
-      let s=0;
-      for (let k=1;k<=15;k+=2) s += Math.sin(twoPi*k*ph)/k;
-      return (s * 0.95);
-    }));
-    this.tables.push(makeTable(ph => { // formant-ish (two sines)
-      return 0.55*Math.sin(twoPi*ph) + 0.45*Math.sin(twoPi*3*ph + 0.35);
-    }));
+    // for smooth random
+    this.rnd = 1234567;
   }
 
   _wrap(p){ return p - Math.floor(p); }
 
-  _readTable(table, phase){
-    const N = table.length;
-    const x = phase * N;
-    const i = x|0;
-    const f = x - i;
-    const a = table[i % N];
-    const b = table[(i+1) % N];
-    return a + (b-a)*f;
-  }
-
   _polyBLEP(t, dt){
-    // cheap polyBLEP to soften edges for saw/square/pwm (still not perfect)
     if (t < dt){
       t = t/dt;
       return t + t - t*t - 1.0;
@@ -723,104 +656,285 @@ class BraidsOsc extends AudioWorkletProcessor {
     return 0.0;
   }
 
+  _saw(phase, dt){
+    let s = 2*phase - 1;
+    s -= this._polyBLEP(phase, dt);
+    return s;
+  }
+
+  _square(phase, dt){
+    let s = phase < 0.5 ? 1 : -1;
+    s += this._polyBLEP(phase, dt);
+    s -= this._polyBLEP(this._wrap(phase + 0.5), dt);
+    return s;
+  }
+
+  _pwm(phase, dt, pw){
+    let s = phase < pw ? 1 : -1;
+    s += this._polyBLEP(phase, dt);
+    s -= this._polyBLEP(this._wrap(phase - pw), dt);
+    return s;
+  }
+
+  _tri(phase){
+    return 2*Math.abs(2*(phase - Math.floor(phase + 0.5))) - 1;
+  }
+
+  _softclip(x, drive){
+    const y = x * drive;
+    return y / (1.0 + 0.75*Math.abs(y));
+  }
+
+  _rand(){
+    // xorshift-ish
+    let x = this.rnd | 0;
+    x ^= x << 13; x ^= x >> 17; x ^= x << 5;
+    this.rnd = x;
+    return (x >>> 0) / 4294967295;
+  }
+
+  // simple vowel-ish “formant” by summing a few sines at harmonic-ish partials
+  _vowel(phase, vowelIdx, hiFi){
+    // five vowels: A E I O U (rough formant-ish spectral shapes)
+    // weights are per harmonic number (1..8), normalized-ish
+    const sets = [
+      [1.0,0.30,0.10,0.55,0.20,0.10,0.05,0.05], // A
+      [1.0,0.55,0.20,0.25,0.10,0.06,0.04,0.03], // E
+      [1.0,0.70,0.35,0.12,0.06,0.05,0.04,0.03], // I
+      [1.0,0.25,0.50,0.18,0.40,0.10,0.06,0.04], // O
+      [1.0,0.22,0.10,0.08,0.06,0.50,0.18,0.10], // U
+    ];
+    const w = sets[vowelIdx] || sets[0];
+    const twoPi = 2*Math.PI;
+    let s = 0;
+    const N = hiFi ? 8 : 5;
+    for (let k=1;k<=N;k++){
+      s += Math.sin(twoPi * (phase * k)) * w[k-1];
+    }
+    // normalize-ish
+    return s * (hiFi ? 0.45 : 0.55);
+  }
+
+  // Casio CZ-style phase distortion
+  _pdSine(phase, amount, shape){
+    // shape: 0..2 chooses warp curve
+    // amount: 0..1
+    let x = phase;
+    if (shape < 0.5){
+      // “corner” warp
+      const a = 0.02 + amount * 0.48;
+      x = (x < a) ? (x / a) * 0.5 : 0.5 + (x - a) / (1 - a) * 0.5;
+    } else if (shape < 1.5){
+      // “pinch” warp
+      const p = 1.0 + amount * 5.0;
+      x = Math.pow(x, p);
+    } else {
+      // “bend” warp (S-curve)
+      const k = amount * 0.95;
+      x = x + k * Math.sin(2*Math.PI*x) * 0.25;
+      x = x - Math.floor(x);
+    }
+    return Math.sin(2*Math.PI*x);
+  }
+
   process(inputs, outputs, parameters){
     const out = outputs[0][0];
     const sr = sampleRate;
 
-    const model = parameters.model.length ? parameters.model[0] : 3;
+    const model  = parameters.model.length  ? parameters.model[0]  : 1;
     const timbre = parameters.timbre.length ? parameters.timbre[0] : 0.5;
-    const color = parameters.color.length ? parameters.color[0] : 0.35;
+    const color  = parameters.color.length  ? parameters.color[0]  : 0.35;
     const detune = parameters.detune.length ? parameters.detune[0] : 0.1;
-    const sub = parameters.sub.length ? parameters.sub[0] : 0.0;
-    const gain = parameters.gain.length ? parameters.gain[0] : 1.0;
+    const sub    = parameters.sub.length    ? parameters.sub[0]    : 0.0;
+    const gain   = parameters.gain.length   ? parameters.gain[0]   : 1.0;
 
-    // detune as cents-ish
-    const detCents = (detune * 40) - 20; // -20..+20 cents
-    const detRatio = Math.pow(2, detCents / 1200);
+    // detune mapping: 0..1 -> 0..30 cents (musical but safe)
+    const cents = detune * 30.0;
+    const detRatioUp = Math.pow(2, cents / 1200);
+    const detRatioDn = Math.pow(2, -cents / 1200);
 
-    // FM index & crush mapped
-    const fmIndex = 0.2 + color * 6.0;
-    const fmRatio = 1.0 + timbre * 7.0; // mod ratio
+    // PWM width for relevant models
+    const pw = 0.05 + timbre * 0.90;
 
-    // crush: lower SR and bit depth
+    // character/drive (color)
+    const drive = 1.0 + color * 3.2;
+
+    // circuit-bent settings
     const crushBits = 4 + Math.floor((1.0 - timbre) * 12); // 4..16
     const crushLevels = Math.pow(2, crushBits);
-    const srDiv = 1 + Math.floor((1.0 - color) * 30); // 1..31
+    const srDiv = 1 + Math.floor((1.0 - color) * 28); // 1..29
+    const bitFlipRate = 1 + Math.floor(color * 15);   // how often we flip mask
+
+    // vowel settings
+    const vowelPos = color * 4.999;
+    const v0 = Math.floor(vowelPos);
+    const v1 = Math.min(4, v0 + 1);
+    const vf = vowelPos - v0;
+    const hiFi = timbre >= 0.5;
+
+    // harmonic osc settings
+    const maxH = 4 + Math.floor(timbre * 20); // 4..24
+    const tilt = 0.3 + (1.0 - color) * 1.2;   // spectral tilt
 
     for (let i=0;i<out.length;i++){
-      const freq = (parameters.freq.length ? parameters.freq[i] : parameters.freq[0]) * detRatio;
-      const dt = Math.min(0.49, freq / sr);
+      const f = (parameters.freq.length ? parameters.freq[i] : parameters.freq[0]);
+      const dt = Math.min(0.49, f / sr);
 
       this.phase = this._wrap(this.phase + dt);
       this.subPhase = this._wrap(this.subPhase + dt*0.5);
-      this.fmPhase  = this._wrap(this.fmPhase + dt*fmRatio);
 
       let y = 0.0;
 
       if (model === 0){
-        // SINE
-        y = Math.sin(2*Math.PI*this.phase);
-      } else if (model === 1){
-        // TRI
-        y = 2*Math.abs(2*(this.phase - Math.floor(this.phase+0.5))) - 1;
-        y *= 0.95;
-      } else if (model === 2){
-        // SAW (polyBLEP)
-        let s = 2*this.phase - 1;
-        s -= this._polyBLEP(this.phase, dt);
-        y = s * 0.90;
-      } else if (model === 4){
-        // SQUARE (polyBLEP)
-        let s = this.phase < 0.5 ? 1 : -1;
-        s += this._polyBLEP(this.phase, dt);
-        s -= this._polyBLEP(this._wrap(this.phase + 0.5), dt);
-        y = s * 0.78;
-      } else if (model === 5){
-        // PWM (polyBLEP), timbre controls width
-        const pw = 0.05 + timbre * 0.90;
-        let s = this.phase < pw ? 1 : -1;
-        // correct both edges
-        s += this._polyBLEP(this.phase, dt);
-        s -= this._polyBLEP(this._wrap(this.phase - pw), dt);
-        y = s * 0.78;
-      } else if (model === 3){
-        // WT MORPH (direct digital)
-        // timbre morph table index, color = bright warp
-        const t = timbre * (this.tables.length - 1);
-        const i0 = Math.floor(t);
-        const i1 = Math.min(this.tables.length - 1, i0 + 1);
-        const frac = t - i0;
-        const a = this._readTable(this.tables[i0], this.phase);
-        const b = this._readTable(this.tables[i1], this.phase);
-        let w = a + (b - a) * frac;
+        // CS-80 style saw w/ notch: saw minus a narrow sinus “notch” component
+        const saw = this._saw(this.phase, dt) * 0.9;
+        // notch frequency tracks timbre (like a moving notch), depth tracks color
+        const notchH = 2 + Math.floor(timbre * 10);          // 2..12 harmonic
+        const notchDepth = 0.05 + color * 0.55;              // 0.05..0.60
+        const notch = Math.sin(2*Math.PI * (this.phase * notchH));
+        y = saw - notch * notchDepth;
+        y = this._softclip(y, 1.0 + color*1.6);
+        y *= 0.85;
+      }
+      else if (model === 1){
+        // Morph TRI ↔ SAW ↔ SQUARE ↔ PULSE + character (color)
+        const tri = this._tri(this.phase);
+        const saw = this._saw(this.phase, dt);
+        const sq  = this._square(this.phase, dt);
+        const pul = this._pwm(this.phase, dt, pw);
 
-        // bright warp (soft fold)
-        const drive = 1.0 + color * 3.5;
-        w *= drive;
-        // tanh-ish soft clip
-        w = w / (1.0 + 0.6*Math.abs(w));
+        // 0..1 split in 4 zones
+        const x = timbre * 3.999;
+        const z = Math.floor(x);
+        const a = x - z;
 
-        y = w * 0.85;
-      } else if (model === 6){
-        // FM 2-OP (direct digital)
-        const mod = Math.sin(2*Math.PI*this.fmPhase) * fmIndex;
-        y = Math.sin(2*Math.PI*(this.phase + mod));
-        // bright/tilt with color (cheap waveshape)
-        const sh = 1.0 + color * 2.5;
-        y = (y * sh) / (1.0 + 0.7*Math.abs(y*sh));
+        let m = 0;
+        if (z === 0) m = tri + (saw - tri) * a;
+        else if (z === 1) m = saw + (sq - saw) * a;
+        else if (z === 2) m = sq + (pul - sq) * a;
+        else m = pul;
+
+        // character: fold/drive-ish
+        const folded = Math.sin(m * (1.0 + color*3.2));
+        y = (1.0 - color*0.55) * m + (color*0.55) * folded;
+        y = this._softclip(y, drive);
+        y *= 0.80;
+      }
+      else if (model === 2){
+        // Band-limited dual pulse train + detune
+        // two PWM oscillators slightly detuned
+        const fUp = dt * detRatioUp;
+        const fDn = dt * detRatioDn;
+
+        this.phases[0] = this._wrap(this.phases[0] + fUp);
+        this.phases[1] = this._wrap(this.phases[1] + fDn);
+
+        const p1 = this._pwm(this.phases[0], Math.min(0.49, fUp), pw);
+        const p2 = this._pwm(this.phases[1], Math.min(0.49, fDn), pw);
+
+        // pulse train feel: add a bit of upper partials via gentle drive
+        y = (p1 + p2) * 0.55;
+        y = this._softclip(y, 1.0 + color*2.0);
+        y *= 0.85;
+      }
+      else if (model === 3){
+        // Supersaw: 7 saws, detune spread from detune+color
+        const spread = (0.001 + detune * 0.010) * (0.5 + color*1.2); // phase increment spread
+        // offsets (centered)
+        const offs = [-3,-2,-1,0,1,2,3];
+
+        let sum = 0;
+        for (let v=0; v<7; v++){
+          const idx = v;
+          const inc = dt * (1.0 + offs[v] * spread);
+          this.phases[idx] = this._wrap(this.phases[idx] + inc);
+          sum += this._saw(this.phases[idx], Math.min(0.49, inc));
+        }
+        y = sum / 7;
+        y = this._softclip(y, 1.0 + color*1.5);
         y *= 0.88;
-      } else if (model === 7){
-        // CRUSH SAW (direct digital)
-        let s = 2*this.phase - 1;
-        // soften a bit
-        s -= this._polyBLEP(this.phase, dt);
+      }
+      else if (model === 4){
+        // Circuit-bent saw: SR reduction + bit toggling
+        const s = this._saw(this.phase, dt);
+
         // downsample hold
-        if (this.srCounter++ % srDiv === 0) this.hold = s;
-        let q = Math.round(this.hold * crushLevels) / crushLevels;
-        y = q * 0.95;
+        if ((this.srCounter++ % srDiv) === 0){
+          this.hold = s;
+
+          // occasionally flip a bit mask (bit toggling)
+          if ((this.srCounter % bitFlipRate) === 0){
+            // 1..8 bits toggled depending on color
+            const bit = 1 << (Math.floor(this._rand()*8));
+            this.bitState ^= bit;
+          }
+
+          // quantize
+          let q = Math.round(this.hold * crushLevels) / crushLevels;
+
+          // bit toggling in quantized domain (simulate “bit flipping”)
+          // map q [-1..1] -> integer range then XOR mask -> back
+          const range = 2047;
+          let qi = Math.max(-range, Math.min(range, Math.floor(q * range)));
+          qi = (qi ^ this.bitState);
+          q = qi / range;
+
+          this.bitHold = q;
+        }
+
+        y = this.bitHold * 0.95;
+        // “bent” character can get loud: soft clip
+        y = this._softclip(y, 1.0 + color*2.4);
+        y *= 0.78;
+      }
+      else if (model === 5){
+        // CZ style: direct synthesis of filtered waveforms via phase distortion
+        // timbre controls PD amount, color selects warp style and brightness
+        const amount = Math.min(1, Math.max(0, timbre));
+        const shape = color * 2.999; // 0..3
+        let pd = this._pdSine(this.phase, amount, shape);
+
+        // add “filtered waveform” feeling by mixing in harmonics under color
+        const bright = 0.25 + color * 0.75;
+        const h2 = Math.sin(2*Math.PI*(this.phase*2)) * 0.35 * bright;
+        const h3 = Math.sin(2*Math.PI*(this.phase*3)) * 0.22 * bright;
+
+        y = (pd + h2 + h3) * 0.82;
+        y = this._softclip(y, 1.0 + color*1.2);
+        y *= 0.90;
+      }
+      else if (model === 6){
+        // Vowel/formant synthesis: lo-fi/hi-fi
+        // color sweeps vowels, timbre selects hi-fi (more partials) + brightness
+        const a = this._vowel(this.phase, v0, hiFi);
+        const b = this._vowel(this.phase, v1, hiFi);
+        let v = a + (b - a) * vf;
+
+        // low/hi-fi “tilt”: timbre brightens / color adds rasp
+        const rasp = (0.0 + color * 0.18) * (2*(this._rand()-0.5));
+        v = v + rasp;
+
+        // “mouth” character control: gentle saturation
+        v = this._softclip(v, 1.0 + (hiFi ? 1.4 : 0.9) + color*0.8);
+        y = v * 0.90;
+      }
+      else if (model === 7){
+        // Harmonic oscillator (additive)
+        const twoPi = 2*Math.PI;
+        let s = 0;
+        // harmonics with spectral tilt
+        for (let k=1; k<=maxH; k++){
+          const amp = 1.0 / Math.pow(k, tilt);
+          s += Math.sin(twoPi * (this.phase * k)) * amp;
+        }
+        // normalize approx: (sum 1/k^tilt) ~ constant, so just a gain trim
+        s *= 0.55;
+        // “color” can add gentle edge (waveshape)
+        y = this._softclip(s, 1.0 + color*1.6);
+        y *= 0.90;
       }
 
-      // SUB (pure sine at 1 octave down)
+      // SUB
       if (sub > 0.0001){
         const subSin = Math.sin(2*Math.PI*this.subPhase);
         y = y*(1.0 - sub*0.35) + subSin*(sub*0.35);
@@ -833,7 +947,7 @@ class BraidsOsc extends AudioWorkletProcessor {
   }
 }
 
-registerProcessor('braids-osc', BraidsOsc);
+registerProcessor('braids-8', Braids8);
 `;
   return URL.createObjectURL(new Blob([code], { type: "application/javascript" }));
 }
@@ -842,11 +956,11 @@ async function initAudio() {
   if (audioCtx) return;
   audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
-  const url = createBraidsWorkletURL();
+  const url = createWorkletURL();
   await audioCtx.audioWorklet.addModule(url);
   try { URL.revokeObjectURL(url); } catch {}
 
-  oscNode = new AudioWorkletNode(audioCtx, "braids-osc", {
+  oscNode = new AudioWorkletNode(audioCtx, "braids-8", {
     numberOfInputs: 0,
     numberOfOutputs: 1,
     outputChannelCount: [1],
@@ -869,7 +983,6 @@ function oscParam(name){ return oscNode?.parameters?.get(name) || null; }
 
 function applyAllParams() {
   if (!audioCtx) return;
-
   oscParam("model")?.setValueAtTime(params.model, audioCtx.currentTime);
   oscParam("timbre")?.setValueAtTime(params.timbre, audioCtx.currentTime);
   oscParam("color")?.setValueAtTime(params.color, audioCtx.currentTime);
@@ -901,10 +1014,7 @@ async function playNote(midi) {
 
   currentNote = midi;
   document.getElementById("noteDisplay").textContent = midiToName(midi);
-
-  const freq = noteToFreq(midi);
-  oscParam("freq")?.setValueAtTime(freq, audioCtx.currentTime);
-
+  oscParam("freq")?.setValueAtTime(noteToFreq(midi), audioCtx.currentTime);
   gateOn();
 }
 function stopNote() {
@@ -954,7 +1064,7 @@ function bindRange(id, onChange) {
   });
 }
 
-/* Braids params */
+/* Osc params */
 bindRange("timbre", (v) => {
   params.timbre = v / 100;
   document.getElementById("v-timbre").textContent = params.timbre.toFixed(2);
@@ -1006,18 +1116,18 @@ bindRange("level", (v) => {
 
 /* init displayed values */
 document.getElementById("v-timbre").textContent = params.timbre.toFixed(2);
-document.getElementById("v-color").textContent = params.color.toFixed(2);
+document.getElementById("v-color").textContent  = params.color.toFixed(2);
 document.getElementById("v-detune").textContent = params.detune.toFixed(2);
-document.getElementById("v-sub").textContent = params.sub.toFixed(2);
+document.getElementById("v-sub").textContent    = params.sub.toFixed(2);
 document.getElementById("v-cutoff").textContent = Math.round(params.cutoff);
-document.getElementById("v-reso").textContent = params.resonance.toFixed(2);
-document.getElementById("v-att").textContent = params.attack.toFixed(3);
-document.getElementById("v-rel").textContent = params.release.toFixed(2);
-document.getElementById("v-sus").textContent = params.sustain.toFixed(2);
-document.getElementById("v-level").textContent = params.level.toFixed(2);
+document.getElementById("v-reso").textContent   = params.resonance.toFixed(2);
+document.getElementById("v-att").textContent    = params.attack.toFixed(3);
+document.getElementById("v-rel").textContent    = params.release.toFixed(2);
+document.getElementById("v-sus").textContent    = params.sustain.toFixed(2);
+document.getElementById("v-level").textContent  = params.level.toFixed(2);
 
 /* ============================================================
-   Degree Chord Sequencer (unchanged logic from previous step)
+   Degree Chord Sequencer (same as before)
 ============================================================ */
 const DEG_STEPS = 16;
 
@@ -1033,7 +1143,6 @@ const seq = {
   playMode:"block", // "block" | "neo" | "rhodes"
   steps: Array.from({length: DEG_STEPS}, () => null),
 };
-
 let lastVoicing = null;
 
 const SCALE = {
@@ -1092,11 +1201,9 @@ function getNeoSoulChordIntervals(degIdx){
 
 function normalizeChordToTarget(notes, target){
   let shifted = notes.slice().sort((a,b)=>a-b);
-  while (centerOf(shifted) < target - 6) shifted = shifted.map(n => n + 12);
-  while (centerOf(shifted) > target + 6) shifted = shifted.map(n => n - 12);
+  while (((shifted[0] + shifted[shifted.length-1]) / 2) < target - 6) shifted = shifted.map(n => n + 12);
+  while (((shifted[0] + shifted[shifted.length-1]) / 2) > target + 6) shifted = shifted.map(n => n - 12);
   return shifted.sort((a,b)=>a-b);
-
-  function centerOf(ns){ return (ns[0] + ns[ns.length-1]) / 2; }
 }
 
 function voiceLeadingCostFlexible(prev, next){
@@ -1225,8 +1332,7 @@ function getRhodesVoicingForDegree(degIdx){
 
 function scheduleNote(midi, tStart, dur){
   if (!audioCtx) return;
-  const freq = noteToFreq(midi);
-  oscParam("freq")?.setValueAtTime(freq, tStart);
+  oscParam("freq")?.setValueAtTime(noteToFreq(midi), tStart);
 
   ampNode.gain.cancelScheduledValues(tStart);
   ampNode.gain.setValueAtTime(ampNode.gain.value, tStart);
@@ -1246,21 +1352,14 @@ function scheduleNote(midi, tStart, dur){
   document.getElementById("noteDisplay").textContent = midiToName(midi);
 }
 
-function stepDurationSec(){
-  const spb = 60 / seq.bpm;
-  return spb / 4;
-}
+function stepDurationSec(){ return (60 / seq.bpm) / 4; }
 function swingDelayForStep(stepIdx){
   const base = stepDurationSec();
   const swingAmt = (seq.swing - 0.5) * 0.5;
   return (stepIdx % 2 === 0) ? base * (1 + swingAmt) : base * (1 - swingAmt);
 }
-function clearSeqHighlights(){
-  document.querySelectorAll(".degStep.ph").forEach(el => el.classList.remove("ph"));
-}
-function setSeqLed(stepIdx){
-  document.getElementById("seqLed").textContent = String(stepIdx+1).padStart(2,"0");
-}
+function clearSeqHighlights(){ document.querySelectorAll(".degStep.ph").forEach(el => el.classList.remove("ph")); }
+function setSeqLed(stepIdx){ document.getElementById("seqLed").textContent = String(stepIdx+1).padStart(2,"0"); }
 
 async function seqTick(){
   if (!seq.running) return;
@@ -1289,8 +1388,7 @@ async function seqTick(){
       scheduleNote(tri[2], now + 2*gap, nd);
       lastVoicing = tri.slice();
       document.getElementById("noteDisplay").textContent = degreeLabel(deg, seq.scale);
-    }
-    else if (seq.playMode === "neo"){
+    } else if (seq.playMode === "neo"){
       const voicing = getNeoSoulVoicingForDegree(deg);
       const gap  = Math.max(0.02, dur * 0.16);
       const nDur = Math.max(0.04, gateDur * 0.55);
@@ -1300,8 +1398,7 @@ async function seqTick(){
       scheduleNote(voicing[3], now + 3*gap, nDur);
       lastVoicing = voicing.slice();
       document.getElementById("noteDisplay").textContent = degreeLabel(deg, seq.scale);
-    }
-    else if (seq.playMode === "rhodes"){
+    } else {
       const voicing = getRhodesVoicingForDegree(deg);
       const gap  = Math.max(0.02, dur * 0.17);
       const nDur = Math.max(0.05, gateDur * 0.62);
@@ -1367,7 +1464,6 @@ function renderDegGrid(){
     const txt = document.createElement("div");
     txt.className = "txt";
     txt.textContent = (val === null) ? "·" : degreeLabel(val, seq.scale);
-
     el.appendChild(txt);
 
     el.addEventListener("pointerdown", async (e) => {
@@ -1418,27 +1514,16 @@ document.getElementById("seqClear").addEventListener("click", () => {
   renderDegGrid();
 });
 
-bindRange("bpm", (v) => {
-  seq.bpm = Math.round(v);
-  document.getElementById("v-bpm").textContent = seq.bpm;
-});
-bindRange("swing", (v) => {
-  seq.swing = v / 100;
-  document.getElementById("v-swing").textContent = Math.round(v) + "%";
-});
-bindRange("gate", (v) => {
-  seq.gate = v / 100;
-  document.getElementById("v-gate").textContent = Math.round(v) + "%";
-});
+bindRange("bpm", (v) => { seq.bpm = Math.round(v); document.getElementById("v-bpm").textContent = seq.bpm; });
+bindRange("swing", (v) => { seq.swing = v / 100; document.getElementById("v-swing").textContent = Math.round(v) + "%"; });
+bindRange("gate", (v) => { seq.gate = v / 100; document.getElementById("v-gate").textContent = Math.round(v) + "%"; });
 
 document.getElementById("v-bpm").textContent = seq.bpm;
 document.getElementById("v-swing").textContent = Math.round(seq.swing*100) + "%";
 document.getElementById("v-gate").textContent = Math.round(seq.gate*100) + "%";
 
-document.getElementById("keySel").addEventListener("change", (e) => {
-  seq.keyPc = +e.target.value;
-  lastVoicing = null;
-});
+document.getElementById("keySel").addEventListener("change", (e) => { seq.keyPc = +e.target.value; lastVoicing = null; });
+
 document.getElementById("scaleMaj").addEventListener("click", () => {
   seq.scale = "maj";
   document.getElementById("scaleMaj").classList.add("active");
@@ -1467,9 +1552,9 @@ document.getElementById("pmRhodes").addEventListener("click", () => setPlayMode(
 
 renderDegGrid();
 
-/* Default pattern */
+/* Default pattern: I vi ii V (every 4 steps) */
 (function seedPattern(){
-  const prog = [0,5,1,4]; // I vi ii V
+  const prog = [0,5,1,4];
   for (let i=0;i<DEG_STEPS;i++){
     if (i % 4 === 0) seq.steps[i] = prog[(i/4)%prog.length];
     else seq.steps[i] = null;
@@ -1548,6 +1633,7 @@ function buildBlackKeys(){
 window.addEventListener("load", buildBlackKeys);
 window.addEventListener("resize", buildBlackKeys);
 
+/* Desktop shortcuts + Space = seq play/pause */
 const keyMap = {
   'a': 48, 'w': 49, 's': 50, 'e': 51, 'd': 52, 'f': 53,
   't': 54, 'g': 55, 'y': 56, 'h': 57, 'u': 58, 'j': 59,
@@ -1570,3 +1656,4 @@ document.addEventListener("keyup", e => {
 </script>
 </body>
 </html>
+
