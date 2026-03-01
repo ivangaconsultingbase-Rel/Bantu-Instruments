@@ -1,1153 +1,1363 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Rhodes Poly 6 - Chord Sequencer</title>
-    <style>
-        :root {
-            --bg-dark: #1a1a2e;
-            --bg-panel: #16213e;
-            --accent: #e94560;
-            --accent-glow: #ff6b6b;
-            --text: #eaeaea;
-            --text-dim: #8892a0;
-            --knob-bg: #0f0f23;
-            --step-active: #4ecca3;
-            --step-inactive: #2a2a4a;
-        }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Rhodes Poly 6 - Chord Sequencer</title>
 
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+  <style>
+    /* ==========================================================
+      DIGITAKT-ISH DARK/RED — FLAT, TIGHT, “MACHINE UI”
+      Full-file version: keeps your existing HTML IDs/classes
+    ========================================================== */
 
-        body {
-            font-family: 'Segoe UI', system-ui, sans-serif;
-            background: linear-gradient(135deg, var(--bg-dark) 0%, #0f0f23 100%);
-            color: var(--text);
-            min-height: 100vh;
-            padding: 20px;
-        }
+    :root{
+      /* Base */
+      --bg:#0a0b0f;
+      --bg2:#0e1016;
+      --panel:#12141a;
+      --panel2:#0f1117;
 
-        .plugin-container {
-            max-width: 1200px;
-            margin: 0 auto;
-            background: var(--bg-panel);
-            border-radius: 20px;
-            padding: 30px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5),
-                        inset 0 1px 0 rgba(255, 255, 255, 0.1);
-        }
+      --ink:#e9eaee;
+      --ink-dim:#9aa1ad;
 
-        header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 30px;
-            padding-bottom: 20px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-        }
+      /* Digitakt-style accent */
+      --red:#ff2a3c;
+      --red2:#ff4d5a;
+      --red-dim: rgba(255,42,60,.22);
 
-        .logo {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
+      /* Lines */
+      --line: rgba(255,255,255,.08);
+      --line2: rgba(255,255,255,.12);
 
-        .logo h1 {
-            font-size: 28px;
-            font-weight: 300;
-            letter-spacing: 3px;
-        }
+      /* Pads / steps */
+      --pad:#171a22;
+      --pad2:#1b1f2a;
+      --pad-hover:#202636;
+      --pad-on:#1d2230;
 
-        .logo span {
-            color: var(--accent);
-            font-weight: 600;
-        }
+      /* Knobs */
+      --knob:#0c0e13;
+      --knob-ring:#1f2536;
+      --knob-notch:#ff2a3c;
 
-        .master-controls {
-            display: flex;
-            gap: 20px;
-            align-items: center;
-        }
+      /* Status */
+      --ok:#47e28e;
+      --warn:#ffb020;
 
-        .power-btn {
-            width: 50px;
-            height: 50px;
-            border-radius: 50%;
-            border: 2px solid var(--accent);
-            background: transparent;
-            color: var(--text-dim);
-            font-size: 20px;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
+      /* Geometry */
+      --r:14px;
+      --r-sm:12px;
+      --r-xs:10px;
 
-        .power-btn.active {
-            background: var(--accent);
-            color: white;
-            box-shadow: 0 0 20px var(--accent);
-        }
+      /* Shadows (subtle, flat) */
+      --sh1: 0 18px 55px rgba(0,0,0,.65);
+      --sh2: 0 10px 26px rgba(0,0,0,.45);
+    }
 
-        /* Sections */
-        .section {
-            background: rgba(0, 0, 0, 0.3);
-            border-radius: 15px;
-            padding: 25px;
-            margin-bottom: 25px;
-        }
+    *{ margin:0; padding:0; box-sizing:border-box; }
+    html, body{ height:100%; }
 
-        .section-title {
-            font-size: 12px;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            color: var(--accent);
-            margin-bottom: 20px;
-        }
+    body{
+      font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+      background:
+        radial-gradient(900px 600px at 15% 0%, rgba(255,42,60,.07), transparent 55%),
+        radial-gradient(800px 500px at 92% 20%, rgba(255,42,60,.05), transparent 60%),
+        linear-gradient(180deg, var(--bg) 0%, var(--bg2) 100%);
+      color: var(--ink);
+      padding: 16px;
+    }
 
-        /* Knobs */
-        .knobs-row {
-            display: flex;
-            gap: 30px;
-            flex-wrap: wrap;
-            justify-content: center;
-        }
+    .plugin-container{
+      max-width: 1200px;
+      margin: 0 auto;
+      background: linear-gradient(180deg, var(--panel) 0%, var(--panel2) 100%);
+      border-radius: calc(var(--r) + 6px);
+      padding: 18px;
+      border: 1px solid var(--line);
+      box-shadow: var(--sh1);
+      position: relative;
+      overflow: hidden;
+    }
 
-        .knob-container {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 10px;
-        }
+    /* Digitakt top “status rail” */
+    .plugin-container::before{
+      content:"";
+      position:absolute;
+      top:0; left:0; right:0;
+      height: 8px;
+      background:
+        linear-gradient(90deg,
+          rgba(255,255,255,.06) 0%,
+          rgba(255,255,255,.06) 10%,
+          rgba(255,42,60,.75) 10%,
+          rgba(255,42,60,.75) 18%,
+          rgba(255,255,255,.06) 18%,
+          rgba(255,255,255,.06) 100%);
+      opacity:.9;
+    }
 
-        .knob {
-            width: 70px;
-            height: 70px;
-            border-radius: 50%;
-            background: conic-gradient(from 220deg, var(--accent) 0%, var(--knob-bg) 0%);
-            position: relative;
-            cursor: pointer;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.4),
-                        inset 0 -2px 5px rgba(0, 0, 0, 0.3);
-        }
+    header{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap: 14px;
+      padding: 10px 6px 14px;
+      margin-bottom: 14px;
+      border-bottom: 1px solid var(--line);
+    }
 
-        .knob::before {
-            content: '';
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            width: 50px;
-            height: 50px;
-            background: var(--knob-bg);
-            border-radius: 50%;
-        }
+    .logo{
+      display:flex;
+      align-items:baseline;
+      gap: 12px;
+      min-width: 240px;
+    }
 
-        .knob::after {
-            content: '';
-            position: absolute;
-            top: 10px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 4px;
-            height: 12px;
-            background: var(--accent);
-            border-radius: 2px;
-        }
+    .logo h1{
+      font-size: 18px;
+      letter-spacing: 4px;
+      font-weight: 800;
+      text-transform: uppercase;
+    }
 
-        .knob-label {
-            font-size: 11px;
-            color: var(--text-dim);
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
+    .logo span{
+      color: var(--red);
+      font-weight: 900;
+    }
 
-        .knob-value {
-            font-size: 13px;
-            color: var(--text);
-            font-weight: 500;
-        }
+    .master-controls{
+      display:flex;
+      gap: 14px;
+      align-items:center;
+    }
 
-        /* Sequencer */
-        .sequencer-grid {
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-        }
+    /* ----------------------------------------------------------
+      Sections
+    ---------------------------------------------------------- */
+    .section{
+      background: rgba(0,0,0,.18);
+      border: 1px solid var(--line);
+      border-radius: var(--r);
+      padding: 16px;
+      margin-bottom: 14px;
+      box-shadow: var(--sh2);
+    }
 
-        .step-row {
-            display: flex;
-            gap: 10px;
-            justify-content: center;
-            flex-wrap: wrap;
-        }
+    .section-title{
+      font-size: 10px;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: var(--red);
+      margin-bottom: 12px;
+      display:flex;
+      align-items:center;
+      gap: 10px;
+      opacity: .95;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    }
+    .section-title::after{
+      content:"";
+      height: 1px;
+      flex: 1;
+      background: linear-gradient(90deg, var(--red-dim), transparent);
+    }
 
-        .step {
-            width: 60px;
-            height: 80px;
-            background: var(--step-inactive);
-            border-radius: 10px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            transition: all 0.2s;
-            border: 2px solid transparent;
-            position: relative;
-        }
+    /* ----------------------------------------------------------
+      Knobs — compact + flat
+    ---------------------------------------------------------- */
+    .knobs-row{
+      display:flex;
+      gap: 12px;
+      flex-wrap:wrap;
+      justify-content:center;
+      padding: 4px 0 10px;
+    }
 
-        .step:hover {
-            background: #3a3a5a;
-        }
+    .knob-container{
+      width: 92px;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      gap: 7px;
+      padding: 10px 8px 12px;
+      border-radius: var(--r-sm);
+      border: 1px solid rgba(255,255,255,.06);
+      background: rgba(255,255,255,.02);
+    }
 
-        .step.active {
-            border-color: var(--step-active);
-            box-shadow: 0 0 15px rgba(78, 204, 163, 0.3);
-        }
+    .knob-container:hover{
+      border-color: rgba(255,255,255,.12);
+      background: rgba(255,255,255,.03);
+    }
 
-        .step.playing {
-            background: var(--step-active);
-            transform: scale(1.05);
-        }
+    .knob{
+      width: 58px;
+      height: 58px;
+      border-radius: 50%;
+      background:
+        conic-gradient(from 220deg, var(--red) 0deg, var(--knob-ring) 0deg);
+      position: relative;
+      cursor: pointer;
+      border: 1px solid rgba(255,255,255,.06);
+      box-shadow: 0 12px 18px rgba(0,0,0,.55);
+      touch-action: none;
+    }
 
-        .step-number {
-            font-size: 10px;
-            color: var(--text-dim);
-            position: absolute;
-            top: 5px;
-        }
+    .knob::before{
+      content:"";
+      position:absolute;
+      inset: 8px;
+      border-radius: 50%;
+      background:
+        radial-gradient(circle at 30% 25%, rgba(255,255,255,.07), transparent 55%),
+        linear-gradient(180deg, rgba(255,255,255,.05), rgba(0,0,0,.25));
+      background-color: var(--knob);
+      border: 1px solid rgba(255,255,255,.06);
+    }
 
-        .step-chord {
-            font-size: 14px;
-            font-weight: 600;
-        }
+    .knob::after{
+      content:"";
+      position:absolute;
+      top: 5px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 3px;
+      height: 12px;
+      border-radius: 2px;
+      background: var(--knob-notch);
+      box-shadow: 0 0 0 1px rgba(0,0,0,.35);
+    }
 
-        .chord-selector {
-            position: absolute;
-            bottom: -120px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: var(--bg-panel);
-            border-radius: 10px;
-            padding: 10px;
-            display: none;
-            z-index: 100;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-            min-width: 200px;
-        }
+    .knob-label{
+      font-size: 10px;
+      color: var(--ink-dim);
+      text-transform: uppercase;
+      letter-spacing: 1.8px;
+      line-height: 1.1;
+      text-align:center;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    }
 
-        .chord-selector.visible {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 5px;
-        }
+    .knob-value{
+      font-size: 12px;
+      color: var(--ink);
+      font-weight: 800;
+      letter-spacing: .2px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    }
 
-        .chord-option {
-            padding: 8px;
-            background: var(--step-inactive);
-            border: none;
-            border-radius: 5px;
-            color: var(--text);
-            cursor: pointer;
-            font-size: 12px;
-            transition: all 0.2s;
-        }
+    /* ----------------------------------------------------------
+      Power button — Digitakt-ish “square” with red state
+    ---------------------------------------------------------- */
+    .power-btn{
+      width: 48px;
+      height: 48px;
+      border-radius: var(--r-sm);
+      border: 1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.03);
+      color: var(--ink-dim);
+      font-size: 18px;
+      cursor:pointer;
+      transition: transform .08s ease, background .18s ease, border-color .18s ease, box-shadow .18s ease;
+      box-shadow: 0 12px 18px rgba(0,0,0,.45);
+    }
 
-        .chord-option:hover {
-            background: var(--accent);
-        }
+    .power-btn:hover{ border-color: rgba(255,255,255,.16); }
+    .power-btn:active{ transform: translateY(1px); }
 
-        /* Transport */
-        .transport {
-            display: flex;
-            gap: 15px;
-            justify-content: center;
-            align-items: center;
-            margin-top: 20px;
-        }
+    .power-btn.active{
+      background: rgba(255,42,60,.14);
+      border-color: rgba(255,42,60,.60);
+      color: var(--ink);
+      box-shadow: 0 0 0 3px rgba(255,42,60,.12), 0 14px 22px rgba(0,0,0,.55);
+    }
 
-        .transport-btn {
-            width: 50px;
-            height: 50px;
-            border-radius: 50%;
-            border: none;
-            background: var(--step-inactive);
-            color: var(--text);
-            font-size: 18px;
-            cursor: pointer;
-            transition: all 0.2s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
+    /* ----------------------------------------------------------
+      Visualizer
+    ---------------------------------------------------------- */
+    .visualizer{
+      height: 60px;
+      border-radius: var(--r);
+      border: 1px solid var(--line);
+      background: linear-gradient(180deg, rgba(255,255,255,.03), rgba(0,0,0,.18));
+      margin-bottom: 14px;
+      overflow: hidden;
+      box-shadow: var(--sh2);
+    }
+    #waveform{ width:100%; height:100%; }
 
-        .transport-btn:hover {
-            background: var(--accent);
-        }
+    /* ----------------------------------------------------------
+      Sequencer — tight trig pads
+    ---------------------------------------------------------- */
+    .sequencer-grid{
+      display:flex;
+      flex-direction:column;
+      gap: 12px;
+    }
 
-        .transport-btn.playing {
-            background: var(--step-active);
-        }
+    .step-row{
+      display:flex;
+      gap: 8px;
+      justify-content:center;
+      flex-wrap:wrap;
+      padding: 6px 0 2px;
+      position: relative;
+    }
 
-        .tempo-control {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            background: rgba(0, 0, 0, 0.3);
-            padding: 10px 20px;
-            border-radius: 25px;
-        }
+    /* group separators (1-4 / 5-8 / 9-12 / 13-16) */
+    .step-row::before{
+      content:"";
+      position:absolute;
+      top: 0; bottom: 0;
+      left: 50%;
+      width: 0;
+      pointer-events:none;
+    }
 
-        .tempo-input {
-            width: 60px;
-            background: transparent;
-            border: none;
-            color: var(--text);
-            font-size:box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
-        }
+    .step{
+      width: 54px;
+      height: 70px;
+      background:
+        linear-gradient(180deg, rgba(255,255,255,.03), rgba(0,0,0,.22));
+      background-color: var(--pad);
+      border-radius: var(--r-sm);
+      border: 1px solid rgba(255,255,255,.08);
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      justify-content:center;
+      cursor:pointer;
+      transition: transform .08s ease, background .18s ease, border-color .18s ease, box-shadow .18s ease;
+      position: relative;
+      user-select:none;
+      box-shadow: 0 10px 14px rgba(0,0,0,.35);
+    }
 
-        .key.black {
-            width: 30px;
-            height: 90px;
-            background: linear-gradient(180deg, #333 0%, #111 100%);
-            margin: 0 -15px;
-            z-index: 1;
-            border-radius: 0 0 5px 5px;
-        }
+    .step:hover{
+      background-color: var(--pad-hover);
+      border-color: rgba(255,255,255,.14);
+    }
+    .step:active{ transform: translateY(1px); }
 
-        .key.black:active, .key.black.pressed {
-            background: linear-gradient(180deg, #444 0%, #222 100%);
-        }
+    .step-number{
+      font-size: 10px;
+      color: rgba(231,231,234,.55);
+      position:absolute;
+      top: 6px;
+      left: 8px;
+      letter-spacing: .6px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    }
 
-        /* Visualizer */
-        .visualizer {
-            height: 60px;
-            background: rgba(0, 0, 0, 0.3);
-            border-radius: 10px;
-            margin-bottom: 20px;
-            overflow: hidden;
-        }
+    .step-chord{
+      font-size: 13px;
+      font-weight: 900;
+      letter-spacing: .6px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    }
 
-        #waveform {
-            width: 100%;
-            height: 100%;
-        }
+    .step.active{
+      border-color: rgba(255,42,60,.62);
+      background-color: var(--pad-on);
+      box-shadow: 0 0 0 3px rgba(255,42,60,.10), 0 14px 18px rgba(0,0,0,.45);
+    }
 
-        /* Responsive */
-        @media (max-width: 768px) {
-            .step {
-                width: 45px;
-                height: 65px;
-            }
-            
-            .knobs-row {
-                gap: 15px;
-            }
-            
-            .knob {
-                width: 55px;
-                height: 55px;
-            }
-        }
-    </style>
+    .step.playing{
+      background-color: rgba(255,42,60,.18);
+      border-color: rgba(255,42,60,.78);
+      box-shadow: 0 0 0 4px rgba(255,42,60,.14), 0 16px 22px rgba(0,0,0,.55);
+      transform: translateY(-1px);
+    }
+
+    /* chord selector — compact grid */
+    .chord-selector{
+      position:absolute;
+      bottom: -132px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(15,17,23,.98);
+      border: 1px solid rgba(255,255,255,.10);
+      border-radius: var(--r);
+      padding: 10px;
+      display:none;
+      z-index: 100;
+      box-shadow: 0 18px 40px rgba(0,0,0,.6);
+      min-width: 220px;
+      backdrop-filter: blur(8px);
+    }
+
+    .chord-selector.visible{
+      display:grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 6px;
+    }
+
+    .chord-option{
+      padding: 9px 8px;
+      background: rgba(255,255,255,.03);
+      border: 1px solid rgba(255,255,255,.08);
+      border-radius: var(--r-xs);
+      color: var(--ink);
+      cursor:pointer;
+      font-size: 12px;
+      font-weight: 900;
+      letter-spacing: .1px;
+      transition: background .15s ease, border-color .15s ease, transform .08s ease;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    }
+    .chord-option:hover{
+      background: rgba(255,42,60,.14);
+      border-color: rgba(255,42,60,.40);
+    }
+    .chord-option:active{ transform: translateY(1px); }
+
+    /* ----------------------------------------------------------
+      Transport
+    ---------------------------------------------------------- */
+    .transport{
+      display:flex;
+      gap: 10px;
+      justify-content:center;
+      align-items:center;
+      margin-top: 12px;
+      flex-wrap: wrap;
+    }
+
+    .transport-btn{
+      width: 48px;
+      height: 48px;
+      border-radius: var(--r-sm);
+      border: 1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.03);
+      color: var(--ink);
+      font-size: 18px;
+      cursor:pointer;
+      transition: transform .08s ease, background .18s ease, border-color .18s ease, box-shadow .18s ease;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      box-shadow: 0 12px 18px rgba(0,0,0,.45);
+    }
+
+    .transport-btn:hover{
+      border-color: rgba(255,255,255,.16);
+      background: rgba(255,255,255,.05);
+    }
+    .transport-btn:active{ transform: translateY(1px); }
+
+    .transport-btn.playing{
+      background: rgba(255,42,60,.14);
+      border-color: rgba(255,42,60,.62);
+      box-shadow: 0 0 0 3px rgba(255,42,60,.12), 0 14px 22px rgba(0,0,0,.55);
+    }
+
+    .tempo-control{
+      display:flex;
+      align-items:center;
+      gap: 10px;
+      background: rgba(255,255,255,.03);
+      border: 1px solid rgba(255,255,255,.10);
+      padding: 10px 12px;
+      border-radius: var(--r-sm);
+      box-shadow: 0 12px 18px rgba(0,0,0,.35);
+    }
+
+    .tempo-label{
+      font-size: 10px;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: var(--ink-dim);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    }
+
+    .tempo-input{
+      width: 74px;
+      background: rgba(0,0,0,.20);
+      border: 1px solid rgba(255,255,255,.10);
+      color: var(--ink);
+      font-size: 14px;
+      font-weight: 900;
+      padding: 6px 8px;
+      border-radius: var(--r-xs);
+      outline: none;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    }
+
+    .tempo-input:focus{
+      border-color: rgba(255,42,60,.62);
+      box-shadow: 0 0 0 3px rgba(255,42,60,.12);
+    }
+
+    /* ----------------------------------------------------------
+      Keyboard (minimal base + your black key style kept)
+    ---------------------------------------------------------- */
+    .keyboard{
+      margin-top: 14px;
+      display:flex;
+      justify-content:center;
+      align-items:flex-end;
+      padding: 12px 10px;
+      border-radius: var(--r);
+      background: rgba(255,255,255,.02);
+      border: 1px solid var(--line);
+      overflow-x: auto;
+      gap: 0;
+    }
+
+    .key{
+      width: 42px;
+      height: 120px;
+      background:
+        linear-gradient(180deg, rgba(255,255,255,.06), rgba(0,0,0,.18));
+      background-color: #e9e9ee;
+      border: 1px solid rgba(0,0,0,.20);
+      border-bottom-color: rgba(0,0,0,.35);
+      border-radius: 0 0 10px 10px;
+      position: relative;
+      cursor: pointer;
+      flex: 0 0 auto;
+    }
+
+    .key:active, .key.pressed{
+      filter: brightness(.95);
+      box-shadow: inset 0 0 0 3px rgba(255,42,60,.22);
+    }
+
+    .key.black{
+      width: 28px;
+      height: 84px;
+      background: linear-gradient(180deg, #24262e 0%, #0c0d12 100%);
+      margin: 0 -14px;
+      z-index: 2;
+      border-radius: 0 0 8px 8px;
+      border: 1px solid rgba(255,255,255,.06);
+    }
+
+    .key.black:active, .key.black.pressed{
+      background: linear-gradient(180deg, #2e3140 0%, #121421 100%);
+      box-shadow: inset 0 0 0 3px rgba(255,42,60,.18);
+    }
+
+    /* ----------------------------------------------------------
+      Focus / accessibility
+    ---------------------------------------------------------- */
+    button:focus-visible,
+    .step:focus-visible,
+    .knob:focus-visible,
+    input:focus-visible{
+      outline: none;
+      box-shadow: 0 0 0 3px rgba(255,42,60,.14);
+    }
+
+    /* ----------------------------------------------------------
+      Responsive
+    ---------------------------------------------------------- */
+    @media (max-width: 768px){
+      body{ padding: 12px; }
+      .plugin-container{ padding: 14px; }
+
+      .logo h1{ font-size: 16px; letter-spacing: 3px; }
+
+      .step{ width: 46px; height: 64px; border-radius: var(--r-xs); }
+      .knob{ width: 54px; height: 54px; }
+      .knob-container{ width: 86px; }
+    }
+  </style>
 </head>
+
 <body>
-    <div class="plugin-container">
-        <header>
-            <div class="logo">
-                <h1>RHODES <span>POLY6</span></h1>
-            </div>
-            <div class="master-controls">
-                <div class="knob-container">
-                    <div class="knob" id="masterVolume" data-value="75"></div>
-                    <span class="knob-label">Master</span>
-                    <span class="knob-value">75%</span>
-                </div>
-                <button class="power-btn active" id="powerBtn">⏻</button>
-            </div>
-        </header>
-
-        <div class="visualizer">
-            <canvas id="waveform"></canvas>
+  <div class="plugin-container">
+    <header>
+      <div class="logo">
+        <h1>RHODES <span>POLY6</span></h1>
+      </div>
+      <div class="master-controls">
+        <div class="knob-container">
+          <div class="knob" id="masterVolume" data-value="75"></div>
+          <span class="knob-label">Master</span>
+          <span class="knob-value">75%</span>
         </div>
+        <button class="power-btn active" id="powerBtn">⏻</button>
+      </div>
+    </header>
 
-        <!-- Sound Generation Section -->
-        <section class="section">
-            <h2 class="section-title">🎹 Rhodes Sound Generation</h2>
-            <div class="knobs-row">
-                <div class="knob-container">
-                    <div class="knob" id="attack" data-value="10" data-min="0" data-max="100"></div>
-                    <span class="knob-label">Attack</span>
-                    <span class="knob-value">10ms</span>
-                </div>
-                <div class="knob-container">
-                    <div class="knob" id="decay" data-value="30" data-min="0" data-max="100"></div>
-                    <span class="knob-label">Decay</span>
-                    <span class="knob-value">300ms</span>
-                </div>
-                <div class="knob-container">
-                    <div class="knob" id="sustain" data-value="60" data-min="0" data-max="100"></div>
-                    <span class="knob-label">Sustain</span>
-                    <span class="knob-value">60%</span>
-                </div>
-                <div class="knob-container">
-                    <div class="knob" id="release" data-value="40" data-min="0" data-max="100"></div>
-                    <span class="knob-label">Release</span>
-                    <span class="knob-value">400ms</span>
-                </div>
-                <div class="knob-container">
-                    <div class="knob" id="brightness" data-value="65" data-min="0" data-max="100"></div>
-                    <span class="knob-label">Brightness</span>
-                    <span class="knob-value">65%</span>
-                </div>
-                <div class="knob-container">
-                    <div class="knob" id="tremolo" data-value="30" data-min="0" data-max="100"></div>
-                    <span class="knob-label">Tremolo</span>
-                    <span class="knob-value">30%</span>
-                </div>
-                <div class="knob-container">
-                    <div class="knob" id="stereo" data-value="50" data-min="0" data-max="100"></div>
-                    <span class="knob-label">Stereo</span>
-                    <span class="knob-value">50%</span>
-                </div>
-                <div class="knob-container">
-                    <div class="knob" id="drive" data-value="20" data-min="0" data-max="100"></div>
-                    <span class="knob-label">Drive</span>
-                    <span class="knob-value">20%</span>
-                </div>
-            </div>
-
-            <div class="keyboard" id="keyboard"></div>
-        </section>
-
-        <!-- Chord Sequencer Section -->
-        <section class="section">
-            <h2 class="section-title">🎼 Chord Sequencer - 16 Steps</h2>
-            <div class="sequencer-grid">
-                <div class="step-row" id="sequencerSteps"></div>
-            </div>
-            <div class="transport">
-                <button class="transport-btn" id="stopBtn">⏹</button>
-                <button class="transport-btn" id="playBtn">▶</button>
-                <div class="tempo-control">
-                    <span class="tempo-label">BPM</span>
-                    <input type="number" class="tempo-input" id="tempoInput" value="120" min="40" max="240">
-                </div>
-                <button class="transport-btn" id="clearBtn">🗑</button>
-            </div>
-        </section>
+    <div class="visualizer">
+      <canvas id="waveform"></canvas>
     </div>
 
-    <script>
-        // ============================================
-        // AUDIO ENGINE - Rhodes Polyphonic Synthesizer
-        // ============================================
-        
-        class RhodesEngine {
-            constructor() {
-                this.audioCtx = null;
-                this.masterGain = null;
-                this.analyser = null;
-                this.voices = [];
-                this.maxVoices = 6;
-                this.isActive = true;
-                
-                // Synth parameters
-                this.params = {
-                    attack: 0.01,
-                    decay: 0.3,
-                    sustain: 0.6,
-                    release: 0.4,
-                    brightness: 0.65,
-                    tremolo: 0.3,
-                    tremoloRate: 5.5,
-                    stereo: 0.5,
-                    drive: 0.2,
-                    masterVolume: 0.75
-                };
-                
-                // Tremolo LFO
-                this.tremoloLFO = null;
-                this.tremoloGain = null;
-            }
-            
-            async init() {
-                this.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                
-                // Master chain
-                this.masterGain = this.audioCtx.createGain();
-                this.masterGain.gain.value = this.params.masterVolume;
-                
-                // Analyser for visualization
-                this.analyser = this.audioCtx.createAnalyser();
-                this.analyser.fftSize = 2048;
-                
-                // Tremolo setup
-                this.tremoloGain = this.audioCtx.createGain();
-                this.tremoloLFO = this.audioCtx.createOscillator();
-                const tremoloDepth = this.audioCtx.createGain();
-                
-                this.tremoloLFO.frequency.value = this.params.tremoloRate;
-                this.tremoloLFO.type = 'sine';
-                tremoloDepth.gain.value = this.params.tremolo * 0.3;
-                
-                this.tremoloLFO.connect(tremoloDepth);
-                tremoloDepth.connect(this.tremoloGain.gain);
-                this.tremoloGain.gain.value = 1;
-                this.tremoloLFO.start();
-                
-                // Connect chain
-                this.tremoloGain.connect(this.masterGain);
-                this.masterGain.connect(this.analyser);
-                this.analyser.connect(this.audioCtx.destination);
-            }
-            
-            // Rhodes FM synthesis voice
-            createVoice(frequency) {
-                if (!this.audioCtx || !this.isActive) return null;
-                
-                const now = this.audioCtx.currentTime;
-                const voice = {};
-                
-                // Carrier oscillator (sine for Rhodes bell-like tone)
-                voice.carrier = this.audioCtx.createOscillator();
-                voice.carrier.type = 'sine';
-                voice.carrier.frequency.value = frequency;
-                
-                // Modulator for FM synthesis (creates the Rhodes character)
-                voice.modulator = this.audioCtx.createOscillator();
-                voice.modulator.type = 'sine';
-                voice.modulator.frequency.value = frequency * 2; // 2:1 ratio
-                
-                // Modulation depth (brightness control)
-                voice.modGain = this.audioCtx.createGain();
-                voice.modGain.gain.value = frequency * this.params.brightness * 2;
-                
-                // Main envelope
-                voice.envelope = this.audioCtx.createGain();
-                voice.envelope.gain.value = 0;
-                
-                // Harmonic enhancer (adds richness)
-                voice.harmonic = this.audioCtx.createOscillator();
-                voice.harmonic.type = 'sine';
-                voice.harmonic.frequency.value = frequency * 3;
-                voice.harmonicGain = this.audioCtx.createGain();
-                voice.harmonicGain.gain.value = 0.15 * this.params.brightness;
-                
-                // Drive/saturation with waveshaper
-                voice.waveshaper = this.audioCtx.createWaveShaper();
-                voice.waveshaper.curve = this.makeDistortionCurve(this.params.drive * 100);
-                
-                // Stereo panner
-                voice.panner = this.audioCtx.createStereoPanner();
-                voice.panner.pan.value = (Math.random() - 0.5) * this.params.stereo;
-                
-                // Connect FM synthesis
-                voice.modulator.connect(voice.modGain);
-                voice.modGain.connect(voice.carrier.frequency);
-                
-                // Connect signal chain
-                voice.carrier.connect(voice.envelope);
-                voice.harmonic.connect(voice.harmonicGain);
-                voice.harmonicGain.connect(voice.envelope);
-                voice.envelope.connect(voice.waveshaper);
-                voice.waveshaper.connect(voice.panner);
-                voice.panner.connect(this.tremoloGain);
-                
-                // Start oscillators
-                voice.carrier.start(now);
-                voice.modulator.start(now);
-                voice.harmonic.start(now);
-                
-                // Apply envelope
-                const attackTime = now + this.params.attack;
-                const decayTime = attackTime + this.params.decay;
-                
-                voice.envelope.gain.setValueAtTime(0, now);
-                voice.envelope.gain.linearRampToValueAtTime(0.4, attackTime);
-                voice.envelope.gain.linearRampToValueAtTime(this.params.sustain * 0.4, decayTime);
-                
-                // Modulation envelope (brightness decays over time - characteristic of Rhodes)
-                voice.modGain.gain.setValueAtTime(frequency * this.params.brightness * 3, now);
-                voice.modGain.gain.exponentialRampToValueAtTime(
-                    frequency * this.params.brightness * 0.5,
-                    now + 0.5
-                );
-                
-                voice.frequency = frequency;
-                voice.startTime = now;
-                
-                return voice;
-            }
-            
-            makeDistortionCurve(amount) {
-                const samples = 44100;
-                const curve = new Float32Array(samples);
-                const deg = Math.PI / 180;
-                
-                for (let i = 0; i < samples; i++) {
-                    const x = (i * 2) / samples - 1;
-                    curve[i] = ((3 + amount) * x * 20 * deg) / (Math.PI + amount * Math.abs(x));
-                }
-                
-                return curve;
-            }
-            
-            noteOn(frequency) {
-                if (!this.audioCtx) this.init();
-                if (this.audioCtx.state === 'suspended') this.audioCtx.resume();
-                
-                // Voice stealing if max voices reached
-                if (this.voices.length >= this.maxVoices) {
-                    const oldVoice = this.voices.shift();
-                    this.stopVoice(oldVoice);
-                }
-                
-                const voice = this.createVoice(frequency);
-                if (voice) {
-                    this.voices.push(voice);
-                }
-                return voice;
-            }
-            
-            noteOff(voice) {
-                if (!voice || !this.audioCtx) return;
-                
-                const now = this.audioCtx.currentTime;
-                const releaseTime = now + this.params.release;
-                
-                voice.envelope.gain.cancelScheduledValues(now);
-                voice.envelope.gain.setValueAtTime(voice.envelope.gain.value, now);
-                voice.envelope.gain.linearRampToValueAtTime(0, releaseTime);
-                
-                setTimeout(() => {
-                    this.stopVoice(voice);
-                }, this.params.release * 1000 + 100);
-            }
-            
-            stopVoice(voice) {
-                try {
-                    voice.carrier.stop();
-                    voice.modulator.stop();
-                    voice.harmonic.stop();
-                    voice.carrier.disconnect();
-                    voice.modulator.disconnect();
-                    voice.harmonic.disconnect();
-                } catch (e) {}
-                
-                const index = this.voices.indexOf(voice);
-                if (index > -1) {
-                    this.voices.splice(index, 1);
-                }
-            }
-            
-            playChord(notes) {
-                const voices = [];
-                notes.forEach(freq => {
-                    const voice = this.noteOn(freq);
-                    if (voice) voices.push(voice);
-                });
-                return voices;
-            }
-            
-            stopChord(voices) {
-                voices.forEach(voice => this.noteOff(voice));
-            }
-            
-            setParam(param, value) {
-                this.params[param] = value;
-                
-                if (param === 'masterVolume' && this.masterGain) {
-                    this.masterGain.gain.value = value;
-                }
-            }
-            
-            toggle() {
-                this.isActive = !this.isActive;
-                if (this.masterGain) {
-                    this.masterGain.gain.value = this.isActive ? this.params.masterVolume : 0;
-                }
-                return this.isActive;
-            }
+    <!-- Sound Generation Section -->
+    <section class="section">
+      <h2 class="section-title">🎹 Rhodes Sound Generation</h2>
+      <div class="knobs-row">
+        <div class="knob-container">
+          <div class="knob" id="attack" data-value="10" data-min="0" data-max="100"></div>
+          <span class="knob-label">Attack</span>
+          <span class="knob-value">10ms</span>
+        </div>
+        <div class="knob-container">
+          <div class="knob" id="decay" data-value="30" data-min="0" data-max="100"></div>
+          <span class="knob-label">Decay</span>
+          <span class="knob-value">300ms</span>
+        </div>
+        <div class="knob-container">
+          <div class="knob" id="sustain" data-value="60" data-min="0" data-max="100"></div>
+          <span class="knob-label">Sustain</span>
+          <span class="knob-value">60%</span>
+        </div>
+        <div class="knob-container">
+          <div class="knob" id="release" data-value="40" data-min="0" data-max="100"></div>
+          <span class="knob-label">Release</span>
+          <span class="knob-value">400ms</span>
+        </div>
+        <div class="knob-container">
+          <div class="knob" id="brightness" data-value="65" data-min="0" data-max="100"></div>
+          <span class="knob-label">Brightness</span>
+          <span class="knob-value">65%</span>
+        </div>
+        <div class="knob-container">
+          <div class="knob" id="tremolo" data-value="30" data-min="0" data-max="100"></div>
+          <span class="knob-label">Tremolo</span>
+          <span class="knob-value">30%</span>
+        </div>
+        <div class="knob-container">
+          <div class="knob" id="stereo" data-value="50" data-min="0" data-max="100"></div>
+          <span class="knob-label">Stereo</span>
+          <span class="knob-value">50%</span>
+        </div>
+        <div class="knob-container">
+          <div class="knob" id="drive" data-value="20" data-min="0" data-max="100"></div>
+          <span class="knob-label">Drive</span>
+          <span class="knob-value">20%</span>
+        </div>
+      </div>
+
+      <div class="keyboard" id="keyboard"></div>
+    </section>
+
+    <!-- Chord Sequencer Section -->
+    <section class="section">
+      <h2 class="section-title">🎼 Chord Sequencer - 16 Steps</h2>
+      <div class="sequencer-grid">
+        <div class="step-row" id="sequencerSteps"></div>
+      </div>
+      <div class="transport">
+        <button class="transport-btn" id="stopBtn">⏹</button>
+        <button class="transport-btn" id="playBtn">▶</button>
+        <div class="tempo-control">
+          <span class="tempo-label">BPM</span>
+          <input type="number" class="tempo-input" id="tempoInput" value="120" min="40" max="240">
+        </div>
+        <button class="transport-btn" id="clearBtn">🗑</button>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    // ============================================
+    // AUDIO ENGINE - Rhodes Polyphonic Synthesizer
+    // ============================================
+
+    class RhodesEngine {
+      constructor() {
+        this.audioCtx = null;
+        this.masterGain = null;
+        this.analyser = null;
+        this.voices = [];
+        this.maxVoices = 6;
+        this.isActive = true;
+
+        // Synth parameters
+        this.params = {
+          attack: 0.01,
+          decay: 0.3,
+          sustain: 0.6,
+          release: 0.4,
+          brightness: 0.65,
+          tremolo: 0.3,
+          tremoloRate: 5.5,
+          stereo: 0.5,
+          drive: 0.2,
+          masterVolume: 0.75
+        };
+
+        // Tremolo LFO
+        this.tremoloLFO = null;
+        this.tremoloGain = null;
+      }
+
+      async init() {
+        this.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+        // Master chain
+        this.masterGain = this.audioCtx.createGain();
+        this.masterGain.gain.value = this.params.masterVolume;
+
+        // Analyser for visualization
+        this.analyser = this.audioCtx.createAnalyser();
+        this.analyser.fftSize = 2048;
+
+        // Tremolo setup
+        this.tremoloGain = this.audioCtx.createGain();
+        this.tremoloLFO = this.audioCtx.createOscillator();
+        const tremoloDepth = this.audioCtx.createGain();
+
+        this.tremoloLFO.frequency.value = this.params.tremoloRate;
+        this.tremoloLFO.type = 'sine';
+        tremoloDepth.gain.value = this.params.tremolo * 0.3;
+
+        this.tremoloLFO.connect(tremoloDepth);
+        tremoloDepth.connect(this.tremoloGain.gain);
+        this.tremoloGain.gain.value = 1;
+        this.tremoloLFO.start();
+
+        // Connect chain
+        this.tremoloGain.connect(this.masterGain);
+        this.masterGain.connect(this.analyser);
+        this.analyser.connect(this.audioCtx.destination);
+      }
+
+      // Rhodes FM synthesis voice
+      createVoice(frequency) {
+        if (!this.audioCtx || !this.isActive) return null;
+
+        const now = this.audioCtx.currentTime;
+        const voice = {};
+
+        // Carrier oscillator (sine for Rhodes bell-like tone)
+        voice.carrier = this.audioCtx.createOscillator();
+        voice.carrier.type = 'sine';
+        voice.carrier.frequency.value = frequency;
+
+        // Modulator for FM synthesis (creates the Rhodes character)
+        voice.modulator = this.audioCtx.createOscillator();
+        voice.modulator.type = 'sine';
+        voice.modulator.frequency.value = frequency * 2; // 2:1 ratio
+
+        // Modulation depth (brightness control)
+        voice.modGain = this.audioCtx.createGain();
+        voice.modGain.gain.value = frequency * this.params.brightness * 2;
+
+        // Main envelope
+        voice.envelope = this.audioCtx.createGain();
+        voice.envelope.gain.value = 0;
+
+        // Harmonic enhancer (adds richness)
+        voice.harmonic = this.audioCtx.createOscillator();
+        voice.harmonic.type = 'sine';
+        voice.harmonic.frequency.value = frequency * 3;
+        voice.harmonicGain = this.audioCtx.createGain();
+        voice.harmonicGain.gain.value = 0.15 * this.params.brightness;
+
+        // Drive/saturation with waveshaper
+        voice.waveshaper = this.audioCtx.createWaveShaper();
+        voice.waveshaper.curve = this.makeDistortionCurve(this.params.drive * 100);
+
+        // Stereo panner
+        voice.panner = this.audioCtx.createStereoPanner();
+        voice.panner.pan.value = (Math.random() - 0.5) * this.params.stereo;
+
+        // Connect FM synthesis
+        voice.modulator.connect(voice.modGain);
+        voice.modGain.connect(voice.carrier.frequency);
+
+        // Connect signal chain
+        voice.carrier.connect(voice.envelope);
+        voice.harmonic.connect(voice.harmonicGain);
+        voice.harmonicGain.connect(voice.envelope);
+        voice.envelope.connect(voice.waveshaper);
+        voice.waveshaper.connect(voice.panner);
+        voice.panner.connect(this.tremoloGain);
+
+        // Start oscillators
+        voice.carrier.start(now);
+        voice.modulator.start(now);
+        voice.harmonic.start(now);
+
+        // Apply envelope
+        const attackTime = now + this.params.attack;
+        const decayTime = attackTime + this.params.decay;
+
+        voice.envelope.gain.setValueAtTime(0, now);
+        voice.envelope.gain.linearRampToValueAtTime(0.4, attackTime);
+        voice.envelope.gain.linearRampToValueAtTime(this.params.sustain * 0.4, decayTime);
+
+        // Modulation envelope (brightness decays over time - characteristic of Rhodes)
+        voice.modGain.gain.setValueAtTime(frequency * this.params.brightness * 3, now);
+        voice.modGain.gain.exponentialRampToValueAtTime(
+          frequency * this.params.brightness * 0.5,
+          now + 0.5
+        );
+
+        voice.frequency = frequency;
+        voice.startTime = now;
+
+        return voice;
+      }
+
+      makeDistortionCurve(amount) {
+        const samples = 44100;
+        const curve = new Float32Array(samples);
+        const deg = Math.PI / 180;
+
+        for (let i = 0; i < samples; i++) {
+          const x = (i * 2) / samples - 1;
+          curve[i] = ((3 + amount) * x * 20 * deg) / (Math.PI + amount * Math.abs(x));
         }
 
-        // ============================================
-        // CHORD SEQUENCER
-        // ============================================
-        
-        class ChordSequencer {
-            constructor(engine) {
-                this.engine = engine;
-                this.steps = 16;
-                this.currentStep = -1;
-                this.isPlaying = false;
-                this.tempo = 120;
-                this.intervalId = null;
-                this.sequence = new Array(16).fill(null);
-                this.currentVoices = [];
-                
-                // Chord definitions (frequencies)
-                this.chords = {
-                    'C': [261.63, 329.63, 392.00],
-                    'Cm': [261.63, 311.13, 392.00],
-                    'C7': [261.63, 329.63, 392.00, 466.16],
-                    'Cmaj7': [261.63, 329.63, 392.00, 493.88],
-                    'D': [293.66, 369.99, 440.00],
-                    'Dm': [293.66, 349.23, 440.00],
-                    'D7': [293.66, 369.99, 440.00, 523.25],
-                    'Dm7': [293.66, 349.23, 440.00, 523.25],
-                    'E': [329.63, 415.30, 493.88],
-                    'Em': [329.63, 392.00, 493.88],
-                    'E7': [329.63, 415.30, 493.88, 587.33],
-                    'Em7': [329.63, 392.00, 493.88, 587.33],
-                    'F': [349.23, 440.00, 523.25],
-                    'Fm': [349.23, 415.30, 523.25],
-                    'Fmaj7': [349.23, 440.00, 523.25, 659.26],
-                    'G': [392.00, 493.88, 587.33],
-                    'Gm': [392.00, 466.16, 587.33],
-                    'G7': [392.00, 493.88, 587.33, 698.46],
-                    'A': [440.00, 554.37, 659.26],
-                    'Am': [440.00, 523.25, 659.26],
-                    'Am7': [440.00, 523.25, 659.26, 783.99],
-                    'A7': [440.00, 554.37, 659.26, 783.99],
-                    'B': [493.88, 622.25, 739.99],
-                    'Bm': [493.88, 587.33, 739.99],
-                    'Bdim': [493.88, 587.33, 698.46],
-                    '—': null
-                };
-            }
-            
-            setChord(step, chord) {
-                this.sequence[step] = chord;
-            }
-            
-            play() {
-                if (this.isPlaying) return;
-                this.isPlaying = true;
-                this.currentStep = -1;
-                
-                const stepDuration = (60 / this.tempo) * 1000 / 2; // 8th notes
-                
-                this.intervalId = setInterval(() => {
-                    this.nextStep();
-                }, stepDuration);
-            }
-            
-            stop() {
-                this.isPlaying = false;
-                if (this.intervalId) {
-                    clearInterval(this.intervalId);
-                    this.intervalId = null;
-                }
-                this.currentStep = -1;
-                
-                // Stop any playing voices
-                this.engine.stopChord(this.currentVoices);
-                this.currentVoices = [];
-                
-                this.onStepChange(-1);
-            }
-            
-            nextStep() {
-                // Stop previous voices
-                this.engine.stopChord(this.currentVoices);
-                this.currentVoices = [];
-                
-                // Advance step
-                this.currentStep = (this.currentStep + 1) % this.steps;
-                
-                // Play chord if exists
-                const chord = this.sequence[this.currentStep];
-                if (chord && this.chords[chord]) {
-                    this.currentVoices = this.engine.playChord(this.chords[chord]);
-                }
-                
-                this.onStepChange(this.currentStep);
-            }
-            
-            setTempo(bpm) {
-                this.tempo = Math.max(40, Math.min(240, bpm));
-                if (this.isPlaying) {
-                    this.stop();
-                    this.play();
-                }
-            }
-            
-            clear() {
-                this.sequence = new Array(16).fill(null);
-            }
-            
-            onStepChange(step) {
-                // Override in UI
-            }
+        return curve;
+      }
+
+      noteOn(frequency) {
+        if (!this.audioCtx) this.init();
+        if (this.audioCtx.state === 'suspended') this.audioCtx.resume();
+
+        // Voice stealing if max voices reached
+        if (this.voices.length >= this.maxVoices) {
+          const oldVoice = this.voices.shift();
+          this.stopVoice(oldVoice);
         }
 
-        // ============================================
-        // UI CONTROLLER
-        // ============================================
-        
-        class UIController {
-            constructor() {
-                this.engine = new RhodesEngine();
-                this.sequencer = new ChordSequencer(this.engine);
-                this.activeKnob = null;
-                this.startY = 0;
-                this.startValue = 0;
-                this.selectedStep = null;
-                
-                this.init();
-            }
-            
-            async init() {
-                await this.engine.init();
-                this.createKeyboard();
-                this.createSequencer();
-                this.setupKnobs();
-                this.setupTransport();
-                this.setupVisualizer();
-                this.setupPower();
-                
-                // Sequencer step callback
-                this.sequencer.onStepChange = (step) => this.updateStepDisplay(step);
-            }
-            
-            createKeyboard() {
-                const keyboard = document.getElementById('keyboard');
-                const notes = [
-                    { note: 'C4', freq: 261.63, black: false },
-                    { note: 'C#4', freq: 277.18, black: true },
-                    { note: 'D4', freq: 293.66, black: false },
-                    { note: 'D#4', freq: 311.13, black: true },
-                    { note: 'E4', freq: 329.63, black: false },
-                    { note: 'F4', freq: 349.23, black: false },
-                    { note: 'F#4', freq: 369.99, black: true },
-                    { note: 'G4', freq: 392.00, black: false },
-                    { note: 'G#4', freq: 415.30, black: true },
-                    { note: 'A4', freq: 440.00, black: false },
-                    { note: 'A#4', freq: 466.16, black: true },
-                    { note: 'B4', freq: 493.88, black: false },
-                    { note: 'C5', freq: 523.25, black: false },
-                ];
-                
-                notes.forEach(({ note, freq, black }) => {
-                    const key = document.createElement('div');
-                    key.className = `key ${black ? 'black' : ''}`;
-                    key.dataset.freq = freq;
-                    
-                    let voice = null;
-                    
-                    const startNote = () => {
-                        key.classList.add('pressed');
-                        voice = this.engine.noteOn(freq);
-                    };
-                    
-                    const endNote = () => {
-                        key.classList.remove('pressed');
-                        if (voice) {
-                            this.engine.noteOff(voice);
-                            voice = null;
-                        }
-                    };
-                    
-                    key.addEventListener('mousedown', startNote);
-                    key.addEventListener('mouseup', endNote);
-                    key.addEventListener('mouseleave', endNote);
-                    key.addEventListener('touchstart', (e) => { e.preventDefault(); startNote(); });
-                    key.addEventListener('touchend', endNote);
-                    
-                    keyboard.appendChild(key);
-                });
-            }
-            
-            createSequencer() {
-                const container = document.getElementById('sequencerSteps');
-                const chordNames = Object.keys(this.sequencer.chords);
-                
-                for (let i = 0; i < 16; i++) {
-                    const step = document.createElement('div');
-                    step.className = 'step';
-                    step.dataset.step = i;
-                    
-                    const number = document.createElement('span');
-                    number.className = 'step-number';
-                    number.textContent = i + 1;
-                    
-                    const chord = document.createElement('span');
-                    chord.className = 'step-chord';
-                    chord.textContent = '—';
-                    
-                    const selector = document.createElement('div');
-                    selector.className = 'chord-selector';
-                    
-                    chordNames.forEach(name => {
-                        const option = document.createElement('button');
-                        option.className = 'chord-option';
-                        option.textContent = name;
-                        option.addEventListener('click', (e) => {
-                            e.stopPropagation();
-                            chord.textContent = name === '—' ? '—' : name;
-                            this.sequencer.setChord(i, name === '—' ? null : name);
-                            step.classList.toggle('active', name !== '—');
-                            selector.classList.remove('visible');
-                            this.selectedStep = null;
-                        });
-                        selector.appendChild(option);
-                    });
-                    
-                    step.appendChild(number);
-                    step.appendChild(chord);
-                    step.appendChild(selector);
-                    
-                    step.addEventListener('click', () => {
-                        // Close other selectors
-                        document.querySelectorAll('.chord-selector.visible').forEach(s => {
-                            s.classList.remove('visible');
-                        });
-                        
-                        if (this.selectedStep === i) {
-                            this.selectedStep = null;
-                        } else {
-                            selector.classList.add('visible');
-                            this.selectedStep = i;
-                        }
-                    });
-                    
-                    container.appendChild(step);
-                }
-                
-                // Close selector on outside click
-                document.addEventListener('click', (e) => {
-                    if (!e.target.closest('.step')) {
-                        document.querySelectorAll('.chord-selector.visible').forEach(s => {
-                            s.classList.remove('visible');
-                        });
-                        this.selectedStep = null;
-                    }
-                });
-            }
-            
-            updateStepDisplay(currentStep) {
-                document.querySelectorAll('.step').forEach((step, i) => {
-                    step.classList.toggle('playing', i === currentStep);
-                });
-            }
-            
-            setupKnobs() {
-                const knobs = document.querySelectorAll('.knob');
-                
-                knobs.forEach(knob => {
-                    const value = parseInt(knob.dataset.value) || 50;
-                    this.updateKnobVisual(knob, value);
-                    
-                    knob.addEventListener('mousedown', (e) => this.startKnobDrag(e, knob));
-                    knob.addEventListener('touchstart', (e) => this.startKnobDrag(e, knob));
-                });
-                
-                document.addEventListener('mousemove', (e) => this.dragKnob(e));
-                document.addEventListener('touchmove', (e) => this.dragKnob(e));
-                document.addEventListener('mouseup', () => this.endKnobDrag());
-                document.addEventListener('touchend', () => this.endKnobDrag());
-            }
-            
-            startKnobDrag(e, knob) {
-                e.preventDefault();
-                this.activeKnob = knob;
-                this.startY = e.clientY || e.touches[0].clientY;
-                this.startValue = parseInt(knob.dataset.value);
-            }
-            
-            dragKnob(e) {
-                if (!this.activeKnob) return;
-                
-                const currentY = e.clientY || (e.touches && e.touches[0].clientY);
-                const diff = this.startY - currentY;
-                let newValue = Math.max(0, Math.min(100, this.startValue + diff));
-                
-                this.activeKnob.dataset.value = newValue;
-                this.updateKnobVisual(this.activeKnob, newValue);
-                this.applyKnobValue(this.activeKnob.id, newValue);
-            }
-            
-            endKnobDrag() {
-                this.activeKnob = null;
-            }
-            
-            updateKnobVisual(knob, value) {
-                const angle = (value / 100) * 280 - 140;
-                const percentage = (value / 100) * 280;
-                knob.style.background = `conic-gradient(from 220deg, var(--accent) ${percentage}deg, var(--knob-bg) ${percentage}deg)`;
-                knob.style.setProperty('--rotation', `${angle}deg`);
-                
-                const container = knob.closest('.knob-container');
-                const valueDisplay = container.querySelector('.knob-value');
-                
-                const id = knob.id;
-                let displayValue = value;
-                
-                switch(id) {
-                    case 'attack':
-                        displayValue = `${value}ms`;
-                        break;
-                    case 'decay':
-                    case 'release':
-                        displayValue = `${value * 10}ms`;
-                        break;
-                    case 'sustain':
-                    case 'brightness':
-                    case 'tremolo':
-                    case 'stereo':
-                    case 'drive':
-                    case 'masterVolume':
-                        displayValue = `${value}%`;
-                        break;
-                }
-                
-                valueDisplay.textContent = displayValue;
-            }
-            
-            applyKnobValue(id, value) {
-                const normalized = value / 100;
-                
-                switch(id) {
-                    case 'attack':
-                        this.engine.setParam('attack', normalized * 0.5);
-                        break;
-                    case 'decay':
-                        this.engine.setParam('decay', normalized * 2);
-                        break;
-                    case 'sustain':
-                        this.engine.setParam('sustain', normalized);
-                        break;
-                    case 'release':
-                        this.engine.setParam('release', normalized * 2);
-                        break;
-                    case 'brightness':
-                        this.engine.setParam('brightness', normalized);
-                        break;
-                    case 'tremolo':
-                        this.engine.setParam('tremolo', normalized);
-                        break;
-                    case 'stereo':
-                        this.engine.setParam('stereo', normalized);
-                        break;
-                    case 'drive':
-                        this.engine.setParam('drive', normalized);
-                        break;
-                    case 'masterVolume':
-                        this.engine.setParam('masterVolume', normalized);
-                        break;
-                }
-            }
-            
-            setupTransport() {
-                const playBtn = document.getElementById('playBtn');
-                const stopBtn = document.getElementById('stopBtn');
-                const clearBtn = document.getElementById('clearBtn');
-                const tempoInput = document.getElementById('tempoInput');
-                
-                playBtn.addEventListener('click', () => {
-                    if (this.sequencer.isPlaying) {
-                        this.sequencer.stop();
-                        playBtn.classList.remove('playing');
-                        playBtn.textContent = '▶';
-                    } else {
-                        this.sequencer.play();
-                        playBtn.classList.add('playing');
-                        playBtn.textContent = '⏸';
-                    }
-                });
-                
-                stopBtn.addEventListener('click', () => {
-                    this.sequencer.stop();
-                    playBtn.classList.remove('playing');
-                    playBtn.textContent = '▶';
-                });
-                
-                clearBtn.addEventListener('click', () => {
-                    this.sequencer.clear();
-                    document.querySelectorAll('.step').forEach(step => {
-                        step.classList.remove('active');
-                        step.querySelector('.step-chord').textContent = '—';
-                    });
-                });
-                
-                tempoInput.addEventListener('change', (e) => {
-                    this.sequencer.setTempo(parseInt(e.target.value));
-                });
-            }
-            
-            setupVisualizer() {
-                const canvas = document.getElementById('waveform');
-                const ctx = canvas.getContext('2d');
-                
-                const resize = () => {
-                    canvas.width = canvas.offsetWidth * 2;
-                    canvas.height = canvas.offsetHeight * 2;
-                };
-                resize();
-                window.addEventListener('resize', resize);
-                
-                const draw = () => {
-                    requestAnimationFrame(draw);
-                    
-                    if (!this.engine.analyser) return;
-                    
-                    const bufferLength = this.engine.analyser.frequencyBinCount;
-                    const dataArray = new Uint8Array(bufferLength);
-                    this.engine.analyser.getByteTimeDomainData(dataArray);
-                    
-                    ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
-                    ctx.fillRect(0, 0, canvas.width, canvas.height);
-                    
-                    ctx.lineWidth = 2;
-                    ctx.strokeStyle = '#4ecca3';
-                    ctx.beginPath();
-                    
-                    const sliceWidth = canvas.width / bufferLength;
-                    let x = 0;
-                    
-                    for (let i = 0; i < bufferLength; i++) {
-                        const v = dataArray[i] / 128.0;
-                        const y = (v * canvas.height) / 2;
-                        
-                        if (i === 0) {
-                            ctx.moveTo(x, y);
-                        } else {
-                            ctx.lineTo(x, y);
-                        }
-                        x += sliceWidth;
-                    }
-                    
-                    ctx.lineTo(canvas.width, canvas.height / 2);
-                    ctx.stroke();
-                };
-                
-                draw();
-            }
-            
-            setupPower() {
-                const powerBtn = document.getElementById('powerBtn');
-                
-                powerBtn.addEventListener('click', () => {
-                    const isActive = this.engine.toggle();
-                    powerBtn.classList.toggle('active', isActive);
-                    
-                    if (!isActive && this.sequencer.isPlaying) {
-                        this.sequencer.stop();
-                        document.getElementById('playBtn').classList.remove('playing');
-                        document.getElementById('playBtn').textContent = '▶';
-                    }
-                });
-            }
+        const voice = this.createVoice(frequency);
+        if (voice) {
+          this.voices.push(voice);
         }
+        return voice;
+      }
 
-        // Initialize on load
-        document.addEventListener('DOMContentLoaded', () => {
-            new UIController();
+      noteOff(voice) {
+        if (!voice || !this.audioCtx) return;
+
+        const now = this.audioCtx.currentTime;
+        const releaseTime = now + this.params.release;
+
+        voice.envelope.gain.cancelScheduledValues(now);
+        voice.envelope.gain.setValueAtTime(voice.envelope.gain.value, now);
+        voice.envelope.gain.linearRampToValueAtTime(0, releaseTime);
+
+        setTimeout(() => {
+          this.stopVoice(voice);
+        }, this.params.release * 1000 + 100);
+      }
+
+      stopVoice(voice) {
+        try {
+          voice.carrier.stop();
+          voice.modulator.stop();
+          voice.harmonic.stop();
+          voice.carrier.disconnect();
+          voice.modulator.disconnect();
+          voice.harmonic.disconnect();
+        } catch (e) {}
+
+        const index = this.voices.indexOf(voice);
+        if (index > -1) {
+          this.voices.splice(index, 1);
+        }
+      }
+
+      playChord(notes) {
+        const voices = [];
+        notes.forEach(freq => {
+          const voice = this.noteOn(freq);
+          if (voice) voices.push(voice);
         });
-    </script>
+        return voices;
+      }
+
+      stopChord(voices) {
+        voices.forEach(voice => this.noteOff(voice));
+      }
+
+      setParam(param, value) {
+        this.params[param] = value;
+
+        if (param === 'masterVolume' && this.masterGain) {
+          this.masterGain.gain.value = value;
+        }
+      }
+
+      toggle() {
+        this.isActive = !this.isActive;
+        if (this.masterGain) {
+          this.masterGain.gain.value = this.isActive ? this.params.masterVolume : 0;
+        }
+        return this.isActive;
+      }
+    }
+
+    // ============================================
+    // CHORD SEQUENCER
+    // ============================================
+
+    class ChordSequencer {
+      constructor(engine) {
+        this.engine = engine;
+        this.steps = 16;
+        this.currentStep = -1;
+        this.isPlaying = false;
+        this.tempo = 120;
+        this.intervalId = null;
+        this.sequence = new Array(16).fill(null);
+        this.currentVoices = [];
+
+        // Chord definitions (frequencies)
+        this.chords = {
+          'C': [261.63, 329.63, 392.00],
+          'Cm': [261.63, 311.13, 392.00],
+          'C7': [261.63, 329.63, 392.00, 466.16],
+          'Cmaj7': [261.63, 329.63, 392.00, 493.88],
+          'D': [293.66, 369.99, 440.00],
+          'Dm': [293.66, 349.23, 440.00],
+          'D7': [293.66, 369.99, 440.00, 523.25],
+          'Dm7': [293.66, 349.23, 440.00, 523.25],
+          'E': [329.63, 415.30, 493.88],
+          'Em': [329.63, 392.00, 493.88],
+          'E7': [329.63, 415.30, 493.88, 587.33],
+          'Em7': [329.63, 392.00, 493.88, 587.33],
+          'F': [349.23, 440.00, 523.25],
+          'Fm': [349.23, 415.30, 523.25],
+          'Fmaj7': [349.23, 440.00, 523.25, 659.26],
+          'G': [392.00, 493.88, 587.33],
+          'Gm': [392.00, 466.16, 587.33],
+          'G7': [392.00, 493.88, 587.33, 698.46],
+          'A': [440.00, 554.37, 659.26],
+          'Am': [440.00, 523.25, 659.26],
+          'Am7': [440.00, 523.25, 659.26, 783.99],
+          'A7': [440.00, 554.37, 659.26, 783.99],
+          'B': [493.88, 622.25, 739.99],
+          'Bm': [493.88, 587.33, 739.99],
+          'Bdim': [493.88, 587.33, 698.46],
+          '—': null
+        };
+      }
+
+      setChord(step, chord) {
+        this.sequence[step] = chord;
+      }
+
+      play() {
+        if (this.isPlaying) return;
+        this.isPlaying = true;
+        this.currentStep = -1;
+
+        const stepDuration = (60 / this.tempo) * 1000 / 2; // 8th notes
+
+        this.intervalId = setInterval(() => {
+          this.nextStep();
+        }, stepDuration);
+      }
+
+      stop() {
+        this.isPlaying = false;
+        if (this.intervalId) {
+          clearInterval(this.intervalId);
+          this.intervalId = null;
+        }
+        this.currentStep = -1;
+
+        // Stop any playing voices
+        this.engine.stopChord(this.currentVoices);
+        this.currentVoices = [];
+
+        this.onStepChange(-1);
+      }
+
+      nextStep() {
+        // Stop previous voices
+        this.engine.stopChord(this.currentVoices);
+        this.currentVoices = [];
+
+        // Advance step
+        this.currentStep = (this.currentStep + 1) % this.steps;
+
+        // Play chord if exists
+        const chord = this.sequence[this.currentStep];
+        if (chord && this.chords[chord]) {
+          this.currentVoices = this.engine.playChord(this.chords[chord]);
+        }
+
+        this.onStepChange(this.currentStep);
+      }
+
+      setTempo(bpm) {
+        this.tempo = Math.max(40, Math.min(240, bpm));
+        if (this.isPlaying) {
+          this.stop();
+          this.play();
+        }
+      }
+
+      clear() {
+        this.sequence = new Array(16).fill(null);
+      }
+
+      onStepChange(step) {
+        // Override in UI
+      }
+    }
+
+    // ============================================
+    // UI CONTROLLER
+    // ============================================
+
+    class UIController {
+      constructor() {
+        this.engine = new RhodesEngine();
+        this.sequencer = new ChordSequencer(this.engine);
+        this.activeKnob = null;
+        this.startY = 0;
+        this.startValue = 0;
+        this.selectedStep = null;
+
+        this.init();
+      }
+
+      async init() {
+        await this.engine.init();
+        this.createKeyboard();
+        this.createSequencer();
+        this.setupKnobs();
+        this.setupTransport();
+        this.setupVisualizer();
+        this.setupPower();
+
+        // Sequencer step callback
+        this.sequencer.onStepChange = (step) => this.updateStepDisplay(step);
+      }
+
+      createKeyboard() {
+        const keyboard = document.getElementById('keyboard');
+        const notes = [
+          { note: 'C4', freq: 261.63, black: false },
+          { note: 'C#4', freq: 277.18, black: true },
+          { note: 'D4', freq: 293.66, black: false },
+          { note: 'D#4', freq: 311.13, black: true },
+          { note: 'E4', freq: 329.63, black: false },
+          { note: 'F4', freq: 349.23, black: false },
+          { note: 'F#4', freq: 369.99, black: true },
+          { note: 'G4', freq: 392.00, black: false },
+          { note: 'G#4', freq: 415.30, black: true },
+          { note: 'A4', freq: 440.00, black: false },
+          { note: 'A#4', freq: 466.16, black: true },
+          { note: 'B4', freq: 493.88, black: false },
+          { note: 'C5', freq: 523.25, black: false },
+        ];
+
+        notes.forEach(({ note, freq, black }) => {
+          const key = document.createElement('div');
+          key.className = `key ${black ? 'black' : ''}`;
+          key.dataset.freq = freq;
+
+          let voice = null;
+
+          const startNote = () => {
+            key.classList.add('pressed');
+            voice = this.engine.noteOn(freq);
+          };
+
+          const endNote = () => {
+            key.classList.remove('pressed');
+            if (voice) {
+              this.engine.noteOff(voice);
+              voice = null;
+            }
+          };
+
+          key.addEventListener('mousedown', startNote);
+          key.addEventListener('mouseup', endNote);
+          key.addEventListener('mouseleave', endNote);
+          key.addEventListener('touchstart', (e) => { e.preventDefault(); startNote(); }, { passive:false });
+          key.addEventListener('touchend', endNote);
+
+          keyboard.appendChild(key);
+        });
+      }
+
+      createSequencer() {
+        const container = document.getElementById('sequencerSteps');
+        const chordNames = Object.keys(this.sequencer.chords);
+
+        for (let i = 0; i < 16; i++) {
+          const step = document.createElement('div');
+          step.className = 'step';
+          step.dataset.step = i;
+
+          const number = document.createElement('span');
+          number.className = 'step-number';
+          number.textContent = i + 1;
+
+          const chord = document.createElement('span');
+          chord.className = 'step-chord';
+          chord.textContent = '—';
+
+          const selector = document.createElement('div');
+          selector.className = 'chord-selector';
+
+          chordNames.forEach(name => {
+            const option = document.createElement('button');
+            option.className = 'chord-option';
+            option.textContent = name;
+            option.addEventListener('click', (e) => {
+              e.stopPropagation();
+              chord.textContent = name === '—' ? '—' : name;
+              this.sequencer.setChord(i, name === '—' ? null : name);
+              step.classList.toggle('active', name !== '—');
+              selector.classList.remove('visible');
+              this.selectedStep = null;
+            });
+            selector.appendChild(option);
+          });
+
+          step.appendChild(number);
+          step.appendChild(chord);
+          step.appendChild(selector);
+
+          step.addEventListener('click', () => {
+            // Close other selectors
+            document.querySelectorAll('.chord-selector.visible').forEach(s => {
+              s.classList.remove('visible');
+            });
+
+            if (this.selectedStep === i) {
+              this.selectedStep = null;
+            } else {
+              selector.classList.add('visible');
+              this.selectedStep = i;
+            }
+          });
+
+          container.appendChild(step);
+        }
+
+        // Close selector on outside click
+        document.addEventListener('click', (e) => {
+          if (!e.target.closest('.step')) {
+            document.querySelectorAll('.chord-selector.visible').forEach(s => {
+              s.classList.remove('visible');
+            });
+            this.selectedStep = null;
+          }
+        });
+      }
+
+      updateStepDisplay(currentStep) {
+        document.querySelectorAll('.step').forEach((step, i) => {
+          step.classList.toggle('playing', i === currentStep);
+        });
+      }
+
+      setupKnobs() {
+        const knobs = document.querySelectorAll('.knob');
+
+        knobs.forEach(knob => {
+          const value = parseInt(knob.dataset.value) || 50;
+          this.updateKnobVisual(knob, value);
+
+          knob.addEventListener('mousedown', (e) => this.startKnobDrag(e, knob));
+          knob.addEventListener('touchstart', (e) => this.startKnobDrag(e, knob), { passive:false });
+        });
+
+        document.addEventListener('mousemove', (e) => this.dragKnob(e));
+        document.addEventListener('touchmove', (e) => this.dragKnob(e), { passive:false });
+        document.addEventListener('mouseup', () => this.endKnobDrag());
+        document.addEventListener('touchend', () => this.endKnobDrag());
+      }
+
+      startKnobDrag(e, knob) {
+        e.preventDefault();
+        this.activeKnob = knob;
+        this.startY = e.clientY || e.touches[0].clientY;
+        this.startValue = parseInt(knob.dataset.value);
+      }
+
+      dragKnob(e) {
+        if (!this.activeKnob) return;
+
+        const currentY = e.clientY || (e.touches && e.touches[0].clientY);
+        const diff = this.startY - currentY;
+        let newValue = Math.max(0, Math.min(100, this.startValue + diff));
+
+        this.activeKnob.dataset.value = newValue;
+        this.updateKnobVisual(this.activeKnob, newValue);
+        this.applyKnobValue(this.activeKnob.id, newValue);
+      }
+
+      endKnobDrag() {
+        this.activeKnob = null;
+      }
+
+      updateKnobVisual(knob, value) {
+        const angle = (value / 100) * 280 - 140;
+        const percentage = (value / 100) * 280;
+        knob.style.background = `conic-gradient(from 220deg, var(--red) ${percentage}deg, var(--knob-ring) ${percentage}deg)`;
+        knob.style.setProperty('--rotation', `${angle}deg`);
+
+        const container = knob.closest('.knob-container');
+        const valueDisplay = container.querySelector('.knob-value');
+
+        const id = knob.id;
+        let displayValue = value;
+
+        switch(id) {
+          case 'attack':
+            displayValue = `${value}ms`;
+            break;
+          case 'decay':
+          case 'release':
+            displayValue = `${value * 10}ms`;
+            break;
+          case 'sustain':
+          case 'brightness':
+          case 'tremolo':
+          case 'stereo':
+          case 'drive':
+          case 'masterVolume':
+            displayValue = `${value}%`;
+            break;
+        }
+
+        valueDisplay.textContent = displayValue;
+      }
+
+      applyKnobValue(id, value) {
+        const normalized = value / 100;
+
+        switch(id) {
+          case 'attack':
+            this.engine.setParam('attack', normalized * 0.5);
+            break;
+          case 'decay':
+            this.engine.setParam('decay', normalized * 2);
+            break;
+          case 'sustain':
+            this.engine.setParam('sustain', normalized);
+            break;
+          case 'release':
+            this.engine.setParam('release', normalized * 2);
+            break;
+          case 'brightness':
+            this.engine.setParam('brightness', normalized);
+            break;
+          case 'tremolo':
+            this.engine.setParam('tremolo', normalized);
+            break;
+          case 'stereo':
+            this.engine.setParam('stereo', normalized);
+            break;
+          case 'drive':
+            this.engine.setParam('drive', normalized);
+            break;
+          case 'masterVolume':
+            this.engine.setParam('masterVolume', normalized);
+            break;
+        }
+      }
+
+      setupTransport() {
+        const playBtn = document.getElementById('playBtn');
+        const stopBtn = document.getElementById('stopBtn');
+        const clearBtn = document.getElementById('clearBtn');
+        const tempoInput = document.getElementById('tempoInput');
+
+        playBtn.addEventListener('click', () => {
+          if (this.sequencer.isPlaying) {
+            this.sequencer.stop();
+            playBtn.classList.remove('playing');
+            playBtn.textContent = '▶';
+          } else {
+            this.sequencer.play();
+            playBtn.classList.add('playing');
+            playBtn.textContent = '⏸';
+          }
+        });
+
+        stopBtn.addEventListener('click', () => {
+          this.sequencer.stop();
+          playBtn.classList.remove('playing');
+          playBtn.textContent = '▶';
+        });
+
+        clearBtn.addEventListener('click', () => {
+          this.sequencer.clear();
+          document.querySelectorAll('.step').forEach(step => {
+            step.classList.remove('active');
+            step.querySelector('.step-chord').textContent = '—';
+          });
+        });
+
+        tempoInput.addEventListener('change', (e) => {
+          this.sequencer.setTempo(parseInt(e.target.value));
+        });
+      }
+
+      setupVisualizer() {
+        const canvas = document.getElementById('waveform');
+        const ctx = canvas.getContext('2d');
+
+        const resize = () => {
+          canvas.width = canvas.offsetWidth * 2;
+          canvas.height = canvas.offsetHeight * 2;
+        };
+        resize();
+        window.addEventListener('resize', resize);
+
+        const draw = () => {
+          requestAnimationFrame(draw);
+
+          if (!this.engine.analyser) return;
+
+          const bufferLength = this.engine.analyser.frequencyBinCount;
+          const dataArray = new Uint8Array(bufferLength);
+          this.engine.analyser.getByteTimeDomainData(dataArray);
+
+          ctx.fillStyle = 'rgba(0, 0, 0, 0.22)';
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+          ctx.lineWidth = 2;
+          ctx.strokeStyle = '#ff2a3c'; // digitakt red
+          ctx.beginPath();
+
+          const sliceWidth = canvas.width / bufferLength;
+          let x = 0;
+
+          for (let i = 0; i < bufferLength; i++) {
+            const v = dataArray[i] / 128.0;
+            const y = (v * canvas.height) / 2;
+
+            if (i === 0) ctx.moveTo(x, y);
+            else ctx.lineTo(x, y);
+
+            x += sliceWidth;
+          }
+
+          ctx.lineTo(canvas.width, canvas.height / 2);
+          ctx.stroke();
+        };
+
+        draw();
+      }
+
+      setupPower() {
+        const powerBtn = document.getElementById('powerBtn');
+
+        powerBtn.addEventListener('click', () => {
+          const isActive = this.engine.toggle();
+          powerBtn.classList.toggle('active', isActive);
+
+          if (!isActive && this.sequencer.isPlaying) {
+            this.sequencer.stop();
+            document.getElementById('playBtn').classList.remove('playing');
+            document.getElementById('playBtn').textContent = '▶';
+          }
+        });
+      }
+    }
+
+    // Initialize on load
+    document.addEventListener('DOMContentLoaded', () => {
+      new UIController();
+    });
+  </script>
 </body>
 </html>
