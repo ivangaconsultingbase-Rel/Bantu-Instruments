@@ -3,13 +3,14 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Rhodes Poly 6 - Chord Sequencer</title>
+  <title>BRhodA Poly 6 - Chord Sequencer</title>
 
   <style>
     /* ==========================================================
       DIGITAKT-ISH DARK/RED — FLAT, TIGHT, “MACHINE UI”
       + Fix decimals overflow
       + Sequencer 4x4 grid
+      + Keyboard moved AFTER sequencer
     ========================================================== */
 
     :root{
@@ -29,7 +30,6 @@
       --line2: rgba(255,255,255,.12);
 
       --pad:#171a22;
-      --pad2:#1b1f2a;
       --pad-hover:#202636;
       --pad-on:#1d2230;
 
@@ -153,7 +153,7 @@
     }
 
     /* ----------------------------------------------------------
-      Knobs — compact + flat
+      Knobs
     ---------------------------------------------------------- */
     .knobs-row{
       display:flex;
@@ -165,7 +165,7 @@
 
     .knob-container{
       width: 92px;
-      min-width: 86px; /* prevents overflow on narrow layouts */
+      min-width: 86px;
       display:flex;
       flex-direction:column;
       align-items:center;
@@ -175,7 +175,6 @@
       border: 1px solid rgba(255,255,255,.06);
       background: rgba(255,255,255,.02);
     }
-
     .knob-container:hover{
       border-color: rgba(255,255,255,.12);
       background: rgba(255,255,255,.03);
@@ -185,15 +184,13 @@
       width: 58px;
       height: 58px;
       border-radius: 50%;
-      background:
-        conic-gradient(from 220deg, var(--red) 0deg, var(--knob-ring) 0deg);
+      background: conic-gradient(from 220deg, var(--red) 0deg, var(--knob-ring) 0deg);
       position: relative;
       cursor: pointer;
       border: 1px solid rgba(255,255,255,.06);
       box-shadow: 0 12px 18px rgba(0,0,0,.55);
       touch-action: none;
     }
-
     .knob::before{
       content:"";
       position:absolute;
@@ -205,7 +202,6 @@
       background-color: var(--knob);
       border: 1px solid rgba(255,255,255,.06);
     }
-
     .knob::after{
       content:"";
       position:absolute;
@@ -235,8 +231,6 @@
       font-weight: 900;
       letter-spacing: .2px;
       font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-
-      /* overflow protection */
       max-width: 100%;
       overflow: hidden;
       text-overflow: ellipsis;
@@ -244,7 +238,7 @@
     }
 
     /* ----------------------------------------------------------
-      Power button — square with red state
+      Buttons
     ---------------------------------------------------------- */
     .power-btn{
       width: 48px;
@@ -258,15 +252,85 @@
       transition: transform .08s ease, background .18s ease, border-color .18s ease, box-shadow .18s ease;
       box-shadow: 0 12px 18px rgba(0,0,0,.45);
     }
-
     .power-btn:hover{ border-color: rgba(255,255,255,.16); }
     .power-btn:active{ transform: translateY(1px); }
-
     .power-btn.active{
       background: rgba(255,42,60,.14);
       border-color: rgba(255,42,60,.60);
       color: var(--ink);
       box-shadow: 0 0 0 3px rgba(255,42,60,.12), 0 14px 22px rgba(0,0,0,.55);
+    }
+
+    .transport{
+      display:flex;
+      gap: 10px;
+      justify-content:center;
+      align-items:center;
+      margin-top: 12px;
+      flex-wrap: wrap;
+    }
+
+    .transport-btn{
+      width: 48px;
+      height: 48px;
+      border-radius: var(--r-sm);
+      border: 1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.03);
+      color: var(--ink);
+      font-size: 18px;
+      cursor:pointer;
+      transition: transform .08s ease, background .18s ease, border-color .18s ease, box-shadow .18s ease;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      box-shadow: 0 12px 18px rgba(0,0,0,.45);
+    }
+    .transport-btn:hover{
+      border-color: rgba(255,255,255,.16);
+      background: rgba(255,255,255,.05);
+    }
+    .transport-btn:active{ transform: translateY(1px); }
+    .transport-btn.playing{
+      background: rgba(255,42,60,.14);
+      border-color: rgba(255,42,60,.62);
+      box-shadow: 0 0 0 3px rgba(255,42,60,.12), 0 14px 22px rgba(0,0,0,.55);
+    }
+
+    .tempo-control{
+      display:flex;
+      align-items:center;
+      gap: 10px;
+      background: rgba(255,255,255,.03);
+      border: 1px solid rgba(255,255,255,.10);
+      padding: 10px 12px;
+      border-radius: var(--r-sm);
+      box-shadow: 0 12px 18px rgba(0,0,0,.35);
+    }
+
+    .tempo-label{
+      font-size: 10px;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: var(--ink-dim);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    }
+
+    .tempo-input{
+      width: 74px;
+      background: rgba(0,0,0,.20);
+      border: 1px solid rgba(255,255,255,.10);
+      color: var(--ink);
+      font-size: 14px;
+      font-weight: 900;
+      padding: 6px 8px;
+      border-radius: var(--r-xs);
+      outline: none;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    }
+
+    .tempo-input:focus{
+      border-color: rgba(255,42,60,.62);
+      box-shadow: 0 0 0 3px rgba(255,42,60,.12);
     }
 
     /* ----------------------------------------------------------
@@ -286,13 +350,6 @@
     /* ----------------------------------------------------------
       Sequencer — 4x4 matrix
     ---------------------------------------------------------- */
-    .sequencer-grid{
-      display:flex;
-      flex-direction:column;
-      gap: 12px;
-    }
-
-    /* IMPORTANT: now a grid */
     .step-row{
       display: grid;
       grid-template-columns: repeat(4, 54px);
@@ -305,8 +362,7 @@
     .step{
       width: 54px;
       height: 70px;
-      background:
-        linear-gradient(180deg, rgba(255,255,255,.03), rgba(0,0,0,.22));
+      background: linear-gradient(180deg, rgba(255,255,255,.03), rgba(0,0,0,.22));
       background-color: var(--pad);
       border-radius: var(--r-sm);
       border: 1px solid rgba(255,255,255,.08);
@@ -357,7 +413,6 @@
       transform: translateY(-1px);
     }
 
-    /* chord selector — appears BELOW the step (works better in 4x4) */
     .chord-selector{
       position:absolute;
       top: calc(100% + 8px);
@@ -400,87 +455,10 @@
     .chord-option:active{ transform: translateY(1px); }
 
     /* ----------------------------------------------------------
-      Transport
-    ---------------------------------------------------------- */
-    .transport{
-      display:flex;
-      gap: 10px;
-      justify-content:center;
-      align-items:center;
-      margin-top: 12px;
-      flex-wrap: wrap;
-    }
-
-    .transport-btn{
-      width: 48px;
-      height: 48px;
-      border-radius: var(--r-sm);
-      border: 1px solid rgba(255,255,255,.10);
-      background: rgba(255,255,255,.03);
-      color: var(--ink);
-      font-size: 18px;
-      cursor:pointer;
-      transition: transform .08s ease, background .18s ease, border-color .18s ease, box-shadow .18s ease;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      box-shadow: 0 12px 18px rgba(0,0,0,.45);
-    }
-
-    .transport-btn:hover{
-      border-color: rgba(255,255,255,.16);
-      background: rgba(255,255,255,.05);
-    }
-    .transport-btn:active{ transform: translateY(1px); }
-
-    .transport-btn.playing{
-      background: rgba(255,42,60,.14);
-      border-color: rgba(255,42,60,.62);
-      box-shadow: 0 0 0 3px rgba(255,42,60,.12), 0 14px 22px rgba(0,0,0,.55);
-    }
-
-    .tempo-control{
-      display:flex;
-      align-items:center;
-      gap: 10px;
-      background: rgba(255,255,255,.03);
-      border: 1px solid rgba(255,255,255,.10);
-      padding: 10px 12px;
-      border-radius: var(--r-sm);
-      box-shadow: 0 12px 18px rgba(0,0,0,.35);
-    }
-
-    .tempo-label{
-      font-size: 10px;
-      letter-spacing: 3px;
-      text-transform: uppercase;
-      color: var(--ink-dim);
-      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-    }
-
-    .tempo-input{
-      width: 74px;
-      background: rgba(0,0,0,.20);
-      border: 1px solid rgba(255,255,255,.10);
-      color: var(--ink);
-      font-size: 14px;
-      font-weight: 900;
-      padding: 6px 8px;
-      border-radius: var(--r-xs);
-      outline: none;
-      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-    }
-
-    .tempo-input:focus{
-      border-color: rgba(255,42,60,.62);
-      box-shadow: 0 0 0 3px rgba(255,42,60,.12);
-    }
-
-    /* ----------------------------------------------------------
-      Keyboard (minimal base + black keys)
+      Keyboard (NOW after sequencer)
     ---------------------------------------------------------- */
     .keyboard{
-      margin-top: 14px;
+      margin-top: 12px;
       display:flex;
       justify-content:center;
       align-items:flex-end;
@@ -495,8 +473,7 @@
     .key{
       width: 42px;
       height: 120px;
-      background:
-        linear-gradient(180deg, rgba(255,255,255,.06), rgba(0,0,0,.18));
+      background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(0,0,0,.18));
       background-color: #e9e9ee;
       border: 1px solid rgba(0,0,0,.20);
       border-bottom-color: rgba(0,0,0,.35);
@@ -526,9 +503,6 @@
       box-shadow: inset 0 0 0 3px rgba(255,42,60,.18);
     }
 
-    /* ----------------------------------------------------------
-      Focus / accessibility
-    ---------------------------------------------------------- */
     button:focus-visible,
     .step:focus-visible,
     .knob:focus-visible,
@@ -537,13 +511,9 @@
       box-shadow: 0 0 0 3px rgba(255,42,60,.14);
     }
 
-    /* ----------------------------------------------------------
-      Responsive (keep 4 columns, but smaller)
-    ---------------------------------------------------------- */
     @media (max-width: 520px){
       body{ padding: 12px; }
       .plugin-container{ padding: 14px; }
-
       .logo h1{ font-size: 16px; letter-spacing: 3px; }
 
       .step-row{
@@ -553,7 +523,7 @@
       .step{ width: 46px; height: 64px; border-radius: var(--r-xs); }
 
       .knob{ width: 54px; height: 54px; }
-      .knob-container{ width: 86px; }
+      .knob-container{ width: 86px; min-width: 86px; }
     }
   </style>
 </head>
@@ -562,7 +532,7 @@
   <div class="plugin-container">
     <header>
       <div class="logo">
-        <h1>RHODES <span>POLY6</span></h1>
+        <h1>BRHODA <span>POLY6</span></h1>
       </div>
       <div class="master-controls">
         <div class="knob-container">
@@ -578,9 +548,10 @@
       <canvas id="waveform"></canvas>
     </div>
 
-    <!-- Sound Generation Section -->
+    <!-- Sound Generation Section (knobs only now) -->
     <section class="section">
       <h2 class="section-title">🎹 Rhodes Sound Generation</h2>
+
       <div class="knobs-row">
         <div class="knob-container">
           <div class="knob" id="attack" data-value="10" data-min="0" data-max="100"></div>
@@ -623,8 +594,6 @@
           <span class="knob-value">20%</span>
         </div>
       </div>
-
-      <div class="keyboard" id="keyboard"></div>
     </section>
 
     <!-- Chord Sequencer Section -->
@@ -642,6 +611,9 @@
         </div>
         <button class="transport-btn" id="clearBtn">🗑</button>
       </div>
+
+      <!-- Keyboard MOVED HERE (after sequencer) -->
+      <div class="keyboard" id="keyboard"></div>
     </section>
   </div>
 
@@ -659,7 +631,6 @@
         this.maxVoices = 6;
         this.isActive = true;
 
-        // Synth parameters
         this.params = {
           attack: 0.01,
           decay: 0.3,
@@ -673,7 +644,6 @@
           masterVolume: 0.75
         };
 
-        // Tremolo LFO
         this.tremoloLFO = null;
         this.tremoloGain = null;
       }
@@ -681,15 +651,12 @@
       async init() {
         this.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
-        // Master chain
         this.masterGain = this.audioCtx.createGain();
         this.masterGain.gain.value = this.params.masterVolume;
 
-        // Analyser for visualization
         this.analyser = this.audioCtx.createAnalyser();
         this.analyser.fftSize = 2048;
 
-        // Tremolo setup
         this.tremoloGain = this.audioCtx.createGain();
         this.tremoloLFO = this.audioCtx.createOscillator();
         const tremoloDepth = this.audioCtx.createGain();
@@ -703,57 +670,46 @@
         this.tremoloGain.gain.value = 1;
         this.tremoloLFO.start();
 
-        // Connect chain
         this.tremoloGain.connect(this.masterGain);
         this.masterGain.connect(this.analyser);
         this.analyser.connect(this.audioCtx.destination);
       }
 
-      // Rhodes FM synthesis voice
       createVoice(frequency) {
         if (!this.audioCtx || !this.isActive) return null;
 
         const now = this.audioCtx.currentTime;
         const voice = {};
 
-        // Carrier oscillator
         voice.carrier = this.audioCtx.createOscillator();
         voice.carrier.type = 'sine';
         voice.carrier.frequency.value = frequency;
 
-        // Modulator
         voice.modulator = this.audioCtx.createOscillator();
         voice.modulator.type = 'sine';
         voice.modulator.frequency.value = frequency * 2;
 
-        // Mod depth
         voice.modGain = this.audioCtx.createGain();
         voice.modGain.gain.value = frequency * this.params.brightness * 2;
 
-        // Main envelope
         voice.envelope = this.audioCtx.createGain();
         voice.envelope.gain.value = 0;
 
-        // Harmonic enhancer
         voice.harmonic = this.audioCtx.createOscillator();
         voice.harmonic.type = 'sine';
         voice.harmonic.frequency.value = frequency * 3;
         voice.harmonicGain = this.audioCtx.createGain();
         voice.harmonicGain.gain.value = 0.15 * this.params.brightness;
 
-        // Drive waveshaper
         voice.waveshaper = this.audioCtx.createWaveShaper();
         voice.waveshaper.curve = this.makeDistortionCurve(this.params.drive * 100);
 
-        // Stereo panner
         voice.panner = this.audioCtx.createStereoPanner();
         voice.panner.pan.value = (Math.random() - 0.5) * this.params.stereo;
 
-        // Connect FM
         voice.modulator.connect(voice.modGain);
         voice.modGain.connect(voice.carrier.frequency);
 
-        // Connect chain
         voice.carrier.connect(voice.envelope);
         voice.harmonic.connect(voice.harmonicGain);
         voice.harmonicGain.connect(voice.envelope);
@@ -761,12 +717,10 @@
         voice.waveshaper.connect(voice.panner);
         voice.panner.connect(this.tremoloGain);
 
-        // Start
         voice.carrier.start(now);
         voice.modulator.start(now);
         voice.harmonic.start(now);
 
-        // Envelope
         const attackTime = now + this.params.attack;
         const decayTime = attackTime + this.params.decay;
 
@@ -774,7 +728,6 @@
         voice.envelope.gain.linearRampToValueAtTime(0.4, attackTime);
         voice.envelope.gain.linearRampToValueAtTime(this.params.sustain * 0.4, decayTime);
 
-        // Mod envelope
         voice.modGain.gain.setValueAtTime(frequency * this.params.brightness * 3, now);
         voice.modGain.gain.exponentialRampToValueAtTime(
           frequency * this.params.brightness * 0.5,
@@ -796,7 +749,6 @@
           const x = (i * 2) / samples - 1;
           curve[i] = ((3 + amount) * x * 20 * deg) / (Math.PI + amount * Math.abs(x));
         }
-
         return curve;
       }
 
@@ -844,8 +796,8 @@
       playChord(notes) {
         const voices = [];
         notes.forEach(freq => {
-          const voice = this.noteOn(freq);
-          if (voice) voices.push(voice);
+          const v = this.noteOn(freq);
+          if (v) voices.push(v);
         });
         return voices;
       }
@@ -924,7 +876,7 @@
         this.isPlaying = true;
         this.currentStep = -1;
 
-        const stepDuration = (60 / this.tempo) * 1000 / 2; // 8th notes
+        const stepDuration = (60 / this.tempo) * 1000 / 2;
         this.intervalId = setInterval(() => this.nextStep(), stepDuration);
       }
 
@@ -938,7 +890,6 @@
 
         this.engine.stopChord(this.currentVoices);
         this.currentVoices = [];
-
         this.onStepChange(-1);
       }
 
@@ -952,7 +903,6 @@
         if (chord && this.chords[chord]) {
           this.currentVoices = this.engine.playChord(this.chords[chord]);
         }
-
         this.onStepChange(this.currentStep);
       }
 
@@ -1089,7 +1039,6 @@
 
           step.addEventListener('click', () => {
             document.querySelectorAll('.chord-selector.visible').forEach(s => s.classList.remove('visible'));
-
             if (this.selectedStep === i) {
               this.selectedStep = null;
             } else {
@@ -1140,7 +1089,6 @@
         this.startValue = Math.round(parseFloat(knob.dataset.value) || 0);
       }
 
-      // FIX: rounding prevents long decimals in dataset/display
       dragKnob(e) {
         if (!this.activeKnob) return;
 
@@ -1195,33 +1143,15 @@
         const normalized = (Math.round(value)) / 100;
 
         switch(id) {
-          case 'attack':
-            this.engine.setParam('attack', normalized * 0.5);
-            break;
-          case 'decay':
-            this.engine.setParam('decay', normalized * 2);
-            break;
-          case 'sustain':
-            this.engine.setParam('sustain', normalized);
-            break;
-          case 'release':
-            this.engine.setParam('release', normalized * 2);
-            break;
-          case 'brightness':
-            this.engine.setParam('brightness', normalized);
-            break;
-          case 'tremolo':
-            this.engine.setParam('tremolo', normalized);
-            break;
-          case 'stereo':
-            this.engine.setParam('stereo', normalized);
-            break;
-          case 'drive':
-            this.engine.setParam('drive', normalized);
-            break;
-          case 'masterVolume':
-            this.engine.setParam('masterVolume', normalized);
-            break;
+          case 'attack': this.engine.setParam('attack', normalized * 0.5); break;
+          case 'decay': this.engine.setParam('decay', normalized * 2); break;
+          case 'sustain': this.engine.setParam('sustain', normalized); break;
+          case 'release': this.engine.setParam('release', normalized * 2); break;
+          case 'brightness': this.engine.setParam('brightness', normalized); break;
+          case 'tremolo': this.engine.setParam('tremolo', normalized); break;
+          case 'stereo': this.engine.setParam('stereo', normalized); break;
+          case 'drive': this.engine.setParam('drive', normalized); break;
+          case 'masterVolume': this.engine.setParam('masterVolume', normalized); break;
         }
       }
 
@@ -1275,7 +1205,6 @@
 
         const draw = () => {
           requestAnimationFrame(draw);
-
           if (!this.engine.analyser) return;
 
           const bufferLength = this.engine.analyser.frequencyBinCount;
@@ -1295,17 +1224,14 @@
           for (let i = 0; i < bufferLength; i++) {
             const v = dataArray[i] / 128.0;
             const y = (v * canvas.height) / 2;
-
             if (i === 0) ctx.moveTo(x, y);
             else ctx.lineTo(x, y);
-
             x += sliceWidth;
           }
 
           ctx.lineTo(canvas.width, canvas.height / 2);
           ctx.stroke();
         };
-
         draw();
       }
 
