@@ -8,11 +8,11 @@
   <style>
     /* ==========================================================
       DIGITAKT-ISH DARK/RED — FLAT, TIGHT, “MACHINE UI”
-      Full-file version: keeps your existing HTML IDs/classes
+      + Fix decimals overflow
+      + Sequencer 4x4 grid
     ========================================================== */
 
     :root{
-      /* Base */
       --bg:#0a0b0f;
       --bg2:#0e1016;
       --panel:#12141a;
@@ -21,36 +21,26 @@
       --ink:#e9eaee;
       --ink-dim:#9aa1ad;
 
-      /* Digitakt-style accent */
       --red:#ff2a3c;
       --red2:#ff4d5a;
       --red-dim: rgba(255,42,60,.22);
 
-      /* Lines */
       --line: rgba(255,255,255,.08);
       --line2: rgba(255,255,255,.12);
 
-      /* Pads / steps */
       --pad:#171a22;
       --pad2:#1b1f2a;
       --pad-hover:#202636;
       --pad-on:#1d2230;
 
-      /* Knobs */
       --knob:#0c0e13;
       --knob-ring:#1f2536;
       --knob-notch:#ff2a3c;
 
-      /* Status */
-      --ok:#47e28e;
-      --warn:#ffb020;
-
-      /* Geometry */
       --r:14px;
       --r-sm:12px;
       --r-xs:10px;
 
-      /* Shadows (subtle, flat) */
       --sh1: 0 18px 55px rgba(0,0,0,.65);
       --sh2: 0 10px 26px rgba(0,0,0,.45);
     }
@@ -80,7 +70,6 @@
       overflow: hidden;
     }
 
-    /* Digitakt top “status rail” */
     .plugin-container::before{
       content:"";
       position:absolute;
@@ -176,6 +165,7 @@
 
     .knob-container{
       width: 92px;
+      min-width: 86px; /* prevents overflow on narrow layouts */
       display:flex;
       flex-direction:column;
       align-items:center;
@@ -242,13 +232,19 @@
     .knob-value{
       font-size: 12px;
       color: var(--ink);
-      font-weight: 800;
+      font-weight: 900;
       letter-spacing: .2px;
       font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+
+      /* overflow protection */
+      max-width: 100%;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
 
     /* ----------------------------------------------------------
-      Power button — Digitakt-ish “square” with red state
+      Power button — square with red state
     ---------------------------------------------------------- */
     .power-btn{
       width: 48px;
@@ -288,7 +284,7 @@
     #waveform{ width:100%; height:100%; }
 
     /* ----------------------------------------------------------
-      Sequencer — tight trig pads
+      Sequencer — 4x4 matrix
     ---------------------------------------------------------- */
     .sequencer-grid{
       display:flex;
@@ -296,23 +292,14 @@
       gap: 12px;
     }
 
+    /* IMPORTANT: now a grid */
     .step-row{
-      display:flex;
-      gap: 8px;
+      display: grid;
+      grid-template-columns: repeat(4, 54px);
+      gap: 10px;
       justify-content:center;
-      flex-wrap:wrap;
+      align-content:start;
       padding: 6px 0 2px;
-      position: relative;
-    }
-
-    /* group separators (1-4 / 5-8 / 9-12 / 13-16) */
-    .step-row::before{
-      content:"";
-      position:absolute;
-      top: 0; bottom: 0;
-      left: 50%;
-      width: 0;
-      pointer-events:none;
     }
 
     .step{
@@ -370,10 +357,10 @@
       transform: translateY(-1px);
     }
 
-    /* chord selector — compact grid */
+    /* chord selector — appears BELOW the step (works better in 4x4) */
     .chord-selector{
       position:absolute;
-      bottom: -132px;
+      top: calc(100% + 8px);
       left: 50%;
       transform: translateX(-50%);
       background: rgba(15,17,23,.98);
@@ -490,7 +477,7 @@
     }
 
     /* ----------------------------------------------------------
-      Keyboard (minimal base + your black key style kept)
+      Keyboard (minimal base + black keys)
     ---------------------------------------------------------- */
     .keyboard{
       margin-top: 14px;
@@ -551,15 +538,20 @@
     }
 
     /* ----------------------------------------------------------
-      Responsive
+      Responsive (keep 4 columns, but smaller)
     ---------------------------------------------------------- */
-    @media (max-width: 768px){
+    @media (max-width: 520px){
       body{ padding: 12px; }
       .plugin-container{ padding: 14px; }
 
       .logo h1{ font-size: 16px; letter-spacing: 3px; }
 
+      .step-row{
+        grid-template-columns: repeat(4, 46px);
+        gap: 8px;
+      }
       .step{ width: 46px; height: 64px; border-radius: var(--r-xs); }
+
       .knob{ width: 54px; height: 54px; }
       .knob-container{ width: 86px; }
     }
@@ -724,17 +716,17 @@
         const now = this.audioCtx.currentTime;
         const voice = {};
 
-        // Carrier oscillator (sine for Rhodes bell-like tone)
+        // Carrier oscillator
         voice.carrier = this.audioCtx.createOscillator();
         voice.carrier.type = 'sine';
         voice.carrier.frequency.value = frequency;
 
-        // Modulator for FM synthesis (creates the Rhodes character)
+        // Modulator
         voice.modulator = this.audioCtx.createOscillator();
         voice.modulator.type = 'sine';
-        voice.modulator.frequency.value = frequency * 2; // 2:1 ratio
+        voice.modulator.frequency.value = frequency * 2;
 
-        // Modulation depth (brightness control)
+        // Mod depth
         voice.modGain = this.audioCtx.createGain();
         voice.modGain.gain.value = frequency * this.params.brightness * 2;
 
@@ -742,14 +734,14 @@
         voice.envelope = this.audioCtx.createGain();
         voice.envelope.gain.value = 0;
 
-        // Harmonic enhancer (adds richness)
+        // Harmonic enhancer
         voice.harmonic = this.audioCtx.createOscillator();
         voice.harmonic.type = 'sine';
         voice.harmonic.frequency.value = frequency * 3;
         voice.harmonicGain = this.audioCtx.createGain();
         voice.harmonicGain.gain.value = 0.15 * this.params.brightness;
 
-        // Drive/saturation with waveshaper
+        // Drive waveshaper
         voice.waveshaper = this.audioCtx.createWaveShaper();
         voice.waveshaper.curve = this.makeDistortionCurve(this.params.drive * 100);
 
@@ -757,11 +749,11 @@
         voice.panner = this.audioCtx.createStereoPanner();
         voice.panner.pan.value = (Math.random() - 0.5) * this.params.stereo;
 
-        // Connect FM synthesis
+        // Connect FM
         voice.modulator.connect(voice.modGain);
         voice.modGain.connect(voice.carrier.frequency);
 
-        // Connect signal chain
+        // Connect chain
         voice.carrier.connect(voice.envelope);
         voice.harmonic.connect(voice.harmonicGain);
         voice.harmonicGain.connect(voice.envelope);
@@ -769,12 +761,12 @@
         voice.waveshaper.connect(voice.panner);
         voice.panner.connect(this.tremoloGain);
 
-        // Start oscillators
+        // Start
         voice.carrier.start(now);
         voice.modulator.start(now);
         voice.harmonic.start(now);
 
-        // Apply envelope
+        // Envelope
         const attackTime = now + this.params.attack;
         const decayTime = attackTime + this.params.decay;
 
@@ -782,7 +774,7 @@
         voice.envelope.gain.linearRampToValueAtTime(0.4, attackTime);
         voice.envelope.gain.linearRampToValueAtTime(this.params.sustain * 0.4, decayTime);
 
-        // Modulation envelope (brightness decays over time - characteristic of Rhodes)
+        // Mod envelope
         voice.modGain.gain.setValueAtTime(frequency * this.params.brightness * 3, now);
         voice.modGain.gain.exponentialRampToValueAtTime(
           frequency * this.params.brightness * 0.5,
@@ -812,16 +804,13 @@
         if (!this.audioCtx) this.init();
         if (this.audioCtx.state === 'suspended') this.audioCtx.resume();
 
-        // Voice stealing if max voices reached
         if (this.voices.length >= this.maxVoices) {
           const oldVoice = this.voices.shift();
           this.stopVoice(oldVoice);
         }
 
         const voice = this.createVoice(frequency);
-        if (voice) {
-          this.voices.push(voice);
-        }
+        if (voice) this.voices.push(voice);
         return voice;
       }
 
@@ -835,9 +824,7 @@
         voice.envelope.gain.setValueAtTime(voice.envelope.gain.value, now);
         voice.envelope.gain.linearRampToValueAtTime(0, releaseTime);
 
-        setTimeout(() => {
-          this.stopVoice(voice);
-        }, this.params.release * 1000 + 100);
+        setTimeout(() => this.stopVoice(voice), this.params.release * 1000 + 100);
       }
 
       stopVoice(voice) {
@@ -851,9 +838,7 @@
         } catch (e) {}
 
         const index = this.voices.indexOf(voice);
-        if (index > -1) {
-          this.voices.splice(index, 1);
-        }
+        if (index > -1) this.voices.splice(index, 1);
       }
 
       playChord(notes) {
@@ -866,12 +851,11 @@
       }
 
       stopChord(voices) {
-        voices.forEach(voice => this.noteOff(voice));
+        voices.forEach(v => this.noteOff(v));
       }
 
       setParam(param, value) {
         this.params[param] = value;
-
         if (param === 'masterVolume' && this.masterGain) {
           this.masterGain.gain.value = value;
         }
@@ -901,7 +885,6 @@
         this.sequence = new Array(16).fill(null);
         this.currentVoices = [];
 
-        // Chord definitions (frequencies)
         this.chords = {
           'C': [261.63, 329.63, 392.00],
           'Cm': [261.63, 311.13, 392.00],
@@ -942,10 +925,7 @@
         this.currentStep = -1;
 
         const stepDuration = (60 / this.tempo) * 1000 / 2; // 8th notes
-
-        this.intervalId = setInterval(() => {
-          this.nextStep();
-        }, stepDuration);
+        this.intervalId = setInterval(() => this.nextStep(), stepDuration);
       }
 
       stop() {
@@ -956,7 +936,6 @@
         }
         this.currentStep = -1;
 
-        // Stop any playing voices
         this.engine.stopChord(this.currentVoices);
         this.currentVoices = [];
 
@@ -964,14 +943,11 @@
       }
 
       nextStep() {
-        // Stop previous voices
         this.engine.stopChord(this.currentVoices);
         this.currentVoices = [];
 
-        // Advance step
         this.currentStep = (this.currentStep + 1) % this.steps;
 
-        // Play chord if exists
         const chord = this.sequence[this.currentStep];
         if (chord && this.chords[chord]) {
           this.currentVoices = this.engine.playChord(this.chords[chord]);
@@ -992,9 +968,7 @@
         this.sequence = new Array(16).fill(null);
       }
 
-      onStepChange(step) {
-        // Override in UI
-      }
+      onStepChange(step) {}
     }
 
     // ============================================
@@ -1005,6 +979,7 @@
       constructor() {
         this.engine = new RhodesEngine();
         this.sequencer = new ChordSequencer(this.engine);
+
         this.activeKnob = null;
         this.startY = 0;
         this.startValue = 0;
@@ -1022,7 +997,6 @@
         this.setupVisualizer();
         this.setupPower();
 
-        // Sequencer step callback
         this.sequencer.onStepChange = (step) => this.updateStepDisplay(step);
       }
 
@@ -1044,7 +1018,7 @@
           { note: 'C5', freq: 523.25, black: false },
         ];
 
-        notes.forEach(({ note, freq, black }) => {
+        notes.forEach(({ freq, black }) => {
           const key = document.createElement('div');
           key.className = `key ${black ? 'black' : ''}`;
           key.dataset.freq = freq;
@@ -1114,10 +1088,7 @@
           step.appendChild(selector);
 
           step.addEventListener('click', () => {
-            // Close other selectors
-            document.querySelectorAll('.chord-selector.visible').forEach(s => {
-              s.classList.remove('visible');
-            });
+            document.querySelectorAll('.chord-selector.visible').forEach(s => s.classList.remove('visible'));
 
             if (this.selectedStep === i) {
               this.selectedStep = null;
@@ -1130,12 +1101,9 @@
           container.appendChild(step);
         }
 
-        // Close selector on outside click
         document.addEventListener('click', (e) => {
           if (!e.target.closest('.step')) {
-            document.querySelectorAll('.chord-selector.visible').forEach(s => {
-              s.classList.remove('visible');
-            });
+            document.querySelectorAll('.chord-selector.visible').forEach(s => s.classList.remove('visible'));
             this.selectedStep = null;
           }
         });
@@ -1151,7 +1119,8 @@
         const knobs = document.querySelectorAll('.knob');
 
         knobs.forEach(knob => {
-          const value = parseInt(knob.dataset.value) || 50;
+          const value = Math.round(parseFloat(knob.dataset.value) || 50);
+          knob.dataset.value = String(value);
           this.updateKnobVisual(knob, value);
 
           knob.addEventListener('mousedown', (e) => this.startKnobDrag(e, knob));
@@ -1168,17 +1137,20 @@
         e.preventDefault();
         this.activeKnob = knob;
         this.startY = e.clientY || e.touches[0].clientY;
-        this.startValue = parseInt(knob.dataset.value);
+        this.startValue = Math.round(parseFloat(knob.dataset.value) || 0);
       }
 
+      // FIX: rounding prevents long decimals in dataset/display
       dragKnob(e) {
         if (!this.activeKnob) return;
 
         const currentY = e.clientY || (e.touches && e.touches[0].clientY);
         const diff = this.startY - currentY;
-        let newValue = Math.max(0, Math.min(100, this.startValue + diff));
 
-        this.activeKnob.dataset.value = newValue;
+        let newValue = this.startValue + diff;
+        newValue = Math.max(0, Math.min(100, Math.round(newValue)));
+
+        this.activeKnob.dataset.value = String(newValue);
         this.updateKnobVisual(this.activeKnob, newValue);
         this.applyKnobValue(this.activeKnob.id, newValue);
       }
@@ -1188,24 +1160,23 @@
       }
 
       updateKnobVisual(knob, value) {
-        const angle = (value / 100) * 280 - 140;
-        const percentage = (value / 100) * 280;
+        const v = Math.round(value);
+        const percentage = (v / 100) * 280;
         knob.style.background = `conic-gradient(from 220deg, var(--red) ${percentage}deg, var(--knob-ring) ${percentage}deg)`;
-        knob.style.setProperty('--rotation', `${angle}deg`);
 
         const container = knob.closest('.knob-container');
         const valueDisplay = container.querySelector('.knob-value');
 
         const id = knob.id;
-        let displayValue = value;
+        let displayValue = v;
 
         switch(id) {
           case 'attack':
-            displayValue = `${value}ms`;
+            displayValue = `${v}ms`;
             break;
           case 'decay':
           case 'release':
-            displayValue = `${value * 10}ms`;
+            displayValue = `${v * 10}ms`;
             break;
           case 'sustain':
           case 'brightness':
@@ -1213,7 +1184,7 @@
           case 'stereo':
           case 'drive':
           case 'masterVolume':
-            displayValue = `${value}%`;
+            displayValue = `${v}%`;
             break;
         }
 
@@ -1221,7 +1192,7 @@
       }
 
       applyKnobValue(id, value) {
-        const normalized = value / 100;
+        const normalized = (Math.round(value)) / 100;
 
         switch(id) {
           case 'attack':
@@ -1287,7 +1258,7 @@
         });
 
         tempoInput.addEventListener('change', (e) => {
-          this.sequencer.setTempo(parseInt(e.target.value));
+          this.sequencer.setTempo(parseInt(e.target.value, 10));
         });
       }
 
@@ -1315,7 +1286,7 @@
           ctx.fillRect(0, 0, canvas.width, canvas.height);
 
           ctx.lineWidth = 2;
-          ctx.strokeStyle = '#ff2a3c'; // digitakt red
+          ctx.strokeStyle = '#ff2a3c';
           ctx.beginPath();
 
           const sliceWidth = canvas.width / bufferLength;
@@ -1347,14 +1318,14 @@
 
           if (!isActive && this.sequencer.isPlaying) {
             this.sequencer.stop();
-            document.getElementById('playBtn').classList.remove('playing');
-            document.getElementById('playBtn').textContent = '▶';
+            const playBtn = document.getElementById('playBtn');
+            playBtn.classList.remove('playing');
+            playBtn.textContent = '▶';
           }
         });
       }
     }
 
-    // Initialize on load
     document.addEventListener('DOMContentLoaded', () => {
       new UIController();
     });
