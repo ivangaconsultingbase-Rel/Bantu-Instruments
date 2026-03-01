@@ -6,41 +6,27 @@
   <title>BRhodA Poly 6 - Chord Sequencer</title>
 
   <style>
-    /* ==========================================================
-      DIGITAKT-ISH DARK/RED — FLAT, TIGHT, “MACHINE UI”
-      + Fix decimals overflow
-      + Sequencer 4x4 grid
-      + Keyboard moved AFTER sequencer
-    ========================================================== */
-
     :root{
       --bg:#0a0b0f;
       --bg2:#0e1016;
       --panel:#12141a;
       --panel2:#0f1117;
-
       --ink:#e9eaee;
       --ink-dim:#9aa1ad;
-
       --red:#ff2a3c;
       --red2:#ff4d5a;
       --red-dim: rgba(255,42,60,.22);
-
       --line: rgba(255,255,255,.08);
       --line2: rgba(255,255,255,.12);
-
       --pad:#171a22;
       --pad-hover:#202636;
       --pad-on:#1d2230;
-
       --knob:#0c0e13;
       --knob-ring:#1f2536;
       --knob-notch:#ff2a3c;
-
       --r:14px;
       --r-sm:12px;
       --r-xs:10px;
-
       --sh1: 0 18px 55px rgba(0,0,0,.65);
       --sh2: 0 10px 26px rgba(0,0,0,.45);
     }
@@ -67,7 +53,7 @@
       border: 1px solid var(--line);
       box-shadow: var(--sh1);
       position: relative;
-      overflow: hidden;
+      /* FIX: removed overflow:hidden which was clipping the chord selector */
     }
 
     .plugin-container::before{
@@ -75,6 +61,7 @@
       position:absolute;
       top:0; left:0; right:0;
       height: 8px;
+      border-radius: calc(var(--r) + 6px) calc(var(--r) + 6px) 0 0;
       background:
         linear-gradient(90deg,
           rgba(255,255,255,.06) 0%,
@@ -84,6 +71,7 @@
           rgba(255,255,255,.06) 18%,
           rgba(255,255,255,.06) 100%);
       opacity:.9;
+      pointer-events: none;
     }
 
     header{
@@ -102,18 +90,13 @@
       gap: 12px;
       min-width: 240px;
     }
-
     .logo h1{
       font-size: 18px;
       letter-spacing: 4px;
       font-weight: 800;
       text-transform: uppercase;
     }
-
-    .logo span{
-      color: var(--red);
-      font-weight: 900;
-    }
+    .logo span{ color: var(--red); font-weight: 900; }
 
     .master-controls{
       display:flex;
@@ -121,9 +104,6 @@
       align-items:center;
     }
 
-    /* ----------------------------------------------------------
-      Sections
-    ---------------------------------------------------------- */
     .section{
       background: rgba(0,0,0,.18);
       border: 1px solid var(--line);
@@ -143,7 +123,7 @@
       align-items:center;
       gap: 10px;
       opacity: .95;
-      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
     }
     .section-title::after{
       content:"";
@@ -152,9 +132,7 @@
       background: linear-gradient(90deg, var(--red-dim), transparent);
     }
 
-    /* ----------------------------------------------------------
-      Knobs
-    ---------------------------------------------------------- */
+    /* ── KNOBS ── */
     .knobs-row{
       display:flex;
       gap: 12px;
@@ -222,24 +200,21 @@
       letter-spacing: 1.8px;
       line-height: 1.1;
       text-align:center;
-      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
     }
-
     .knob-value{
       font-size: 12px;
       color: var(--ink);
       font-weight: 900;
       letter-spacing: .2px;
-      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
       max-width: 100%;
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
     }
 
-    /* ----------------------------------------------------------
-      Buttons
-    ---------------------------------------------------------- */
+    /* ── TRANSPORT ── */
     .power-btn{
       width: 48px;
       height: 48px;
@@ -306,15 +281,13 @@
       border-radius: var(--r-sm);
       box-shadow: 0 12px 18px rgba(0,0,0,.35);
     }
-
     .tempo-label{
       font-size: 10px;
       letter-spacing: 3px;
       text-transform: uppercase;
       color: var(--ink-dim);
-      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
     }
-
     .tempo-input{
       width: 74px;
       background: rgba(0,0,0,.20);
@@ -325,17 +298,14 @@
       padding: 6px 8px;
       border-radius: var(--r-xs);
       outline: none;
-      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
     }
-
     .tempo-input:focus{
       border-color: rgba(255,42,60,.62);
       box-shadow: 0 0 0 3px rgba(255,42,60,.12);
     }
 
-    /* ----------------------------------------------------------
-      Visualizer
-    ---------------------------------------------------------- */
+    /* ── VISUALIZER ── */
     .visualizer{
       height: 60px;
       border-radius: var(--r);
@@ -347,9 +317,7 @@
     }
     #waveform{ width:100%; height:100%; }
 
-    /* ----------------------------------------------------------
-      Sequencer — 4x4 matrix
-    ---------------------------------------------------------- */
+    /* ── SEQUENCER STEPS ── */
     .step-row{
       display: grid;
       grid-template-columns: repeat(4, 54px);
@@ -376,7 +344,6 @@
       user-select:none;
       box-shadow: 0 10px 14px rgba(0,0,0,.35);
     }
-
     .step:hover{
       background-color: var(--pad-hover);
       border-color: rgba(255,255,255,.14);
@@ -390,22 +357,19 @@
       top: 6px;
       left: 8px;
       letter-spacing: .6px;
-      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
     }
-
     .step-chord{
       font-size: 13px;
       font-weight: 900;
       letter-spacing: .6px;
-      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
     }
-
     .step.active{
       border-color: rgba(255,42,60,.62);
       background-color: var(--pad-on);
       box-shadow: 0 0 0 3px rgba(255,42,60,.10), 0 14px 18px rgba(0,0,0,.45);
     }
-
     .step.playing{
       background-color: rgba(255,42,60,.18);
       border-color: rgba(255,42,60,.78);
@@ -413,50 +377,73 @@
       transform: translateY(-1px);
     }
 
+    /* ── CHORD SELECTOR — FIX: position:fixed + JS positioning ── */
     .chord-selector{
-      position:absolute;
-      top: calc(100% + 8px);
-      left: 50%;
-      transform: translateX(-50%);
-      background: rgba(15,17,23,.98);
-      border: 1px solid rgba(255,255,255,.10);
+      position: fixed;          /* viewport-relative, never clipped */
+      z-index: 9999;
+      background: rgba(12,13,18,.98);
+      border: 1px solid rgba(255,255,255,.14);
       border-radius: var(--r);
       padding: 10px;
-      display:none;
-      z-index: 100;
-      box-shadow: 0 18px 40px rgba(0,0,0,.6);
-      min-width: 220px;
-      backdrop-filter: blur(8px);
+      display: none;
+      box-shadow: 0 24px 50px rgba(0,0,0,.75), 0 0 0 1px rgba(255,42,60,.08);
+      width: 240px;
+      max-height: 65vh;        /* never taller than 65% of viewport */
+      overflow-y: auto;        /* scroll if needed */
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      /* Smooth scrollbar */
+      scrollbar-width: thin;
+      scrollbar-color: rgba(255,42,60,.35) transparent;
     }
+    .chord-selector::-webkit-scrollbar{ width: 4px; }
+    .chord-selector::-webkit-scrollbar-thumb{ background: rgba(255,42,60,.35); border-radius: 999px; }
 
     .chord-selector.visible{
-      display:grid;
+      display: grid;
       grid-template-columns: repeat(4, 1fr);
       gap: 6px;
     }
 
+    /* Small header inside selector showing which step */
+    .chord-selector-header{
+      grid-column: 1 / -1;
+      font-size: 10px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--red);
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--red-dim);
+      margin-bottom: 2px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    }
+
     .chord-option{
-      padding: 9px 8px;
+      padding: 9px 6px;
       background: rgba(255,255,255,.03);
       border: 1px solid rgba(255,255,255,.08);
       border-radius: var(--r-xs);
       color: var(--ink);
       cursor:pointer;
-      font-size: 12px;
+      font-size: 11px;
       font-weight: 900;
       letter-spacing: .1px;
-      transition: background .15s ease, border-color .15s ease, transform .08s ease;
-      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      transition: background .12s ease, border-color .12s ease, transform .08s ease;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      text-align: center;
     }
     .chord-option:hover{
-      background: rgba(255,42,60,.14);
-      border-color: rgba(255,42,60,.40);
+      background: rgba(255,42,60,.18);
+      border-color: rgba(255,42,60,.45);
     }
     .chord-option:active{ transform: translateY(1px); }
+    .chord-option.selected{
+      background: rgba(255,42,60,.22);
+      border-color: rgba(255,42,60,.65);
+      color: #fff;
+    }
 
-    /* ----------------------------------------------------------
-      Keyboard (NOW after sequencer)
-    ---------------------------------------------------------- */
+    /* ── KEYBOARD ── */
     .keyboard{
       margin-top: 12px;
       display:flex;
@@ -482,12 +469,10 @@
       cursor: pointer;
       flex: 0 0 auto;
     }
-
     .key:active, .key.pressed{
       filter: brightness(.95);
       box-shadow: inset 0 0 0 3px rgba(255,42,60,.22);
     }
-
     .key.black{
       width: 28px;
       height: 84px;
@@ -497,7 +482,6 @@
       border-radius: 0 0 8px 8px;
       border: 1px solid rgba(255,255,255,.06);
     }
-
     .key.black:active, .key.black.pressed{
       background: linear-gradient(180deg, #2e3140 0%, #121421 100%);
       box-shadow: inset 0 0 0 3px rgba(255,42,60,.18);
@@ -515,13 +499,8 @@
       body{ padding: 12px; }
       .plugin-container{ padding: 14px; }
       .logo h1{ font-size: 16px; letter-spacing: 3px; }
-
-      .step-row{
-        grid-template-columns: repeat(4, 46px);
-        gap: 8px;
-      }
+      .step-row{ grid-template-columns: repeat(4, 46px); gap: 8px; }
       .step{ width: 46px; height: 64px; border-radius: var(--r-xs); }
-
       .knob{ width: 54px; height: 54px; }
       .knob-container{ width: 86px; min-width: 86px; }
     }
@@ -548,10 +527,8 @@
       <canvas id="waveform"></canvas>
     </div>
 
-    <!-- Sound Generation Section (knobs only now) -->
     <section class="section">
       <h2 class="section-title">🎹 Rhodes Sound Generation</h2>
-
       <div class="knobs-row">
         <div class="knob-container">
           <div class="knob" id="attack" data-value="10" data-min="0" data-max="100"></div>
@@ -596,7 +573,6 @@
       </div>
     </section>
 
-    <!-- Chord Sequencer Section -->
     <section class="section">
       <h2 class="section-title">🎼 Chord Sequencer - 16 Steps</h2>
       <div class="sequencer-grid">
@@ -612,16 +588,20 @@
         <button class="transport-btn" id="clearBtn">🗑</button>
       </div>
 
-      <!-- Keyboard MOVED HERE (after sequencer) -->
       <div class="keyboard" id="keyboard"></div>
     </section>
   </div>
 
+  <!-- FIX: Single global chord selector, moved outside plugin-container
+       so it's never clipped by any parent overflow -->
+  <div class="chord-selector" id="globalChordSelector">
+    <div class="chord-selector-header" id="selectorHeader">Step —</div>
+  </div>
+
   <script>
     // ============================================
-    // AUDIO ENGINE - Rhodes Polyphonic Synthesizer
+    // AUDIO ENGINE
     // ============================================
-
     class RhodesEngine {
       constructor() {
         this.audioCtx = null;
@@ -630,46 +610,31 @@
         this.voices = [];
         this.maxVoices = 6;
         this.isActive = true;
-
         this.params = {
-          attack: 0.01,
-          decay: 0.3,
-          sustain: 0.6,
-          release: 0.4,
-          brightness: 0.65,
-          tremolo: 0.3,
-          tremoloRate: 5.5,
-          stereo: 0.5,
-          drive: 0.2,
-          masterVolume: 0.75
+          attack: 0.01, decay: 0.3, sustain: 0.6, release: 0.4,
+          brightness: 0.65, tremolo: 0.3, tremoloRate: 5.5,
+          stereo: 0.5, drive: 0.2, masterVolume: 0.75
         };
-
         this.tremoloLFO = null;
         this.tremoloGain = null;
       }
 
       async init() {
         this.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-
         this.masterGain = this.audioCtx.createGain();
         this.masterGain.gain.value = this.params.masterVolume;
-
         this.analyser = this.audioCtx.createAnalyser();
         this.analyser.fftSize = 2048;
-
         this.tremoloGain = this.audioCtx.createGain();
         this.tremoloLFO = this.audioCtx.createOscillator();
         const tremoloDepth = this.audioCtx.createGain();
-
         this.tremoloLFO.frequency.value = this.params.tremoloRate;
         this.tremoloLFO.type = 'sine';
         tremoloDepth.gain.value = this.params.tremolo * 0.3;
-
         this.tremoloLFO.connect(tremoloDepth);
         tremoloDepth.connect(this.tremoloGain.gain);
         this.tremoloGain.gain.value = 1;
         this.tremoloLFO.start();
-
         this.tremoloGain.connect(this.masterGain);
         this.masterGain.connect(this.analyser);
         this.analyser.connect(this.audioCtx.destination);
@@ -677,66 +642,47 @@
 
       createVoice(frequency) {
         if (!this.audioCtx || !this.isActive) return null;
-
         const now = this.audioCtx.currentTime;
         const voice = {};
-
         voice.carrier = this.audioCtx.createOscillator();
         voice.carrier.type = 'sine';
         voice.carrier.frequency.value = frequency;
-
         voice.modulator = this.audioCtx.createOscillator();
         voice.modulator.type = 'sine';
         voice.modulator.frequency.value = frequency * 2;
-
         voice.modGain = this.audioCtx.createGain();
         voice.modGain.gain.value = frequency * this.params.brightness * 2;
-
         voice.envelope = this.audioCtx.createGain();
         voice.envelope.gain.value = 0;
-
         voice.harmonic = this.audioCtx.createOscillator();
         voice.harmonic.type = 'sine';
         voice.harmonic.frequency.value = frequency * 3;
         voice.harmonicGain = this.audioCtx.createGain();
         voice.harmonicGain.gain.value = 0.15 * this.params.brightness;
-
         voice.waveshaper = this.audioCtx.createWaveShaper();
         voice.waveshaper.curve = this.makeDistortionCurve(this.params.drive * 100);
-
         voice.panner = this.audioCtx.createStereoPanner();
         voice.panner.pan.value = (Math.random() - 0.5) * this.params.stereo;
-
         voice.modulator.connect(voice.modGain);
         voice.modGain.connect(voice.carrier.frequency);
-
         voice.carrier.connect(voice.envelope);
         voice.harmonic.connect(voice.harmonicGain);
         voice.harmonicGain.connect(voice.envelope);
         voice.envelope.connect(voice.waveshaper);
         voice.waveshaper.connect(voice.panner);
         voice.panner.connect(this.tremoloGain);
-
         voice.carrier.start(now);
         voice.modulator.start(now);
         voice.harmonic.start(now);
-
         const attackTime = now + this.params.attack;
         const decayTime = attackTime + this.params.decay;
-
         voice.envelope.gain.setValueAtTime(0, now);
         voice.envelope.gain.linearRampToValueAtTime(0.4, attackTime);
         voice.envelope.gain.linearRampToValueAtTime(this.params.sustain * 0.4, decayTime);
-
         voice.modGain.gain.setValueAtTime(frequency * this.params.brightness * 3, now);
-        voice.modGain.gain.exponentialRampToValueAtTime(
-          frequency * this.params.brightness * 0.5,
-          now + 0.5
-        );
-
+        voice.modGain.gain.exponentialRampToValueAtTime(frequency * this.params.brightness * 0.5, now + 0.5);
         voice.frequency = frequency;
         voice.startTime = now;
-
         return voice;
       }
 
@@ -744,7 +690,6 @@
         const samples = 44100;
         const curve = new Float32Array(samples);
         const deg = Math.PI / 180;
-
         for (let i = 0; i < samples; i++) {
           const x = (i * 2) / samples - 1;
           curve[i] = ((3 + amount) * x * 20 * deg) / (Math.PI + amount * Math.abs(x));
@@ -755,12 +700,10 @@
       noteOn(frequency) {
         if (!this.audioCtx) this.init();
         if (this.audioCtx.state === 'suspended') this.audioCtx.resume();
-
         if (this.voices.length >= this.maxVoices) {
-          const oldVoice = this.voices.shift();
-          this.stopVoice(oldVoice);
+          const old = this.voices.shift();
+          this.stopVoice(old);
         }
-
         const voice = this.createVoice(frequency);
         if (voice) this.voices.push(voice);
         return voice;
@@ -768,56 +711,39 @@
 
       noteOff(voice) {
         if (!voice || !this.audioCtx) return;
-
         const now = this.audioCtx.currentTime;
         const releaseTime = now + this.params.release;
-
         voice.envelope.gain.cancelScheduledValues(now);
         voice.envelope.gain.setValueAtTime(voice.envelope.gain.value, now);
         voice.envelope.gain.linearRampToValueAtTime(0, releaseTime);
-
         setTimeout(() => this.stopVoice(voice), this.params.release * 1000 + 100);
       }
 
       stopVoice(voice) {
         try {
-          voice.carrier.stop();
-          voice.modulator.stop();
-          voice.harmonic.stop();
-          voice.carrier.disconnect();
-          voice.modulator.disconnect();
-          voice.harmonic.disconnect();
-        } catch (e) {}
-
-        const index = this.voices.indexOf(voice);
-        if (index > -1) this.voices.splice(index, 1);
+          voice.carrier.stop(); voice.modulator.stop(); voice.harmonic.stop();
+          voice.carrier.disconnect(); voice.modulator.disconnect(); voice.harmonic.disconnect();
+        } catch(e) {}
+        const idx = this.voices.indexOf(voice);
+        if (idx > -1) this.voices.splice(idx, 1);
       }
 
       playChord(notes) {
         const voices = [];
-        notes.forEach(freq => {
-          const v = this.noteOn(freq);
-          if (v) voices.push(v);
-        });
+        notes.forEach(freq => { const v = this.noteOn(freq); if (v) voices.push(v); });
         return voices;
       }
 
-      stopChord(voices) {
-        voices.forEach(v => this.noteOff(v));
-      }
+      stopChord(voices) { voices.forEach(v => this.noteOff(v)); }
 
       setParam(param, value) {
         this.params[param] = value;
-        if (param === 'masterVolume' && this.masterGain) {
-          this.masterGain.gain.value = value;
-        }
+        if (param === 'masterVolume' && this.masterGain) this.masterGain.gain.value = value;
       }
 
       toggle() {
         this.isActive = !this.isActive;
-        if (this.masterGain) {
-          this.masterGain.gain.value = this.isActive ? this.params.masterVolume : 0;
-        }
+        if (this.masterGain) this.masterGain.gain.value = this.isActive ? this.params.masterVolume : 0;
         return this.isActive;
       }
     }
@@ -825,7 +751,6 @@
     // ============================================
     // CHORD SEQUENCER
     // ============================================
-
     class ChordSequencer {
       constructor(engine) {
         this.engine = engine;
@@ -838,56 +763,49 @@
         this.currentVoices = [];
 
         this.chords = {
-          'C': [261.63, 329.63, 392.00],
-          'Cm': [261.63, 311.13, 392.00],
-          'C7': [261.63, 329.63, 392.00, 466.16],
-          'Cmaj7': [261.63, 329.63, 392.00, 493.88],
-          'D': [293.66, 369.99, 440.00],
-          'Dm': [293.66, 349.23, 440.00],
-          'D7': [293.66, 369.99, 440.00, 523.25],
-          'Dm7': [293.66, 349.23, 440.00, 523.25],
-          'E': [329.63, 415.30, 493.88],
-          'Em': [329.63, 392.00, 493.88],
-          'E7': [329.63, 415.30, 493.88, 587.33],
-          'Em7': [329.63, 392.00, 493.88, 587.33],
-          'F': [349.23, 440.00, 523.25],
-          'Fm': [349.23, 415.30, 523.25],
-          'Fmaj7': [349.23, 440.00, 523.25, 659.26],
-          'G': [392.00, 493.88, 587.33],
-          'Gm': [392.00, 466.16, 587.33],
-          'G7': [392.00, 493.88, 587.33, 698.46],
-          'A': [440.00, 554.37, 659.26],
-          'Am': [440.00, 523.25, 659.26],
-          'Am7': [440.00, 523.25, 659.26, 783.99],
-          'A7': [440.00, 554.37, 659.26, 783.99],
-          'B': [493.88, 622.25, 739.99],
-          'Bm': [493.88, 587.33, 739.99],
+          'C':    [261.63, 329.63, 392.00],
+          'Cm':   [261.63, 311.13, 392.00],
+          'C7':   [261.63, 329.63, 392.00, 466.16],
+          'Cmaj7':[261.63, 329.63, 392.00, 493.88],
+          'D':    [293.66, 369.99, 440.00],
+          'Dm':   [293.66, 349.23, 440.00],
+          'D7':   [293.66, 369.99, 440.00, 523.25],
+          'Dm7':  [293.66, 349.23, 440.00, 523.25],
+          'E':    [329.63, 415.30, 493.88],
+          'Em':   [329.63, 392.00, 493.88],
+          'E7':   [329.63, 415.30, 493.88, 587.33],
+          'Em7':  [329.63, 392.00, 493.88, 587.33],
+          'F':    [349.23, 440.00, 523.25],
+          'Fm':   [349.23, 415.30, 523.25],
+          'Fmaj7':[349.23, 440.00, 523.25, 659.26],
+          'G':    [392.00, 493.88, 587.33],
+          'Gm':   [392.00, 466.16, 587.33],
+          'G7':   [392.00, 493.88, 587.33, 698.46],
+          'A':    [440.00, 554.37, 659.26],
+          'Am':   [440.00, 523.25, 659.26],
+          'Am7':  [440.00, 523.25, 659.26, 783.99],
+          'A7':   [440.00, 554.37, 659.26, 783.99],
+          'B':    [493.88, 622.25, 739.99],
+          'Bm':   [493.88, 587.33, 739.99],
           'Bdim': [493.88, 587.33, 698.46],
-          '—': null
+          '—':    null
         };
       }
 
-      setChord(step, chord) {
-        this.sequence[step] = chord;
-      }
+      setChord(step, chord) { this.sequence[step] = chord; }
 
       play() {
         if (this.isPlaying) return;
         this.isPlaying = true;
         this.currentStep = -1;
-
         const stepDuration = (60 / this.tempo) * 1000 / 2;
         this.intervalId = setInterval(() => this.nextStep(), stepDuration);
       }
 
       stop() {
         this.isPlaying = false;
-        if (this.intervalId) {
-          clearInterval(this.intervalId);
-          this.intervalId = null;
-        }
+        if (this.intervalId) { clearInterval(this.intervalId); this.intervalId = null; }
         this.currentStep = -1;
-
         this.engine.stopChord(this.currentVoices);
         this.currentVoices = [];
         this.onStepChange(-1);
@@ -896,9 +814,7 @@
       nextStep() {
         this.engine.stopChord(this.currentVoices);
         this.currentVoices = [];
-
         this.currentStep = (this.currentStep + 1) % this.steps;
-
         const chord = this.sequence[this.currentStep];
         if (chord && this.chords[chord]) {
           this.currentVoices = this.engine.playChord(this.chords[chord]);
@@ -908,32 +824,30 @@
 
       setTempo(bpm) {
         this.tempo = Math.max(40, Math.min(240, bpm));
-        if (this.isPlaying) {
-          this.stop();
-          this.play();
-        }
+        if (this.isPlaying) { this.stop(); this.play(); }
       }
 
-      clear() {
-        this.sequence = new Array(16).fill(null);
-      }
-
+      clear() { this.sequence = new Array(16).fill(null); }
       onStepChange(step) {}
     }
 
     // ============================================
     // UI CONTROLLER
     // ============================================
-
     class UIController {
       constructor() {
         this.engine = new RhodesEngine();
         this.sequencer = new ChordSequencer(this.engine);
-
         this.activeKnob = null;
         this.startY = 0;
         this.startValue = 0;
         this.selectedStep = null;
+
+        // FIX: single global selector element
+        this.globalSelector = document.getElementById('globalChordSelector');
+        this.selectorHeader = document.getElementById('selectorHeader');
+        // Will hold refs to each step's chord display span
+        this.stepChordSpans = [];
 
         this.init();
       }
@@ -942,65 +856,129 @@
         await this.engine.init();
         this.createKeyboard();
         this.createSequencer();
+        this.setupGlobalSelector();
         this.setupKnobs();
         this.setupTransport();
         this.setupVisualizer();
         this.setupPower();
-
         this.sequencer.onStepChange = (step) => this.updateStepDisplay(step);
       }
 
-      createKeyboard() {
-        const keyboard = document.getElementById('keyboard');
-        const notes = [
-          { note: 'C4', freq: 261.63, black: false },
-          { note: 'C#4', freq: 277.18, black: true },
-          { note: 'D4', freq: 293.66, black: false },
-          { note: 'D#4', freq: 311.13, black: true },
-          { note: 'E4', freq: 329.63, black: false },
-          { note: 'F4', freq: 349.23, black: false },
-          { note: 'F#4', freq: 369.99, black: true },
-          { note: 'G4', freq: 392.00, black: false },
-          { note: 'G#4', freq: 415.30, black: true },
-          { note: 'A4', freq: 440.00, black: false },
-          { note: 'A#4', freq: 466.16, black: true },
-          { note: 'B4', freq: 493.88, black: false },
-          { note: 'C5', freq: 523.25, black: false },
-        ];
+      // ── GLOBAL CHORD SELECTOR ──────────────────────────────────
+      setupGlobalSelector() {
+        const chordNames = Object.keys(this.sequencer.chords);
+        const sel = this.globalSelector;
 
-        notes.forEach(({ freq, black }) => {
-          const key = document.createElement('div');
-          key.className = `key ${black ? 'black' : ''}`;
-          key.dataset.freq = freq;
+        // Build chord option buttons once
+        chordNames.forEach(name => {
+          const btn = document.createElement('button');
+          btn.className = 'chord-option';
+          btn.textContent = name;
+          btn.dataset.chord = name;
+          btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (this.selectedStep === null) return;
 
-          let voice = null;
+            const i = this.selectedStep;
+            const isOff = name === '—';
+            const chordSpan = this.stepChordSpans[i];
+            const stepEl = document.querySelectorAll('.step')[i];
 
-          const startNote = () => {
-            key.classList.add('pressed');
-            voice = this.engine.noteOn(freq);
-          };
+            chordSpan.textContent = isOff ? '—' : name;
+            this.sequencer.setChord(i, isOff ? null : name);
+            stepEl.classList.toggle('active', !isOff);
 
-          const endNote = () => {
-            key.classList.remove('pressed');
-            if (voice) {
-              this.engine.noteOff(voice);
-              voice = null;
-            }
-          };
+            // Highlight selected option
+            sel.querySelectorAll('.chord-option').forEach(b => b.classList.remove('selected'));
+            if (!isOff) btn.classList.add('selected');
 
-          key.addEventListener('mousedown', startNote);
-          key.addEventListener('mouseup', endNote);
-          key.addEventListener('mouseleave', endNote);
-          key.addEventListener('touchstart', (e) => { e.preventDefault(); startNote(); }, { passive:false });
-          key.addEventListener('touchend', endNote);
-
-          keyboard.appendChild(key);
+            this.closeSelector();
+          });
+          sel.appendChild(btn);
         });
+
+        // Close on outside click
+        document.addEventListener('click', (e) => {
+          if (!e.target.closest('.chord-selector') && !e.target.closest('.step')) {
+            this.closeSelector();
+          }
+        });
+
+        // Close on scroll or resize (selector position would be stale)
+        window.addEventListener('scroll', () => this.closeSelector(), true);
+        window.addEventListener('resize', () => this.closeSelector());
       }
 
+      openSelector(stepIndex) {
+        const stepEl = document.querySelectorAll('.step')[stepIndex];
+        const rect = stepEl.getBoundingClientRect();
+        const sel = this.globalSelector;
+
+        this.selectedStep = stepIndex;
+        this.selectorHeader.textContent = 'Step ' + (stepIndex + 1);
+
+        // Highlight currently assigned chord
+        const current = this.sequencer.sequence[stepIndex] || '—';
+        sel.querySelectorAll('.chord-option').forEach(b => {
+          b.classList.toggle('selected', b.dataset.chord === current);
+        });
+
+        // Show first so we can measure height
+        sel.style.visibility = 'hidden';
+        sel.classList.add('visible');
+
+        const selW = sel.offsetWidth;   // 240px
+        const selH = sel.offsetHeight;  // actual rendered height
+
+        const margin = 8;
+        const vw = window.innerWidth;
+        const vh = window.innerHeight;
+
+        // Horizontal: centre on step, clamped inside viewport
+        let left = rect.left + rect.width / 2 - selW / 2;
+        left = Math.max(margin, Math.min(left, vw - selW - margin));
+
+        // Vertical: prefer below, flip above if not enough room
+        let top;
+        const spaceBelow = vh - rect.bottom - margin;
+        const spaceAbove = rect.top - margin;
+
+        if (spaceBelow >= selH || spaceBelow >= spaceAbove) {
+          top = rect.bottom + margin;
+          // If it still overflows, cap and let internal scroll handle it
+          if (top + selH > vh - margin) {
+            sel.style.maxHeight = (vh - top - margin) + 'px';
+          } else {
+            sel.style.maxHeight = '';
+          }
+        } else {
+          top = rect.top - selH - margin;
+          if (top < margin) {
+            top = margin;
+            sel.style.maxHeight = (rect.top - margin * 2) + 'px';
+          } else {
+            sel.style.maxHeight = '';
+          }
+        }
+
+        sel.style.left = left + 'px';
+        sel.style.top  = top  + 'px';
+        sel.style.visibility = '';
+
+        // Scroll selected option into view inside the dropdown
+        const selectedBtn = sel.querySelector('.chord-option.selected');
+        if (selectedBtn) selectedBtn.scrollIntoView({ block: 'nearest' });
+      }
+
+      closeSelector() {
+        this.globalSelector.classList.remove('visible');
+        this.globalSelector.style.maxHeight = '';
+        this.selectedStep = null;
+      }
+
+      // ── SEQUENCER STEPS ──────────────────────────────────────
       createSequencer() {
         const container = document.getElementById('sequencerSteps');
-        const chordNames = Object.keys(this.sequencer.chords);
 
         for (let i = 0; i < 16; i++) {
           const step = document.createElement('div');
@@ -1014,48 +992,22 @@
           const chord = document.createElement('span');
           chord.className = 'step-chord';
           chord.textContent = '—';
-
-          const selector = document.createElement('div');
-          selector.className = 'chord-selector';
-
-          chordNames.forEach(name => {
-            const option = document.createElement('button');
-            option.className = 'chord-option';
-            option.textContent = name;
-            option.addEventListener('click', (e) => {
-              e.stopPropagation();
-              chord.textContent = name === '—' ? '—' : name;
-              this.sequencer.setChord(i, name === '—' ? null : name);
-              step.classList.toggle('active', name !== '—');
-              selector.classList.remove('visible');
-              this.selectedStep = null;
-            });
-            selector.appendChild(option);
-          });
+          this.stepChordSpans.push(chord);
 
           step.appendChild(number);
           step.appendChild(chord);
-          step.appendChild(selector);
 
-          step.addEventListener('click', () => {
-            document.querySelectorAll('.chord-selector.visible').forEach(s => s.classList.remove('visible'));
+          step.addEventListener('click', (e) => {
+            e.stopPropagation();
             if (this.selectedStep === i) {
-              this.selectedStep = null;
+              this.closeSelector();
             } else {
-              selector.classList.add('visible');
-              this.selectedStep = i;
+              this.openSelector(i);
             }
           });
 
           container.appendChild(step);
         }
-
-        document.addEventListener('click', (e) => {
-          if (!e.target.closest('.step')) {
-            document.querySelectorAll('.chord-selector.visible').forEach(s => s.classList.remove('visible'));
-            this.selectedStep = null;
-          }
-        });
       }
 
       updateStepDisplay(currentStep) {
@@ -1064,14 +1016,49 @@
         });
       }
 
-      setupKnobs() {
-        const knobs = document.querySelectorAll('.knob');
+      // ── KEYBOARD ─────────────────────────────────────────────
+      createKeyboard() {
+        const keyboard = document.getElementById('keyboard');
+        const notes = [
+          { note:'C4',  freq:261.63, black:false },
+          { note:'C#4', freq:277.18, black:true  },
+          { note:'D4',  freq:293.66, black:false },
+          { note:'D#4', freq:311.13, black:true  },
+          { note:'E4',  freq:329.63, black:false },
+          { note:'F4',  freq:349.23, black:false },
+          { note:'F#4', freq:369.99, black:true  },
+          { note:'G4',  freq:392.00, black:false },
+          { note:'G#4', freq:415.30, black:true  },
+          { note:'A4',  freq:440.00, black:false },
+          { note:'A#4', freq:466.16, black:true  },
+          { note:'B4',  freq:493.88, black:false },
+          { note:'C5',  freq:523.25, black:false },
+        ];
 
-        knobs.forEach(knob => {
+        notes.forEach(({ freq, black }) => {
+          const key = document.createElement('div');
+          key.className = 'key' + (black ? ' black' : '');
+          key.dataset.freq = freq;
+          let voice = null;
+
+          const startNote = () => { key.classList.add('pressed'); voice = this.engine.noteOn(freq); };
+          const endNote   = () => { key.classList.remove('pressed'); if (voice) { this.engine.noteOff(voice); voice = null; } };
+
+          key.addEventListener('mousedown', startNote);
+          key.addEventListener('mouseup', endNote);
+          key.addEventListener('mouseleave', endNote);
+          key.addEventListener('touchstart', (e) => { e.preventDefault(); startNote(); }, { passive:false });
+          key.addEventListener('touchend', endNote);
+          keyboard.appendChild(key);
+        });
+      }
+
+      // ── KNOBS ─────────────────────────────────────────────────
+      setupKnobs() {
+        document.querySelectorAll('.knob').forEach(knob => {
           const value = Math.round(parseFloat(knob.dataset.value) || 50);
           knob.dataset.value = String(value);
           this.updateKnobVisual(knob, value);
-
           knob.addEventListener('mousedown', (e) => this.startKnobDrag(e, knob));
           knob.addEventListener('touchstart', (e) => this.startKnobDrag(e, knob), { passive:false });
         });
@@ -1091,75 +1078,47 @@
 
       dragKnob(e) {
         if (!this.activeKnob) return;
-
         const currentY = e.clientY || (e.touches && e.touches[0].clientY);
-        const diff = this.startY - currentY;
-
-        let newValue = this.startValue + diff;
-        newValue = Math.max(0, Math.min(100, Math.round(newValue)));
-
+        let newValue = Math.max(0, Math.min(100, Math.round(this.startValue + (this.startY - currentY))));
         this.activeKnob.dataset.value = String(newValue);
         this.updateKnobVisual(this.activeKnob, newValue);
         this.applyKnobValue(this.activeKnob.id, newValue);
       }
 
-      endKnobDrag() {
-        this.activeKnob = null;
-      }
+      endKnobDrag() { this.activeKnob = null; }
 
       updateKnobVisual(knob, value) {
         const v = Math.round(value);
-        const percentage = (v / 100) * 280;
-        knob.style.background = `conic-gradient(from 220deg, var(--red) ${percentage}deg, var(--knob-ring) ${percentage}deg)`;
-
-        const container = knob.closest('.knob-container');
-        const valueDisplay = container.querySelector('.knob-value');
-
+        knob.style.background = `conic-gradient(from 220deg, var(--red) ${(v/100)*280}deg, var(--knob-ring) ${(v/100)*280}deg)`;
+        const valueDisplay = knob.closest('.knob-container').querySelector('.knob-value');
         const id = knob.id;
-        let displayValue = v;
-
-        switch(id) {
-          case 'attack':
-            displayValue = `${v}ms`;
-            break;
-          case 'decay':
-          case 'release':
-            displayValue = `${v * 10}ms`;
-            break;
-          case 'sustain':
-          case 'brightness':
-          case 'tremolo':
-          case 'stereo':
-          case 'drive':
-          case 'masterVolume':
-            displayValue = `${v}%`;
-            break;
-        }
-
-        valueDisplay.textContent = displayValue;
+        let display = v + '%';
+        if (id === 'attack') display = v + 'ms';
+        else if (id === 'decay' || id === 'release') display = (v * 10) + 'ms';
+        valueDisplay.textContent = display;
       }
 
       applyKnobValue(id, value) {
-        const normalized = (Math.round(value)) / 100;
-
+        const n = value / 100;
         switch(id) {
-          case 'attack': this.engine.setParam('attack', normalized * 0.5); break;
-          case 'decay': this.engine.setParam('decay', normalized * 2); break;
-          case 'sustain': this.engine.setParam('sustain', normalized); break;
-          case 'release': this.engine.setParam('release', normalized * 2); break;
-          case 'brightness': this.engine.setParam('brightness', normalized); break;
-          case 'tremolo': this.engine.setParam('tremolo', normalized); break;
-          case 'stereo': this.engine.setParam('stereo', normalized); break;
-          case 'drive': this.engine.setParam('drive', normalized); break;
-          case 'masterVolume': this.engine.setParam('masterVolume', normalized); break;
+          case 'attack':      this.engine.setParam('attack', n * 0.5); break;
+          case 'decay':       this.engine.setParam('decay', n * 2); break;
+          case 'sustain':     this.engine.setParam('sustain', n); break;
+          case 'release':     this.engine.setParam('release', n * 2); break;
+          case 'brightness':  this.engine.setParam('brightness', n); break;
+          case 'tremolo':     this.engine.setParam('tremolo', n); break;
+          case 'stereo':      this.engine.setParam('stereo', n); break;
+          case 'drive':       this.engine.setParam('drive', n); break;
+          case 'masterVolume':this.engine.setParam('masterVolume', n); break;
         }
       }
 
+      // ── TRANSPORT ─────────────────────────────────────────────
       setupTransport() {
-        const playBtn = document.getElementById('playBtn');
-        const stopBtn = document.getElementById('stopBtn');
-        const clearBtn = document.getElementById('clearBtn');
-        const tempoInput = document.getElementById('tempoInput');
+        const playBtn   = document.getElementById('playBtn');
+        const stopBtn   = document.getElementById('stopBtn');
+        const clearBtn  = document.getElementById('clearBtn');
+        const tempoInput= document.getElementById('tempoInput');
 
         playBtn.addEventListener('click', () => {
           if (this.sequencer.isPlaying) {
@@ -1181,9 +1140,9 @@
 
         clearBtn.addEventListener('click', () => {
           this.sequencer.clear();
-          document.querySelectorAll('.step').forEach(step => {
+          document.querySelectorAll('.step').forEach((step, i) => {
             step.classList.remove('active');
-            step.querySelector('.step-chord').textContent = '—';
+            this.stepChordSpans[i].textContent = '—';
           });
         });
 
@@ -1192,12 +1151,12 @@
         });
       }
 
+      // ── VISUALIZER ────────────────────────────────────────────
       setupVisualizer() {
         const canvas = document.getElementById('waveform');
         const ctx = canvas.getContext('2d');
-
         const resize = () => {
-          canvas.width = canvas.offsetWidth * 2;
+          canvas.width  = canvas.offsetWidth  * 2;
           canvas.height = canvas.offsetHeight * 2;
         };
         resize();
@@ -1206,42 +1165,32 @@
         const draw = () => {
           requestAnimationFrame(draw);
           if (!this.engine.analyser) return;
-
-          const bufferLength = this.engine.analyser.frequencyBinCount;
-          const dataArray = new Uint8Array(bufferLength);
-          this.engine.analyser.getByteTimeDomainData(dataArray);
-
-          ctx.fillStyle = 'rgba(0, 0, 0, 0.22)';
+          const buf = new Uint8Array(this.engine.analyser.frequencyBinCount);
+          this.engine.analyser.getByteTimeDomainData(buf);
+          ctx.fillStyle = 'rgba(0,0,0,.22)';
           ctx.fillRect(0, 0, canvas.width, canvas.height);
-
           ctx.lineWidth = 2;
           ctx.strokeStyle = '#ff2a3c';
           ctx.beginPath();
-
-          const sliceWidth = canvas.width / bufferLength;
+          const sw = canvas.width / buf.length;
           let x = 0;
-
-          for (let i = 0; i < bufferLength; i++) {
-            const v = dataArray[i] / 128.0;
-            const y = (v * canvas.height) / 2;
-            if (i === 0) ctx.moveTo(x, y);
-            else ctx.lineTo(x, y);
-            x += sliceWidth;
+          for (let i = 0; i < buf.length; i++) {
+            const y = (buf[i] / 128.0) * canvas.height / 2;
+            if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+            x += sw;
           }
-
           ctx.lineTo(canvas.width, canvas.height / 2);
           ctx.stroke();
         };
         draw();
       }
 
+      // ── POWER ─────────────────────────────────────────────────
       setupPower() {
         const powerBtn = document.getElementById('powerBtn');
-
         powerBtn.addEventListener('click', () => {
           const isActive = this.engine.toggle();
           powerBtn.classList.toggle('active', isActive);
-
           if (!isActive && this.sequencer.isPlaying) {
             this.sequencer.stop();
             const playBtn = document.getElementById('playBtn');
@@ -1252,9 +1201,7 @@
       }
     }
 
-    document.addEventListener('DOMContentLoaded', () => {
-      new UIController();
-    });
+    document.addEventListener('DOMContentLoaded', () => new UIController());
   </script>
 </body>
 </html>
