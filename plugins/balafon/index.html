@@ -2,460 +2,599 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BALAFON — Idiophone Mélodique</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>BALAFON — Elektron Dark Red (Portrait)</title>
+
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Space+Mono:wght@400;700&display=swap');
+  /* ==========================================================
+    ELEKTRON / DIGITAKT-ISH DARK+RED FLAT DESIGN
+    + Portrait-first mobile layout
+    + Keeps your HTML/JS structure intact (no refacto needed)
+  ========================================================== */
 
-  :root {
-    --bg: #0e0a06;
-    --surface: #1a1208;
-    --surface2: #231a0d;
-    --surface3: #2e2210;
-    --wood-light: #c8892a;
-    --wood-mid: #a06818;
-    --wood-dark: #7a4e10;
-    --resonator: #3a3530;
-    --accent: #e8a030;
-    --accent2: #d4601a;
-    --accent3: #8fbe55;
-    --text: #f0e0c0;
-    --text-dim: #886644;
-    --led-green: #88ff44;
-    --led-red: #ff4422;
-    --led-yellow: #ffcc22;
-    --knob-bg: #1e1710;
-    --knob-ring: #3a2e20;
-    --shadow-wood: 0 8px 32px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,200,100,0.15);
+  :root{
+    --bg:#0a0b0f;
+    --bg2:#0e1016;
+
+    --panel:#12141a;
+    --panel2:#0f1117;
+    --panel3:#0b0d12;
+
+    --ink:#e9eaee;
+    --ink-dim:#9aa1ad;
+
+    --red:#ff2a3c;
+    --red2:#ff4d5a;
+    --red-dim: rgba(255,42,60,.18);
+
+    --line: rgba(255,255,255,.08);
+    --line2: rgba(255,255,255,.12);
+
+    --pad:#171a22;
+    --pad-hover:#202636;
+
+    --knob:#0c0e13;
+    --knob-ring:#1f2536;
+
+    --r:14px;
+    --r-sm:12px;
+    --r-xs:10px;
+
+    --sh1: 0 18px 55px rgba(0,0,0,.65);
+    --sh2: 0 10px 26px rgba(0,0,0,.45);
+
+    /* Balafon "bars" now become anodized pads */
+    --bar: #1a1f2d;
+    --bar2:#121622;
+    --res:#0d1017;
+
+    /* LEDs */
+    --led-on:#68ff3b;
+    --led-off:#2a2f3b;
+    --led-warn:#ffcc22;
   }
 
-  * { margin: 0; padding: 0; box-sizing: border-box; }
+  *{ margin:0; padding:0; box-sizing:border-box; }
+  html, body { height:100%; }
 
-  body {
-    background: var(--bg);
-    font-family: 'Space Mono', monospace;
-    color: var(--text);
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding: 30px 20px 60px;
-    background-image:
-      radial-gradient(ellipse at 20% 0%, rgba(160,80,20,0.12) 0%, transparent 60%),
-      radial-gradient(ellipse at 80% 100%, rgba(80,40,10,0.15) 0%, transparent 60%),
-      url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.012'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
-  }
-
-  header { text-align: center; margin-bottom: 28px; }
-
-  header h1 {
-    font-family: 'Playfair Display', serif;
-    font-size: 3.2rem;
-    font-weight: 700;
-    letter-spacing: 0.18em;
-    color: var(--accent);
-    text-shadow: 0 0 40px rgba(232,160,48,0.4), 0 2px 4px rgba(0,0,0,0.8);
-  }
-
-  header .subtitle {
-    font-size: 0.65rem;
-    letter-spacing: 0.35em;
-    color: var(--text-dim);
-    margin-top: 4px;
-    text-transform: uppercase;
-  }
-
-  .plugin-frame {
-    width: 100%;
-    max-width: 920px;
-    background: linear-gradient(160deg, #1e1610 0%, #120d08 100%);
-    border: 1px solid #3a2a15;
-    border-radius: 12px;
-    box-shadow:
-      0 0 0 1px rgba(255,180,60,0.06),
-      0 30px 80px rgba(0,0,0,0.7),
-      inset 0 1px 0 rgba(255,200,100,0.08);
-    overflow: hidden;
-  }
-
-  .keyboard-section {
-    padding: 24px 24px 0;
-    background: linear-gradient(180deg, #1a1208 0%, #151008 100%);
-    border-bottom: 2px solid #2a1e0e;
-    position: relative;
-  }
-
-  .keyboard-section::before {
-    content: '';
-    position: absolute;
-    left: 0; right: 0; top: 0; height: 3px;
-    background: linear-gradient(90deg, transparent, var(--accent2), var(--accent), var(--accent2), transparent);
-    opacity: 0.5;
-  }
-
-  .bars-container {
-    display: flex;
-    align-items: flex-end;
-    gap: 6px;
-    justify-content: center;
-    padding-bottom: 0;
-  }
-
-  .bar-wrapper {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 5px;
-    cursor: pointer;
-    user-select: none;
-  }
-
-  .note-label {
-    font-size: 0.52rem;
-    letter-spacing: 0.1em;
-    color: var(--text-dim);
-    transition: color 0.15s;
-  }
-
-  .bar-wrapper:hover .note-label,
-  .bar-wrapper.active .note-label { color: var(--accent); }
-
-  .bar {
-    border-radius: 6px 6px 4px 4px;
-    position: relative;
-    transition: transform 0.08s ease, filter 0.08s ease;
-    cursor: pointer;
+  body{
     background:
-      linear-gradient(180deg, #d4922e 0%, #b87020 25%, #9a5e18 60%, #7a4a12 100%);
-    box-shadow:
-      inset 0 2px 0 rgba(255,220,120,0.4),
-      inset 0 -2px 0 rgba(0,0,0,0.5),
-      inset -2px 0 0 rgba(0,0,0,0.3),
-      inset 2px 0 0 rgba(255,200,80,0.2),
-      0 6px 16px rgba(0,0,0,0.5);
+      radial-gradient(900px 600px at 15% 0%, rgba(255,42,60,.07), transparent 55%),
+      radial-gradient(800px 500px at 92% 20%, rgba(255,42,60,.05), transparent 60%),
+      linear-gradient(180deg, var(--bg) 0%, var(--bg2) 100%);
+    color: var(--ink);
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    padding: 14px 12px 20px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
   }
 
-  .bar::after {
-    content: '';
-    position: absolute;
-    top: 4px; left: 30%; right: 30%;
-    height: 2px;
-    background: rgba(255,220,100,0.3);
-    border-radius: 2px;
-  }
+  /* Hide old wood texture scrollbar styling */
+  ::-webkit-scrollbar { width: 8px; height: 8px; }
+  ::-webkit-scrollbar-track { background: rgba(255,255,255,.02); }
+  ::-webkit-scrollbar-thumb { background: rgba(255,255,255,.10); border-radius: 999px; }
+  ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,.14); }
 
-  .bar-wrapper.active .bar {
-    transform: translateY(3px);
-    filter: brightness(1.4) saturate(1.3);
-    box-shadow:
-      inset 0 2px 0 rgba(255,220,120,0.6),
-      0 3px 8px rgba(0,0,0,0.4),
-      0 0 20px rgba(232,160,48,0.3);
+  /* Top fixed buttons -> Elektron small chips */
+  a[href="../../"]{
+    position: fixed !important;
+    top: 12px !important;
+    left: 12px !important;
+    z-index: 9999 !important;
+    padding: 10px 10px !important;
+    border-radius: 12px !important;
+    border: 1px solid rgba(255,255,255,.10) !important;
+    background: rgba(255,255,255,.03) !important;
+    color: var(--ink) !important;
+    text-decoration: none !important;
+    font-size: 12px !important;
+    letter-spacing: .4px !important;
+    box-shadow: 0 12px 18px rgba(0,0,0,.35) !important;
+    backdrop-filter: blur(10px);
   }
+  a[href="../../"]:active{ transform: translateY(1px); }
 
-  .resonator {
-    width: 22px;
-    background: linear-gradient(180deg, #4a4540 0%, #2a2520 100%);
-    border-radius: 0 0 50% 50%;
-    border: 1px solid #5a5045;
-    position: relative;
-    overflow: hidden;
-    flex-shrink: 0;
+  #startAudio{
+    position: fixed !important;
+    top: 12px !important;
+    right: 12px !important;
+    z-index: 9999 !important;
+    padding: 10px 10px !important;
+    border-radius: 12px !important;
+    border: 1px solid rgba(255,42,60,.45) !important;
+    background: rgba(255,42,60,.12) !important;
+    color: var(--ink) !important;
+    font-size: 12px !important;
+    letter-spacing: .4px !important;
+    cursor:pointer !important;
+    box-shadow: 0 0 0 3px rgba(255,42,60,.10), 0 12px 18px rgba(0,0,0,.45) !important;
+    backdrop-filter: blur(10px);
   }
+  #startAudio:active{ transform: translateY(1px); }
 
-  .resonator::after {
-    content: '';
-    position: absolute;
-    top: 30%; left: 20%; right: 20%;
-    height: 40%;
-    background: rgba(255,255,255,0.05);
-    border-radius: 50%;
+  header{
+    text-align:center;
+    margin: 40px 0 14px;
   }
-
-  .controls-zone {
-    display: grid;
-    grid-template-columns: 200px 1fr 1fr 1fr;
-    gap: 0;
-    min-height: 280px;
-  }
-
-  .panel {
-    padding: 18px 16px;
-    border-right: 1px solid #2a1e0e;
-    position: relative;
-  }
-  .panel:last-child { border-right: none; }
-
-  .panel-title {
-    font-size: 0.52rem;
-    letter-spacing: 0.4em;
-    color: var(--text-dim);
+  header h1{
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace !important;
+    font-size: 22px !important;
+    letter-spacing: 6px !important;
     text-transform: uppercase;
-    margin-bottom: 14px;
-    display: flex;
-    align-items: center;
+    color: var(--ink) !important;
+    font-weight: 900 !important;
+    text-shadow: none !important;
+  }
+  header h1::after{
+    content:"";
+    display:block;
+    width: 160px;
+    height: 3px;
+    margin: 10px auto 0;
+    border-radius: 999px;
+    background: linear-gradient(90deg, transparent, rgba(255,42,60,.85), transparent);
+  }
+  header .subtitle{
+    margin-top: 10px !important;
+    font-size: 10px !important;
+    letter-spacing: 3px !important;
+    color: var(--ink-dim) !important;
+    text-transform: uppercase;
+  }
+
+  .plugin-frame{
+    width: 100%;
+    max-width: 980px;
+    background: linear-gradient(180deg, var(--panel) 0%, var(--panel2) 100%) !important;
+    border: 1px solid var(--line) !important;
+    border-radius: calc(var(--r) + 6px) !important;
+    box-shadow: var(--sh1) !important;
+    overflow: hidden;
+    position: relative;
+  }
+
+  .plugin-frame::before{
+    content:"";
+    position:absolute;
+    top:0; left:0; right:0;
+    height: 8px;
+    background:
+      linear-gradient(90deg,
+        rgba(255,255,255,.06) 0%,
+        rgba(255,255,255,.06) 10%,
+        rgba(255,42,60,.75) 10%,
+        rgba(255,42,60,.75) 18%,
+        rgba(255,255,255,.06) 18%,
+        rgba(255,255,255,.06) 100%);
+    opacity:.9;
+    pointer-events:none;
+  }
+
+  /* =======================
+     Keyboard section -> Pad grid strip
+  ======================= */
+  .keyboard-section{
+    padding: 14px 12px 12px !important;
+    background: linear-gradient(180deg, rgba(255,255,255,.02), rgba(0,0,0,.18)) !important;
+    border-bottom: 1px solid var(--line) !important;
+    position: relative;
+  }
+  .keyboard-section::before{
+    content:"";
+    position:absolute;
+    left:0; right:0; top:0; height: 1px;
+    background: rgba(255,42,60,.22);
+    opacity: 1;
+  }
+
+  .bars-container{
+    display:flex;
+    justify-content:flex-start;
+    align-items:stretch !important;
+    gap: 10px !important;
+    overflow-x:auto;
+    padding: 8px 4px 6px;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .bar-wrapper{
+    scroll-snap-align: start;
+    flex: 0 0 auto;
+    width: 86px;
+    border-radius: var(--r);
+    background: rgba(255,255,255,.02);
+    border: 1px solid rgba(255,255,255,.08);
+    padding: 10px 10px 12px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap: 10px;
+    user-select:none;
+    box-shadow: 0 10px 18px rgba(0,0,0,.35);
+  }
+  .bar-wrapper:hover{
+    border-color: rgba(255,255,255,.14);
+    background: rgba(255,255,255,.03);
+  }
+  .bar-wrapper.active{
+    border-color: rgba(255,42,60,.62);
+    box-shadow: 0 0 0 3px rgba(255,42,60,.10), 0 14px 20px rgba(0,0,0,.55);
+  }
+
+  .note-label{
+    font-size: 10px !important;
+    letter-spacing: 2px !important;
+    color: var(--ink-dim) !important;
+    text-transform: uppercase;
+  }
+  .bar-wrapper.active .note-label{
+    color: var(--red) !important;
+  }
+
+  /* Turn wood bars into flat “pads” */
+  .bar{
+    width: 100% !important;
+    height: 64px !important;
+    border-radius: var(--r-sm) !important;
+    background:
+      linear-gradient(180deg, rgba(255,255,255,.04), rgba(0,0,0,.20)) !important;
+    background-color: var(--bar) !important;
+    border: 1px solid rgba(255,255,255,.10) !important;
+    box-shadow: 0 10px 14px rgba(0,0,0,.35) !important;
+  }
+  .bar::after{ display:none !important; }
+
+  .bar-wrapper.active .bar{
+    transform: translateY(1px) !important;
+    filter: none !important;
+    background-color: rgba(255,42,60,.14) !important;
+    border-color: rgba(255,42,60,.62) !important;
+    box-shadow: 0 0 0 3px rgba(255,42,60,.10), 0 14px 18px rgba(0,0,0,.45) !important;
+  }
+
+  /* Resonator becomes “LED strip” */
+  .resonator{
+    width: 100% !important;
+    height: 14px !important;
+    border-radius: 999px !important;
+    background: rgba(255,255,255,.06) !important;
+    border: 1px solid rgba(255,255,255,.10) !important;
+    position: relative;
+    overflow:hidden;
+    box-shadow: inset 0 0 0 2px rgba(0,0,0,.25);
+  }
+  .resonator::after{
+    content:"";
+    position:absolute;
+    inset: 2px;
+    border-radius: 999px;
+    background: linear-gradient(90deg, rgba(255,42,60,.18), rgba(255,255,255,.05));
+    opacity:.8;
+  }
+  .bar-wrapper.active .resonator::after{
+    background: linear-gradient(90deg, rgba(255,42,60,.72), rgba(255,42,60,.10));
+    opacity: 1;
+  }
+
+  /* =======================
+     Controls zone -> responsive grid
+  ======================= */
+  .controls-zone{
+    display:grid !important;
+    grid-template-columns: 1fr 1fr !important; /* portrait default */
+    gap: 0 !important;
+    min-height: unset !important;
+  }
+
+  .panel{
+    padding: 14px 12px !important;
+    border-right: 1px solid var(--line) !important;
+    border-top: 1px solid var(--line) !important;
+    background: rgba(255,255,255,.02);
+    position: relative;
+  }
+  /* clean borders for 2-col layout */
+  .controls-zone .panel:nth-child(2n){ border-right: none !important; }
+
+  .panel-title{
+    font-size: 10px !important;
+    letter-spacing: 3px !important;
+    color: var(--red) !important;
+    text-transform: uppercase !important;
+    margin-bottom: 12px !important;
+    display:flex;
+    align-items:center;
+    gap: 10px !important;
+    opacity: .95;
+  }
+  .panel-title::after{
+    content:"";
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(90deg, var(--red-dim), transparent) !important;
+  }
+
+  .control-label{
+    font-size: 10px !important;
+    letter-spacing: 2px !important;
+    color: var(--ink-dim) !important;
+    text-transform: uppercase !important;
+  }
+
+  .slider-container{
+    height: 24px !important;
     gap: 8px;
   }
 
-  .panel-title::after {
-    content: '';
-    flex: 1;
-    height: 1px;
-    background: #2a1e0e;
-  }
-
-  .instr-controls { display: flex; flex-direction: column; gap: 12px; }
-
-  .control-row { display: flex; flex-direction: column; gap: 4px; }
-
-  .control-label {
-    font-size: 0.5rem;
-    letter-spacing: 0.2em;
-    color: var(--text-dim);
-    text-transform: uppercase;
-  }
-
-  .slider-container { position: relative; height: 20px; display: flex; align-items: center; }
-
-  input[type=range] {
+  input[type=range]{
     -webkit-appearance: none;
     width: 100%;
-    height: 4px;
-    background: linear-gradient(90deg, var(--accent2) var(--pct, 50%), #2a2018 var(--pct, 50%));
-    border-radius: 2px;
+    height: 6px !important;
+    border-radius: 999px !important;
     outline: none;
     cursor: pointer;
+    background: linear-gradient(90deg, rgba(255,42,60,.85) var(--pct, 50%), rgba(255,255,255,.10) var(--pct, 50%)) !important;
   }
-
-  input[type=range]::-webkit-slider-thumb {
+  input[type=range]::-webkit-slider-thumb{
     -webkit-appearance: none;
-    width: 14px; height: 14px;
+    width: 16px !important;
+    height: 16px !important;
     border-radius: 50%;
-    background: radial-gradient(circle at 35% 35%, #e0b060, #9a6020);
-    border: 1px solid rgba(255,200,80,0.4);
-    box-shadow: 0 2px 6px rgba(0,0,0,0.5);
-    cursor: pointer;
-    transition: transform 0.1s;
+    background: rgba(255,255,255,.92) !important;
+    border: 2px solid rgba(255,42,60,.55) !important;
+    box-shadow: 0 8px 12px rgba(0,0,0,.45) !important;
   }
-  input[type=range]::-webkit-slider-thumb:hover { transform: scale(1.2); }
+  input[type=range]::-webkit-slider-thumb:active{
+    transform: scale(1.05);
+  }
 
-  .value-display {
-    font-size: 0.55rem;
-    color: var(--accent);
-    min-width: 28px;
+  .value-display{
+    font-size: 12px !important;
+    color: var(--ink) !important;
+    min-width: 36px !important;
     text-align: right;
-    margin-left: 6px;
+    margin-left: 0 !important;
+    font-weight: 900 !important;
+    letter-spacing: .2px;
+    overflow:hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
-  .knobs-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 16px;
-    align-content: start;
+  /* knobs grid */
+  .knobs-grid{
+    display:grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 12px !important;
+    align-content:start;
   }
 
-  .knob-wrap { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+  .knob-wrap{ gap: 6px !important; }
 
-  .knob-label {
-    font-size: 0.48rem;
-    letter-spacing: 0.2em;
-    color: var(--text-dim);
-    text-align: center;
-    text-transform: uppercase;
+  .knob-label{
+    font-size: 10px !important;
+    letter-spacing: 2px !important;
+    color: var(--ink-dim) !important;
+    text-transform: uppercase !important;
   }
 
-  .knob {
-    width: 48px; height: 48px;
+  .knob{
+    width: 54px !important;
+    height: 54px !important;
     border-radius: 50%;
-    background: radial-gradient(circle at 35% 30%, #3a2e20, #150f08);
-    border: 2px solid #3a2e1a;
-    position: relative;
-    cursor: grab;
-    transition: border-color 0.2s;
-    box-shadow:
-      0 4px 12px rgba(0,0,0,0.6),
-      inset 0 1px 0 rgba(255,200,80,0.1),
-      inset 0 -1px 0 rgba(0,0,0,0.5);
-    user-select: none;
+    background:
+      radial-gradient(circle at 30% 25%, rgba(255,255,255,.07), transparent 55%),
+      linear-gradient(180deg, rgba(255,255,255,.05), rgba(0,0,0,.25)) !important;
+    background-color: var(--knob) !important;
+    border: 1px solid rgba(255,255,255,.10) !important;
+    box-shadow: 0 12px 18px rgba(0,0,0,.55) !important;
+    cursor: grab !important;
+  }
+  .knob.dragging{
+    cursor: grabbing !important;
+    border-color: rgba(255,42,60,.62) !important;
+    box-shadow: 0 0 0 3px rgba(255,42,60,.10), 0 14px 22px rgba(0,0,0,.55) !important;
   }
 
-  .knob:hover { border-color: #6a4e2a; }
-  .knob.dragging { cursor: grabbing; border-color: var(--accent); }
-
-  .knob-ring {
-    position: absolute;
-    inset: -5px;
-    border-radius: 50%;
+  .knob-ring{
+    position:absolute;
+    inset:-6px !important;
+    border-radius:50%;
     border: 2px solid transparent;
-    background: conic-gradient(var(--accent2) 0deg, var(--accent2) var(--angle, 0deg), transparent var(--angle, 0deg)) border-box;
+    background:
+      conic-gradient(rgba(255,42,60,.9) 0deg, rgba(255,42,60,.9) var(--angle, 0deg), rgba(255,255,255,.10) var(--angle, 0deg)) border-box !important;
     -webkit-mask: linear-gradient(#fff 0 0) padding-box, linear-gradient(#fff 0 0);
     -webkit-mask-composite: destination-out;
     mask-composite: exclude;
-    opacity: 0.7;
+    opacity: 1 !important;
   }
 
-  .knob-dot {
-    position: absolute;
-    width: 4px; height: 4px;
-    border-radius: 50%;
-    background: var(--accent);
-    top: 6px; left: 50%;
-    transform: translateX(-50%);
-    box-shadow: 0 0 6px var(--accent);
+  .knob-dot{
+    width: 3px !important;
+    height: 12px !important;
+    border-radius: 2px !important;
+    background: var(--red) !important;
+    top: 6px !important;
+    left: 50% !important;
+    box-shadow: 0 0 0 1px rgba(0,0,0,.35);
   }
 
-  .knob-value {
-    font-size: 0.5rem;
-    color: var(--accent);
-    letter-spacing: 0.1em;
+  .knob-value{
+    font-size: 12px !important;
+    color: var(--ink) !important;
+    font-weight: 900 !important;
+    letter-spacing: .2px;
+    max-width: 90px;
+    overflow:hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
-  .bypass-btn {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    background: none;
-    border: 1px solid #3a2a15;
-    border-radius: 4px;
-    color: var(--text-dim);
-    font-family: 'Space Mono', monospace;
-    font-size: 0.5rem;
-    letter-spacing: 0.2em;
-    padding: 4px 8px;
-    cursor: pointer;
-    transition: all 0.2s;
+  /* bypass button */
+  .bypass-btn{
+    width: fit-content;
+    display:flex;
+    align-items:center;
+    gap: 8px;
+    background: rgba(255,255,255,.03) !important;
+    border: 1px solid rgba(255,255,255,.10) !important;
+    border-radius: var(--r-sm) !important;
+    color: var(--ink-dim) !important;
+    font-size: 11px !important;
+    letter-spacing: 2px !important;
+    padding: 8px 10px !important;
+    cursor:pointer;
+    transition: transform .08s ease, background .18s ease, border-color .18s ease, box-shadow .18s ease;
     text-transform: uppercase;
-    margin-bottom: 12px;
+    margin-bottom: 12px !important;
+  }
+  .bypass-btn:active{ transform: translateY(1px); }
+  .bypass-btn .led{
+    width: 8px !important;
+    height: 8px !important;
+    background: var(--led-off) !important;
+    box-shadow: none !important;
+  }
+  .bypass-btn.active{
+    border-color: rgba(255,42,60,.55) !important;
+    color: var(--ink) !important;
+    background: rgba(255,42,60,.12) !important;
+    box-shadow: 0 0 0 3px rgba(255,42,60,.10);
+  }
+  .bypass-btn.active .led{
+    background: var(--led-on) !important;
+    box-shadow: 0 0 10px rgba(104,255,59,.35) !important;
   }
 
-  .bypass-btn.active {
-    border-color: var(--led-green);
-    color: var(--led-green);
+  /* mode buttons (LP/BP/HP etc) */
+  .mode-btn{
+    background: rgba(255,255,255,.03) !important;
+    border: 1px solid rgba(255,255,255,.10) !important;
+    color: var(--ink-dim) !important;
+    font-size: 11px !important;
+    padding: 8px 10px !important;
+    border-radius: var(--r-sm) !important;
+    cursor:pointer;
+    transition: transform .08s ease, background .18s ease, border-color .18s ease;
+    letter-spacing: 2px !important;
+    text-transform: uppercase;
+  }
+  .mode-btn:active{ transform: translateY(1px); }
+  .mode-btn:hover{
+    border-color: rgba(255,255,255,.16) !important;
+    background: rgba(255,255,255,.05) !important;
+  }
+  .mode-btn.active{
+    background: rgba(255,42,60,.12) !important;
+    border-color: rgba(255,42,60,.55) !important;
+    color: var(--ink) !important;
+    box-shadow: 0 0 0 3px rgba(255,42,60,.10);
   }
 
-  .led {
-    width: 6px; height: 6px;
-    border-radius: 50%;
-    background: #222;
-    box-shadow: none;
-    transition: all 0.2s;
+  /* Output meters + scope */
+  .vu-meter{
+    height: 76px !important;
+    gap: 6px !important;
+  }
+  .vu-bar{
+    background: rgba(255,255,255,.03) !important;
+    border: 1px solid rgba(255,255,255,.10) !important;
+    border-radius: var(--r-xs) !important;
+  }
+  .vu-fill{
+    background: linear-gradient(0deg, rgba(104,255,59,.95), rgba(255,204,34,.95), rgba(255,42,60,.95)) !important;
   }
 
-  .bypass-btn.active .led {
-    background: var(--led-green);
-    box-shadow: 0 0 8px var(--led-green);
+  canvas#scope{
+    background: rgba(0,0,0,.25) !important;
+    border: 1px solid rgba(255,255,255,.10) !important;
+    border-radius: var(--r-sm) !important;
+    margin-top: 10px !important;
   }
 
-  .vu-meter { display: flex; gap: 2px; height: 80px; align-items: flex-end; margin-top: 8px; }
-
-  .vu-bar {
-    flex: 1;
-    border-radius: 2px 2px 0 0;
-    background: #1a1408;
-    border: 1px solid #2a1e0e;
-    position: relative;
-    overflow: hidden;
+  /* Keys legend & status */
+  .keys-legend{
+    padding: 10px 12px !important;
+    gap: 6px !important;
+    justify-content: flex-start !important;
+    border-top: 1px solid var(--line) !important;
+    background: rgba(0,0,0,.10) !important;
+    overflow-x:auto;
+    flex-wrap: nowrap !important;
+    -webkit-overflow-scrolling: touch;
   }
 
-  .vu-fill {
-    position: absolute;
-    bottom: 0; left: 0; right: 0;
-    background: linear-gradient(0deg, var(--led-green), #88ee88, var(--led-yellow), var(--led-red));
-    transition: height 0.08s ease;
-    height: 0%;
+  .key-chip{
+    background: rgba(255,255,255,.03) !important;
+    border: 1px solid rgba(255,255,255,.10) !important;
+    border-radius: 12px !important;
+    padding: 6px 10px !important;
+    font-size: 11px !important;
+    color: var(--ink-dim) !important;
+    flex: 0 0 auto;
+  }
+  .key-chip kbd{
+    background: rgba(0,0,0,.20) !important;
+    border: 1px solid rgba(255,255,255,.10) !important;
+    border-radius: 8px !important;
+    padding: 2px 6px !important;
+    color: var(--ink) !important;
   }
 
-  canvas#scope {
-    width: 100%;
-    height: 60px;
-    background: #080604;
-    border: 1px solid #2a1e0e;
-    border-radius: 4px;
-    display: block;
-    margin-top: 8px;
+  .status-bar{
+    padding: 10px 12px !important;
+    background: rgba(0,0,0,.18) !important;
+    border-top: 1px solid var(--line) !important;
+    font-size: 11px !important;
+    color: var(--ink-dim) !important;
+    letter-spacing: 1px !important;
+    display:grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 6px;
+  }
+  .status-led{
+    width: 8px !important;
+    height: 8px !important;
+    background: var(--led-on) !important;
+    box-shadow: 0 0 10px rgba(104,255,59,.35) !important;
+    margin-right: 8px !important;
+  }
+  #status-note{ color: var(--ink) !important; font-weight: 900; }
+
+  /* ================
+     Responsive upgrades
+  ================= */
+
+  /* Medium screens: 2 columns still OK, keyboard section pads a bit wider */
+  @media (min-width: 720px){
+    body{ padding: 18px 16px 24px; }
+    header{ margin-top: 52px; }
+    .bar-wrapper{ width: 98px; }
+    .controls-zone{ grid-template-columns: repeat(2, 1fr) !important; }
+    .status-bar{ grid-template-columns: 1fr 1.2fr 1fr !important; align-items:center; }
   }
 
-  .keys-legend {
-    padding: 10px 24px;
-    display: flex;
-    gap: 4px;
-    justify-content: center;
-    border-top: 1px solid #1e1408;
-    background: #0e0a06;
-    flex-wrap: wrap;
+  /* Large screens: 4 columns like original (but still Elektron style) */
+  @media (min-width: 1040px){
+    .controls-zone{ grid-template-columns: 200px 1fr 1fr 1fr !important; }
+    .controls-zone .panel:nth-child(2n){ border-right: 1px solid var(--line) !important; }
+    .controls-zone .panel:last-child{ border-right:none !important; }
+    .panel{ border-top:none !important; }
   }
 
-  .key-chip {
-    background: #1e1610;
-    border: 1px solid #3a2a15;
-    border-radius: 3px;
-    padding: 2px 6px;
-    font-size: 0.45rem;
-    letter-spacing: 0.1em;
-    color: var(--text-dim);
-    display: flex;
-    gap: 4px;
-    align-items: center;
-  }
-
-  .key-chip kbd {
-    background: #2a2018;
-    border: 1px solid #4a3820;
-    border-radius: 2px;
-    padding: 1px 4px;
-    font-family: 'Space Mono', monospace;
-    font-size: 0.5rem;
-    color: var(--accent);
-  }
-
-  .status-bar {
-    padding: 6px 24px;
-    background: #080604;
-    border-top: 1px solid #1a1208;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    font-size: 0.48rem;
-    color: var(--text-dim);
-    letter-spacing: 0.15em;
-  }
-
-  .status-led {
-    width: 5px; height: 5px;
-    border-radius: 50%;
-    background: var(--led-green);
-    box-shadow: 0 0 6px var(--led-green);
-    display: inline-block;
-    margin-right: 5px;
-  }
-
-  ::-webkit-scrollbar { width: 6px; }
-  ::-webkit-scrollbar-track { background: #0e0a06; }
-  ::-webkit-scrollbar-thumb { background: #3a2a15; border-radius: 3px; }
-
-  .panel-col { display: flex; flex-direction: column; }
-
-  .mode-btn {
-    background: #1e1610;
-    border: 1px solid #3a2a15;
-    color: var(--text-dim);
-    font-family: 'Space Mono', monospace;
-    font-size: 0.48rem;
-    padding: 3px 8px;
-    border-radius: 3px;
-    cursor: pointer;
-    transition: all 0.15s;
-    letter-spacing: 0.1em;
-  }
-  .mode-btn:hover { border-color: var(--accent2); color: var(--accent2); }
-  .mode-btn.active {
-    background: #2a1e10;
-    border-color: var(--accent);
-    color: var(--accent);
-    box-shadow: 0 0 8px rgba(232,160,48,0.2);
+  /* Tight portrait phones */
+  @media (max-width: 420px){
+    header h1{ font-size: 20px !important; letter-spacing: 5px !important; }
+    .bar-wrapper{ width: 82px; }
+    .knob{ width: 52px !important; height: 52px !important; }
+    .knobs-grid{ gap: 10px !important; }
+    .mode-btn{ padding: 8px 9px !important; }
   }
 </style>
 </head>
+
 <body>
 
 <a href="../../" style="
@@ -485,7 +624,7 @@
 
   <div class="keyboard-section">
     <div class="bars-container" id="barsContainer"></div>
-    <div style="height:20px;"></div>
+    <div style="height:10px;"></div>
   </div>
 
   <div class="controls-zone">
@@ -575,8 +714,8 @@
         </div>
       </div>
       <div style="margin-top:10px;">
-        <div class="panel-title" style="font-size:0.45rem;">Mode</div>
-        <div style="display:flex;gap:5px;">
+        <div class="panel-title" style="font-size:10px;">Mode</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
           <button class="mode-btn active" onclick="setFilterMode('lowpass',this)">LP</button>
           <button class="mode-btn" onclick="setFilterMode('bandpass',this)">BP</button>
           <button class="mode-btn" onclick="setFilterMode('highpass',this)">HP</button>
@@ -625,8 +764,8 @@
         </div>
       </div>
       <div style="margin-top:10px;">
-        <div class="panel-title" style="font-size:0.45rem;">Sync</div>
-        <div style="display:flex;gap:5px;">
+        <div class="panel-title" style="font-size:10px;">Sync</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
           <button class="mode-btn" onclick="setEchoSync('free',this)">Free</button>
           <button class="mode-btn active" onclick="setEchoSync('quarter',this)">1/4</button>
           <button class="mode-btn" onclick="setEchoSync('dotted',this)">3/8</button>
@@ -675,8 +814,8 @@
         </div>
       </div>
       <div style="margin-top:10px;">
-        <div class="panel-title" style="font-size:0.45rem;">Tape Speed</div>
-        <div style="display:flex;gap:5px;">
+        <div class="panel-title" style="font-size:10px;">Tape Speed</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
           <button class="mode-btn active" onclick="setTapeSpeed('7ips',this)">7½</button>
           <button class="mode-btn" onclick="setTapeSpeed('15ips',this)">15</button>
           <button class="mode-btn" onclick="setTapeSpeed('30ips',this)">30</button>
@@ -860,7 +999,7 @@ function initAudio() {
   // TAPE BLOCK (bus)
   // in → [dry] →\
   //    → [pre→flutterDelay→shaper→post] → [wet] →/ → out
-  // + hiss (gain controlled) injected to tapeOut
+  // + hiss injected to tapeOut
   // ─────────────────────────────
   tapeIn = actx.createGain();
   tapeDry = actx.createGain();
@@ -870,8 +1009,7 @@ function initAudio() {
   tapePreGain = actx.createGain();
   tapePreGain.gain.value = 1 + P.tapeSat * 3.0;
 
-  // flutter via very small modulated delay
-  tapeFlutterDelay = actx.createDelay(0.05); // 50ms max
+  tapeFlutterDelay = actx.createDelay(0.05);
   tapeFlutterDelay.delayTime.value = 0.0;
 
   tapeFlutterLFO = actx.createOscillator();
@@ -900,7 +1038,7 @@ function initAudio() {
   tapeDry.connect(tapeOut);
   tapeWet.connect(tapeOut);
 
-  // hiss (buffer noise)
+  // hiss
   const hissBuffer = actx.createBuffer(1, actx.sampleRate * 2, actx.sampleRate);
   const data = hissBuffer.getChannelData(0);
   for (let i = 0; i < data.length; i++) data[i] = Math.random() * 2 - 1;
@@ -914,7 +1052,7 @@ function initAudio() {
   hissFilter.Q.value = 0.5;
 
   hissGain = actx.createGain();
-  hissGain.gain.value = 0.0; // set in syncFX()
+  hissGain.gain.value = 0.0;
 
   hissSource.connect(hissFilter);
   hissFilter.connect(hissGain);
@@ -925,8 +1063,6 @@ function initAudio() {
   // ECHO BLOCK (bus)
   // in → [dry] →\
   //    → delay→wetGain → [wet] →/ → out
-  // delay feedback loop inside; wet level controlled by echoMix
-  // Bypass is dry-only crossfade
   // ─────────────────────────────
   echoIn = actx.createGain();
   echoDry = actx.createGain();
@@ -942,7 +1078,6 @@ function initAudio() {
   echoWetGain = actx.createGain();
   echoWetGain.gain.value = 1.0;
 
-  // wow (modulate delayTime slightly)
   wowLFO = actx.createOscillator();
   wowLFO.type = 'sine';
   wowLFO.frequency.value = 2.2;
@@ -953,7 +1088,6 @@ function initAudio() {
   wowDepth.connect(delayNode.delayTime);
   wowLFO.start();
 
-  // feedback loop
   delayNode.connect(delayFeedback);
   delayFeedback.connect(delayNode);
 
@@ -965,46 +1099,36 @@ function initAudio() {
   echoDry.connect(echoOut);
   echoWet.connect(echoOut);
 
-  // ─────────────────────────────
   // CHAIN
-  // instrumentBus → filterIn → filterOut → tapeIn → tapeOut → echoIn → echoOut → masterOut
-  // ─────────────────────────────
   instrumentBus.connect(filterIn);
   filterOut.connect(tapeIn);
   tapeOut.connect(echoIn);
   echoOut.connect(masterOut);
 
-  // Apply bypass/mix initial states
   syncFX();
   syncBypassUI();
-
   startScope();
   startVU();
 }
 
-// Apply all “bus-level” params (bypass + mix) without reconnecting
 function syncFX() {
   if (!actx) return;
 
-  // FILTER
   filterNode.type = filterType;
   setSmooth(filterNode.frequency, getCutoffHz(), 0.03);
   setSmooth(filterNode.Q, P.filterRes * 30, 0.03);
   setSmooth(filterDriveGain.gain, 1 + P.filterDrive * 4, 0.03);
 
-  // bypass crossfade
   const fWet = P.filterActive ? 1 : 0;
   const fDry = 1 - fWet;
   setSmooth(filterWet.gain, fWet, 0.02);
   setSmooth(filterDry.gain, fDry, 0.02);
 
-  // TAPE
   shaperNode.curve = makeSatCurve(P.tapeSat, P.tapeBias);
   setSmooth(tapePreGain.gain, 1 + P.tapeSat * 3.0, 0.02);
 
-  // tape flutter speed by ips
   const ipsRate = (P.tapeSpeed === '30ips') ? 6.0 : (P.tapeSpeed === '15ips' ? 4.2 : 2.8);
-  setSmooth(tapeFlutterDepth.gain, P.tapeFlutter * 0.004, 0.05); // seconds
+  setSmooth(tapeFlutterDepth.gain, P.tapeFlutter * 0.004, 0.05);
   tapeFlutterLFO.frequency.setValueAtTime(ipsRate, actx.currentTime);
 
   const tWet = P.tapeActive ? 1 : 0;
@@ -1012,13 +1136,10 @@ function syncFX() {
   setSmooth(tapeWet.gain, tWet, 0.02);
   setSmooth(tapeDry.gain, tDry, 0.02);
 
-  // hiss only when tape active (sinon 0)
   setSmooth(hissGain.gain, (P.tapeActive ? (P.tapeHiss * 0.02) : 0.0), 0.08);
 
-  // ECHO
   setSmooth(delayNode.delayTime, P.echoTime, 0.03);
   setSmooth(delayFeedback.gain, P.echoFeedback, 0.03);
-  // wow depth (seconds modulation)
   setSmooth(wowDepth.gain, P.echoMod * 0.01, 0.08);
 
   const eWet = (P.echoActive ? P.echoMix : 0);
@@ -1027,7 +1148,6 @@ function syncFX() {
   setSmooth(echoDry.gain, eDry, 0.02);
 }
 
-// ─── PLAY NOTE (connect to instrumentBus only) ─────────────────────────────
 function playNote(freq) {
   initAudio();
   if (actx.state === 'suspended') actx.resume();
@@ -1037,7 +1157,6 @@ function playNote(freq) {
   const hardness = P.hardness;
   const pitchMult = Math.pow(2, P.pitch / 1200);
 
-  // oscillators
   const osc1 = actx.createOscillator();
   const osc2 = actx.createOscillator();
   const osc3 = actx.createOscillator();
@@ -1072,7 +1191,6 @@ function playNote(freq) {
   g4.gain.setValueAtTime(vel * 0.15, now);
   g4.gain.exponentialRampToValueAtTime(0.0001, now + decay * 0.6);
 
-  // resonator “hit” gain
   const resMod = actx.createGain();
   resMod.gain.setValueAtTime(1 + P.resonance * 0.5, now);
   resMod.gain.linearRampToValueAtTime(1, now + 0.08);
@@ -1088,8 +1206,6 @@ function playNote(freq) {
   voice.connect(resMod);
   resMod.connect(instrumentBus);
 
-  // Per-note filter envelope (works even if filter bypassed; it will affect wet path)
-  // This makes the "Env Amt" feel consistent
   if (filterNode) {
     const base = getCutoffHz();
     const peak = Math.min(18000, base * (1 + P.filterEnv * 2));
@@ -1098,13 +1214,11 @@ function playNote(freq) {
     filterNode.frequency.exponentialRampToValueAtTime(base, now + 0.15);
   }
 
-  // stop
   osc1.start(now); osc1.stop(now + decay + 0.1);
   osc2.start(now); osc2.stop(now + decay + 0.1);
   osc3.start(now); osc3.stop(now + decay + 0.1);
   osc4.start(now); osc4.stop(now + decay + 0.1);
 
-  // cleanup
   const stopAt = (decay + 0.2) * 1000;
   setTimeout(() => {
     try { osc1.disconnect(); osc2.disconnect(); osc3.disconnect(); osc4.disconnect(); } catch {}
@@ -1113,25 +1227,22 @@ function playNote(freq) {
   }, stopAt);
 }
 
-// ─── BUILD KEYBOARD ───────────────────────────────────────────────────────
+// BUILD KEYBOARD
 const container = document.getElementById('barsContainer');
 const keysLegend = document.getElementById('keysLegend');
 
 BALAFON_NOTES.forEach((n, i) => {
-  const pct = i / (BALAFON_NOTES.length - 1);
-  const barH = 120 + (1 - pct) * 80;
-  const barW = 28 + (1 - pct) * 14;
-  const resH = 40 + (1 - pct) * 50;
   const freq = noteToFreq(n.note, n.oct);
 
   const wrapper = document.createElement('div');
   wrapper.className = 'bar-wrapper';
   wrapper.id = `bar-${i}`;
 
+  /* Keep your internal HTML but sizes are overridden by CSS above */
   wrapper.innerHTML = `
     <span class="note-label">${n.note}${n.oct}</span>
-    <div class="bar" style="width:${barW}px;height:${barH}px;"></div>
-    <div class="resonator" style="height:${resH}px;width:${Math.max(18, barW - 6)}px;"></div>
+    <div class="bar" style="width:72px;height:120px;"></div>
+    <div class="resonator" style="height:50px;width:64px;"></div>
   `;
 
   const activate = () => {
@@ -1152,7 +1263,7 @@ BALAFON_NOTES.forEach((n, i) => {
   keysLegend.appendChild(chip);
 });
 
-// ─── KEYBOARD INPUT ───────────────────────────────────────────────────────
+// KEYBOARD INPUT
 const keyMap = {};
 BALAFON_NOTES.forEach((n, i) => { keyMap[n.key] = i; });
 
@@ -1172,7 +1283,7 @@ document.addEventListener('keydown', e => {
   }
 });
 
-// ─── SLIDERS ──────────────────────────────────────────────────────────────
+// SLIDERS
 function updateSlider(el, id) {
   const v = parseFloat(el.value);
   const pct = ((v - el.min) / (el.max - el.min) * 100).toFixed(0);
@@ -1186,17 +1297,15 @@ function updateSlider(el, id) {
   if (id === 'decay') P.decay = v/100;
   if (id === 'hardness') P.hardness = v/100;
   if (id === 'resonance') P.resonance = v/100;
-  if (id === 'pitch') P.pitch = v * 100; // cents
+  if (id === 'pitch') P.pitch = v * 100;
 }
-
-// Init slider visual state
 document.querySelectorAll('input[type=range]').forEach(el => {
   const v = parseFloat(el.value);
   const pct = ((v - el.min) / (el.max - el.min) * 100).toFixed(0);
   el.style.setProperty('--pct', pct + '%');
 });
 
-// ─── KNOBS ────────────────────────────────────────────────────────────────
+// KNOBS
 const knobDefs = {
   'cutoff':    {param:'filterCutoff', min:0, max:1, fmt: v => Math.round(80 + v*v*(18000-80)) + 'Hz', valId:'kv-cutoff'},
   'resonance': {param:'filterRes',   min:0, max:1, fmt: v => v.toFixed(2), valId:'kv-resonance'},
@@ -1236,22 +1345,21 @@ function setupKnob(el) {
     P[def.param] = value;
     document.getElementById(def.valId).textContent = def.fmt(value);
 
-    // Apply live to buses (if audio ready)
     if (actx) syncFX();
   }
 
-  function onMouseMove(e) {
+  function onMove(e) {
     const dy = startY - (e.clientY || e.touches?.[0]?.clientY || startY);
     const range = def.max - def.min;
     updateKnob(startValue + dy * range / 200);
   }
 
-  function onMouseUp() {
+  function onUp() {
     el.classList.remove('dragging');
-    document.removeEventListener('mousemove', onMouseMove);
-    document.removeEventListener('mouseup', onMouseUp);
-    document.removeEventListener('touchmove', onMouseMove);
-    document.removeEventListener('touchend', onMouseUp);
+    document.removeEventListener('mousemove', onMove);
+    document.removeEventListener('mouseup', onUp);
+    document.removeEventListener('touchmove', onMove);
+    document.removeEventListener('touchend', onUp);
   }
 
   el.addEventListener('mousedown', e => {
@@ -1259,8 +1367,8 @@ function setupKnob(el) {
     el.classList.add('dragging');
     startY = e.clientY;
     startValue = value;
-    document.addEventListener('mousemove', onMouseMove);
-    document.addEventListener('mouseup', onMouseUp);
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseup', onUp);
   });
 
   el.addEventListener('touchstart', e => {
@@ -1268,21 +1376,16 @@ function setupKnob(el) {
     el.classList.add('dragging');
     startY = e.touches[0].clientY;
     startValue = value;
-    document.addEventListener('touchmove', onMouseMove, {passive:false});
-    document.addEventListener('touchend', onMouseUp);
+    document.addEventListener('touchmove', onMove, {passive:false});
+    document.addEventListener('touchend', onUp);
   }, {passive:false});
-
-  el.addEventListener('dblclick', () => {
-    const norm = parseFloat(el.dataset.value);
-    updateKnob(def.min + norm * (def.max - def.min));
-  });
 
   updateKnob(value);
 }
 
 document.querySelectorAll('.knob').forEach(setupKnob);
 
-// ─── BYPASS (robuste + bus) ───────────────────────────────────────────────
+// BYPASS
 function toggleBypass(fx) {
   const btn = document.getElementById(`${fx}-bypass`);
   if (!btn) return;
@@ -1296,7 +1399,7 @@ function toggleBypass(fx) {
   if (fx === 'echo')   P.echoActive   = isActive;
   if (fx === 'tape')   P.tapeActive   = isActive;
 
-  if (actx) syncFX(); // instant effect on tails
+  if (actx) syncFX();
 }
 
 function syncBypassUI() {
@@ -1310,7 +1413,7 @@ function syncBypassUI() {
   });
 }
 
-// ─── MODE BUTTONS ─────────────────────────────────────────────────────────
+// MODE BUTTONS
 function setFilterMode(mode, btn) {
   filterType = mode;
   P.filterMode = mode;
@@ -1324,11 +1427,9 @@ function setEchoSync(mode, btn) {
   btn.closest('.panel').querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
 
-  // BPM hardcodé comme dans ton code initial (tu pourras le lier à un BPM global ensuite)
   const bpm = 120;
   if (mode === 'quarter') P.echoTime = 60/bpm;
   if (mode === 'dotted')  P.echoTime = 60/bpm * 1.5;
-  // free: on ne change pas
 
   document.getElementById('kv-etime').textContent = Math.round(P.echoTime * 1000) + 'ms';
   if (actx) syncFX();
@@ -1341,7 +1442,7 @@ function setTapeSpeed(speed, btn) {
   if (actx) syncFX();
 }
 
-// ─── OSCILLOSCOPE ─────────────────────────────────────────────────────────
+// OSCILLOSCOPE
 const scopeCanvas = document.getElementById('scope');
 const scopeCtx = scopeCanvas.getContext('2d');
 let scopeData;
@@ -1352,18 +1453,18 @@ function startScope() {
     requestAnimationFrame(draw);
     analyser.getByteTimeDomainData(scopeData);
     scopeCtx.clearRect(0, 0, scopeCanvas.width, scopeCanvas.height);
-    scopeCtx.fillStyle = '#080604';
+    scopeCtx.fillStyle = 'rgba(0,0,0,.22)';
     scopeCtx.fillRect(0, 0, scopeCanvas.width, scopeCanvas.height);
 
-    scopeCtx.strokeStyle = 'rgba(58,42,20,0.5)';
-    scopeCtx.lineWidth = 0.5;
+    scopeCtx.strokeStyle = 'rgba(255,255,255,.10)';
+    scopeCtx.lineWidth = 0.7;
     scopeCtx.beginPath();
     scopeCtx.moveTo(0, scopeCanvas.height/2);
     scopeCtx.lineTo(scopeCanvas.width, scopeCanvas.height/2);
     scopeCtx.stroke();
 
-    scopeCtx.strokeStyle = '#c87020';
-    scopeCtx.lineWidth = 1.5;
+    scopeCtx.strokeStyle = '#ff2a3c';
+    scopeCtx.lineWidth = 1.6;
     scopeCtx.beginPath();
     const slice = scopeCanvas.width / scopeData.length;
     let x = 0;
@@ -1378,7 +1479,7 @@ function startScope() {
   draw();
 }
 
-// ─── VU METER ─────────────────────────────────────────────────────────────
+// VU METER
 function startVU() {
   const freqData = new Uint8Array(analyser.frequencyBinCount);
   let peakL = 0, peakR = 0;
