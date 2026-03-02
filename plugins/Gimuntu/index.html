@@ -166,7 +166,7 @@ input[type=range]::-moz-range-thumb{
 .ctrl-val{ font-size:10.5px; color:var(--ink); font-weight:700; }
 
 /* ═══════════════════════════════════════════
-   STEPS — 8×2 mobile, 16×1 wide
+   STEPS — 8×4 mobile, 16×2 wide (32 steps)
 ═══════════════════════════════════════════ */
 .steps-grid{
   display:grid;
@@ -310,7 +310,7 @@ input[type=range]::-moz-range-thumb{
   <!-- SEQUENCER -->
   <div class="card">
     <div class="card-header open" id="hSeq">
-      <span class="card-header-label">16-Step Chord Sequencer</span>
+      <span class="card-header-label">32-Step Chord Sequencer</span>
       <button id="btnClear" class="btn xs" style="margin-right:4px">CLR</button>
       <span class="card-toggle open" id="tSeq">▼</span>
     </div>
@@ -320,7 +320,8 @@ input[type=range]::-moz-range-thumb{
       <div class="ctrls">
         <div class="ctrl">
           <div class="ctrl-head"><span class="ctrl-lbl">BPM</span><span class="ctrl-val" id="vBpm">60</span></div>
-          <input id="rBpm" type="range" min="60" max="170" value="60"/>
+          <!-- min abaissé à 30 -->
+          <input id="rBpm" type="range" min="30" max="170" value="60"/>
         </div>
         <div class="ctrl">
           <div class="ctrl-head"><span class="ctrl-lbl">Swing</span><span class="ctrl-val" id="vSwing">0.54</span></div>
@@ -428,6 +429,11 @@ input[type=range]::-moz-range-thumb{
 (() => {
 "use strict";
 
+/* ==========================
+   CONFIG
+========================== */
+const STEPS = 32;
+
 // Theory
 const NOTE_NAMES=["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"];
 const CIRCLE=[0,7,2,9,4,11,6,1,8,3,10,5];
@@ -451,7 +457,7 @@ const S={
   playing:false,bpm:60,swing:.54,human:.010,gate:.78,accent:.35,spread:.50,drive:.00,octave:2,stability:.70,
   vibe:.62,release:.35,volume:.80,presetKey:"neosoul",keyCenterPC:0,circleRotation:0,
   hold:false,fill:false,curStep:0,
-  steps:Array.from({length:16},(_,i)=>({on:i%4===0,pos:(i*2)%12,type:null})),
+  steps:Array.from({length:STEPS},(_,i)=>({on:i%4===0,pos:(i*2)%12,type:null})),
   scenes:Array.from({length:8},()=>null),activeScene:0
 };
 function curPreset(){return PRESETS[S.presetKey];}
@@ -557,7 +563,14 @@ let nextNoteTime=0,timerID=null;
 const LOOKAHEAD=.025,SCHED=.12;
 function stepDur(){return(60/S.bpm)/4;}
 function isActive(i){return S.steps[i].on||(S.fill&&i%2===1);}
-function findNextTime(from,base){const d=stepDur();for(let k=1;k<=16;k++){const j=(from+k)%16;if(isActive(j))return base+k*d;}return base+d;}
+function findNextTime(from,base){
+  const d=stepDur();
+  for(let k=1;k<=STEPS;k++){
+    const j=(from+k)%STEPS;
+    if(isActive(j)) return base+k*d;
+  }
+  return base+d;
+}
 
 function getChord(si){
   const st=S.steps[si],preset=curPreset();
@@ -586,7 +599,11 @@ function scheduleStep(si,time){
 }
 
 function scheduler(){
-  while(nextNoteTime<AC.currentTime+SCHED){scheduleStep(S.curStep,nextNoteTime);nextNoteTime+=stepDur();S.curStep=(S.curStep+1)%16;}
+  while(nextNoteTime<AC.currentTime+SCHED){
+    scheduleStep(S.curStep,nextNoteTime);
+    nextNoteTime+=stepDur();
+    S.curStep=(S.curStep+1)%STEPS;
+  }
   timerID=window.setTimeout(scheduler,LOOKAHEAD*1000);
 }
 
@@ -667,7 +684,7 @@ function attachDrag(el,i){
 
 function renderSteps(){
   const grid=document.getElementById("stepsGrid");grid.innerHTML="";
-  for(let i=0;i<16;i++){
+  for(let i=0;i<STEPS;i++){
     const st=S.steps[i],lab=stepLabel(i);
     const el=document.createElement("div");
     el.className="step"+(lab.on?" on":"")+(i%4===0?" beat1":"");
@@ -687,7 +704,6 @@ function applySnapshot(s){
   Object.assign(S,{bpm:s.bpm,swing:s.swing,human:s.human,gate:s.gate,accent:s.accent,octave:s.octave,stability:s.stability,spread:s.spread,drive:s.drive,vibe:s.vibe,release:s.release,volume:s.volume??S.volume,presetKey:s.presetKey,keyCenterPC:s.keyCenterPC,circleRotation:s.circleRotation,hold:!!s.hold,fill:!!s.fill});
   S.steps=s.steps.map(x=>({on:x.on,pos:x.pos,type:x.type}));
   ["rBpm","rSwing","rHuman","rGate","rAcc","rOct","rStab","rSpread","rDrive","rVibe","rRel","rVol"].forEach(id=>{
-    const key=id.replace("r","").charAt(0).toLowerCase()+id.replace("r","").slice(1);
     const map={rBpm:"bpm",rSwing:"swing",rHuman:"human",rGate:"gate",rAcc:"accent",rOct:"octave",rStab:"stability",rSpread:"spread",rDrive:"drive",rVibe:"vibe",rRel:"release",rVol:"volume"};
     syncRange(id,S[map[id]]);
   });
@@ -753,12 +769,20 @@ document.getElementById("btnRotL").addEventListener("click",()=>{ensureAudio();S
 document.getElementById("btnRotR").addEventListener("click",()=>{ensureAudio();S.circleRotation=(S.circleRotation+1)%12;renderSteps();});
 document.getElementById("btnRand").addEventListener("click",()=>{
   ensureAudio();
-  for(let i=0;i<16;i++){S.steps[i].on=Math.random()<.75;if(i%4===0)S.steps[i].on=true;S.steps[i].pos=Math.floor(Math.random()*12);S.steps[i].type=Math.random()<.28?null:["maj9","m9","9","sus2","m11","6","dom7","m7"][Math.floor(Math.random()*8)];}
+  for(let i=0;i<STEPS;i++){
+    S.steps[i].on=Math.random()<.75;
+    if(i%4===0)S.steps[i].on=true;
+    S.steps[i].pos=Math.floor(Math.random()*12);
+    S.steps[i].type=Math.random()<.28?null:["maj9","m9","9","sus2","m11","6","dom7","m7"][Math.floor(Math.random()*8)];
+  }
   renderSteps();
 });
 document.getElementById("btnHold").addEventListener("click",()=>{S.hold=!S.hold;upHold();});
 document.getElementById("btnFill").addEventListener("click",()=>{S.fill=!S.fill;upFill();renderSteps();});
-document.getElementById("btnClear").addEventListener("click",()=>{for(let i=0;i<16;i++){S.steps[i].on=false;S.steps[i].type=null;S.steps[i].pos=0;}renderSteps();});
+document.getElementById("btnClear").addEventListener("click",()=>{
+  for(let i=0;i<STEPS;i++){S.steps[i].on=false;S.steps[i].type=null;S.steps[i].pos=0;}
+  renderSteps();
+});
 
 window.addEventListener("keydown",e=>{
   if(e.key===" "){e.preventDefault();S.playing?stop():start();}
