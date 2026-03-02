@@ -298,7 +298,7 @@ input[type=range]::-moz-range-thumb{
 
   <!-- STATUS -->
   <div class="pills">
-    <div class="pill">BPM <strong id="kBpm">112</strong></div>
+    <div class="pill">BPM <strong id="kBpm">60</strong></div>
     <div class="pill">Swing <strong id="kSwing">54%</strong></div>
     <div class="pill">Key <strong id="kKey">C</strong></div>
     <div class="pill">Preset <strong id="kPreset">Neo-Soul</strong></div>
@@ -319,8 +319,8 @@ input[type=range]::-moz-range-thumb{
       <div class="divider"></div>
       <div class="ctrls">
         <div class="ctrl">
-          <div class="ctrl-head"><span class="ctrl-lbl">BPM</span><span class="ctrl-val" id="vBpm">112</span></div>
-          <input id="rBpm" type="range" min="60" max="170" value="112"/>
+          <div class="ctrl-head"><span class="ctrl-lbl">BPM</span><span class="ctrl-val" id="vBpm">60</span></div>
+          <input id="rBpm" type="range" min="60" max="170" value="60"/>
         </div>
         <div class="ctrl">
           <div class="ctrl-head"><span class="ctrl-lbl">Swing</span><span class="ctrl-val" id="vSwing">0.54</span></div>
@@ -372,8 +372,8 @@ input[type=range]::-moz-range-thumb{
           <input id="rSpread" type="range" min="0" max="1" step="0.01" value="0.50"/>
         </div>
         <div class="ctrl">
-          <div class="ctrl-head"><span class="ctrl-lbl">Drive</span><span class="ctrl-val" id="vDrive">0.12</span></div>
-          <input id="rDrive" type="range" min="0" max="0.80" step="0.01" value="0.12"/>
+          <div class="ctrl-head"><span class="ctrl-lbl">Drive</span><span class="ctrl-val" id="vDrive">0.00</span></div>
+          <input id="rDrive" type="range" min="0" max="0.80" step="0.01" value="0.00"/>
         </div>
         <div class="ctrl">
           <div class="ctrl-head"><span class="ctrl-lbl">Release</span><span class="ctrl-val" id="vRel">0.35s</span></div>
@@ -384,8 +384,8 @@ input[type=range]::-moz-range-thumb{
           <input id="rAcc" type="range" min="0" max="0.80" step="0.01" value="0.35"/>
         </div>
         <div class="ctrl">
-          <div class="ctrl-head"><span class="ctrl-lbl">Octave</span><span class="ctrl-val" id="vOct">3</span></div>
-          <input id="rOct" type="range" min="2" max="5" step="1" value="3"/>
+          <div class="ctrl-head"><span class="ctrl-lbl">Octave</span><span class="ctrl-val" id="vOct">2</span></div>
+          <input id="rOct" type="range" min="2" max="5" step="1" value="2"/>
         </div>
         <div class="ctrl">
           <div class="ctrl-head"><span class="ctrl-lbl">Stability</span><span class="ctrl-val" id="vStab">0.70</span></div>
@@ -448,7 +448,7 @@ let AC=null,master=null,masterGain=null,comp=null,sat=null,toneLP=null,toneHP=nu
 let chorus=null,reverb=null,dryGain=null,wetChorus=null,wetVerb=null,verbDuck=null;
 
 const S={
-  playing:false,bpm:112,swing:.54,human:.010,gate:.78,accent:.35,spread:.50,drive:.12,octave:3,stability:.70,
+  playing:false,bpm:60,swing:.54,human:.010,gate:.78,accent:.35,spread:.50,drive:.00,octave:2,stability:.70,
   vibe:.62,release:.35,volume:.80,presetKey:"neosoul",keyCenterPC:0,circleRotation:0,
   hold:false,fill:false,curStep:0,
   steps:Array.from({length:16},(_,i)=>({on:i%4===0,pos:(i*2)%12,type:null})),
