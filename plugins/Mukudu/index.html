@@ -97,7 +97,7 @@ body{
 .btn.grn.active{ border-color:var(--grn); background:rgba(46,201,138,.20); box-shadow:0 0 0 2px rgba(46,201,138,.14) inset; color:#fff; }
 
 /* ── PILLS ── */
-.pills{ display:flex; gap:6px; flex-wrap:wrap; align-items:center; }
+.pills{ display:flex; gap:6px; flex-wrap:wrap; align-items:center; justify-content:center; }
 .pill{ padding:4px 9px; border-radius:999px; border:1px solid var(--border); background:rgba(0,0,0,.25); font-size:9.5px; color:var(--ink-mid); white-space:nowrap; line-height:1.2; }
 .pill strong{ color:var(--ink); font-weight:800; }
 .pill.hot{ border-color:rgba(217,53,53,.45); background:rgba(217,53,53,.08); }
@@ -271,7 +271,7 @@ select:focus, input[type=number]:focus{ border-color:rgba(217,53,53,.55); }
       <div class="brand-sub">RS-09 inspired · Chord Sequencer · Tape FX</div>
     </div>
 
-    <div class="pills" style="justify-content:center">
+    <div class="pills">
       <div class="pill">BPM <strong id="kBpm">120</strong></div>
       <div class="pill">Key <strong id="kKey">C</strong></div>
       <div class="pill">Scale <strong id="kScale">Majeure</strong></div>
@@ -499,14 +499,22 @@ select:focus, input[type=number]:focus{ border-color:rgba(217,53,53,.55); }
               <div class="ctrl-head"><span class="ctrl-lbl">Master</span><span class="ctrl-val" id="vMaster">30%</span></div>
               <input id="rMaster" type="range" min="0" max="1" step="0.01" value="0.30">
             </div>
+
+            <!-- Blend + sources -->
             <div class="ctrl">
-              <div class="ctrl-head"><span class="ctrl-lbl">Sources</span><span class="ctrl-val" id="vCh">chorus off</span></div>
-              <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+              <div class="ctrl-head">
+                <span class="ctrl-lbl">Blend</span>
+                <span class="ctrl-val" id="vBlend">STR 100 / ORG 0</span>
+              </div>
+              <input id="rBlend" type="range" min="0" max="1" step="0.01" value="0.00">
+              <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:8px">
                 <button id="btnStrings" class="btn xs grn">STR</button>
                 <button id="btnOrgan" class="btn xs">ORGAN</button>
                 <button id="btnChorus" class="btn xs">CH</button>
               </div>
-              <div style="font-size:9px;color:var(--ink-dim);margin-top:6px;letter-spacing:.06em">CHORUS OFF par défaut</div>
+              <div style="font-size:9px;color:var(--ink-dim);margin-top:6px;letter-spacing:.06em">
+                Crossfade actif si STR et ORGAN sont ON. Chorus OFF par défaut.
+              </div>
             </div>
           </div>
         </div>
@@ -613,14 +621,15 @@ const state = {
     ensemble:0.60,
     strings:true,
     organ:false,
-    chorus:false // ⬅️ OFF by default
+    chorus:false,   // OFF by default
+    blend:0.00      // 0=strings, 1=organ
   },
 
   // FX off by default
   metOn:false,
   metVol:0.35,
-  sat:0.00,       // ⬅️ OFF
-  echoMix:0.00,   // ⬅️ OFF
+  sat:0.00,       // OFF
+  echoMix:0.00,   // OFF
   echoTime:0.32,
   echoFb:0.35,
 
@@ -650,6 +659,13 @@ let AC=null;
 let masterGain=null;
 
 let voicesBus=null;
+
+// Blend buses
+let stringsBus=null, organBus=null;
+let stringsGain=null, organGain=null;
+
+// Global softening EQ
+let toneLP=null, toneHS=null;
 
 // tape sat
 let satNode=null;
@@ -758,10 +774,38 @@ function ensureAudio(){
   }
   chorWet.connect(chorOut);
 
-  // Chain
-  voicesBus.connect(chorIn);
+  // Global softening EQ
+  toneLP = AC.createBiquadFilter();
+  toneLP.type = "lowpass";
+  toneLP.Q.value = 0.70;
+
+  toneHS = AC.createBiquadFilter();
+  toneHS.type = "highshelf";
+  toneHS.frequency.value = 4200;
+  toneHS.gain.value = -3.0;
+
+  // Blend buses
+  stringsBus = AC.createGain();
+  organBus   = AC.createGain();
+  stringsGain = AC.createGain();
+  organGain   = AC.createGain();
+
+  voicesBus.connect(stringsBus);
+  voicesBus.connect(organBus);
+
+  stringsBus.connect(stringsGain);
+  organBus.connect(organGain);
+
+  // Route blended sources into EQ -> chorus -> sat -> echo -> out
+  stringsGain.connect(toneLP);
+  organGain.connect(toneLP);
+
+  toneLP.connect(toneHS);
+  toneHS.connect(chorIn);
+
   chorOut.connect(satNode);
   satNode.connect(echoIn);
+
   echoDry.connect(masterGain);
   echoWet.connect(masterGain);
 
@@ -791,23 +835,35 @@ function applyAudioParams(){
 
   masterGain.gain.setTargetAtTime(state.master, AC.currentTime, 0.02);
 
-  // chorus off by default
+  // equal-power crossfade
+  const x = clamp(state.synth.blend, 0, 1);
+  const gStr = Math.cos(x * Math.PI * 0.5);
+  const gOrg = Math.sin(x * Math.PI * 0.5);
+
+  stringsGain.gain.setTargetAtTime(state.synth.strings ? gStr : 0.0, AC.currentTime, 0.03);
+  organGain.gain.setTargetAtTime(state.synth.organ   ? gOrg : 0.0, AC.currentTime, 0.03);
+
+  // Chorus OFF by default
   chorWet.gain.setTargetAtTime(state.synth.chorus ? state.synth.ensemble : 0.0, AC.currentTime, 0.03);
   const depthBase = 0.0008 + state.synth.ensemble*0.0032;
   chorLfoG.forEach((g,i)=>{
     g.gain.setTargetAtTime(state.synth.chorus ? depthBase*(1+i*0.22) : 0.00001, AC.currentTime, 0.03);
   });
 
-  // sat off by default (sat=0)
+  // Sat OFF by default
   satNode.curve = makeSatCurve(state.sat);
 
-  // echo off by default (mix=0)
+  // Echo OFF by default
   echoWet.gain.setTargetAtTime(state.echoMix, AC.currentTime, 0.03);
   echoDelay.delayTime.setTargetAtTime(state.echoTime, AC.currentTime, 0.03);
   echoFbGain.gain.setTargetAtTime(state.echoFb, AC.currentTime, 0.03);
   echoLP.frequency.setTargetAtTime(5200 - state.echoFb*2200, AC.currentTime, 0.05);
   wowGain.gain.setTargetAtTime(0.0010 + state.echoMix*0.0040, AC.currentTime, 0.05);
   wowLFO.frequency.setTargetAtTime(0.25 + state.echoTime*0.8, AC.currentTime, 0.05);
+
+  // Global softening EQ follows brightness a bit
+  toneLP.frequency.setTargetAtTime(1800 + state.synth.brightness * 5200, AC.currentTime, 0.05);
+  toneHS.gain.setTargetAtTime(-2.0 - state.synth.brightness * 4.0, AC.currentTime, 0.05);
 
   metGain.gain.setTargetAtTime(state.metVol, AC.currentTime, 0.02);
 }
@@ -837,32 +893,43 @@ function metroClick(time, accent=false){
 /* ========= per-voice envelopes ======== */
 function createStringVoice(freq, velocity, startTime){
   const t0 = startTime ?? AC.currentTime;
-  const vol = (velocity/127) * 0.75;
+  const vol = (velocity/127) * 0.70;
 
   const osc1 = AC.createOscillator();
   const osc2 = AC.createOscillator();
   const osc3 = AC.createOscillator();
-  osc1.type = 'sawtooth';
+
+  // Softer core: triangle + 2 saw (detuned)
+  osc1.type = 'triangle';
   osc2.type = 'sawtooth';
   osc3.type = 'sawtooth';
 
-  const det = 0.003 + state.synth.ensemble*0.007;
+  const det = 0.002 + state.synth.ensemble*0.006; // slightly less detune
   osc1.frequency.setValueAtTime(freq, t0);
   osc2.frequency.setValueAtTime(freq*(1+det), t0);
   osc3.frequency.setValueAtTime(freq*(1-det), t0);
 
+  // Filter for brightness (softer range)
   const filter = AC.createBiquadFilter();
   filter.type = 'lowpass';
-  filter.frequency.setValueAtTime(900 + state.synth.brightness * 5200, t0);
-  filter.Q.value = 0.55;
+  const cutoff = 700 + state.synth.brightness * 4200; // gentler
+  filter.frequency.setValueAtTime(cutoff, t0);
+  filter.Q.value = 0.60;
 
   const env = AC.createGain();
   env.gain.setValueAtTime(0.0001, t0);
 
   const mix = AC.createGain();
-  mix.gain.value = 0.33;
 
-  osc1.connect(mix); osc2.connect(mix); osc3.connect(mix);
+  // weight triangle a bit more, saw a bit less
+  const g1 = AC.createGain(); g1.gain.value = 0.42;
+  const g2 = AC.createGain(); g2.gain.value = 0.30;
+  const g3 = AC.createGain(); g3.gain.value = 0.30;
+
+  osc1.connect(g1); g1.connect(mix);
+  osc2.connect(g2); g2.connect(mix);
+  osc3.connect(g3); g3.connect(mix);
+
   mix.connect(filter);
   filter.connect(env);
   env.connect(voicesBus);
@@ -1085,7 +1152,7 @@ const els = {
   brightnessValue: document.getElementById("brightnessValue"),
   ensembleValue: document.getElementById("ensembleValue"),
   vMaster: document.getElementById("vMaster"),
-  vCh: document.getElementById("vCh"),
+  vBlend: document.getElementById("vBlend"),
   btnChorus: document.getElementById("btnChorus"),
   btnOrgan: document.getElementById("btnOrgan"),
   btnStrings: document.getElementById("btnStrings"),
@@ -1127,7 +1194,11 @@ function refreshTop(){
   els.brightnessValue.textContent = Math.round(state.synth.brightness*100)+"%";
   els.ensembleValue.textContent = Math.round(state.synth.ensemble*100)+"%";
   els.vMaster.textContent = Math.round(state.master*100)+"%";
-  els.vCh.textContent = `chorus ${state.synth.chorus ? "on" : "off"}`;
+
+  const b = clamp(state.synth.blend,0,1);
+  const pOrg = Math.round(b*100);
+  const pStr = 100 - pOrg;
+  els.vBlend.textContent = `STR ${pStr} / ORG ${pOrg}`;
 
   els.btnMetro.classList.toggle("active", state.metOn);
   els.btnMetOn.classList.toggle("active", state.metOn);
@@ -1472,9 +1543,10 @@ wireRange("rEchoFb", v=>{ state.echoFb = v; if(AC) applyAudioParams(); });
 
 wireRange("rAtk", v=>{ state.synth.attack = v; });
 wireRange("rRel", v=>{ state.synth.release = v; });
-wireRange("rBri", v=>{ state.synth.brightness = v; });
+wireRange("rBri", v=>{ state.synth.brightness = v; if(AC) applyAudioParams(); });
 wireRange("rEns", v=>{ state.synth.ensemble = v; if(AC) applyAudioParams(); });
 wireRange("rMaster", v=>{ state.master = v; if(AC) applyAudioParams(); });
+wireRange("rBlend", v=>{ state.synth.blend = v; if(AC) applyAudioParams(); });
 
 // toggles
 els.btnChorus.addEventListener("click", ()=>{
@@ -1487,10 +1559,14 @@ els.btnChorus.addEventListener("click", ()=>{
 els.btnStrings.addEventListener("click", ()=>{
   state.synth.strings = !state.synth.strings;
   els.btnStrings.classList.toggle("grn", state.synth.strings);
+  if(AC) applyAudioParams();
+  refreshTop();
 });
 els.btnOrgan.addEventListener("click", ()=>{
   state.synth.organ = !state.synth.organ;
   els.btnOrgan.classList.toggle("grn", state.synth.organ);
+  if(AC) applyAudioParams();
+  refreshTop();
 });
 
 // keyboard shortcuts
@@ -1522,7 +1598,7 @@ function init(){
 
   refreshTop();
 
-  ["rBpm","rMetVol","rSat","rEchoMix","rEchoTime","rEchoFb","rAtk","rRel","rBri","rEns","rMaster","velocitySlider"].forEach(id=>{
+  ["rBpm","rMetVol","rSat","rEchoMix","rEchoTime","rEchoFb","rAtk","rRel","rBri","rEns","rMaster","rBlend","velocitySlider"].forEach(id=>{
     const el=document.getElementById(id);
     if(el && el.type==="range") setRangePct(el);
   });
