@@ -286,7 +286,7 @@ select:focus{ border-color:rgba(217,53,53,.55); }
     <div class="transport">
       <button id="btnAudio" class="btn grn sm"><span class="led"></span> AUDIO</button>
       <button id="btnMetro" class="btn sm"><span class="led"></span> METRO</button>
-      <button id="btnStop" class="btn sm">⏹</button>
+      <!-- STOP button removed (Play toggles start/stop) -->
       <button id="btnPlay" class="btn red sm">▶ PLAY</button>
     </div>
   </div>
@@ -485,6 +485,12 @@ select:focus{ border-color:rgba(217,53,53,.55); }
         </div>
         <div class="card-body" id="bSynth">
           <div class="fx-grid">
+            <!-- MASTER moved to the top -->
+            <div class="ctrl">
+              <div class="ctrl-head"><span class="ctrl-lbl">Master</span><span class="ctrl-val" id="vMaster">30%</span></div>
+              <input id="rMaster" type="range" min="0" max="1" step="0.01" value="0.30">
+            </div>
+
             <div class="ctrl">
               <div class="ctrl-head"><span class="ctrl-lbl">Attack</span><span class="ctrl-val" id="attackValue">0.10s</span></div>
               <input id="rAtk" type="range" min="0.005" max="0.60" step="0.005" value="0.10">
@@ -501,17 +507,14 @@ select:focus{ border-color:rgba(217,53,53,.55); }
               <div class="ctrl-head"><span class="ctrl-lbl">Ensemble</span><span class="ctrl-val" id="ensembleValue">60%</span></div>
               <input id="rEns" type="range" min="0" max="1" step="0.01" value="0.60">
             </div>
-            <div class="ctrl">
-              <div class="ctrl-head"><span class="ctrl-lbl">Master</span><span class="ctrl-val" id="vMaster">30%</span></div>
-              <input id="rMaster" type="range" min="0" max="1" step="0.01" value="0.30">
-            </div>
 
             <div class="ctrl">
               <div class="ctrl-head">
                 <span class="ctrl-lbl">Blend</span>
-                <span class="ctrl-val" id="vBlend">STR 100 / ORG 0</span>
+                <span class="ctrl-val" id="vBlend">STR 0 / ORG 100</span>
               </div>
-              <input id="rBlend" type="range" min="0" max="1" step="0.01" value="0.00">
+              <!-- default to 100% Organ -->
+              <input id="rBlend" type="range" min="0" max="1" step="0.01" value="1.00">
               <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:8px">
                 <button id="btnStrings" class="btn xs grn"><span class="led"></span> STR</button>
                 <button id="btnOrgan" class="btn xs grn"><span class="led"></span> ORGAN</button>
@@ -601,6 +604,7 @@ function pc(name){ return NOTES.indexOf(name); }
    STATE (default LEN=64)
    ✅ organ ON by default
    ✅ fx off by default
+   ✅ blend default 100% organ
 ========================= */
 const state = {
   key:'C',
@@ -622,9 +626,9 @@ const state = {
     brightness:0.50,
     ensemble:0.60,
     strings:true,
-    organ:true,      // ✅ ON by default
-    chorus:false,    // ✅ OFF by default
-    blend:0.00       // 0=strings, 1=organ
+    organ:true,       // ✅ ON
+    chorus:false,     // ✅ OFF
+    blend:1.00        // ✅ 0=strings, 1=organ
   },
 
   metOn:false,
@@ -713,9 +717,9 @@ function ensureAudio(){
   stringsGain = AC.createGain();
   organGain   = AC.createGain();
 
-  // initialise explicit values
-  stringsGain.gain.value = 1.0;
-  organGain.gain.value   = 0.0;
+  // initialise explicit values (will be overridden by applyAudioParams(true))
+  stringsGain.gain.value = 0.0;
+  organGain.gain.value   = 1.0;
 
   // Sat
   satNode = AC.createWaveShaper();
@@ -1147,7 +1151,6 @@ const els = {
 
   btnAudio: document.getElementById("btnAudio"),
   btnPlay: document.getElementById("btnPlay"),
-  btnStop: document.getElementById("btnStop"),
   btnMetro: document.getElementById("btnMetro"),
   btnMetOn: document.getElementById("btnMetOn"),
   btnMode: document.getElementById("btnMode"),
@@ -1374,7 +1377,8 @@ function setSeqLen(newLen){
 }
 
 /* =========================
-   SEQUENCER
+   SEQUENCER (tempo-safe)
+   - reschedules interval on BPM change without UI glitches
 ========================= */
 let intervalId = null;
 let metIntervalId = null;
@@ -1396,6 +1400,36 @@ function computeChordOffTime(stepIndex, t0, durationBeats){
   return nominalEnd;
 }
 
+function tickStep(){
+  cleanupVoices();
+
+  state.currentStep = (state.currentStep + 1) % state.seqLen;
+  const idx = state.currentStep;
+  const st = state.steps[idx];
+
+  els.kStep.textContent = String(idx+1);
+  els.kChord.textContent = st.active ? `${st.root}${CHORD_NAMES[st.chordType]}` : "—";
+
+  if(state.playMode === "CHOKE"){
+    chokeAllAt(AC.currentTime + 0.001);
+  }
+
+  if(st.active){
+    const notes = getChordNotes(st.root, st.chordType, st.voicing, st.bass);
+    const t0 = AC.currentTime + 0.003;
+    const tOff = computeChordOffTime(idx, t0, st.duration);
+    playChordVoices(notes, st.velocity, t0, tOff);
+  }
+
+  renderSteps();
+}
+
+function scheduleSequencerInterval(){
+  if(intervalId){ clearInterval(intervalId); intervalId=null; }
+  const t = stepMs();
+  intervalId = setInterval(()=>{ if(state.playing && AC) tickStep(); }, t);
+}
+
 function startSequencer(){
   ensureAudio();
   if(AC.state==="suspended") AC.resume();
@@ -1409,31 +1443,7 @@ function startSequencer(){
   els.btnPlay.classList.add("playing");
   els.btnPlay.textContent = "⏸ PAUSE";
 
-  const t = stepMs();
-  intervalId = setInterval(()=>{
-    cleanupVoices();
-
-    state.currentStep = (state.currentStep + 1) % state.seqLen;
-    const idx = state.currentStep;
-    const st = state.steps[idx];
-
-    els.kStep.textContent = String(idx+1);
-    els.kChord.textContent = st.active ? `${st.root}${CHORD_NAMES[st.chordType]}` : "—";
-
-    if(state.playMode === "CHOKE"){
-      chokeAllAt(AC.currentTime + 0.001);
-    }
-
-    if(st.active){
-      const notes = getChordNotes(st.root, st.chordType, st.voicing, st.bass);
-      const t0 = AC.currentTime + 0.003;
-      const tOff = computeChordOffTime(idx, t0, st.duration);
-      playChordVoices(notes, st.velocity, t0, tOff);
-    }
-
-    renderSteps();
-  }, t);
-
+  scheduleSequencerInterval();
   startMetronome();
 }
 
@@ -1474,6 +1484,12 @@ function stopMetronome(){
   if(metIntervalId){ clearInterval(metIntervalId); metIntervalId=null; }
 }
 
+function rescheduleTempo(){
+  if(!state.playing) return;
+  scheduleSequencerInterval();
+  if(state.metOn) startMetronome();
+}
+
 /* =========================
    COLLAPSIBLES
 ========================= */
@@ -1509,7 +1525,6 @@ els.btnAudio.addEventListener("click", async ()=>{
 });
 
 els.btnPlay.addEventListener("click", ()=>{ state.playing ? stopSequencer() : startSequencer(); });
-els.btnStop.addEventListener("click", stopSequencer);
 
 els.btnMode.addEventListener("click", ()=>{
   state.playMode = (state.playMode === "LEGATO") ? "CHOKE" : "LEGATO";
@@ -1608,7 +1623,7 @@ els.btnPaste.addEventListener("click", ()=>{
 // Ranges
 wireRange("rBpm", v=>{
   state.bpm = Math.round(v);
-  if(state.playing){ stopSequencer(); startSequencer(); }
+  rescheduleTempo(); // ✅ avoids UI flicker / tempo “bug”
 });
 wireRange("rMetVol", v=>{ state.metVol = v; if(AC) applyAudioParams(false); });
 wireRange("rSat", v=>{ state.sat = v; if(AC) applyAudioParams(false); });
@@ -1669,6 +1684,10 @@ function init(){
   }
   state.steps[0].active=true;
 
+  // apply defaults to sliders that are in markup
+  const rBlend = document.getElementById("rBlend");
+  if(rBlend){ rBlend.value = String(state.synth.blend); setRangePct(rBlend); }
+
   renderKeyMenus();
   document.getElementById("scaleSelect").value = state.scale;
 
@@ -1693,4 +1712,3 @@ document.addEventListener("DOMContentLoaded", init);
 </script>
 </body>
 </html>
-
