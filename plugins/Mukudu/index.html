@@ -9,56 +9,56 @@
 @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
 
 :root{
-  --bg:        #090b0f;
-  --s0:        #0d1018;
-  --s1:        #111420;
-  --s2:        #161a26;
-  --s3:        #1b2030;
-  --border:    rgba(255,255,255,.07);
-  --border2:   rgba(255,255,255,.13);
-  --ink:       #dce4f0;
-  --ink-mid:   #8b96a8;
-  --ink-dim:   #55606e;
-  --red:       #d93535;
-  --red-hi:    #f04444;
-  --red-dim:   rgba(217,53,53,.18);
-  --grn:       #2ec98a;
-  --grn-dim:   rgba(46,201,138,.14);
+  --bg:#090b0f;
+  --s0:#0d1018;
+  --s1:#111420;
+  --s2:#161a26;
+  --s3:#1b2030;
+  --border:rgba(255,255,255,.07);
+  --border2:rgba(255,255,255,.13);
+  --ink:#dce4f0;
+  --ink-mid:#8b96a8;
+  --ink-dim:#55606e;
+  --red:#d93535;
+  --red-hi:#f04444;
+  --red-dim:rgba(217,53,53,.18);
+  --grn:#2ec98a;
+  --grn-dim:rgba(46,201,138,.14);
   --grn-border:rgba(46,201,138,.45);
-  --amb:       #e8b84b;
-  --amb-dim:   rgba(232,184,75,.13);
-  --r:     12px;
-  --r-sm:  10px;
-  --r-xs:  8px;
-  --mono: 'Share Tech Mono', ui-monospace, monospace;
-  --sh:   0 10px 28px rgba(0,0,0,.55);
+  --amb:#e8b84b;
+  --amb-dim:rgba(232,184,75,.13);
+  --r:12px;
+  --r-sm:10px;
+  --r-xs:8px;
+  --mono:'Share Tech Mono', ui-monospace, monospace;
+  --sh:0 10px 28px rgba(0,0,0,.55);
 }
 
 *,*::before,*::after{ box-sizing:border-box; margin:0; padding:0; }
 html,body{ height:100%; }
 
 body{
-  font-family: var(--mono);
-  background: var(--bg);
+  font-family:var(--mono);
+  background:var(--bg);
   background-image:
     radial-gradient(ellipse 600px 420px at 72% -60px, rgba(217,53,53,.08), transparent 55%),
     radial-gradient(ellipse 420px 680px at -12% 44%, rgba(217,53,53,.04), transparent 55%);
-  color: var(--ink);
-  min-height: 100dvh;
+  color:var(--ink);
+  min-height:100dvh;
   padding:
     calc(env(safe-area-inset-top,0px) + 10px)
     calc(env(safe-area-inset-right,0px) + 12px)
     calc(env(safe-area-inset-bottom,0px) + 22px)
     calc(env(safe-area-inset-left,0px) + 12px);
-  -webkit-tap-highlight-color: transparent;
-  touch-action: manipulation;
-  user-select: none;
-  overscroll-behavior: none;
+  -webkit-tap-highlight-color:transparent;
+  touch-action:manipulation;
+  user-select:none;
+  overscroll-behavior:none;
 }
 
 .shell{
-  max-width: 980px;
-  margin: 0 auto;
+  max-width:980px;
+  margin:0 auto;
   display:flex;
   flex-direction:column;
   gap:10px;
@@ -70,7 +70,7 @@ body{
   grid-template-columns:auto 1fr auto;
   align-items:center;
   gap:10px;
-  padding: 6px 0 8px;
+  padding:6px 0 8px;
   border-bottom:1px solid var(--border);
 }
 .brand-name{ font-size:13px; letter-spacing:.22em; font-weight:800; text-transform:uppercase; white-space:nowrap; }
@@ -165,8 +165,12 @@ select:focus, input[type=number]:focus{ border-color:rgba(217,53,53,.55); }
 
 /* ── SCALE NOTES ── */
 .scale-notes{ display:flex; gap:6px; flex-wrap:wrap; }
-.note{ width:42px; height:42px; border-radius:var(--r-sm); border:1px solid rgba(255,255,255,.09);
-  background:var(--s2); display:flex; align-items:center; justify-content:center; font-weight:900; font-size:11px; color:var(--ink-mid);
+.note{
+  width:42px; height:42px; border-radius:var(--r-sm);
+  border:1px solid rgba(255,255,255,.09);
+  background:var(--s2);
+  display:flex; align-items:center; justify-content:center;
+  font-weight:900; font-size:11px; color:var(--ink-mid);
 }
 .note.in{ border-color:rgba(46,201,138,.45); background:rgba(46,201,138,.10); color:rgba(46,201,138,.92); }
 .note.root{ border-color:rgba(217,53,53,.75); background:rgba(217,53,53,.14); color:#fff; }
@@ -261,7 +265,6 @@ select:focus, input[type=number]:focus{ border-color:rgba(217,53,53,.55); }
 <body>
 <div class="shell">
 
-  <!-- TOPBAR -->
   <div class="topbar">
     <div>
       <div class="brand-name">MUKUDU CHORDSEQ</div>
@@ -283,7 +286,6 @@ select:focus, input[type=number]:focus{ border-color:rgba(217,53,53,.55); }
     </div>
   </div>
 
-  <!-- PANELS: KEY/SCALE + NOTES + DEGREES -->
   <div class="grid3">
     <div class="card">
       <div class="card-header open" id="hKey">
@@ -345,14 +347,10 @@ select:focus, input[type=number]:focus{ border-color:rgba(217,53,53,.55); }
     </div>
   </div>
 
-  <!-- SEQUENCER -->
   <div class="card">
     <div class="card-header open" id="hSeq">
       <span class="card-header-label">Séquenceur 16 steps</span>
-
-      <!-- Musical mode -->
       <button id="btnMode" class="btn xs amb" style="margin-right:4px">MODE: LEGATO</button>
-
       <button id="btnClearAll" class="btn xs" style="margin-right:4px">CLR</button>
       <button id="btnRandom" class="btn xs amb" style="margin-right:4px">RAND</button>
       <button id="btnCopy" class="btn xs" style="margin-right:4px">COPY</button>
@@ -429,7 +427,6 @@ select:focus, input[type=number]:focus{ border-color:rgba(217,53,53,.55); }
 
       <div class="divider"></div>
 
-      <!-- FX -->
       <div class="card" style="box-shadow:none;border-color:rgba(255,255,255,.06)">
         <div class="card-header open" id="hFx">
           <span class="card-header-label">FX · Metronome · Tape</span>
@@ -441,27 +438,21 @@ select:focus, input[type=number]:focus{ border-color:rgba(217,53,53,.55); }
               <div class="ctrl-head"><span class="ctrl-lbl">Metronome</span><span class="ctrl-val" id="vMet">off</span></div>
               <div style="display:flex;gap:6px;align-items:center">
                 <button id="btnMetOn" class="btn xs">ON/OFF</button>
-                <div style="flex:1">
-                  <input id="rMetVol" type="range" min="0" max="1" step="0.01" value="0.35">
-                </div>
+                <div style="flex:1"><input id="rMetVol" type="range" min="0" max="1" step="0.01" value="0.35"></div>
               </div>
-              <div style="font-size:9px;color:var(--ink-dim);margin-top:6px;letter-spacing:.06em">
-                click accent on beat 1 (4/4)
-              </div>
+              <div style="font-size:9px;color:var(--ink-dim);margin-top:6px;letter-spacing:.06em">click accent on beat 1 (4/4)</div>
             </div>
 
             <div class="ctrl">
-              <div class="ctrl-head"><span class="ctrl-lbl">Tape Sat</span><span class="ctrl-val" id="vSat">0.20</span></div>
-              <input id="rSat" type="range" min="0" max="1" step="0.01" value="0.20">
-              <div style="font-size:9px;color:var(--ink-dim);margin-top:6px;letter-spacing:.06em">
-                waveshaper soft clip + bias
-              </div>
+              <div class="ctrl-head"><span class="ctrl-lbl">Tape Sat</span><span class="ctrl-val" id="vSat">0.00</span></div>
+              <input id="rSat" type="range" min="0" max="1" step="0.01" value="0.00">
+              <div style="font-size:9px;color:var(--ink-dim);margin-top:6px;letter-spacing:.06em">OFF par défaut</div>
             </div>
 
             <div class="ctrl">
-              <div class="ctrl-head"><span class="ctrl-lbl">Tape Echo Verb</span><span class="ctrl-val" id="vEcho">mix 0.20</span></div>
+              <div class="ctrl-head"><span class="ctrl-lbl">Tape Echo Verb</span><span class="ctrl-val" id="vEcho">mix 0.00</span></div>
               <div style="display:grid;gap:8px">
-                <input id="rEchoMix" type="range" min="0" max="1" step="0.01" value="0.20">
+                <input id="rEchoMix" type="range" min="0" max="1" step="0.01" value="0.00">
                 <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
                   <div>
                     <div style="font-size:8.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-dim);margin-bottom:5px">Time</div>
@@ -473,9 +464,7 @@ select:focus, input[type=number]:focus{ border-color:rgba(217,53,53,.55); }
                   </div>
                 </div>
               </div>
-              <div style="font-size:9px;color:var(--ink-dim);margin-top:6px;letter-spacing:.06em">
-                wow/flutter + lowpass in feedback
-              </div>
+              <div style="font-size:9px;color:var(--ink-dim);margin-top:6px;letter-spacing:.06em">OFF par défaut</div>
             </div>
           </div>
         </div>
@@ -483,7 +472,6 @@ select:focus, input[type=number]:focus{ border-color:rgba(217,53,53,.55); }
 
       <div class="divider"></div>
 
-      <!-- SYNTH -->
       <div class="card" style="box-shadow:none;border-color:rgba(255,255,255,.06)">
         <div class="card-header open" id="hSynth">
           <span class="card-header-label">Mukudu Machine · RS-09 vibe</span>
@@ -512,22 +500,20 @@ select:focus, input[type=number]:focus{ border-color:rgba(217,53,53,.55); }
               <input id="rMaster" type="range" min="0" max="1" step="0.01" value="0.30">
             </div>
             <div class="ctrl">
-              <div class="ctrl-head"><span class="ctrl-lbl">Sources</span><span class="ctrl-val" id="vCh">chorus on</span></div>
+              <div class="ctrl-head"><span class="ctrl-lbl">Sources</span><span class="ctrl-val" id="vCh">chorus off</span></div>
               <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
                 <button id="btnStrings" class="btn xs grn">STR</button>
                 <button id="btnOrgan" class="btn xs">ORGAN</button>
-                <button id="btnChorus" class="btn xs grn">CH</button>
+                <button id="btnChorus" class="btn xs">CH</button>
               </div>
-              <div style="font-size:9px;color:var(--ink-dim);margin-top:6px;letter-spacing:.06em">
-                toggle sources + chorus
-              </div>
+              <div style="font-size:9px;color:var(--ink-dim);margin-top:6px;letter-spacing:.06em">CHORUS OFF par défaut</div>
             </div>
           </div>
         </div>
       </div>
 
       <div class="hint">
-        <b>MODE: LEGATO</b> = l’accord tient sur les steps “vides”, mais s’arrête proprement à l’arrivée du prochain accord actif.<br/>
+        <b>MODE: LEGATO</b> = l’accord tient sur les steps “vides”, mais s’arrête à l’arrivée du prochain accord actif.<br/>
         <b>MODE: CHOKE</b> = coupe l’accord précédent à chaque step (style groovebox).
       </div>
     </div>
@@ -597,7 +583,7 @@ function clamp(x,a,b){ return Math.min(b,Math.max(a,x)); }
 function pc(name){ return NOTES.indexOf(name); }
 
 /* =========================
-   STATE
+   STATE (FX OFF BY DEFAULT)
 ========================= */
 const state = {
   key:'C',
@@ -607,9 +593,6 @@ const state = {
   currentStep:-1,
   selectedStep:0,
 
-  // musical playback mode
-  // LEGATO: chord can span empty steps but is cut at next active chord
-  // CHOKE : cut previous voices every step
   playMode:"LEGATO",
 
   steps: Array.from({length:16}, (_,i)=>({
@@ -618,12 +601,11 @@ const state = {
     chordType: 'maj',
     voicing: 'close',
     bass: 'root',
-    duration: 1,      // quarter-note units
+    duration: 1,
     velocity: 100
   })),
   clipboard: null,
 
-  // synth
   synth:{
     attack:0.10,
     release:1.50,
@@ -631,14 +613,14 @@ const state = {
     ensemble:0.60,
     strings:true,
     organ:false,
-    chorus:true
+    chorus:false // ⬅️ OFF by default
   },
 
-  // fx
+  // FX off by default
   metOn:false,
   metVol:0.35,
-  sat:0.20,
-  echoMix:0.20,
+  sat:0.00,       // ⬅️ OFF
+  echoMix:0.00,   // ⬅️ OFF
   echoTime:0.32,
   echoFb:0.35,
 
@@ -663,9 +645,6 @@ function wireRange(id, fn){
 
 /* =========================
    AUDIO (RS-09-ish) + FX
-   Chain:
-     voicesBus -> chorus -> tapeSat -> echoVerb -> masterGain -> destination
-   Metronome goes to masterGain too
 ========================= */
 let AC=null;
 let masterGain=null;
@@ -679,14 +658,14 @@ let satNode=null;
 let echoIn=null, echoDelay=null, echoFbGain=null, echoWet=null, echoDry=null, echoLP=null;
 let wowLFO=null, wowGain=null;
 
-// chorus-ish ensemble
+// chorus
 let chorIn=null, chorOut=null, chorWet=null, chorDry=null, chorDelays=[], chorLFOs=[], chorLfoG=[];
 
 // met
 let metGain=null;
 
 // voices
-let activeVoices=[]; // {oscs, env, stopAt(tOff), _stopT}
+let activeVoices=[];
 
 function ensureAudio(){
   if(AC) return;
@@ -702,12 +681,12 @@ function ensureAudio(){
 
   voicesBus = AC.createGain();
 
-  // ── Tape Saturation ──
+  // Sat
   satNode = AC.createWaveShaper();
   satNode.oversample = "2x";
   satNode.curve = makeSatCurve(state.sat);
 
-  // ── Tape Echo Verb ──
+  // Echo
   echoIn = AC.createGain();
   echoDry = AC.createGain();
   echoWet = AC.createGain();
@@ -743,14 +722,14 @@ function ensureAudio(){
   echoLP.connect(echoFbGain);
   echoFbGain.connect(echoDelay);
 
-  // ── Chorus/Ensemble ──
+  // Chorus
   chorIn = AC.createGain();
   chorOut = AC.createGain();
   chorDry = AC.createGain();
   chorWet = AC.createGain();
 
   chorDry.gain.value = 1.0;
-  chorWet.gain.value = state.synth.ensemble;
+  chorWet.gain.value = 0.0;
 
   chorIn.connect(chorDry);
   chorDry.connect(chorOut);
@@ -779,7 +758,7 @@ function ensureAudio(){
   }
   chorWet.connect(chorOut);
 
-  // Final chain
+  // Chain
   voicesBus.connect(chorIn);
   chorOut.connect(satNode);
   satNode.connect(echoIn);
@@ -812,17 +791,17 @@ function applyAudioParams(){
 
   masterGain.gain.setTargetAtTime(state.master, AC.currentTime, 0.02);
 
-  // chorus
+  // chorus off by default
   chorWet.gain.setTargetAtTime(state.synth.chorus ? state.synth.ensemble : 0.0, AC.currentTime, 0.03);
   const depthBase = 0.0008 + state.synth.ensemble*0.0032;
   chorLfoG.forEach((g,i)=>{
     g.gain.setTargetAtTime(state.synth.chorus ? depthBase*(1+i*0.22) : 0.00001, AC.currentTime, 0.03);
   });
 
-  // sat
+  // sat off by default (sat=0)
   satNode.curve = makeSatCurve(state.sat);
 
-  // echo
+  // echo off by default (mix=0)
   echoWet.gain.setTargetAtTime(state.echoMix, AC.currentTime, 0.03);
   echoDelay.delayTime.setTargetAtTime(state.echoTime, AC.currentTime, 0.03);
   echoFbGain.gain.setTargetAtTime(state.echoFb, AC.currentTime, 0.03);
@@ -830,7 +809,6 @@ function applyAudioParams(){
   wowGain.gain.setTargetAtTime(0.0010 + state.echoMix*0.0040, AC.currentTime, 0.05);
   wowLFO.frequency.setTargetAtTime(0.25 + state.echoTime*0.8, AC.currentTime, 0.05);
 
-  // met
   metGain.gain.setTargetAtTime(state.metVol, AC.currentTime, 0.02);
 }
 
@@ -856,7 +834,7 @@ function metroClick(time, accent=false){
   osc.stop(time + 0.05);
 }
 
-/* ========= FIX: per-voice envelopes + per-voice stop ======== */
+/* ========= per-voice envelopes ======== */
 function createStringVoice(freq, velocity, startTime){
   const t0 = startTime ?? AC.currentTime;
   const vol = (velocity/127) * 0.75;
@@ -884,9 +862,7 @@ function createStringVoice(freq, velocity, startTime){
   const mix = AC.createGain();
   mix.gain.value = 0.33;
 
-  osc1.connect(mix);
-  osc2.connect(mix);
-  osc3.connect(mix);
+  osc1.connect(mix); osc2.connect(mix); osc3.connect(mix);
   mix.connect(filter);
   filter.connect(env);
   env.connect(voicesBus);
@@ -895,17 +871,16 @@ function createStringVoice(freq, velocity, startTime){
 
   osc1.start(t0); osc2.start(t0); osc3.start(t0);
 
-  const voice = {
+  return {
     oscs:[osc1,osc2,osc3],
     env,
-    _stopT: t0,
+    _stopT:t0,
     stopAt(tOff){
       const r = state.synth.release;
       const t = Math.max(tOff, t0 + 0.005);
       this._stopT = t + r + 0.08;
 
       env.gain.cancelScheduledValues(t);
-      // keep current value at t, then release
       env.gain.setValueAtTime(env.gain.value, t);
       env.gain.linearRampToValueAtTime(0.0001, t + r);
 
@@ -920,10 +895,10 @@ function createStringVoice(freq, velocity, startTime){
       env.gain.cancelScheduledValues(t);
       env.gain.setValueAtTime(env.gain.value, t);
       env.gain.linearRampToValueAtTime(0.0001, t + fast);
+
       this.oscs.forEach(o=>{ try{o.stop(tStop);}catch(e){} });
     }
   };
-  return voice;
 }
 
 function createOrganVoice(freq, velocity, startTime){
@@ -953,10 +928,10 @@ function createOrganVoice(freq, velocity, startTime){
 
   env.gain.linearRampToValueAtTime(0.55, t0 + 0.01);
 
-  const voice = {
+  return {
     oscs,
     env,
-    _stopT: t0,
+    _stopT:t0,
     stopAt(tOff){
       const r = state.synth.release;
       const t = Math.max(tOff, t0 + 0.005);
@@ -981,7 +956,6 @@ function createOrganVoice(freq, velocity, startTime){
       this.oscs.forEach(o=>{ try{o.stop(tStop);}catch(e){} });
     }
   };
-  return voice;
 }
 
 /* =========================
@@ -992,7 +966,6 @@ function getScaleNotes(key, scale){
   const intervals = SCALES[scale] || SCALES.major;
   return intervals.map(i => NOTES[(keyIndex + i) % 12]);
 }
-
 function getScaleChords(key, scale){
   const scaleNotes = getScaleNotes(key, scale);
   const chordTypes = SCALE_CHORD_TYPES[scale] || SCALE_CHORD_TYPES.major;
@@ -1003,7 +976,6 @@ function getScaleChords(key, scale){
     degreeLower: (i===0||i===3||i===4)? DEGREE_NAMES[i] : DEGREE_NAMES[i].toLowerCase()
   }));
 }
-
 function getChordNotes(root, chordType, voicing, bassNote){
   const rootIndex = pc(root);
   const intervals = CHORD_INTERVALS[chordType] || [0,4,7];
@@ -1028,17 +1000,10 @@ function getChordNotes(root, chordType, voicing, bassNote){
 }
 
 /* =========================
-   MUSIC MODE: compute end time
-   - durationBeats is in quarter notes
-   - sequencer step is 16th => 4 steps per beat
-   LEGATO rule:
-     chord may ring across empty steps, but stops at next ACTIVE chord if it arrives before nominal duration end
-   CHOKE rule:
-     cut previous voices at every step start, then play new (if active)
+   PLAY MODE TIMING
 ========================= */
-function stepLenSec(){ return (60/state.bpm)/4; } // 16th
+function stepLenSec(){ return (60/state.bpm)/4; }
 function durBeatsToSteps(durationBeats){ return Math.max(1, Math.round(durationBeats * 4)); }
-
 function stepsToNextActive(fromStep){
   for(let k=1;k<=16;k++){
     const j = (fromStep + k) % 16;
@@ -1046,10 +1011,8 @@ function stepsToNextActive(fromStep){
   }
   return null;
 }
-
 function playChordVoices(noteObjs, velocity, t0, tOff){
   ensureAudio();
-
   noteObjs.forEach(n=>{
     const f = noteToFreq(n.name, n.octave);
     if(state.synth.strings){
@@ -1064,18 +1027,12 @@ function playChordVoices(noteObjs, velocity, t0, tOff){
     }
   });
 }
-
 function chokeAllAt(t0){
   if(!AC) return;
-  // fast choke to avoid clicks but still snappy groovebox feel
   const fast = 0.018;
-  activeVoices.forEach(v=>{
-    try{ v.chokeAt(t0, fast); }catch(e){}
-  });
-  // cleanup old refs soon
+  activeVoices.forEach(v=>{ try{ v.chokeAt(t0, fast); }catch(e){} });
   setTimeout(()=>cleanupVoices(), 350);
 }
-
 function cleanupVoices(){
   if(!AC){ activeVoices=[]; return; }
   const now = AC.currentTime;
@@ -1123,7 +1080,6 @@ const els = {
   vBass: document.getElementById("vBass"),
   vDur: document.getElementById("vDur"),
 
-  // synth
   attackValue: document.getElementById("attackValue"),
   releaseValue: document.getElementById("releaseValue"),
   brightnessValue: document.getElementById("brightnessValue"),
@@ -1134,12 +1090,10 @@ const els = {
   btnOrgan: document.getElementById("btnOrgan"),
   btnStrings: document.getElementById("btnStrings"),
 
-  // fx
   vMet: document.getElementById("vMet"),
   vSat: document.getElementById("vSat"),
   vEcho: document.getElementById("vEcho"),
 
-  // actions
   btnClearAll: document.getElementById("btnClearAll"),
   btnRandom: document.getElementById("btnRandom"),
   btnCopy: document.getElementById("btnCopy"),
@@ -1187,10 +1141,7 @@ function refreshTop(){
 function renderKeyMenus(){
   els.keySelect.innerHTML = NOTES.map(n=>`<option value="${n}">${n}</option>`).join("");
   els.rootSelect.innerHTML = NOTES.map(n=>`<option value="${n}">${n}</option>`).join("");
-  els.bassSelect.innerHTML =
-    `<option value="root">Fondamentale</option>` +
-    NOTES.map(n=>`<option value="${n}">${n}</option>`).join("");
-
+  els.bassSelect.innerHTML = `<option value="root">Fondamentale</option>` + NOTES.map(n=>`<option value="${n}">${n}</option>`).join("");
   els.keySelect.value = state.key;
   els.rootSelect.value = state.steps[state.selectedStep].root;
   els.bassSelect.value = state.steps[state.selectedStep].bass;
@@ -1233,12 +1184,7 @@ function renderSteps(){
   els.stepsContainer.innerHTML = state.steps.map((st,i)=>{
     const chordName = st.active ? `${st.root}${CHORD_NAMES[st.chordType]}` : "—";
     const bassDisplay = (st.active && st.bass !== "root") ? `/${st.bass}` : "";
-    const cls = [
-      "step",
-      st.active ? "active" : "",
-      i===state.selectedStep ? "selected" : "",
-      i===state.currentStep ? "playing" : ""
-    ].filter(Boolean).join(" ");
+    const cls = ["step", st.active?"active":"", i===state.selectedStep?"selected":"", i===state.currentStep?"playing":""].filter(Boolean).join(" ");
     return `
       <div class="${cls}" data-step="${i}">
         <span class="n">${i+1}</span>
@@ -1251,16 +1197,12 @@ function renderSteps(){
   els.stepsContainer.querySelectorAll(".step").forEach(el=>{
     el.addEventListener("click",(e)=>{
       const idx = parseInt(el.dataset.step,10);
-      if(e.shiftKey){
-        state.steps[idx].active = !state.steps[idx].active;
-      }else{
-        state.selectedStep = idx;
-      }
+      if(e.shiftKey){ state.steps[idx].active = !state.steps[idx].active; }
+      else{ state.selectedStep = idx; }
       updateParamsUI();
       renderSteps();
       previewCurrentChord();
     });
-
     el.addEventListener("dblclick",()=>{
       const idx = parseInt(el.dataset.step,10);
       state.steps[idx].active = !state.steps[idx].active;
@@ -1298,25 +1240,19 @@ function previewCurrentChord(){
 let intervalId = null;
 let metIntervalId = null;
 
-function stepMs(){ return (60/state.bpm)*1000/4; } // 16th
+function stepMs(){ return (60/state.bpm)*1000/4; }
 
 function computeChordOffTime(stepIndex, t0, durationBeats){
   const sLen = stepLenSec();
   const durSteps = durBeatsToSteps(durationBeats);
   const nominalEnd = t0 + durSteps*sLen;
 
-  if(state.playMode === "CHOKE"){
-    // CHOKE: duration still matters for release tail, but next step will choke anyway
-    return nominalEnd;
-  }
+  if(state.playMode === "CHOKE"){ return nominalEnd; }
 
-  // LEGATO: if next active chord happens before nominal end, stop at that next chord start
   const k = stepsToNextActive(stepIndex);
   if(k != null){
     const nextStart = t0 + k*sLen;
-    if(nextStart < nominalEnd){
-      return nextStart; // cut exactly when next chord starts
-    }
+    if(nextStart < nominalEnd) return nextStart;
   }
   return nominalEnd;
 }
@@ -1324,8 +1260,8 @@ function computeChordOffTime(stepIndex, t0, durationBeats){
 function startSequencer(){
   ensureAudio();
   if(AC.state==="suspended") AC.resume();
-
   if(state.playing) return;
+
   state.playing = true;
   state.currentStep = -1;
 
@@ -1340,21 +1276,16 @@ function startSequencer(){
     const idx = state.currentStep;
     const st = state.steps[idx];
 
-    // UI
     els.kStep.textContent = String(idx+1);
     els.kChord.textContent = st.active ? `${st.root}${CHORD_NAMES[st.chordType]}` : "—";
 
-    // CHOKE mode: cut previous at every step start
     if(state.playMode === "CHOKE"){
       chokeAllAt(AC.currentTime + 0.001);
     }
 
     if(st.active){
       const notes = getChordNotes(st.root, st.chordType, st.voicing, st.bass);
-
-      // schedule times (simple, but stable enough)
       const t0 = AC.currentTime + 0.003;
-
       const tOff = computeChordOffTime(idx, t0, st.duration);
       playChordVoices(notes, st.velocity, t0, tOff);
     }
@@ -1371,12 +1302,9 @@ function stopSequencer(){
   if(intervalId){ clearInterval(intervalId); intervalId=null; }
   stopMetronome();
 
-  // PANIC stop (fast fade)
   if(AC){
     const now = AC.currentTime;
-    activeVoices.forEach(v=>{
-      try{ v.chokeAt(now, 0.03); }catch(e){}
-    });
+    activeVoices.forEach(v=>{ try{ v.chokeAt(now, 0.03); }catch(e){} });
   }
   activeVoices = [];
 
@@ -1396,8 +1324,7 @@ function startMetronome(){
   const qMs = (60/state.bpm)*1000;
   metIntervalId = setInterval(()=>{
     const t = AC.currentTime + 0.01;
-    const accent = (beat % 4) === 0;
-    metroClick(t, accent);
+    metroClick(t, (beat%4)===0);
     beat++;
   }, qMs);
 }
@@ -1428,7 +1355,7 @@ setupCollapsible("hFx","bFx","tFx");
 setupCollapsible("hSynth","bSynth","tSynth");
 
 /* =========================
-   WIRE EVENTS
+   EVENTS
 ========================= */
 els.btnAudio.addEventListener("click", async ()=>{
   ensureAudio();
@@ -1436,6 +1363,7 @@ els.btnAudio.addEventListener("click", async ()=>{
     if(AC.state==="suspended") await AC.resume();
     els.btnAudio.classList.add("active");
     els.btnAudio.textContent = "AUDIO ✓";
+    applyAudioParams();
   }catch(e){}
 });
 
@@ -1475,30 +1403,21 @@ els.scaleSelect.addEventListener("change", e=>{
 
 els.rootSelect.addEventListener("change", e=>{
   const st = state.steps[state.selectedStep];
-  st.root = e.target.value;
-  st.active = true;
-  updateParamsUI();
-  renderSteps();
-  previewCurrentChord();
+  st.root = e.target.value; st.active = true;
+  updateParamsUI(); renderSteps(); previewCurrentChord();
 });
 els.chordTypeSelect.addEventListener("change", e=>{
   const st = state.steps[state.selectedStep];
-  st.chordType = e.target.value;
-  st.active = true;
-  updateParamsUI();
-  renderSteps();
-  previewCurrentChord();
+  st.chordType = e.target.value; st.active = true;
+  updateParamsUI(); renderSteps(); previewCurrentChord();
 });
 els.voicingSelect.addEventListener("change", e=>{
   state.steps[state.selectedStep].voicing = e.target.value;
-  updateParamsUI();
-  previewCurrentChord();
+  updateParamsUI(); previewCurrentChord();
 });
 els.bassSelect.addEventListener("change", e=>{
   state.steps[state.selectedStep].bass = e.target.value;
-  updateParamsUI();
-  renderSteps();
-  previewCurrentChord();
+  updateParamsUI(); renderSteps(); previewCurrentChord();
 });
 els.durationSelect.addEventListener("change", e=>{
   state.steps[state.selectedStep].duration = parseFloat(e.target.value);
@@ -1532,68 +1451,30 @@ els.btnRandom.addEventListener("click", ()=>{
   renderSteps();
   updateParamsUI();
 });
-els.btnCopy.addEventListener("click", ()=>{
-  state.clipboard = {...state.steps[state.selectedStep]};
-});
+els.btnCopy.addEventListener("click", ()=>{ state.clipboard = {...state.steps[state.selectedStep]}; });
 els.btnPaste.addEventListener("click", ()=>{
   if(!state.clipboard) return;
   state.steps[state.selectedStep] = {...state.clipboard};
-  renderSteps();
-  updateParamsUI();
-  previewCurrentChord();
+  renderSteps(); updateParamsUI(); previewCurrentChord();
 });
 
 // Ranges
 wireRange("rBpm", v=>{
   state.bpm = Math.round(v);
-  if(state.playing){
-    stopSequencer();
-    startSequencer();
-  }else{
-    refreshTop();
-  }
+  if(state.playing){ stopSequencer(); startSequencer(); }
+  else refreshTop();
 });
+wireRange("rMetVol", v=>{ state.metVol = v; if(AC) applyAudioParams(); });
+wireRange("rSat", v=>{ state.sat = v; if(AC) applyAudioParams(); });
+wireRange("rEchoMix", v=>{ state.echoMix = v; if(AC) applyAudioParams(); });
+wireRange("rEchoTime", v=>{ state.echoTime = v; if(AC) applyAudioParams(); });
+wireRange("rEchoFb", v=>{ state.echoFb = v; if(AC) applyAudioParams(); });
 
-wireRange("rMetVol", v=>{
-  state.metVol = v;
-  if(AC) applyAudioParams();
-});
-
-wireRange("rSat", v=>{
-  state.sat = v;
-  if(AC) applyAudioParams();
-});
-
-wireRange("rEchoMix", v=>{
-  state.echoMix = v;
-  if(AC) applyAudioParams();
-});
-wireRange("rEchoTime", v=>{
-  state.echoTime = v;
-  if(AC) applyAudioParams();
-});
-wireRange("rEchoFb", v=>{
-  state.echoFb = v;
-  if(AC) applyAudioParams();
-});
-
-wireRange("rAtk", v=>{
-  state.synth.attack = v;
-});
-wireRange("rRel", v=>{
-  state.synth.release = v;
-});
-wireRange("rBri", v=>{
-  state.synth.brightness = v;
-});
-wireRange("rEns", v=>{
-  state.synth.ensemble = v;
-  if(AC) applyAudioParams();
-});
-wireRange("rMaster", v=>{
-  state.master = v;
-  if(AC) applyAudioParams();
-});
+wireRange("rAtk", v=>{ state.synth.attack = v; });
+wireRange("rRel", v=>{ state.synth.release = v; });
+wireRange("rBri", v=>{ state.synth.brightness = v; });
+wireRange("rEns", v=>{ state.synth.ensemble = v; if(AC) applyAudioParams(); });
+wireRange("rMaster", v=>{ state.master = v; if(AC) applyAudioParams(); });
 
 // toggles
 els.btnChorus.addEventListener("click", ()=>{
@@ -1616,8 +1497,6 @@ els.btnOrgan.addEventListener("click", ()=>{
 window.addEventListener("keydown",(e)=>{
   if(e.key===" "){ e.preventDefault(); state.playing ? stopSequencer() : startSequencer(); }
   if(e.key.toLowerCase()==="m"){ state.metOn=!state.metOn; refreshTop(); if(state.playing) startMetronome(); }
-  if(e.key.toLowerCase()==="l"){ state.playMode="LEGATO"; refreshTop(); }
-  if(e.key.toLowerCase()==="c"){ state.playMode="CHOKE"; refreshTop(); }
 });
 
 /* =========================
@@ -1635,11 +1514,13 @@ function init(){
   renderScaleNotes();
   renderScaleDegrees();
   renderSteps();
-  refreshTop();
 
+  // reflect defaults (chorus OFF; FX OFF)
   els.btnChorus.classList.toggle("grn", state.synth.chorus);
   els.btnOrgan.classList.toggle("grn", state.synth.organ);
   els.btnStrings.classList.toggle("grn", state.synth.strings);
+
+  refreshTop();
 
   ["rBpm","rMetVol","rSat","rEchoMix","rEchoTime","rEchoFb","rAtk","rRel","rBri","rEns","rMaster","velocitySlider"].forEach(id=>{
     const el=document.getElementById(id);
