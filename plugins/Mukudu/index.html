@@ -8,9 +8,6 @@
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
 
-/* ═══════════════════════════════════════════
-   TOKENS — Elektron-ish dark red (align other plugins)
-═══════════════════════════════════════════ */
 :root{
   --bg:        #090b0f;
   --s0:        #0d1018;
@@ -352,12 +349,17 @@ select:focus, input[type=number]:focus{ border-color:rgba(217,53,53,.55); }
   <div class="card">
     <div class="card-header open" id="hSeq">
       <span class="card-header-label">Séquenceur 16 steps</span>
+
+      <!-- Musical mode -->
+      <button id="btnMode" class="btn xs amb" style="margin-right:4px">MODE: LEGATO</button>
+
       <button id="btnClearAll" class="btn xs" style="margin-right:4px">CLR</button>
       <button id="btnRandom" class="btn xs amb" style="margin-right:4px">RAND</button>
       <button id="btnCopy" class="btn xs" style="margin-right:4px">COPY</button>
       <button id="btnPaste" class="btn xs" style="margin-right:4px">PASTE</button>
       <span class="card-toggle open" id="tSeq">▼</span>
     </div>
+
     <div class="card-body" id="bSeq">
       <div class="steps" id="stepsContainer"></div>
 
@@ -510,14 +512,14 @@ select:focus, input[type=number]:focus{ border-color:rgba(217,53,53,.55); }
               <input id="rMaster" type="range" min="0" max="1" step="0.01" value="0.30">
             </div>
             <div class="ctrl">
-              <div class="ctrl-head"><span class="ctrl-lbl">Chorus</span><span class="ctrl-val" id="vCh">on</span></div>
-              <div style="display:flex;gap:8px;align-items:center">
-                <button id="btnChorus" class="btn xs grn">ON</button>
-                <button id="btnOrgan" class="btn xs">ORGAN</button>
+              <div class="ctrl-head"><span class="ctrl-lbl">Sources</span><span class="ctrl-val" id="vCh">chorus on</span></div>
+              <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
                 <button id="btnStrings" class="btn xs grn">STR</button>
+                <button id="btnOrgan" class="btn xs">ORGAN</button>
+                <button id="btnChorus" class="btn xs grn">CH</button>
               </div>
               <div style="font-size:9px;color:var(--ink-dim);margin-top:6px;letter-spacing:.06em">
-                toggle sources
+                toggle sources + chorus
               </div>
             </div>
           </div>
@@ -525,9 +527,8 @@ select:focus, input[type=number]:focus{ border-color:rgba(217,53,53,.55); }
       </div>
 
       <div class="hint">
-        • AUDIO : obligatoire sur mobile (débloque WebAudio).<br/>
-        • METRO : clique quarter-notes, accent sur le temps 1 (4/4).<br/>
-        • Tape Sat + Tape Echo Verb : chaînés après le synth (comme tes autres plugins).
+        <b>MODE: LEGATO</b> = l’accord tient sur les steps “vides”, mais s’arrête proprement à l’arrivée du prochain accord actif.<br/>
+        <b>MODE: CHOKE</b> = coupe l’accord précédent à chaque step (style groovebox).
       </div>
     </div>
   </div>
@@ -593,7 +594,6 @@ const SCALE_CHORD_TYPES = {
 };
 
 function clamp(x,a,b){ return Math.min(b,Math.max(a,x)); }
-function mod(n,m){ return ((n%m)+m)%m; }
 function pc(name){ return NOTES.indexOf(name); }
 
 /* =========================
@@ -606,13 +606,19 @@ const state = {
   playing:false,
   currentStep:-1,
   selectedStep:0,
+
+  // musical playback mode
+  // LEGATO: chord can span empty steps but is cut at next active chord
+  // CHOKE : cut previous voices every step
+  playMode:"LEGATO",
+
   steps: Array.from({length:16}, (_,i)=>({
     active: i%4===0,
     root: 'C',
     chordType: 'maj',
     voicing: 'close',
     bass: 'root',
-    duration: 1,
+    duration: 1,      // quarter-note units
     velocity: 100
   })),
   clipboard: null,
@@ -658,8 +664,8 @@ function wireRange(id, fn){
 /* =========================
    AUDIO (RS-09-ish) + FX
    Chain:
-     voicesBus -> tapeSat -> echoVerb (delay+fb+lp+wow) -> masterGain -> destination
-   Metronome is separate into masterGain.
+     voicesBus -> chorus -> tapeSat -> echoVerb -> masterGain -> destination
+   Metronome goes to masterGain too
 ========================= */
 let AC=null;
 let masterGain=null;
@@ -673,14 +679,14 @@ let satNode=null;
 let echoIn=null, echoDelay=null, echoFbGain=null, echoWet=null, echoDry=null, echoLP=null;
 let wowLFO=null, wowGain=null;
 
-// chorus-ish (simple ensemble)
+// chorus-ish ensemble
 let chorIn=null, chorOut=null, chorWet=null, chorDry=null, chorDelays=[], chorLFOs=[], chorLfoG=[];
 
 // met
 let metGain=null;
 
-// voice tracking
-let activeVoices=[];
+// voices
+let activeVoices=[]; // {oscs, env, stopAt(tOff), _stopT}
 
 function ensureAudio(){
   if(AC) return;
@@ -696,12 +702,12 @@ function ensureAudio(){
 
   voicesBus = AC.createGain();
 
-  // ── Tape Saturation (waveshaper) ──
+  // ── Tape Saturation ──
   satNode = AC.createWaveShaper();
   satNode.oversample = "2x";
   satNode.curve = makeSatCurve(state.sat);
 
-  // ── Tape Echo Verb (delay+fb+lp+wow) ──
+  // ── Tape Echo Verb ──
   echoIn = AC.createGain();
   echoDry = AC.createGain();
   echoWet = AC.createGain();
@@ -719,7 +725,6 @@ function ensureAudio(){
   echoLP.frequency.value = 4200;
   echoLP.Q.value = 0.75;
 
-  // wow/flutter on delayTime
   wowLFO = AC.createOscillator();
   wowLFO.type = "sine";
   wowLFO.frequency.value = 0.35;
@@ -729,18 +734,16 @@ function ensureAudio(){
   wowGain.connect(echoDelay.delayTime);
   wowLFO.start();
 
-  // routing echo
   echoIn.connect(echoDry);
   echoIn.connect(echoDelay);
 
   echoDelay.connect(echoLP);
   echoLP.connect(echoWet);
 
-  // feedback loop
   echoLP.connect(echoFbGain);
   echoFbGain.connect(echoDelay);
 
-  // ── Chorus/Ensemble (simple) ──
+  // ── Chorus/Ensemble ──
   chorIn = AC.createGain();
   chorOut = AC.createGain();
   chorDry = AC.createGain();
@@ -788,13 +791,11 @@ function ensureAudio(){
 
 function makeSatCurve(amount){
   const a = clamp(amount,0,1);
-  const k = 8 + a*42; // stronger with amount
+  const k = 8 + a*42;
   const n = 2048;
   const curve = new Float32Array(n);
   for(let i=0;i<n;i++){
     const x = (i/(n-1))*2 - 1;
-    // soft clip + a pinch of asymmetry (tape-ish)
-    const y = Math.tanh(x*(1+k)) / Math.tanh(1+k);
     const bias = (a*0.20);
     curve[i] = Math.tanh((x + bias)* (1 + k*0.85)) / Math.tanh(1 + k*0.85);
   }
@@ -806,129 +807,12 @@ function noteToFreq(note, octave=4){
   return 440 * Math.pow(2, (noteIndex - 9 + (octave - 4) * 12) / 12);
 }
 
-function createStringVoice(freq, velocity){
-  const now = AC.currentTime;
-  const vol = (velocity/127) * 0.75;
-
-  const osc1 = AC.createOscillator();
-  const osc2 = AC.createOscillator();
-  const osc3 = AC.createOscillator();
-  osc1.type = 'sawtooth';
-  osc2.type = 'sawtooth';
-  osc3.type = 'sawtooth';
-
-  const det = 0.003 + state.synth.ensemble*0.007;
-  osc1.frequency.value = freq;
-  osc2.frequency.value = freq*(1+det);
-  osc3.frequency.value = freq*(1-det);
-
-  const filter = AC.createBiquadFilter();
-  filter.type = 'lowpass';
-  filter.frequency.value = 900 + state.synth.brightness * 5200;
-  filter.Q.value = 0.55;
-
-  const env = AC.createGain();
-  env.gain.value = 0;
-
-  const mix = AC.createGain();
-  mix.gain.value = 0.33;
-
-  osc1.connect(mix);
-  osc2.connect(mix);
-  osc3.connect(mix);
-  mix.connect(filter);
-  filter.connect(env);
-  env.connect(voicesBus);
-
-  env.gain.setValueAtTime(0.0001, now);
-  env.gain.linearRampToValueAtTime(vol, now + state.synth.attack);
-
-  osc1.start(now); osc2.start(now); osc3.start(now);
-
-  return { oscs:[osc1,osc2,osc3], env, filter };
-}
-
-function createOrganVoice(freq, velocity){
-  const now = AC.currentTime;
-  const harmonics = [1,2,3,4,6,8];
-  const levels = [1,.55,.35,.25,.20,.14];
-
-  const mixer = AC.createGain();
-  mixer.gain.value = 0.15;
-
-  const oscs=[];
-  harmonics.forEach((h,i)=>{
-    const o=AC.createOscillator();
-    o.type="sine";
-    o.frequency.value=freq*h;
-    const g=AC.createGain();
-    g.gain.value = levels[i]*0.12*(velocity/127);
-    o.connect(g); g.connect(mixer);
-    o.start(now);
-    oscs.push(o);
-  });
-
-  const env=AC.createGain();
-  env.gain.value=0;
-  mixer.connect(env);
-  env.connect(voicesBus);
-
-  env.gain.setValueAtTime(0.0001, now);
-  env.gain.linearRampToValueAtTime(0.55, now + 0.01);
-
-  return { oscs, env };
-}
-
-function stopAllVoices(){
-  activeVoices.forEach(v=>{
-    (v.oscs||[]).forEach(o=>{ try{o.stop();}catch(e){} });
-  });
-  activeVoices = [];
-}
-
-function releaseVoices(){
-  if(!AC) return;
-  const now = AC.currentTime;
-  activeVoices.forEach(v=>{
-    if(!v.env) return;
-    v.env.gain.cancelScheduledValues(now);
-    v.env.gain.setValueAtTime(v.env.gain.value, now);
-    v.env.gain.linearRampToValueAtTime(0.0001, now + state.synth.release);
-  });
-  setTimeout(()=>stopAllVoices(), state.synth.release*1000 + 120);
-}
-
-function playChord(noteObjs, velocity, durationBeats){
-  ensureAudio();
-  // do NOT kill voices instantly; release previous for stringy overlap
-  releaseVoices();
-
-  // schedule new chord
-  const durSec = durationBeats * (60/state.bpm);
-  const offAt = AC.currentTime + durSec;
-
-  noteObjs.forEach(n=>{
-    const f = noteToFreq(n.name, n.octave);
-    if(state.synth.strings){
-      const v = createStringVoice(f, velocity);
-      activeVoices.push(v);
-    }
-    if(state.synth.organ){
-      const v = createOrganVoice(f, velocity);
-      activeVoices.push(v);
-    }
-  });
-
-  // auto-release at chord end
-  setTimeout(()=>releaseVoices(), durSec*1000);
-}
-
 function applyAudioParams(){
   if(!AC) return;
 
   masterGain.gain.setTargetAtTime(state.master, AC.currentTime, 0.02);
 
-  // chorus/ensemble depth & wet
+  // chorus
   chorWet.gain.setTargetAtTime(state.synth.chorus ? state.synth.ensemble : 0.0, AC.currentTime, 0.03);
   const depthBase = 0.0008 + state.synth.ensemble*0.0032;
   chorLfoG.forEach((g,i)=>{
@@ -942,7 +826,6 @@ function applyAudioParams(){
   echoWet.gain.setTargetAtTime(state.echoMix, AC.currentTime, 0.03);
   echoDelay.delayTime.setTargetAtTime(state.echoTime, AC.currentTime, 0.03);
   echoFbGain.gain.setTargetAtTime(state.echoFb, AC.currentTime, 0.03);
-  // darker as feedback rises
   echoLP.frequency.setTargetAtTime(5200 - state.echoFb*2200, AC.currentTime, 0.05);
   wowGain.gain.setTargetAtTime(0.0010 + state.echoMix*0.0040, AC.currentTime, 0.05);
   wowLFO.frequency.setTargetAtTime(0.25 + state.echoTime*0.8, AC.currentTime, 0.05);
@@ -971,6 +854,134 @@ function metroClick(time, accent=false){
 
   osc.start(time);
   osc.stop(time + 0.05);
+}
+
+/* ========= FIX: per-voice envelopes + per-voice stop ======== */
+function createStringVoice(freq, velocity, startTime){
+  const t0 = startTime ?? AC.currentTime;
+  const vol = (velocity/127) * 0.75;
+
+  const osc1 = AC.createOscillator();
+  const osc2 = AC.createOscillator();
+  const osc3 = AC.createOscillator();
+  osc1.type = 'sawtooth';
+  osc2.type = 'sawtooth';
+  osc3.type = 'sawtooth';
+
+  const det = 0.003 + state.synth.ensemble*0.007;
+  osc1.frequency.setValueAtTime(freq, t0);
+  osc2.frequency.setValueAtTime(freq*(1+det), t0);
+  osc3.frequency.setValueAtTime(freq*(1-det), t0);
+
+  const filter = AC.createBiquadFilter();
+  filter.type = 'lowpass';
+  filter.frequency.setValueAtTime(900 + state.synth.brightness * 5200, t0);
+  filter.Q.value = 0.55;
+
+  const env = AC.createGain();
+  env.gain.setValueAtTime(0.0001, t0);
+
+  const mix = AC.createGain();
+  mix.gain.value = 0.33;
+
+  osc1.connect(mix);
+  osc2.connect(mix);
+  osc3.connect(mix);
+  mix.connect(filter);
+  filter.connect(env);
+  env.connect(voicesBus);
+
+  env.gain.linearRampToValueAtTime(vol, t0 + state.synth.attack);
+
+  osc1.start(t0); osc2.start(t0); osc3.start(t0);
+
+  const voice = {
+    oscs:[osc1,osc2,osc3],
+    env,
+    _stopT: t0,
+    stopAt(tOff){
+      const r = state.synth.release;
+      const t = Math.max(tOff, t0 + 0.005);
+      this._stopT = t + r + 0.08;
+
+      env.gain.cancelScheduledValues(t);
+      // keep current value at t, then release
+      env.gain.setValueAtTime(env.gain.value, t);
+      env.gain.linearRampToValueAtTime(0.0001, t + r);
+
+      const tStop = t + r + 0.08;
+      this.oscs.forEach(o=>{ try{o.stop(tStop);}catch(e){} });
+    },
+    chokeAt(tChoke, fast=0.02){
+      const t = Math.max(tChoke, t0 + 0.002);
+      const tStop = t + fast + 0.08;
+      this._stopT = tStop;
+
+      env.gain.cancelScheduledValues(t);
+      env.gain.setValueAtTime(env.gain.value, t);
+      env.gain.linearRampToValueAtTime(0.0001, t + fast);
+      this.oscs.forEach(o=>{ try{o.stop(tStop);}catch(e){} });
+    }
+  };
+  return voice;
+}
+
+function createOrganVoice(freq, velocity, startTime){
+  const t0 = startTime ?? AC.currentTime;
+  const harmonics = [1,2,3,4,6,8];
+  const levels = [1,.55,.35,.25,.20,.14];
+
+  const mixer = AC.createGain();
+  mixer.gain.value = 0.15;
+
+  const oscs=[];
+  harmonics.forEach((h,i)=>{
+    const o=AC.createOscillator();
+    o.type="sine";
+    o.frequency.setValueAtTime(freq*h, t0);
+    const g=AC.createGain();
+    g.gain.setValueAtTime(levels[i]*0.12*(velocity/127), t0);
+    o.connect(g); g.connect(mixer);
+    o.start(t0);
+    oscs.push(o);
+  });
+
+  const env=AC.createGain();
+  env.gain.setValueAtTime(0.0001, t0);
+  mixer.connect(env);
+  env.connect(voicesBus);
+
+  env.gain.linearRampToValueAtTime(0.55, t0 + 0.01);
+
+  const voice = {
+    oscs,
+    env,
+    _stopT: t0,
+    stopAt(tOff){
+      const r = state.synth.release;
+      const t = Math.max(tOff, t0 + 0.005);
+      this._stopT = t + r + 0.08;
+
+      env.gain.cancelScheduledValues(t);
+      env.gain.setValueAtTime(env.gain.value, t);
+      env.gain.linearRampToValueAtTime(0.0001, t + r);
+
+      const tStop = t + r + 0.08;
+      this.oscs.forEach(o=>{ try{o.stop(tStop);}catch(e){} });
+    },
+    chokeAt(tChoke, fast=0.02){
+      const t = Math.max(tChoke, t0 + 0.002);
+      const tStop = t + fast + 0.08;
+      this._stopT = tStop;
+
+      env.gain.cancelScheduledValues(t);
+      env.gain.setValueAtTime(env.gain.value, t);
+      env.gain.linearRampToValueAtTime(0.0001, t + fast);
+
+      this.oscs.forEach(o=>{ try{o.stop(tStop);}catch(e){} });
+    }
+  };
+  return voice;
 }
 
 /* =========================
@@ -1011,14 +1022,68 @@ function getChordNotes(root, chordType, voicing, bassNote){
     return {name, octave};
   });
 
-  // bass
   const actualBass = bassNote === 'root' ? root : bassNote;
   objs.unshift({name: actualBass, octave: 2});
   return objs;
 }
 
 /* =========================
-   RENDER UI
+   MUSIC MODE: compute end time
+   - durationBeats is in quarter notes
+   - sequencer step is 16th => 4 steps per beat
+   LEGATO rule:
+     chord may ring across empty steps, but stops at next ACTIVE chord if it arrives before nominal duration end
+   CHOKE rule:
+     cut previous voices at every step start, then play new (if active)
+========================= */
+function stepLenSec(){ return (60/state.bpm)/4; } // 16th
+function durBeatsToSteps(durationBeats){ return Math.max(1, Math.round(durationBeats * 4)); }
+
+function stepsToNextActive(fromStep){
+  for(let k=1;k<=16;k++){
+    const j = (fromStep + k) % 16;
+    if(state.steps[j].active) return k;
+  }
+  return null;
+}
+
+function playChordVoices(noteObjs, velocity, t0, tOff){
+  ensureAudio();
+
+  noteObjs.forEach(n=>{
+    const f = noteToFreq(n.name, n.octave);
+    if(state.synth.strings){
+      const v = createStringVoice(f, velocity, t0);
+      activeVoices.push(v);
+      v.stopAt(tOff);
+    }
+    if(state.synth.organ){
+      const v = createOrganVoice(f, velocity, t0);
+      activeVoices.push(v);
+      v.stopAt(tOff);
+    }
+  });
+}
+
+function chokeAllAt(t0){
+  if(!AC) return;
+  // fast choke to avoid clicks but still snappy groovebox feel
+  const fast = 0.018;
+  activeVoices.forEach(v=>{
+    try{ v.chokeAt(t0, fast); }catch(e){}
+  });
+  // cleanup old refs soon
+  setTimeout(()=>cleanupVoices(), 350);
+}
+
+function cleanupVoices(){
+  if(!AC){ activeVoices=[]; return; }
+  const now = AC.currentTime;
+  activeVoices = activeVoices.filter(v => (v._stopT ?? now) > now + 0.05);
+}
+
+/* =========================
+   UI BINDINGS
 ========================= */
 const els = {
   kBpm: document.getElementById("kBpm"),
@@ -1032,6 +1097,7 @@ const els = {
   btnStop: document.getElementById("btnStop"),
   btnMetro: document.getElementById("btnMetro"),
   btnMetOn: document.getElementById("btnMetOn"),
+  btnMode: document.getElementById("btnMode"),
 
   keySelect: document.getElementById("keySelect"),
   scaleSelect: document.getElementById("scaleSelect"),
@@ -1088,7 +1154,6 @@ function refreshTop(){
   const sname = els.scaleSelect.options[els.scaleSelect.selectedIndex]?.textContent || state.scale;
   els.kScale.textContent = sname;
 
-  // params display
   const st = state.steps[state.selectedStep];
   els.selectedStepNum.textContent = String(state.selectedStep+1);
   els.velocityValue.textContent = String(st.velocity);
@@ -1099,32 +1164,29 @@ function refreshTop(){
   els.vBass.textContent = st.bass;
   els.vDur.textContent = String(st.duration);
 
-  // fx
   els.vMet.textContent = state.metOn ? "on" : "off";
   els.vSat.textContent = state.sat.toFixed(2);
   els.vEcho.textContent = `mix ${state.echoMix.toFixed(2)}`;
 
-  // synth
   els.attackValue.textContent = state.synth.attack.toFixed(2)+"s";
   els.releaseValue.textContent = state.synth.release.toFixed(2)+"s";
   els.brightnessValue.textContent = Math.round(state.synth.brightness*100)+"%";
   els.ensembleValue.textContent = Math.round(state.synth.ensemble*100)+"%";
   els.vMaster.textContent = Math.round(state.master*100)+"%";
-  els.vCh.textContent = state.synth.chorus ? "on" : "off";
+  els.vCh.textContent = `chorus ${state.synth.chorus ? "on" : "off"}`;
 
-  // audio
-  if(AC) applyAudioParams();
-
-  // met buttons state
   els.btnMetro.classList.toggle("active", state.metOn);
   els.btnMetOn.classList.toggle("active", state.metOn);
+
+  els.btnMode.textContent = `MODE: ${state.playMode}`;
+  els.btnMode.classList.toggle("active", state.playMode === "CHOKE");
+
+  if(AC) applyAudioParams();
 }
 
 function renderKeyMenus(){
   els.keySelect.innerHTML = NOTES.map(n=>`<option value="${n}">${n}</option>`).join("");
   els.rootSelect.innerHTML = NOTES.map(n=>`<option value="${n}">${n}</option>`).join("");
-
-  // bass: root + all
   els.bassSelect.innerHTML =
     `<option value="root">Fondamentale</option>` +
     NOTES.map(n=>`<option value="${n}">${n}</option>`).join("");
@@ -1222,7 +1284,12 @@ function previewCurrentChord(){
   const st = state.steps[state.selectedStep];
   if(!st.active) return;
   const notes = getChordNotes(st.root, st.chordType, st.voicing, st.bass);
-  playChord(notes, st.velocity, 0.5);
+  ensureAudio();
+  if(AC.state==="suspended") AC.resume();
+  const t0 = AC.currentTime + 0.01;
+  const tOff = t0 + 0.40;
+  playChordVoices(notes, st.velocity, t0, tOff);
+  setTimeout(()=>cleanupVoices(), 700);
 }
 
 /* =========================
@@ -1232,6 +1299,27 @@ let intervalId = null;
 let metIntervalId = null;
 
 function stepMs(){ return (60/state.bpm)*1000/4; } // 16th
+
+function computeChordOffTime(stepIndex, t0, durationBeats){
+  const sLen = stepLenSec();
+  const durSteps = durBeatsToSteps(durationBeats);
+  const nominalEnd = t0 + durSteps*sLen;
+
+  if(state.playMode === "CHOKE"){
+    // CHOKE: duration still matters for release tail, but next step will choke anyway
+    return nominalEnd;
+  }
+
+  // LEGATO: if next active chord happens before nominal end, stop at that next chord start
+  const k = stepsToNextActive(stepIndex);
+  if(k != null){
+    const nextStart = t0 + k*sLen;
+    if(nextStart < nominalEnd){
+      return nextStart; // cut exactly when next chord starts
+    }
+  }
+  return nominalEnd;
+}
 
 function startSequencer(){
   ensureAudio();
@@ -1246,21 +1334,34 @@ function startSequencer(){
 
   const t = stepMs();
   intervalId = setInterval(()=>{
-    state.currentStep = (state.currentStep + 1) % 16;
-    const st = state.steps[state.currentStep];
+    cleanupVoices();
 
-    // update top
-    els.kStep.textContent = String(state.currentStep+1);
+    state.currentStep = (state.currentStep + 1) % 16;
+    const idx = state.currentStep;
+    const st = state.steps[idx];
+
+    // UI
+    els.kStep.textContent = String(idx+1);
     els.kChord.textContent = st.active ? `${st.root}${CHORD_NAMES[st.chordType]}` : "—";
+
+    // CHOKE mode: cut previous at every step start
+    if(state.playMode === "CHOKE"){
+      chokeAllAt(AC.currentTime + 0.001);
+    }
 
     if(st.active){
       const notes = getChordNotes(st.root, st.chordType, st.voicing, st.bass);
-      playChord(notes, st.velocity, st.duration);
+
+      // schedule times (simple, but stable enough)
+      const t0 = AC.currentTime + 0.003;
+
+      const tOff = computeChordOffTime(idx, t0, st.duration);
+      playChordVoices(notes, st.velocity, t0, tOff);
     }
+
     renderSteps();
   }, t);
 
-  // metronome scheduling: simple setInterval on quarter note
   startMetronome();
 }
 
@@ -1269,7 +1370,16 @@ function stopSequencer(){
   state.currentStep = -1;
   if(intervalId){ clearInterval(intervalId); intervalId=null; }
   stopMetronome();
-  releaseVoices();
+
+  // PANIC stop (fast fade)
+  if(AC){
+    const now = AC.currentTime;
+    activeVoices.forEach(v=>{
+      try{ v.chokeAt(now, 0.03); }catch(e){}
+    });
+  }
+  activeVoices = [];
+
   renderSteps();
 
   els.btnPlay.classList.remove("playing");
@@ -1283,7 +1393,7 @@ function startMetronome(){
   if(!state.metOn || !AC) return;
 
   let beat = 0;
-  const qMs = (60/state.bpm)*1000; // quarter
+  const qMs = (60/state.bpm)*1000;
   metIntervalId = setInterval(()=>{
     const t = AC.currentTime + 0.01;
     const accent = (beat % 4) === 0;
@@ -1332,6 +1442,11 @@ els.btnAudio.addEventListener("click", async ()=>{
 els.btnPlay.addEventListener("click", ()=>{ state.playing ? stopSequencer() : startSequencer(); });
 els.btnStop.addEventListener("click", stopSequencer);
 
+els.btnMode.addEventListener("click", ()=>{
+  state.playMode = (state.playMode === "LEGATO") ? "CHOKE" : "LEGATO";
+  refreshTop();
+});
+
 els.btnMetro.addEventListener("click", ()=>{
   ensureAudio();
   state.metOn = !state.metOn;
@@ -1348,7 +1463,6 @@ els.btnMetOn.addEventListener("click", ()=>{
 els.keySelect.addEventListener("change", e=>{
   state.key = e.target.value;
   renderScaleNotes(); renderScaleDegrees();
-  // update preview for current step
   previewCurrentChord();
   refreshTop();
 });
@@ -1401,14 +1515,14 @@ els.btnClearAll.addEventListener("click", ()=>{
 });
 els.btnRandom.addEventListener("click", ()=>{
   const chords = getScaleChords(state.key, state.scale);
-  state.steps.forEach((s,i)=>{
+  state.steps.forEach((s)=>{
     if(Math.random()>0.30){
       const ch = chords[Math.floor(Math.random()*chords.length)];
       s.active=true;
       s.root=ch.root;
       s.chordType=ch.type;
       s.velocity=80 + Math.floor(Math.random()*40);
-      s.duration = [0.5,1,1,2][Math.floor(Math.random()*4)];
+      s.duration = [0.25,0.5,1,2][Math.floor(Math.random()*4)];
       s.voicing = ["close","open","drop2","spread"][Math.floor(Math.random()*4)];
       s.bass = (Math.random()<0.75) ? "root" : NOTES[Math.floor(Math.random()*12)];
     }else{
@@ -1429,11 +1543,10 @@ els.btnPaste.addEventListener("click", ()=>{
   previewCurrentChord();
 });
 
-// Ranges: BPM + synth + fx
+// Ranges
 wireRange("rBpm", v=>{
   state.bpm = Math.round(v);
   if(state.playing){
-    // restart timers to apply tempo immediately
     stopSequencer();
     startSequencer();
   }else{
@@ -1487,7 +1600,6 @@ els.btnChorus.addEventListener("click", ()=>{
   ensureAudio();
   state.synth.chorus = !state.synth.chorus;
   els.btnChorus.classList.toggle("grn", state.synth.chorus);
-  els.btnChorus.textContent = state.synth.chorus ? "ON" : "OFF";
   applyAudioParams();
   refreshTop();
 });
@@ -1504,41 +1616,37 @@ els.btnOrgan.addEventListener("click", ()=>{
 window.addEventListener("keydown",(e)=>{
   if(e.key===" "){ e.preventDefault(); state.playing ? stopSequencer() : startSequencer(); }
   if(e.key.toLowerCase()==="m"){ state.metOn=!state.metOn; refreshTop(); if(state.playing) startMetronome(); }
+  if(e.key.toLowerCase()==="l"){ state.playMode="LEGATO"; refreshTop(); }
+  if(e.key.toLowerCase()==="c"){ state.playMode="CHOKE"; refreshTop(); }
 });
 
 /* =========================
    INIT
 ========================= */
 function init(){
-  // build menus
   renderKeyMenus();
   els.scaleSelect.value = state.scale;
 
-  // init first step
   state.steps[0].active=true;
   state.steps[0].root=state.key;
   state.steps[0].chordType='maj';
 
-  // set selects to selected step
   updateParamsUI();
-
-  // render panels
   renderScaleNotes();
   renderScaleDegrees();
   renderSteps();
   refreshTop();
 
-  // init toggles visuals
   els.btnChorus.classList.toggle("grn", state.synth.chorus);
   els.btnOrgan.classList.toggle("grn", state.synth.organ);
   els.btnStrings.classList.toggle("grn", state.synth.strings);
 
-  // range pct for any ranges not wired yet
   ["rBpm","rMetVol","rSat","rEchoMix","rEchoTime","rEchoFb","rAtk","rRel","rBri","rEns","rMaster","velocitySlider"].forEach(id=>{
     const el=document.getElementById(id);
     if(el && el.type==="range") setRangePct(el);
   });
 }
+
 document.addEventListener("DOMContentLoaded", init);
 
 })();
