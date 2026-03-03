@@ -80,7 +80,7 @@ body{
 .brand-name{ font-size:13px; letter-spacing:.22em; font-weight:700; text-transform:uppercase; white-space:nowrap; }
 .brand-sub{ font-size:8.5px; letter-spacing:.07em; color:var(--ink-dim); margin-top:2px; display:none; }
 @media(min-width:480px){ .brand-sub{ display:block; } }
-.transport-btns{ display:flex; gap:6px; align-items:center; }
+.transport-btns{ display:flex; gap:6px; align-items:center; flex-wrap:wrap; }
 
 /* ── MASTER VOLUME ── */
 .vol-strip{
@@ -114,7 +114,6 @@ input[type=range]::-moz-range-thumb{
 .pill strong{ color:var(--ink); font-weight:700; }
 .pill.hot{ border-color:rgba(217,53,53,.45); background:rgba(217,53,53,.08); }
 .pill.hot strong{ color:var(--red-hi); }
-.spacer{ flex:1; }
 
 /* ── CARD ── */
 .card{ background:var(--s1); border:1px solid var(--border); border-radius:var(--r); box-shadow:var(--sh); position:relative; }
@@ -167,6 +166,7 @@ input[type=range]::-moz-range-thumb{
 
 /* ═══════════════════════════════════════════
    STEPS — Page A/B (16 visible) for 32 total
+   + Better chord readability
 ═══════════════════════════════════════════ */
 .steps-grid{
   display:grid;
@@ -181,35 +181,86 @@ input[type=range]::-moz-range-thumb{
   border-radius:var(--r-sm);
   border:1px solid rgba(255,255,255,.08);
   background:var(--s2);
-  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:1px;
-  cursor:pointer; touch-action:none; overflow:hidden;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:4px;
+  cursor:pointer;
+  touch-action:none;
+  overflow:hidden;
   transition:background .08s,border-color .08s,box-shadow .08s,transform .06s;
   -webkit-tap-highlight-color:transparent;
 }
+/* top accent bar */
 .step::before{
   content:""; position:absolute; top:0; left:0; right:0; height:3px;
   background:var(--grn); opacity:0; transition:opacity .08s;
 }
-.step-num{ position:absolute; bottom:3px; left:4px; font-size:7.5px; color:rgba(255,255,255,.22); }
+
+/* corners less dominant */
+.step-num{
+  position:absolute; top:4px; left:5px;
+  font-size:7.5px;
+  color:rgba(255,255,255,.18);
+}
 .step-pos{
-  position:absolute; top:4px; right:4px; font-size:7px; color:rgba(255,255,255,.20);
-  background:rgba(0,0,0,.3); padding:1px 3px; border-radius:999px;
-  border:1px solid rgba(255,255,255,.07); line-height:1.2;
+  position:absolute; top:4px; right:4px;
+  font-size:7px;
+  color:rgba(255,255,255,.16);
+  background:rgba(0,0,0,.28);
+  padding:1px 4px;
+  border-radius:999px;
+  border:1px solid rgba(255,255,255,.06);
+  line-height:1.2;
 }
-.step-root{ font-size:10.5px; font-weight:700; color:var(--ink-dim); line-height:1; }
-.step-type{ font-size:7.5px; color:var(--ink-dim); opacity:.7; letter-spacing:.04em; }
 
+/* main chord (big) */
+.step-chord{
+  font-size:14px;
+  font-weight:900;
+  letter-spacing:.02em;
+  line-height:1;
+  color:var(--ink-dim);
+  text-shadow:0 1px 0 rgba(0,0,0,.35);
+}
+.step-chord .acc{
+  font-size:.75em;
+  vertical-align:top;
+  opacity:.95;
+}
+
+/* quality badge */
+.step-qual{
+  font-size:8.5px;
+  letter-spacing:.10em;
+  text-transform:uppercase;
+  padding:2px 6px;
+  border-radius:999px;
+  border:1px solid rgba(255,255,255,.10);
+  background:rgba(0,0,0,.22);
+  color:rgba(220,228,240,.55);
+  line-height:1.2;
+}
+
+/* downbeat dot */
 .step.beat1::after{
-  content:""; position:absolute; bottom:3px; right:4px;
-  width:4px; height:4px; border-radius:50%; background:rgba(217,53,53,.5);
+  content:""; position:absolute; bottom:4px; right:5px;
+  width:4px; height:4px; border-radius:50%; background:rgba(217,53,53,.55);
 }
 
+/* ON */
 .step.on{ border-color:rgba(46,201,138,.45); background:rgba(46,201,138,.06); }
 .step.on::before{ opacity:.85; }
-.step.on .step-root{ color:var(--grn); }
-.step.on .step-type{ color:rgba(46,201,138,.75); opacity:1; }
-.step.on .step-pos{ color:rgba(46,201,138,.55); }
+.step.on .step-chord{ color:var(--grn); }
+.step.on .step-qual{
+  border-color:rgba(46,201,138,.45);
+  background:rgba(46,201,138,.10);
+  color:rgba(46,201,138,.85);
+}
+.step.on .step-pos{ color:rgba(46,201,138,.40); border-color:rgba(46,201,138,.22); }
 
+/* PLAYING */
 .step.play{
   border-color:rgba(217,53,53,.95);
   background:rgba(217,53,53,.15);
@@ -217,9 +268,13 @@ input[type=range]::-moz-range-thumb{
   transform:scale(.96);
 }
 .step.play::before{ background:var(--red-hi); opacity:1; }
-.step.play .step-root{ color:#fff; }
-.step.play .step-type{ color:rgba(255,200,200,.8); opacity:1; }
-.step.play .step-pos{ color:rgba(255,150,150,.6); }
+.step.play .step-chord{ color:#fff; }
+.step.play .step-qual{
+  border-color:rgba(255,140,140,.45);
+  background:rgba(217,53,53,.22);
+  color:#fff;
+}
+.step.play .step-pos{ color:rgba(255,170,170,.55); border-color:rgba(255,140,140,.25); }
 
 /* ── CIRCLE ── */
 .circle-grid{ display:grid; grid-template-columns:repeat(6,1fr); gap:5px; }
@@ -265,8 +320,8 @@ input[type=range]::-moz-range-thumb{
 ::-webkit-scrollbar-thumb{ background:rgba(255,255,255,.09); border-radius:999px; }
 </style>
 </head>
-<body>
 
+<body>
 <div class="shell">
 
   <!-- TOPBAR -->
@@ -436,8 +491,8 @@ input[type=range]::-moz-range-thumb{
 /* ==========================
    CONFIG
 ========================== */
-const STEPS = 32;      // total steps
-const PAGE_SIZE = 16;  // visible steps per page
+const STEPS = 32;
+const PAGE_SIZE = 16;
 
 // Theory
 const NOTE_NAMES=["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"];
@@ -449,6 +504,7 @@ const PRESETS={
   house:{name:"House",pickType(pos,step){const p=(pos===0)?["maj7","6"]:(pos===1||pos===11)?["dom7","9","sus4"]:(pos===2||pos===10)?["m7","m9"]:["m7","dom7","maj7","sus2"];return p[(step*3+pos)%p.length];}},
   jazz:{name:"Jazz",pickType(pos,step){const p=(pos===0)?["maj9","maj7"]:(pos===1||pos===11)?["9","dom7","sus4"]:(pos===2||pos===10)?["m9","m11","m7"]:["m9","9","dom7","m7","maj7","sus2"];return p[(step+pos*2)%p.length];}}
 };
+
 function pcToName(pc){return NOTE_NAMES[(pc%12+12)%12];}
 function clamp(x,a,b){return Math.min(b,Math.max(a,x));}
 function voiceChord(notes,spread){
@@ -466,6 +522,19 @@ function buildChordMidi(rootPC,quality,octave,spread){
   return voiceChord(intervals.map(s=>base+s),spread);
 }
 
+/* ===== Step chord display helpers ===== */
+function noteToHTML(noteName){
+  return noteName.includes("#")
+    ? noteName.replace("#", '<span class="acc">#</span>')
+    : noteName;
+}
+function typeToBadge(type){
+  if(!type) return "—";
+  return type
+    .replace("maj","M")
+    .replace("dom7","7");
+}
+
 // State
 let AC=null,master=null,masterGain=null,comp=null,sat=null,toneLP=null,toneHP=null;
 let chorus=null,reverb=null,dryGain=null,wetChorus=null,wetVerb=null,verbDuck=null;
@@ -473,7 +542,7 @@ let chorus=null,reverb=null,dryGain=null,wetChorus=null,wetVerb=null,verbDuck=nu
 // Metronome
 let metGain=null, metHP=null;
 
-let page = 0; // 0 = 1..16, 1 = 17..32
+let page = 0;
 
 const S={
   playing:false,
@@ -589,7 +658,6 @@ function ensureAudio(){
   chorus.out.connect(wetChorus);
   reverb.out.connect(verbDuck);verbDuck.connect(wetVerb);
 
-  // metronome -> masterGain (post-master mix, but still under master volume)
   metHP.connect(metGain);
   metGain.connect(masterGain);
 
@@ -670,15 +738,12 @@ function playChord(midiNotes,t,holdUntil,velocity){
 }
 
 /* ==========================
-   METRONOME (audio)
+   METRONOME
 ========================== */
 function metTick(time, accent=false){
   if(!AC || !S.metOn || !metGain) return;
 
-  // a short click: osc + tiny noise
   const t = time;
-
-  // tone click
   const o = AC.createOscillator();
   o.type = "square";
   o.frequency.setValueAtTime(accent ? 1400 : 1000, t);
@@ -689,7 +754,6 @@ function metTick(time, accent=false){
   g.gain.exponentialRampToValueAtTime(peak, t + 0.001);
   g.gain.exponentialRampToValueAtTime(0.0001, t + (accent ? 0.045 : 0.035));
 
-  // tiny noise snap
   const n = AC.createBufferSource();
   n.buffer = makeNoiseBuf(AC, 0.02);
   const ng = AC.createGain();
@@ -697,16 +761,12 @@ function metTick(time, accent=false){
   ng.gain.exponentialRampToValueAtTime(accent ? 0.10 : 0.07, t + 0.001);
   ng.gain.exponentialRampToValueAtTime(0.0001, t + 0.02);
 
-  o.connect(g);
-  g.connect(metHP);
-  n.connect(ng);
-  ng.connect(metHP);
+  o.connect(g); g.connect(metHP);
+  n.connect(ng); ng.connect(metHP);
 
-  o.start(t);
-  n.start(t);
+  o.start(t); n.start(t);
   const stopT = t + 0.06;
-  o.stop(stopT);
-  n.stop(stopT);
+  o.stop(stopT); n.stop(stopT);
 }
 
 /* ==========================
@@ -715,7 +775,7 @@ function metTick(time, accent=false){
 let nextNoteTime=0,timerID=null;
 const LOOKAHEAD=.025,SCHED=.12;
 
-function stepDur(){return (60/S.bpm)/4;} // 16th
+function stepDur(){return (60/S.bpm)/4;}
 function isActive(i){return S.steps[i].on||(S.fill&&i%2===1);}
 
 function findNextTime(from,base){
@@ -757,18 +817,14 @@ function highlightStep(si,chord){
 }
 
 function scheduleStep(si,time){
-  // metronome first (always on step grid, independent of chord on/off)
-  // accent on bar downbeat (step 0) and also on step 16 (start of page B / bar 2) if you want:
-  const isQuarter = (si % 4) === 0;         // 1/4 notes at 16th grid
+  const isQuarter = (si % 4) === 0;
   if(isQuarter){
-    const isBar = (si % 16) === 0;          // bar downbeat every 16 steps
-    // respect swing/human so the click matches groove feel:
+    const isBar = (si % 16) === 0;
     const d=stepDur(),isOff=(si%2===1);
     const tt=time+(isOff?(S.swing-.5)*d*2:0)+(Math.random()*2-1)*S.human;
     metTick(tt, isBar);
   }
 
-  // chord scheduling
   if(!AC || !isActive(si)) return;
 
   const d=stepDur(),isOff=si%2===1;
@@ -830,6 +886,8 @@ function refreshDisplay(){
   set("vSwing",S.swing.toFixed(2));
   set("vHuman",S.human.toFixed(3)+"s");
   set("vGate",S.gate.toFixed(2));
+
+  // Sound section
   set("vAcc",S.accent.toFixed(2));
   set("vSpread",S.spread.toFixed(2));
   set("vDrive",S.drive.toFixed(2));
@@ -837,6 +895,7 @@ function refreshDisplay(){
   set("vStab",S.stability.toFixed(2));
   set("vVibe",S.vibe.toFixed(2));
   set("vRel",S.release.toFixed(2)+"s");
+
   set("vVol",Math.round(S.volume*100)+"%");
   set("vMet",S.metVol.toFixed(2));
 
@@ -868,7 +927,7 @@ function renderCircle(){
 }
 
 /* ==========================
-   STEPS (Page A/B)
+   STEPS (Page A/B) — readable chord display
 ========================== */
 function stepLabel(i){
   const st=S.steps[i],preset=curPreset();
@@ -876,8 +935,14 @@ function stepLabel(i){
   const type=st.type||preset.pickType(pos,i);
   const chord=getChord(i);
   const on=isActive(i);
-  const shortType=type?type.replace("maj","M").replace("dom","7"):"—";
-  return {root:on?pcToName(chord.rootPC):"—",type:on?shortType:"off",pos:"p"+pos,on};
+
+  const rootName = pcToName(chord.rootPC);
+  return {
+    rootHTML: on ? noteToHTML(rootName) : "—",
+    qual: on ? typeToBadge(type) : "off",
+    pos: "p"+pos,
+    on
+  };
 }
 
 function cycleType(i,dir){
@@ -923,8 +988,8 @@ function renderSteps(){
     el.innerHTML =
       '<span class="step-num">'+(i+1)+'</span>'+
       '<span class="step-pos">'+lab.pos+'</span>'+
-      '<span class="step-root">'+lab.root+'</span>'+
-      '<span class="step-type">'+lab.type+'</span>';
+      '<span class="step-chord">'+lab.rootHTML+'</span>'+
+      '<span class="step-qual">'+lab.qual+'</span>';
 
     el.addEventListener("click",()=>{ensureAudio();st.on=!st.on;renderSteps();});
     attachDrag(el,i);
@@ -937,9 +1002,11 @@ function renderSteps(){
 ========================== */
 function snapshot(){
   return {
-    bpm:S.bpm,swing:S.swing,human:S.human,gate:S.gate,accent:S.accent,octave:S.octave,stability:S.stability,
-    spread:S.spread,drive:S.drive,vibe:S.vibe,release:S.release,volume:S.volume,
-    presetKey:S.presetKey,keyCenterPC:S.keyCenterPC,circleRotation:S.circleRotation,hold:S.hold,fill:S.fill,
+    bpm:S.bpm,swing:S.swing,human:S.human,gate:S.gate,
+    accent:S.accent,octave:S.octave,stability:S.stability,
+    spread:S.spread,drive:S.drive,vibe:S.vibe,release:S.release,
+    volume:S.volume,presetKey:S.presetKey,keyCenterPC:S.keyCenterPC,
+    circleRotation:S.circleRotation,hold:S.hold,fill:S.fill,
     metOn:S.metOn, metVol:S.metVol,
     steps:S.steps.map(s=>({on:s.on,pos:s.pos,type:s.type}))
   };
@@ -951,15 +1018,22 @@ function syncRange(id,val){
 function applySnapshot(s){
   if(!s) return;
   Object.assign(S,{
-    bpm:s.bpm,swing:s.swing,human:s.human,gate:s.gate,accent:s.accent,octave:s.octave,stability:s.stability,
-    spread:s.spread,drive:s.drive,vibe:s.vibe,release:s.release,volume:s.volume??S.volume,
+    bpm:s.bpm,swing:s.swing,human:s.human,gate:s.gate,
+    accent:s.accent,octave:s.octave,stability:s.stability,
+    spread:s.spread,drive:s.drive,vibe:s.vibe,release:s.release,
+    volume:s.volume??S.volume,
     presetKey:s.presetKey,keyCenterPC:s.keyCenterPC,circleRotation:s.circleRotation,
     hold:!!s.hold,fill:!!s.fill,
     metOn:!!s.metOn, metVol: (typeof s.metVol==="number") ? s.metVol : S.metVol
   });
   S.steps=s.steps.map(x=>({on:x.on,pos:x.pos,type:x.type}));
 
-  const map={rBpm:"bpm",rSwing:"swing",rHuman:"human",rGate:"gate",rAcc:"accent",rOct:"octave",rStab:"stability",rSpread:"spread",rDrive:"drive",rVibe:"vibe",rRel:"release",rVol:"volume",rMet:"metVol"};
+  const map={
+    rBpm:"bpm", rSwing:"swing", rHuman:"human", rGate:"gate",
+    rAcc:"accent", rOct:"octave", rStab:"stability",
+    rSpread:"spread", rDrive:"drive", rVibe:"vibe", rRel:"release",
+    rVol:"volume", rMet:"metVol"
+  };
   Object.keys(map).forEach(id=>syncRange(id,S[map[id]]));
 
   document.querySelectorAll("[data-preset]").forEach(b=>b.classList.toggle("active",b.dataset.preset===S.presetKey));
@@ -968,6 +1042,7 @@ function applySnapshot(s){
 
   if(AC){
     masterGain.gain.setTargetAtTime(S.volume,AC.currentTime,.02);
+    sat.curve = makeSatCurve(S.drive);
     applyVibe();
     applyMet();
   }
@@ -1038,24 +1113,37 @@ function upMet(){
 }
 
 /* ==========================
-   WIRE CONTROLS
+   WIRE CONTROLS (ALL)
 ========================== */
 initRange("rVol",v=>{
   S.volume=v;
   if(AC&&masterGain) masterGain.gain.setTargetAtTime(v,AC.currentTime,.02);
 });
+
 initRange("rBpm",v=>S.bpm=Math.round(v));
 initRange("rSwing",v=>S.swing=v);
 initRange("rHuman",v=>S.human=v);
 initRange("rGate",v=>S.gate=v);
+initRange("rMet",v=>{S.metVol=v;if(AC)applyMet();});
+
+// Sound sliders (FIX)
 initRange("rAcc",v=>S.accent=v);
 initRange("rSpread",v=>S.spread=v);
-initRange("rDrive",v=>{S.drive=v;if(AC)sat.curve=makeSatCurve(S.drive);});
+
+initRange("rDrive",v=>{
+  S.drive=v;
+  if(AC) sat.curve = makeSatCurve(S.drive);
+});
+
 initRange("rOct",v=>S.octave=Math.round(v));
 initRange("rStab",v=>S.stability=v);
-initRange("rVibe",v=>{S.vibe=v;if(AC)applyVibe();});
+
+initRange("rVibe",v=>{
+  S.vibe=v;
+  if(AC) applyVibe();
+});
+
 initRange("rRel",v=>S.release=v);
-initRange("rMet",v=>{S.metVol=v;if(AC)applyMet();});
 
 document.querySelectorAll("[data-preset]").forEach(btn=>{
   btn.addEventListener("click",()=>{
@@ -1072,7 +1160,6 @@ document.querySelectorAll("[data-preset]").forEach(btn=>{
    BUTTONS
 ========================== */
 document.getElementById("btnBack").addEventListener("click",()=>{
-  // behaves like "return" in other plugins
   if(history.length>1) history.back();
   else window.location.href="./";
 });
@@ -1084,16 +1171,13 @@ document.getElementById("btnAudio").addEventListener("click",async ()=>{
     const b=document.getElementById("btnAudio");
     b.classList.add("active");
     b.textContent="AUDIO ✓";
-  }catch(_){
-    // no-op
-  }
+  }catch(_){}
 });
 
 document.getElementById("btnMet").addEventListener("click",()=>{
   ensureAudio();
   S.metOn=!S.metOn;
   upMet();
-  // audible confirmation tick
   if(AC && S.metOn){
     const t=AC.currentTime+0.02;
     metTick(t,true);
@@ -1160,12 +1244,14 @@ renderCircle();
 renderSteps();
 renderScenes();
 refreshDisplay();
-setRangePct(document.getElementById("rVol"));
-setRangePct(document.getElementById("rBpm"));
-setRangePct(document.getElementById("rSwing"));
-setRangePct(document.getElementById("rHuman"));
-setRangePct(document.getElementById("rGate"));
-setRangePct(document.getElementById("rMet"));
+
+[
+  "rVol","rBpm","rSwing","rHuman","rGate","rMet",
+  "rAcc","rSpread","rDrive","rOct","rStab","rVibe","rRel"
+].forEach(id=>{
+  const el=document.getElementById(id);
+  if(el) setRangePct(el);
+});
 
 })();
 </script>
