@@ -286,7 +286,7 @@ select:focus{ border-color:rgba(217,53,53,.55); }
     <div class="transport">
       <button id="btnAudio" class="btn grn sm"><span class="led"></span> AUDIO</button>
       <button id="btnMetro" class="btn sm"><span class="led"></span> METRO</button>
-      <!-- STOP button removed (Play toggles start/stop) -->
+      <!-- STOP removed: Play toggles -->
       <button id="btnPlay" class="btn red sm">▶ PLAY</button>
     </div>
   </div>
@@ -317,6 +317,14 @@ select:focus{ border-color:rgba(217,53,53,.55); }
               <option value="locrian">Locrien</option>
             </select>
           </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <!-- MASTER moved above BPM -->
+        <div class="ctrl">
+          <div class="ctrl-head"><span class="ctrl-lbl">Master</span><span class="ctrl-val" id="vMaster">30%</span></div>
+          <input id="rMaster" type="range" min="0" max="1" step="0.01" value="0.30">
         </div>
 
         <div class="divider"></div>
@@ -485,12 +493,6 @@ select:focus{ border-color:rgba(217,53,53,.55); }
         </div>
         <div class="card-body" id="bSynth">
           <div class="fx-grid">
-            <!-- MASTER moved to the top -->
-            <div class="ctrl">
-              <div class="ctrl-head"><span class="ctrl-lbl">Master</span><span class="ctrl-val" id="vMaster">30%</span></div>
-              <input id="rMaster" type="range" min="0" max="1" step="0.01" value="0.30">
-            </div>
-
             <div class="ctrl">
               <div class="ctrl-head"><span class="ctrl-lbl">Attack</span><span class="ctrl-val" id="attackValue">0.10s</span></div>
               <input id="rAtk" type="range" min="0.005" max="0.60" step="0.005" value="0.10">
@@ -513,7 +515,6 @@ select:focus{ border-color:rgba(217,53,53,.55); }
                 <span class="ctrl-lbl">Blend</span>
                 <span class="ctrl-val" id="vBlend">STR 0 / ORG 100</span>
               </div>
-              <!-- default to 100% Organ -->
               <input id="rBlend" type="range" min="0" max="1" step="0.01" value="1.00">
               <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:8px">
                 <button id="btnStrings" class="btn xs grn"><span class="led"></span> STR</button>
@@ -626,9 +627,9 @@ const state = {
     brightness:0.50,
     ensemble:0.60,
     strings:true,
-    organ:true,       // ✅ ON
-    chorus:false,     // ✅ OFF
-    blend:1.00        // ✅ 0=strings, 1=organ
+    organ:true,
+    chorus:false,
+    blend:1.00   // ✅ 100% organ
   },
 
   metOn:false,
@@ -717,7 +718,7 @@ function ensureAudio(){
   stringsGain = AC.createGain();
   organGain   = AC.createGain();
 
-  // initialise explicit values (will be overridden by applyAudioParams(true))
+  // init values (applyAudioParams(true) will override)
   stringsGain.gain.value = 0.0;
   organGain.gain.value   = 1.0;
 
@@ -929,7 +930,6 @@ function createStringVoice(freq, velocity, startTime){
   const osc2 = AC.createOscillator();
   const osc3 = AC.createOscillator();
 
-  // softer strings
   osc1.type = 'triangle';
   osc2.type = 'sawtooth';
   osc3.type = 'sawtooth';
@@ -1242,7 +1242,6 @@ function refreshTop(){
   els.btnLen.textContent = `LEN: ${state.seqLen}`;
   els.seqLabel.textContent = `Séquenceur ${state.seqLen} steps`;
 
-  // show ON sources in green
   els.btnStrings.classList.toggle("grn", state.synth.strings);
   els.btnOrgan.classList.toggle("grn", state.synth.organ);
   els.btnChorus.classList.toggle("grn", state.synth.chorus);
@@ -1333,6 +1332,10 @@ function updateParamsUI(){
   els.bassSelect.value = st.bass;
   els.durationSelect.value = String(st.duration);
   els.velocitySlider.value = String(st.velocity);
+
+  // ✅ keep slider fill in sync even when step changes
+  setRangePct(els.velocitySlider);
+
   refreshTop();
 }
 
@@ -1378,7 +1381,6 @@ function setSeqLen(newLen){
 
 /* =========================
    SEQUENCER (tempo-safe)
-   - reschedules interval on BPM change without UI glitches
 ========================= */
 let intervalId = null;
 let metIntervalId = null;
@@ -1584,8 +1586,12 @@ els.durationSelect.addEventListener("change", e=>{
   state.steps[state.selectedStep].duration = parseFloat(e.target.value);
   updateParamsUI();
 });
+
+// ✅ Velocity slider: keep fill updated
 els.velocitySlider.addEventListener("input", e=>{
-  state.steps[state.selectedStep].velocity = parseInt(e.target.value,10);
+  const el = e.target;
+  state.steps[state.selectedStep].velocity = parseInt(el.value,10);
+  setRangePct(el);
   updateParamsUI();
 });
 
@@ -1623,8 +1629,10 @@ els.btnPaste.addEventListener("click", ()=>{
 // Ranges
 wireRange("rBpm", v=>{
   state.bpm = Math.round(v);
-  rescheduleTempo(); // ✅ avoids UI flicker / tempo “bug”
+  rescheduleTempo();
 });
+wireRange("rMaster", v=>{ state.master = v; if(AC) applyAudioParams(false); });
+
 wireRange("rMetVol", v=>{ state.metVol = v; if(AC) applyAudioParams(false); });
 wireRange("rSat", v=>{ state.sat = v; if(AC) applyAudioParams(false); });
 wireRange("rEchoMix", v=>{ state.echoMix = v; if(AC) applyAudioParams(false); });
@@ -1635,7 +1643,6 @@ wireRange("rAtk", v=>{ state.synth.attack = v; });
 wireRange("rRel", v=>{ state.synth.release = v; });
 wireRange("rBri", v=>{ state.synth.brightness = v; if(AC) applyAudioParams(false); });
 wireRange("rEns", v=>{ state.synth.ensemble = v; if(AC) applyAudioParams(false); });
-wireRange("rMaster", v=>{ state.master = v; if(AC) applyAudioParams(false); });
 wireRange("rBlend", v=>{ state.synth.blend = v; if(AC) applyAudioParams(false); });
 
 // toggles
@@ -1684,12 +1691,14 @@ function init(){
   }
   state.steps[0].active=true;
 
-  // apply defaults to sliders that are in markup
-  const rBlend = document.getElementById("rBlend");
-  if(rBlend){ rBlend.value = String(state.synth.blend); setRangePct(rBlend); }
-
   renderKeyMenus();
   document.getElementById("scaleSelect").value = state.scale;
+
+  // enforce defaults
+  const rBlend = document.getElementById("rBlend");
+  if(rBlend){ rBlend.value = String(state.synth.blend); setRangePct(rBlend); }
+  const rMaster = document.getElementById("rMaster");
+  if(rMaster){ rMaster.value = String(state.master); setRangePct(rMaster); }
 
   updateParamsUI();
   renderScaleNotes();
@@ -1697,8 +1706,8 @@ function init(){
   renderSteps();
   refreshTop();
 
-  // init slider pct
-  ["rBpm","rMetVol","rSat","rEchoMix","rEchoTime","rEchoFb","rAtk","rRel","rBri","rEns","rMaster","rBlend","velocitySlider"].forEach(id=>{
+  // init slider pct for all ranges
+  ["rBpm","rMaster","rMetVol","rSat","rEchoMix","rEchoTime","rEchoFb","rAtk","rRel","rBri","rEns","rBlend","velocitySlider"].forEach(id=>{
     const el=document.getElementById(id);
     if(el && el.type==="range") setRangePct(el);
   });
