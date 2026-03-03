@@ -1,1521 +1,1547 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chord Progression Sequencer</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        :root {
-            --bg-dark: #1a1a2e;
-            --bg-medium: #16213e;
-            --bg-light: #1f2940;
-            --accent: #e94560;
-            --accent-hover: #ff6b6b;
-            --text-primary: #eaeaea;
-            --text-secondary: #a0a0a0;
-            --in-scale: #4ecca3;
-            --out-scale: #ff9f43;
-            --step-active: #e94560;
-            --step-inactive: #2d3a4f;
-            --step-current: #ffd700;
-        }
-
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, var(--bg-dark) 0%, var(--bg-medium) 100%);
-            color: var(--text-primary);
-            min-height: 100vh;
-            padding: 20px;
-        }
-
-        .container {
-            max-width: 1400px;
-            margin: 0 auto;
-        }
-
-        /* Header */
-        .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 20px 30px;
-            background: var(--bg-light);
-            border-radius: 15px;
-            margin-bottom: 20px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
-        }
-
-        .logo {
-            font-size: 1.8em;
-            font-weight: bold;
-            color: var(--accent);
-        }
-
-        .logo span {
-            color: var(--text-primary);
-        }
-
-        /* Transport Controls */
-        .transport {
-            display: flex;
-            gap: 10px;
-            align-items: center;
-        }
-
-        .transport button {
-            width: 50px;
-            height: 50px;
-            border: none;
-            border-radius: 50%;
-            background: var(--bg-medium);
-            color: var(--text-primary);
-            font-size: 1.2em;
-            cursor: pointer;
-            transition: all 0.2s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .transport button:hover {
-            background: var(--accent);
-            transform: scale(1.1);
-        }
-
-        .transport button.playing {
-            background: var(--accent);
-            animation: pulse 1s infinite;
-        }
-
-        @keyframes pulse {
-            0%, 100% { box-shadow: 0 0 0 0 rgba(233, 69, 96, 0.4); }
-            50% { box-shadow: 0 0 0 10px rgba(233, 69, 96, 0); }
-        }
-
-        .bpm-control {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            background: var(--bg-medium);
-            padding: 10px 20px;
-            border-radius: 25px;
-        }
-
-        .bpm-control input {
-            width: 60px;
-            background: var(--bg-dark);
-            border: none;
-            color: var(--text-primary);
-            font-size: 1.2em;
-            text-align: center;
-            padding: 5px;
-            border-radius: 5px;
-        }
-
-        /* Key & Scale Section */
-        .key-scale-section {
-            display: flex;
-            gap: 20px;
-            margin-bottom: 20px;
-        }
-
-        .panel {
-            background: var(--bg-light);
-            border-radius: 15px;
-            padding: 20px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
-        }
-
-        .panel-title {
-            font-size: 0.9em;
-            color: var(--text-secondary);
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            margin-bottom: 15px;
-        }
-
-        .key-scale-panel {
-            flex: 1;
-        }
-
-        .key-scale-controls {
-            display: flex;
-            gap: 15px;
-        }
-
-        .control-group {
-            display: flex;
-            flex-direction: column;
-            gap: 5px;
-        }
-
-        .control-group label {
-            font-size: 0.8em;
-            color: var(--text-secondary);
-        }
-
-        select, input[type="number"] {
-            background: var(--bg-medium);
-            border: 2px solid transparent;
-            color: var(--text-primary);
-            padding: 10px 15px;
-            border-radius: 8px;
-            font-size: 1em;
-            cursor: pointer;
-            transition: border-color 0.2s;
-        }
-
-        select:hover, select:focus {
-            border-color: var(--accent);
-            outline: none;
-        }
-
-        /* Scale Notes Display */
-        .scale-notes-panel {
-            flex: 2;
-        }
-
-        .scale-notes {
-            display: flex;
-            gap: 8px;
-            flex-wrap: wrap;
-        }
-
-        .scale-note {
-            width: 45px;
-            height: 45px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: var(--bg-medium);
-            border-radius: 8px;
-            font-weight: bold;
-            transition: all 0.2s;
-        }
-
-        .scale-note.in-scale {
-            background: var(--in-scale);
-            color: var(--bg-dark);
-        }
-
-        .scale-note.root {
-            background: var(--accent);
-            color: white;
-        }
-
-        /* Scale Degrees */
-        .scale-degrees-panel {
-            flex: 3;
-        }
-
-        .scale-degrees {
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
-        }
-
-        .degree-chord {
-            background: var(--bg-medium);
-            padding: 12px 18px;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.2s;
-            text-align: center;
-            min-width: 80px;
-        }
-
-        .degree-chord:hover {
-            background: var(--accent);
-            transform: translateY(-2px);
-        }
-
-        .degree-chord .degree {
-            font-size: 0.75em;
-            color: var(--text-secondary);
-            margin-bottom: 4px;
-        }
-
-        .degree-chord:hover .degree {
-            color: rgba(255,255,255,0.8);
-        }
-
-        .degree-chord .chord-name {
-            font-weight: bold;
-            font-size: 1.1em;
-        }
-
-        /* Sequencer Section */
-        .sequencer-section {
-            background: var(--bg-light);
-            border-radius: 15px;
-            padding: 25px;
-            margin-bottom: 20px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
-        }
-
-        .sequencer-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-        }
-
-        .step-actions {
-            display: flex;
-            gap: 10px;
-        }
-
-        .step-actions button {
-            background: var(--bg-medium);
-            border: none;
-            color: var(--text-primary);
-            padding: 8px 16px;
-            border-radius: 6px;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .step-actions button:hover {
-            background: var(--accent);
-        }
-
-        /* Steps Grid */
-        .steps-container {
-            display: grid;
-            grid-template-columns: repeat(16, 1fr);
-            gap: 8px;
-            margin-bottom: 25px;
-        }
-
-        .step {
-            aspect-ratio: 1;
-            background: var(--step-inactive);
-            border-radius: 10px;
-            cursor: pointer;
-            transition: all 0.15s;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 8px;
-            position: relative;
-            border: 3px solid transparent;
-        }
-
-        .step:hover {
-            transform: scale(1.05);
-            background: var(--bg-medium);
-        }
-
-        .step.active {
-            background: var(--step-active);
-        }
-
-        .step.selected {
-            border-color: var(--step-current);
-        }
-
-        .step.playing {
-            border-color: var(--step-current);
-            box-shadow: 0 0 20px var(--step-current);
-        }
-
-        .step-number {
-            font-size: 0.7em;
-            color: var(--text-secondary);
-            position: absolute;
-            top: 4px;
-            left: 6px;
-        }
-
-        .step-chord {
-            font-weight: bold;
-            font-size: 0.85em;
-            text-align: center;
-        }
-
-        .step-bass {
-            font-size: 0.7em;
-            color: var(--text-secondary);
-        }
-
-        /* Parameters Panel */
-        .params-panel {
-            background: var(--bg-medium);
-            border-radius: 12px;
-            padding: 20px;
-        }
-
-        .params-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-        }
-
-        .params-title {
-            font-size: 1.1em;
-            color: var(--accent);
-        }
-
-        .params-grid {
-            display: grid;
-            grid-template-columns: repeat(6, 1fr);
-            gap: 20px;
-        }
-
-        .param-group {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
-
-        .param-group label {
-            font-size: 0.8em;
-            color: var(--text-secondary);
-            text-transform: uppercase;
-        }
-
-        .param-group select,
-        .param-group input {
-            width: 100%;
-        }
-
-        input[type="range"] {
-            -webkit-appearance: none;
-            background: var(--bg-dark);
-            height: 8px;
-            border-radius: 4px;
-            cursor: pointer;
-        }
-
-        input[type="range"]::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            width: 18px;
-            height: 18px;
-            background: var(--accent);
-            border-radius: 50%;
-            cursor: pointer;
-        }
-
-        .param-value {
-            text-align: center;
-            font-size: 0.9em;
-            color: var(--text-primary);
-        }
-
-        /* Synth Section */
-        .synth-section {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
-        }
-
-        .synth-panel {
-            background: var(--bg-light);
-            border-radius: 15px;
-            padding: 25px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
-        }
-
-        .synth-title {
-            font-size: 1.2em;
-            margin-bottom: 5px;
-            color: var(--accent);
-        }
-
-        .synth-subtitle {
-            font-size: 0.85em;
-            color: var(--text-secondary);
-            margin-bottom: 20px;
-        }
-
-        .knobs-row {
-            display: flex;
-            gap: 25px;
-            flex-wrap: wrap;
-        }
-
-        .knob-group {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .knob {
-            width: 70px;
-            height: 70px;
-            background: linear-gradient(145deg, #2a3a50, #1a2535);
-            border-radius: 50%;
-            position: relative;
-            cursor: pointer;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.4);
-        }
-
-        .knob::after {
-            content: '';
-            position: absolute;
-            width: 4px;
-            height: 20px;
-            background: var(--accent);
-            top: 8px;
-            left: 50%;
-            transform: translateX(-50%);
-            border-radius: 2px;
-        }
-
-        .knob-label {
-            font-size: 0.75em;
-            color: var(--text-secondary);
-            text-transform: uppercase;
-        }
-
-        .knob-value {
-            font-size: 0.85em;
-            color: var(--text-primary);
-        }
-
-        /* Switches */
-        .switches-row {
-            display: flex;
-            gap: 30px;
-            margin-top: 20px;
-        }
-
-        .switch-group {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .switch {
-            width: 50px;
-            height: 26px;
-            background: var(--bg-dark);
-            border-radius: 13px;
-            cursor: pointer;
-            position: relative;
-            transition: background 0.2s;
-        }
-
-        .switch.active {
-            background: var(--accent);
-        }
-
-        .switch::after {
-            content: '';
-            position: absolute;
-            width: 20px;
-            height: 20px;
-            background: white;
-            border-radius: 50%;
-            top: 3px;
-            left: 3px;
-            transition: left 0.2s;
-        }
-
-        .switch.active::after {
-            left: 27px;
-        }
-
-        .switch-label {
-            font-size: 0.75em;
-            color: var(--text-secondary);
-            text-transform: uppercase;
-        }
-
-        /* Chord Preview */
-        .chord-preview {
-            background: var(--bg-light);
-            border-radius: 15px;
-            padding: 25px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
-        }
-
-        .piano-roll {
-            display: flex;
-            gap: 2px;
-            height: 120px;
-            margin-top: 15px;
-        }
-
-        .piano-key {
-            flex: 1;
-            background: linear-gradient(180deg, #f5f5f5 0%, #d0d0d0 100%);
-            border-radius: 0 0 5px 5px;
-            position: relative;
-            cursor: pointer;
-            transition: all 0.1s;
-        }
-
-        .piano-key.black {
-            background: linear-gradient(180deg, #3a3a3a 0%, #1a1a1a 100%);
-            height: 70%;
-            margin: 0 -8px;
-            z-index: 1;
-            flex: 0.6;
-        }
-
-        .piano-key.active {
-            background: var(--accent) !important;
-        }
-
-        .piano-key.in-scale:not(.black) {
-            background: linear-gradient(180deg, #b8f5d8 0%, #7ed6a8 100%);
-        }
-
-        .piano-key span {
-            position: absolute;
-            bottom: 5px;
-            left: 50%;
-            transform: translateX(-50%);
-            font-size: 0.7em;
-            color: #666;
-        }
-
-        .piano-key.black span {
-            color: #aaa;
-        }
-
-        /* Responsive */
-        @media (max-width: 1200px) {
-            .steps-container {
-                grid-template-columns: repeat(8, 1fr);
-            }
-            
-            .params-grid {
-                grid-template-columns: repeat(3, 1fr);
-            }
-            
-            .synth-section {
-                grid-template-columns: 1fr;
-            }
-        }
-
-        @media (max-width: 768px) {
-            .steps-container {
-                grid-template-columns: repeat(4, 1fr);
-            }
-            
-            .key-scale-section {
-                flex-direction: column;
-            }
-            
-            .params-grid {
-                grid-template-columns: repeat(2, 1fr);
-            }
-        }
-    </style>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
+<title>MUKUDU CHORDSEQ — Elektron Dark Red</title>
+
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
+
+/* ═══════════════════════════════════════════
+   TOKENS — Elektron-ish dark red (align other plugins)
+═══════════════════════════════════════════ */
+:root{
+  --bg:        #090b0f;
+  --s0:        #0d1018;
+  --s1:        #111420;
+  --s2:        #161a26;
+  --s3:        #1b2030;
+  --border:    rgba(255,255,255,.07);
+  --border2:   rgba(255,255,255,.13);
+  --ink:       #dce4f0;
+  --ink-mid:   #8b96a8;
+  --ink-dim:   #55606e;
+  --red:       #d93535;
+  --red-hi:    #f04444;
+  --red-dim:   rgba(217,53,53,.18);
+  --grn:       #2ec98a;
+  --grn-dim:   rgba(46,201,138,.14);
+  --grn-border:rgba(46,201,138,.45);
+  --amb:       #e8b84b;
+  --amb-dim:   rgba(232,184,75,.13);
+  --r:     12px;
+  --r-sm:  10px;
+  --r-xs:  8px;
+  --mono: 'Share Tech Mono', ui-monospace, monospace;
+  --sh:   0 10px 28px rgba(0,0,0,.55);
+}
+
+*,*::before,*::after{ box-sizing:border-box; margin:0; padding:0; }
+html,body{ height:100%; }
+
+body{
+  font-family: var(--mono);
+  background: var(--bg);
+  background-image:
+    radial-gradient(ellipse 600px 420px at 72% -60px, rgba(217,53,53,.08), transparent 55%),
+    radial-gradient(ellipse 420px 680px at -12% 44%, rgba(217,53,53,.04), transparent 55%);
+  color: var(--ink);
+  min-height: 100dvh;
+  padding:
+    calc(env(safe-area-inset-top,0px) + 10px)
+    calc(env(safe-area-inset-right,0px) + 12px)
+    calc(env(safe-area-inset-bottom,0px) + 22px)
+    calc(env(safe-area-inset-left,0px) + 12px);
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  user-select: none;
+  overscroll-behavior: none;
+}
+
+.shell{
+  max-width: 980px;
+  margin: 0 auto;
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+}
+
+/* ── TOPBAR ── */
+.topbar{
+  display:grid;
+  grid-template-columns:auto 1fr auto;
+  align-items:center;
+  gap:10px;
+  padding: 6px 0 8px;
+  border-bottom:1px solid var(--border);
+}
+.brand-name{ font-size:13px; letter-spacing:.22em; font-weight:800; text-transform:uppercase; white-space:nowrap; }
+.brand-sub{ font-size:9px; letter-spacing:.08em; color:var(--ink-dim); margin-top:2px; display:none; }
+@media(min-width:520px){ .brand-sub{ display:block; } }
+.transport{ display:flex; gap:6px; flex-wrap:wrap; justify-content:flex-end; align-items:center; }
+
+/* ── BUTTONS ── */
+.btn{
+  appearance:none; border:1px solid var(--border2); background:rgba(255,255,255,.04);
+  color:var(--ink); border-radius:var(--r-sm); font-family:var(--mono);
+  font-size:10.5px; letter-spacing:.10em; font-weight:800; cursor:pointer;
+  height:40px; padding:0 12px; display:inline-flex; align-items:center; justify-content:center;
+  gap:6px; white-space:nowrap; transition:transform .07s,background .12s,border-color .12s,box-shadow .12s;
+  -webkit-tap-highlight-color:transparent;
+}
+.btn:active{ transform:translateY(1px); }
+.btn.red{ border-color:rgba(217,53,53,.55); background:rgba(217,53,53,.10); color:var(--red-hi); }
+.btn.grn{ border-color:var(--grn-border); background:var(--grn-dim); color:var(--grn); }
+.btn.amb{ border-color:rgba(232,184,75,.4); background:var(--amb-dim); color:var(--amb); }
+.btn.sm{ height:36px; font-size:9.6px; padding:0 10px; }
+.btn.xs{ height:32px; font-size:9px; padding:0 8px; border-radius:var(--r-xs); }
+.btn.active,.btn.playing{ border-color:var(--red-hi); background:rgba(217,53,53,.20); box-shadow:0 0 0 2px rgba(217,53,53,.14) inset; color:#fff; }
+.btn.grn.active{ border-color:var(--grn); background:rgba(46,201,138,.20); box-shadow:0 0 0 2px rgba(46,201,138,.14) inset; color:#fff; }
+
+/* ── PILLS ── */
+.pills{ display:flex; gap:6px; flex-wrap:wrap; align-items:center; }
+.pill{ padding:4px 9px; border-radius:999px; border:1px solid var(--border); background:rgba(0,0,0,.25); font-size:9.5px; color:var(--ink-mid); white-space:nowrap; line-height:1.2; }
+.pill strong{ color:var(--ink); font-weight:800; }
+.pill.hot{ border-color:rgba(217,53,53,.45); background:rgba(217,53,53,.08); }
+.pill.hot strong{ color:var(--red-hi); }
+.spacer{ flex:1; }
+
+/* ── CARD ── */
+.card{ background:var(--s1); border:1px solid var(--border); border-radius:var(--r); box-shadow:var(--sh); position:relative; }
+.card::before{
+  content:""; position:absolute; top:0; left:0; right:0; height:2px;
+  border-radius:var(--r) var(--r) 0 0;
+  background:linear-gradient(90deg,transparent 0%,transparent 6%,rgba(217,53,53,.7) 6%,rgba(217,53,53,.7) 16%,transparent 16%);
+  pointer-events:none;
+}
+.card-header{
+  display:flex; align-items:center; gap:8px; padding:10px 12px;
+  cursor:pointer; border-bottom:1px solid transparent; transition:border-color .15s;
+}
+.card-header.open{ border-bottom-color:var(--border); }
+.card-header-label{ font-size:9px; letter-spacing:.22em; text-transform:uppercase; color:var(--red); flex:1; }
+.card-toggle{ font-size:10px; color:var(--ink-dim); transition:transform .18s; }
+.card-toggle.open{ transform:rotate(180deg); }
+.card-body{ padding:12px; }
+.card-body.collapsed{ display:none; }
+
+/* ── RANGE ── */
+input[type=range]{
+  -webkit-appearance:none; appearance:none; width:100%; height:4px;
+  border-radius:999px; outline:none; cursor:pointer;
+  background:linear-gradient(to right,var(--red) 0%,var(--red) var(--pct,50%),rgba(255,255,255,.10) var(--pct,50%),rgba(255,255,255,.10) 100%);
+}
+input[type=range]::-webkit-slider-thumb{
+  -webkit-appearance:none; width:16px; height:16px; border-radius:50%;
+  background:#dde4f0; border:2px solid rgba(217,53,53,.6); box-shadow:0 2px 8px rgba(0,0,0,.5);
+}
+input[type=range]::-moz-range-thumb{
+  width:16px; height:16px; border-radius:50%;
+  background:#dde4f0; border:2px solid rgba(217,53,53,.6); box-shadow:0 2px 8px rgba(0,0,0,.5);
+}
+
+/* ── SELECT ── */
+select, input[type=number]{
+  width:100%;
+  height:36px;
+  border-radius:var(--r-sm);
+  border:1px solid rgba(255,255,255,.10);
+  background:var(--s2);
+  color:var(--ink);
+  font-family:var(--mono);
+  font-size:11px;
+  padding:0 10px;
+  outline:none;
+}
+select:focus, input[type=number]:focus{ border-color:rgba(217,53,53,.55); }
+
+/* ── GRID: top panels ── */
+.grid3{
+  display:grid;
+  grid-template-columns:1fr;
+  gap:10px;
+}
+@media(min-width:900px){
+  .grid3{ grid-template-columns:1fr 1fr 1.2fr; }
+}
+
+/* ── SCALE NOTES ── */
+.scale-notes{ display:flex; gap:6px; flex-wrap:wrap; }
+.note{ width:42px; height:42px; border-radius:var(--r-sm); border:1px solid rgba(255,255,255,.09);
+  background:var(--s2); display:flex; align-items:center; justify-content:center; font-weight:900; font-size:11px; color:var(--ink-mid);
+}
+.note.in{ border-color:rgba(46,201,138,.45); background:rgba(46,201,138,.10); color:rgba(46,201,138,.92); }
+.note.root{ border-color:rgba(217,53,53,.75); background:rgba(217,53,53,.14); color:#fff; }
+
+/* ── DEGREES ── */
+.degrees{ display:flex; gap:6px; flex-wrap:wrap; }
+.deg{
+  min-width:92px;
+  border:1px solid rgba(255,255,255,.09);
+  background:rgba(0,0,0,.18);
+  border-radius:var(--r-sm);
+  padding:8px 10px;
+  cursor:pointer;
+  transition:transform .07s, background .12s, border-color .12s;
+}
+.deg:active{ transform:translateY(1px); }
+.deg:hover{ border-color:rgba(217,53,53,.35); background:rgba(217,53,53,.08); }
+.deg .d{ font-size:9px; color:var(--ink-dim); letter-spacing:.12em; text-transform:uppercase; }
+.deg .c{ font-size:12px; font-weight:900; margin-top:2px; color:var(--ink); }
+
+/* ── SEQ STEPS ── */
+.steps{
+  display:grid;
+  grid-template-columns:repeat(8,1fr);
+  gap:6px;
+}
+@media(min-width:820px){ .steps{ grid-template-columns:repeat(16,1fr); } }
+
+.step{
+  position:relative;
+  aspect-ratio: 1/1.05;
+  border-radius:var(--r-sm);
+  border:1px solid rgba(255,255,255,.08);
+  background:var(--s2);
+  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px;
+  cursor:pointer; overflow:hidden;
+  transition:background .08s,border-color .08s,box-shadow .08s,transform .06s;
+}
+.step::before{ content:""; position:absolute; left:0; right:0; top:0; height:3px; background:var(--grn); opacity:0; transition:opacity .08s; }
+.step .n{ position:absolute; top:5px; left:6px; font-size:7.5px; color:rgba(255,255,255,.18); }
+.step .ch{ font-size:12.5px; font-weight:900; letter-spacing:.02em; color:rgba(220,228,240,.55); }
+.step .ba{ font-size:8px; color:rgba(220,228,240,.35); letter-spacing:.06em; }
+
+.step.active{ border-color:rgba(46,201,138,.45); background:rgba(46,201,138,.06); }
+.step.active::before{ opacity:.85; }
+.step.active .ch{ color:var(--grn); }
+
+.step.selected{ border-color:rgba(217,53,53,.85); box-shadow:0 0 0 2px rgba(217,53,53,.12) inset; }
+.step.playing{
+  border-color:rgba(217,53,53,.95);
+  background:rgba(217,53,53,.15);
+  box-shadow:0 0 0 2px rgba(217,53,53,.15) inset,0 0 14px rgba(217,53,53,.12);
+  transform:scale(.96);
+}
+.step.playing::before{ background:var(--red-hi); opacity:1; }
+.step.playing .ch{ color:#fff; }
+
+.divider{ height:1px; background:var(--border); margin:10px 0; }
+
+/* ── PARAMS ── */
+.ctrls{
+  display:grid;
+  grid-template-columns:repeat(2,1fr);
+  gap:8px;
+}
+@media(min-width:820px){ .ctrls{ grid-template-columns:repeat(6,1fr); } }
+.ctrl{
+  background:rgba(0,0,0,.22);
+  border:1px solid var(--border);
+  border-radius:var(--r-sm);
+  padding:8px 8px 10px;
+}
+.ctrl-head{ display:flex; justify-content:space-between; align-items:baseline; gap:6px; margin-bottom:7px; }
+.ctrl-lbl{ font-size:8.5px; letter-spacing:.18em; color:var(--ink-dim); text-transform:uppercase; }
+.ctrl-val{ font-size:10.5px; color:var(--ink); font-weight:900; }
+
+/* ── FX ROW ── */
+.fx-grid{
+  display:grid;
+  grid-template-columns:1fr;
+  gap:8px;
+}
+@media(min-width:720px){ .fx-grid{ grid-template-columns:repeat(3,1fr); } }
+
+.hint{
+  font-size:9px; color:var(--ink-dim); letter-spacing:.05em; line-height:1.55;
+  padding:10px; border:1px solid var(--border); border-radius:var(--r-xs); background:rgba(0,0,0,.12);
+}
+</style>
 </head>
+
 <body>
-    <div class="container">
-        <!-- Header -->
-        <header class="header">
-            <div class="logo">Mukudu Chord<span>Seq</span></div>
-            
-            <div class="transport">
-                <button id="stopBtn" title="Stop">■</button>
-                <button id="playBtn" title="Play">▶</button>
-                
-                <div class="bpm-control">
-                    <span>BPM</span>
-                    <input type="number" id="bpmInput" value="120" min="40" max="240">
-                </div>
-            </div>
-        </header>
+<div class="shell">
 
-        <!-- Key & Scale Section -->
-        <div class="key-scale-section">
-            <div class="panel key-scale-panel">
-                <div class="panel-title">Tonalité & Gamme</div>
-                <div class="key-scale-controls">
-                    <div class="control-group">
-                        <label>Tonique</label>
-                        <select id="keySelect">
-                            <option value="C">C</option>
-                            <option value="C#">C#</option>
-                            <option value="D">D</option>
-                            <option value="D#">D#</option>
-                            <option value="E">E</option>
-                            <option value="F">F</option>
-                            <option value="F#">F#</option>
-                            <option value="G">G</option>
-                            <option value="G#">G#</option>
-                            <option value="A">A</option>
-                            <option value="A#">A#</option>
-                            <option value="B">B</option>
-                        </select>
-                    </div>
-                    <div class="control-group">
-                        <label>Gamme</label>
-                        <select id="scaleSelect">
-                            <option value="major">Majeure</option>
-                            <option value="minor">Mineure Naturelle</option>
-                            <option value="harmonicMinor">Mineure Harmonique</option>
-                            <option value="melodicMinor">Mineure Mélodique</option>
-                            <option value="dorian">Dorien</option>
-                            <option value="phrygian">Phrygien</option>
-                            <option value="lydian">Lydien</option>
-                            <option value="mixolydian">Mixolydien</option>
-                            <option value="locrian">Locrien</option>
-                        </select>
-                    </div>
-                </div>
-            </div>
-
-            <div class="panel scale-notes-panel">
-                <div class="panel-title">Notes de la Gamme</div>
-                <div class="scale-notes" id="scaleNotes"></div>
-            </div>
-
-            <div class="panel scale-degrees-panel">
-                <div class="panel-title">Accords Diatoniques</div>
-                <div class="scale-degrees" id="scaleDegrees"></div>
-            </div>
-        </div>
-
-        <!-- Sequencer Section -->
-        <section class="sequencer-section">
-            <div class="sequencer-header">
-                <div class="panel-title">Séquenceur 16 Steps</div>
-                <div class="step-actions">
-                    <button id="clearAllBtn">Effacer Tout</button>
-                    <button id="randomBtn">Aléatoire</button>
-                    <button id="copyBtn">Copier</button>
-                    <button id="pasteBtn">Coller</button>
-                </div>
-            </div>
-
-            <div class="steps-container" id="stepsContainer"></div>
-
-            <div class="params-panel">
-                <div class="params-header">
-                    <div class="params-title">Paramètres du Step <span id="selectedStepNum">1</span></div>
-                </div>
-                <div class="params-grid">
-                    <div class="param-group">
-                        <label>Note Fondamentale</label>
-                        <select id="rootSelect">
-                            <option value="C">C</option>
-                            <option value="C#">C#</option>
-                            <option value="D">D</option>
-                            <option value="D#">D#</option>
-                            <option value="E">E</option>
-                            <option value="F">F</option>
-                            <option value="F#">F#</option>
-                            <option value="G">G</option>
-                            <option value="G#">G#</option>
-                            <option value="A">A</option>
-                            <option value="A#">A#</option>
-                            <option value="B">B</option>
-                        </select>
-                    </div>
-                    <div class="param-group">
-                        <label>Type d'Accord</label>
-                        <select id="chordTypeSelect">
-                            <option value="maj">Majeur</option>
-                            <option value="min">Mineur</option>
-                            <option value="dim">Diminué</option>
-                            <option value="aug">Augmenté</option>
-                            <option value="sus2">Sus2</option>
-                            <option value="sus4">Sus4</option>
-                            <option value="maj7">Maj7</option>
-                            <option value="min7">Min7</option>
-                            <option value="dom7">7</option>
-                            <option value="dim7">Dim7</option>
-                            <option value="m7b5">m7♭5</option>
-                            <option value="add9">Add9</option>
-                            <option value="maj9">Maj9</option>
-                            <option value="min9">Min9</option>
-                        </select>
-                    </div>
-                    <div class="param-group">
-                        <label>Voicing</label>
-                        <select id="voicingSelect">
-                            <option value="close">Close</option>
-                            <option value="open">Open</option>
-                            <option value="drop2">Drop 2</option>
-                            <option value="drop3">Drop 3</option>
-                            <option value="spread">Spread</option>
-                        </select>
-                    </div>
-                    <div class="param-group">
-                        <label>Note Basse</label>
-                        <select id="bassSelect">
-                            <option value="root">Fondamentale</option>
-                            <option value="C">C</option>
-                            <option value="C#">C#</option>
-                            <option value="D">D</option>
-                            <option value="D#">D#</option>
-                            <option value="E">E</option>
-                            <option value="F">F</option>
-                            <option value="F#">F#</option>
-                            <option value="G">G</option>
-                            <option value="G#">G#</option>
-                            <option value="A">A</option>
-                            <option value="A#">A#</option>
-                            <option value="B">B</option>
-                        </select>
-                    </div>
-                    <div class="param-group">
-                        <label>Durée</label>
-                        <select id="durationSelect">
-                            <option value="0.25">1/16</option>
-                            <option value="0.5">1/8</option>
-                            <option value="1" selected>1/4</option>
-                            <option value="2">1/2</option>
-                            <option value="4">1</option>
-                        </select>
-                    </div>
-                    <div class="param-group">
-                        <label>Vélocité</label>
-                        <input type="range" id="velocitySlider" min="0" max="127" value="100">
-                        <div class="param-value" id="velocityValue">100</div>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- Synth Section -->
-        <div class="synth-section">
-            <div class="synth-panel">
-                <div class="synth-title">Mukudu Machine</div>
-                <div class="synth-subtitle">Inspiré du RS-09</div>
-                
-                <div class="knobs-row">
-                    <div class="knob-group">
-                        <div class="knob" data-param="attack" data-value="0.1"></div>
-                        <div class="knob-label">Attack</div>
-                        <div class="knob-value" id="attackValue">0.1s</div>
-                    </div>
-                    <div class="knob-group">
-                        <div class="knob" data-param="release" data-value="1.5"></div>
-                        <div class="knob-label">Release</div>
-                        <div class="knob-value" id="releaseValue">1.5s</div>
-                    </div>
-                    <div class="knob-group">
-                        <div class="knob" data-param="brightness" data-value="0.5"></div>
-                        <div class="knob-label">Brightness</div>
-                        <div class="knob-value" id="brightnessValue">50%</div>
-                    </div>
-                    <div class="knob-group">
-                        <div class="knob" data-param="ensemble" data-value="0.6"></div>
-                        <div class="knob-label">Ensemble</div>
-                        <div class="knob-value" id="ensembleValue">60%</div>
-                    </div>
-                </div>
-
-                <div class="switches-row">
-                    <div class="switch-group">
-                        <div class="switch active" id="stringsSwitch" data-param="strings"></div>
-                        <div class="switch-label">Strings</div>
-                    </div>
-                    <div class="switch-group">
-                        <div class="switch" id="organSwitch" data-param="organ"></div>
-                        <div class="switch-label">Organ</div>
-                    </div>
-                    <div class="switch-group">
-                        <div class="switch active" id="chorusSwitch" data-param="chorus"></div>
-                        <div class="switch-label">Chorus</div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="synth-panel chord-preview">
-                <div class="synth-title">🎵 Aperçu de l'Accord</div>
-                <div class="synth-subtitle" id="chordDisplay">C Major</div>
-                <div class="piano-roll" id="pianoRoll"></div>
-            </div>
-        </div>
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <div>
+      <div class="brand-name">MUKUDU CHORDSEQ</div>
+      <div class="brand-sub">RS-09 inspired · Chord Sequencer · Tape FX</div>
     </div>
 
-    <script>
-        // ============================================
-        // MUSIC THEORY DATA
-        // ============================================
-        const NOTES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
-        
-        const SCALES = {
-            major: [0, 2, 4, 5, 7, 9, 11],
-            minor: [0, 2, 3, 5, 7, 8, 10],
-            harmonicMinor: [0, 2, 3, 5, 7, 8, 11],
-            melodicMinor: [0, 2, 3, 5, 7, 9, 11],
-            dorian: [0, 2, 3, 5, 7, 9, 10],
-            phrygian: [0, 1, 3, 5, 7, 8, 10],
-            lydian: [0, 2, 4, 6, 7, 9, 11],
-            mixolydian: [0, 2, 4, 5, 7, 9, 10],
-            locrian: [0, 1, 3, 5, 6, 8, 10]
-        };
+    <div class="pills" style="justify-content:center">
+      <div class="pill">BPM <strong id="kBpm">120</strong></div>
+      <div class="pill">Key <strong id="kKey">C</strong></div>
+      <div class="pill">Scale <strong id="kScale">Majeure</strong></div>
+      <div class="pill hot">Step <strong id="kStep">—</strong> · <strong id="kChord">—</strong></div>
+    </div>
 
-        const CHORD_INTERVALS = {
-            maj: [0, 4, 7],
-            min: [0, 3, 7],
-            dim: [0, 3, 6],
-            aug: [0, 4, 8],
-            sus2: [0, 2, 7],
-            sus4: [0, 5, 7],
-            maj7: [0, 4, 7, 11],
-            min7: [0, 3, 7, 10],
-            dom7: [0, 4, 7, 10],
-            dim7: [0, 3, 6, 9],
-            m7b5: [0, 3, 6, 10],
-            add9: [0, 4, 7, 14],
-            maj9: [0, 4, 7, 11, 14],
-            min9: [0, 3, 7, 10, 14]
-        };
+    <div class="transport">
+      <button id="btnAudio" class="btn grn sm">AUDIO</button>
+      <button id="btnMetro" class="btn sm">METRO</button>
+      <button id="btnStop" class="btn sm">⏹</button>
+      <button id="btnPlay" class="btn red sm">▶ PLAY</button>
+    </div>
+  </div>
 
-        const CHORD_NAMES = {
-            maj: '', min: 'm', dim: '°', aug: '+', sus2: 'sus2', sus4: 'sus4',
-            maj7: 'M7', min7: 'm7', dom7: '7', dim7: '°7', m7b5: 'ø7',
-            add9: 'add9', maj9: 'M9', min9: 'm9'
-        };
+  <!-- PANELS: KEY/SCALE + NOTES + DEGREES -->
+  <div class="grid3">
+    <div class="card">
+      <div class="card-header open" id="hKey">
+        <span class="card-header-label">Tonalité · Gamme</span>
+        <span class="card-toggle open" id="tKey">▼</span>
+      </div>
+      <div class="card-body" id="bKey">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+          <div>
+            <div style="font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-dim);margin-bottom:6px">Tonique</div>
+            <select id="keySelect"></select>
+          </div>
+          <div>
+            <div style="font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-dim);margin-bottom:6px">Gamme</div>
+            <select id="scaleSelect">
+              <option value="major">Majeure</option>
+              <option value="minor">Mineure Naturelle</option>
+              <option value="harmonicMinor">Mineure Harmonique</option>
+              <option value="melodicMinor">Mineure Mélodique</option>
+              <option value="dorian">Dorien</option>
+              <option value="phrygian">Phrygien</option>
+              <option value="lydian">Lydien</option>
+              <option value="mixolydian">Mixolydien</option>
+              <option value="locrian">Locrien</option>
+            </select>
+          </div>
+        </div>
 
-        const DEGREE_NAMES = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII'];
-        
-        const SCALE_CHORD_TYPES = {
-            major: ['maj', 'min', 'min', 'maj', 'maj', 'min', 'dim'],
-            minor: ['min', 'dim', 'maj', 'min', 'min', 'maj', 'maj'],
-            harmonicMinor: ['min', 'dim', 'aug', 'min', 'maj', 'maj', 'dim'],
-            melodicMinor: ['min', 'min', 'aug', 'maj', 'maj', 'dim', 'dim'],
-            dorian: ['min', 'min', 'maj', 'maj', 'min', 'dim', 'maj'],
-            phrygian: ['min', 'maj', 'maj', 'min', 'dim', 'maj', 'min'],
-            lydian: ['maj', 'maj', 'min', 'dim', 'maj', 'min', 'min'],
-            mixolydian: ['maj', 'min', 'dim', 'maj', 'min', 'min', 'maj'],
-            locrian: ['dim', 'maj', 'min', 'min', 'maj', 'maj', 'min']
-        };
+        <div class="divider"></div>
 
-        // ============================================
-        // SEQUENCER STATE
-        // ============================================
-        const state = {
-            key: 'C',
-            scale: 'major',
-            bpm: 120,
-            playing: false,
-            currentStep: -1,
-            selectedStep: 0,
-            steps: Array(16).fill(null).map(() => ({
-                active: false,
-                root: 'C',
-                chordType: 'maj',
-                voicing: 'close',
-                bass: 'root',
-                duration: 1,
-                velocity: 100
-            })),
-            clipboard: null,
-            synth: {
-                attack: 0.1,
-                release: 1.5,
-                brightness: 0.5,
-                ensemble: 0.6,
-                strings: true,
-                organ: false,
-                chorus: true
-            }
-        };
+        <div class="ctrl">
+          <div class="ctrl-head">
+            <span class="ctrl-lbl">BPM</span>
+            <span class="ctrl-val" id="vBpm">120</span>
+          </div>
+          <input id="rBpm" type="range" min="30" max="200" value="120"/>
+        </div>
+      </div>
+    </div>
 
-        // ============================================
-        // AUDIO ENGINE (Web Audio API - RS-09 Style)
-        // ============================================
-        let audioCtx = null;
-        let masterGain = null;
-        let chorusLFO = null;
-        let activeVoices = [];
+    <div class="card">
+      <div class="card-header open" id="hNotes">
+        <span class="card-header-label">Notes de la gamme</span>
+        <span class="card-toggle open" id="tNotes">▼</span>
+      </div>
+      <div class="card-body" id="bNotes">
+        <div class="scale-notes" id="scaleNotes"></div>
+      </div>
+    </div>
 
-        function initAudio() {
-            if (audioCtx) return;
-            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            masterGain = audioCtx.createGain();
-            masterGain.gain.value = 0.3;
-            masterGain.connect(audioCtx.destination);
-            
-            // Chorus LFO
-            chorusLFO = audioCtx.createOscillator();
-            chorusLFO.frequency.value = 0.5;
-            chorusLFO.start();
-        }
+    <div class="card">
+      <div class="card-header open" id="hDeg">
+        <span class="card-header-label">Accords diatoniques</span>
+        <span class="card-toggle open" id="tDeg">▼</span>
+      </div>
+      <div class="card-body" id="bDeg">
+        <div class="degrees" id="scaleDegrees"></div>
+      </div>
+    </div>
+  </div>
 
-        function noteToFreq(note, octave = 4) {
-            const noteIndex = NOTES.indexOf(note);
-            return 440 * Math.pow(2, (noteIndex - 9 + (octave - 4) * 12) / 12);
-        }
+  <!-- SEQUENCER -->
+  <div class="card">
+    <div class="card-header open" id="hSeq">
+      <span class="card-header-label">Séquenceur 16 steps</span>
+      <button id="btnClearAll" class="btn xs" style="margin-right:4px">CLR</button>
+      <button id="btnRandom" class="btn xs amb" style="margin-right:4px">RAND</button>
+      <button id="btnCopy" class="btn xs" style="margin-right:4px">COPY</button>
+      <button id="btnPaste" class="btn xs" style="margin-right:4px">PASTE</button>
+      <span class="card-toggle open" id="tSeq">▼</span>
+    </div>
+    <div class="card-body" id="bSeq">
+      <div class="steps" id="stepsContainer"></div>
 
-        function createStringVoice(freq, velocity) {
-            const osc1 = audioCtx.createOscillator();
-            const osc2 = audioCtx.createOscillator();
-            const osc3 = audioCtx.createOscillator();
-            
-            // Sawtooth waves for strings
-            osc1.type = 'sawtooth';
-            osc2.type = 'sawtooth';
-            osc3.type = 'sawtooth';
-            
-            osc1.frequency.value = freq;
-            osc2.frequency.value = freq * 1.003; // Slight detune for ensemble
-            osc3.frequency.value = freq * 0.997;
-            
-            // Filter for brightness
-            const filter = audioCtx.createBiquadFilter();
-            filter.type = 'lowpass';
-            filter.frequency.value = 1000 + state.synth.brightness * 4000;
-            filter.Q.value = 0.5;
-            
-            // Envelope
-            const envelope = audioCtx.createGain();
-            envelope.gain.value = 0;
-            
-            // Mix oscillators
-            const mixer = audioCtx.createGain();
-            mixer.gain.value = 0.33;
-            
-            osc1.connect(mixer);
-            osc2.connect(mixer);
-            osc3.connect(mixer);
-            mixer.connect(filter);
-            filter.connect(envelope);
-            envelope.connect(masterGain);
-            
-            const now = audioCtx.currentTime;
-            const vol = (velocity / 127) * 0.8;
-            
-            envelope.gain.setValueAtTime(0, now);
-            envelope.gain.linearRampToValueAtTime(vol, now + state.synth.attack);
-            
-            osc1.start(now);
-            osc2.start(now);
-            osc3.start(now);
-            
-            return { oscs: [osc1, osc2, osc3], envelope, filter };
-        }
+      <div class="divider"></div>
 
-        function createOrganVoice(freq, velocity) {
-            const oscs = [];
-            const mixer = audioCtx.createGain();
-            mixer.gain.value = 0.2;
-            
-            // Organ drawbars simulation
-            const harmonics = [1, 2, 3, 4, 6, 8];
-            const levels = [1, 0.5, 0.3, 0.25, 0.2, 0.15];
-            
-            harmonics.forEach((h, i) => {
-                const osc = audioCtx.createOscillator();
-                osc.type = 'sine';
-                osc.frequency.value = freq * h;
-                const gain = audioCtx.createGain();
-                gain.gain.value = levels[i] * 0.15;
-                osc.connect(gain);
-                gain.connect(mixer);
-                osc.start();
-                oscs.push(osc);
-            });
-            
-            const envelope = audioCtx.createGain();
-            envelope.gain.value = 0;
-            mixer.connect(envelope);
-            envelope.connect(masterGain);
-            
-            const now = audioCtx.currentTime;
-            const vol = (velocity / 127) * 0.6;
-            envelope.gain.setValueAtTime(0, now);
-            envelope.gain.linearRampToValueAtTime(vol, now + 0.01);
-            
-            return { oscs, envelope };
-        }
+      <div class="card" style="box-shadow:none;border-color:rgba(255,255,255,.06)">
+        <div class="card-header open" id="hParams" style="cursor:default">
+          <span class="card-header-label" style="color:var(--ink-mid)">Édition step <span id="selectedStepNum">1</span></span>
+          <span style="font-size:9px;color:var(--ink-dim);letter-spacing:.08em">click=select · shift+click=toggle active</span>
+        </div>
+        <div class="card-body" id="bParams">
+          <div class="ctrls">
+            <div class="ctrl">
+              <div class="ctrl-head"><span class="ctrl-lbl">Root</span><span class="ctrl-val" id="vRoot">C</span></div>
+              <select id="rootSelect"></select>
+            </div>
+            <div class="ctrl">
+              <div class="ctrl-head"><span class="ctrl-lbl">Type</span><span class="ctrl-val" id="vType">Maj</span></div>
+              <select id="chordTypeSelect">
+                <option value="maj">Majeur</option>
+                <option value="min">Mineur</option>
+                <option value="dim">Diminué</option>
+                <option value="aug">Augmenté</option>
+                <option value="sus2">Sus2</option>
+                <option value="sus4">Sus4</option>
+                <option value="maj7">Maj7</option>
+                <option value="min7">Min7</option>
+                <option value="dom7">7</option>
+                <option value="dim7">Dim7</option>
+                <option value="m7b5">m7♭5</option>
+                <option value="add9">Add9</option>
+                <option value="maj9">Maj9</option>
+                <option value="min9">Min9</option>
+              </select>
+            </div>
+            <div class="ctrl">
+              <div class="ctrl-head"><span class="ctrl-lbl">Voicing</span><span class="ctrl-val" id="vVoi">close</span></div>
+              <select id="voicingSelect">
+                <option value="close">Close</option>
+                <option value="open">Open</option>
+                <option value="drop2">Drop 2</option>
+                <option value="drop3">Drop 3</option>
+                <option value="spread">Spread</option>
+              </select>
+            </div>
+            <div class="ctrl">
+              <div class="ctrl-head"><span class="ctrl-lbl">Bass</span><span class="ctrl-val" id="vBass">root</span></div>
+              <select id="bassSelect"></select>
+            </div>
+            <div class="ctrl">
+              <div class="ctrl-head"><span class="ctrl-lbl">Dur</span><span class="ctrl-val" id="vDur">1</span></div>
+              <select id="durationSelect">
+                <option value="0.25">1/16</option>
+                <option value="0.5">1/8</option>
+                <option value="1" selected>1/4</option>
+                <option value="2">1/2</option>
+                <option value="4">1</option>
+              </select>
+            </div>
+            <div class="ctrl">
+              <div class="ctrl-head"><span class="ctrl-lbl">Vel</span><span class="ctrl-val" id="velocityValue">100</span></div>
+              <input type="range" id="velocitySlider" min="0" max="127" value="100">
+            </div>
+          </div>
+        </div>
+      </div>
 
-        function playChord(notes, velocity, duration) {
-            initAudio();
-            stopAllVoices();
-            
-            notes.forEach(note => {
-                const freq = noteToFreq(note.name, note.octave);
-                
-                if (state.synth.strings) {
-                    const voice = createStringVoice(freq, velocity);
-                    activeVoices.push(voice);
-                }
-                
-                if (state.synth.organ) {
-                    const voice = createOrganVoice(freq, velocity);
-                    activeVoices.push(voice);
-                }
-            });
-            
-            // Schedule release
-            const releaseTime = audioCtx.currentTime + duration * (60 / state.bpm);
-            setTimeout(() => releaseVoices(), duration * (60 / state.bpm) * 1000);
-        }
+      <div class="divider"></div>
 
-        function releaseVoices() {
-            const now = audioCtx.currentTime;
-            activeVoices.forEach(voice => {
-                voice.envelope.gain.cancelScheduledValues(now);
-                voice.envelope.gain.setValueAtTime(voice.envelope.gain.value, now);
-                voice.envelope.gain.linearRampToValueAtTime(0, now + state.synth.release);
-            });
-            
-            setTimeout(() => stopAllVoices(), state.synth.release * 1000 + 100);
-        }
-
-        function stopAllVoices() {
-            activeVoices.forEach(voice => {
-                voice.oscs.forEach(osc => {
-                    try { osc.stop(); } catch(e) {}
-                });
-            });
-            activeVoices = [];
-        }
-
-        // ============================================
-        // CHORD BUILDING
-        // ============================================
-        function getChordNotes(root, chordType, voicing, bassNote) {
-            const rootIndex = NOTES.indexOf(root);
-            const intervals = CHORD_INTERVALS[chordType] || [0, 4, 7];
-            let notes = intervals.map(interval => {
-                const noteIndex = (rootIndex + interval) % 12;
-                return NOTES[noteIndex];
-            });
-            
-            // Build note objects with octaves
-            let noteObjects = notes.map((note, i) => {
-                let octave = 4;
-                if (voicing === 'open' && i > 0) octave = i % 2 === 0 ? 4 : 5;
-                if (voicing === 'drop2' && i === 1) octave = 3;
-                if (voicing === 'drop3' && i === 2) octave = 3;
-                if (voicing === 'spread') octave = 3 + i;
-                return { name: note, octave };
-            });
-            
-            // Add bass note
-            const actualBass = bassNote === 'root' ? root : bassNote;
-            noteObjects.unshift({ name: actualBass, octave: 2 });
-            
-            return noteObjects;
-        }
-
-        function getScaleNotes(key, scale) {
-            const keyIndex = NOTES.indexOf(key);
-            const intervals = SCALES[scale] || SCALES.major;
-            return intervals.map(interval => NOTES[(keyIndex + interval) % 12]);
-        }
-
-        function getScaleChords(key, scale) {
-            const scaleNotes = getScaleNotes(key, scale);
-            const chordTypes = SCALE_CHORD_TYPES[scale] || SCALE_CHORD_TYPES.major;
-            
-            return scaleNotes.map((note, i) => ({
-                root: note,
-                type: chordTypes[i],
-                degree: DEGREE_NAMES[i],
-                degreeLower: i === 0 || i === 3 || i === 4 ? DEGREE_NAMES[i] : DEGREE_NAMES[i].toLowerCase()
-            }));
-        }
-
-        // ============================================
-        // UI RENDERING
-        // ============================================
-        function renderScaleNotes() {
-            const container = document.getElementById('scaleNotes');
-            const scaleNotes = getScaleNotes(state.key, state.scale);
-            
-            container.innerHTML = NOTES.map(note => {
-                const inScale = scaleNotes.includes(note);
-                const isRoot = note === state.key;
-                let classes = 'scale-note';
-                if (inScale) classes += ' in-scale';
-                if (isRoot) classes += ' root';
-                return `<div class="${classes}">${note}</div>`;
-            }).join('');
-        }
-
-        function renderScaleDegrees() {
-            const container = document.getElementById('scaleDegrees');
-            const chords = getScaleChords(state.key, state.scale);
-            
-            container.innerHTML = chords.map((chord, i) => `
-                <div class="degree-chord" data-root="${chord.root}" data-type="${chord.type}">
-                    <div class="degree">${chord.degreeLower}</div>
-                    <div class="chord-name">${chord.root}${CHORD_NAMES[chord.type]}</div>
+      <!-- FX -->
+      <div class="card" style="box-shadow:none;border-color:rgba(255,255,255,.06)">
+        <div class="card-header open" id="hFx">
+          <span class="card-header-label">FX · Metronome · Tape</span>
+          <span class="card-toggle open" id="tFx">▼</span>
+        </div>
+        <div class="card-body" id="bFx">
+          <div class="fx-grid">
+            <div class="ctrl">
+              <div class="ctrl-head"><span class="ctrl-lbl">Metronome</span><span class="ctrl-val" id="vMet">off</span></div>
+              <div style="display:flex;gap:6px;align-items:center">
+                <button id="btnMetOn" class="btn xs">ON/OFF</button>
+                <div style="flex:1">
+                  <input id="rMetVol" type="range" min="0" max="1" step="0.01" value="0.35">
                 </div>
-            `).join('');
-            
-            // Add click handlers
-            container.querySelectorAll('.degree-chord').forEach(el => {
-                el.addEventListener('click', () => {
-                    const step = state.steps[state.selectedStep];
-                    step.root = el.dataset.root;
-                    step.chordType = el.dataset.type;
-                    step.active = true;
-                    updateParamsUI();
-                    renderSteps();
-                    renderPianoRoll();
-                    previewCurrentChord();
-                });
-            });
-        }
+              </div>
+              <div style="font-size:9px;color:var(--ink-dim);margin-top:6px;letter-spacing:.06em">
+                click accent on beat 1 (4/4)
+              </div>
+            </div>
 
-        function renderSteps() {
-            const container = document.getElementById('stepsContainer');
-            
-            container.innerHTML = state.steps.map((step, i) => {
-                let classes = 'step';
-                if (step.active) classes += ' active';
-                if (i === state.selectedStep) classes += ' selected';
-                if (i === state.currentStep) classes += ' playing';
-                
-                const chordName = step.active ? 
-                    `${step.root}${CHORD_NAMES[step.chordType]}` : '';
-                const bassDisplay = step.active && step.bass !== 'root' ? 
-                    `/${step.bass}` : '';
-                
-                return `
-                    <div class="${classes}" data-step="${i}">
-                        <span class="step-number">${i + 1}</span>
-                        <span class="step-chord">${chordName}</span>
-                        <span class="step-bass">${bassDisplay}</span>
-                    </div>
-                `;
-            }).join('');
-            
-            // Add click handlers
-            container.querySelectorAll('.step').forEach(el => {
-                el.addEventListener('click', (e) => {
-                    const stepIndex = parseInt(el.dataset.step);
-                    if (e.shiftKey) {
-                        // Toggle active
-                        state.steps[stepIndex].active = !state.steps[stepIndex].active;
-                    } else {
-                        state.selectedStep = stepIndex;
-                    }
-                    renderSteps();
-                    updateParamsUI();
-                    renderPianoRoll();
-                });
-                
-                el.addEventListener('dblclick', () => {
-                    const stepIndex = parseInt(el.dataset.step);
-                    state.steps[stepIndex].active = !state.steps[stepIndex].active;
-                    renderSteps();
-                    renderPianoRoll();
-                });
-            });
-        }
+            <div class="ctrl">
+              <div class="ctrl-head"><span class="ctrl-lbl">Tape Sat</span><span class="ctrl-val" id="vSat">0.20</span></div>
+              <input id="rSat" type="range" min="0" max="1" step="0.01" value="0.20">
+              <div style="font-size:9px;color:var(--ink-dim);margin-top:6px;letter-spacing:.06em">
+                waveshaper soft clip + bias
+              </div>
+            </div>
 
-        function renderPianoRoll() {
-            const container = document.getElementById('pianoRoll');
-            const step = state.steps[state.selectedStep];
-            const scaleNotes = getScaleNotes(state.key, state.scale);
-            
-            let activeNotes = [];
-            if (step.active) {
-                const chordNotes = getChordNotes(step.root, step.chordType, step.voicing, step.bass);
-                activeNotes = chordNotes.map(n => n.name);
-            }
-            
-            // Create 2 octaves of keys
-            const keys = [];
-            for (let oct = 3; oct <= 4; oct++) {
-                NOTES.forEach((note, i) => {
-                    const isBlack = note.includes('#');
-                    const isActive = activeNotes.includes(note);
-                    const inScale = scaleNotes.includes(note);
-                    
-                    let classes = 'piano-key';
-                    if (isBlack) classes += ' black';
-                    if (isActive) classes += ' active';
-                    if (inScale && !isBlack) classes += ' in-scale';
-                    
-                    keys.push(`<div class="${classes}"><span>${note}</span></div>`);
-                });
-            }
-            
-            container.innerHTML = keys.join('');
-            
-            // Update chord display
-            if (step.active) {
-                const bassText = step.bass !== 'root' ? `/${step.bass}` : '';
-                document.getElementById('chordDisplay').textContent = 
-                    `${step.root}${CHORD_NAMES[step.chordType]}${bassText}`;
-            } else {
-                document.getElementById('chordDisplay').textContent = 'Aucun accord';
-            }
-        }
+            <div class="ctrl">
+              <div class="ctrl-head"><span class="ctrl-lbl">Tape Echo Verb</span><span class="ctrl-val" id="vEcho">mix 0.20</span></div>
+              <div style="display:grid;gap:8px">
+                <input id="rEchoMix" type="range" min="0" max="1" step="0.01" value="0.20">
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+                  <div>
+                    <div style="font-size:8.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-dim);margin-bottom:5px">Time</div>
+                    <input id="rEchoTime" type="range" min="0.08" max="0.65" step="0.005" value="0.32">
+                  </div>
+                  <div>
+                    <div style="font-size:8.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-dim);margin-bottom:5px">FB</div>
+                    <input id="rEchoFb" type="range" min="0" max="0.85" step="0.01" value="0.35">
+                  </div>
+                </div>
+              </div>
+              <div style="font-size:9px;color:var(--ink-dim);margin-top:6px;letter-spacing:.06em">
+                wow/flutter + lowpass in feedback
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
 
-        function updateParamsUI() {
-            const step = state.steps[state.selectedStep];
-            document.getElementById('selectedStepNum').textContent = state.selectedStep + 1;
-            document.getElementById('rootSelect').value = step.root;
-            document.getElementById('chordTypeSelect').value = step.chordType;
-            document.getElementById('voicingSelect').value = step.voicing;
-            document.getElementById('bassSelect').value = step.bass;
-            document.getElementById('durationSelect').value = step.duration;
-            document.getElementById('velocitySlider').value = step.velocity;
-            document.getElementById('velocityValue').textContent = step.velocity;
-        }
+      <div class="divider"></div>
 
-        function previewCurrentChord() {
-            const step = state.steps[state.selectedStep];
-            if (step.active) {
-                const notes = getChordNotes(step.root, step.chordType, step.voicing, step.bass);
-                playChord(notes, step.velocity, 0.5);
-            }
-        }
+      <!-- SYNTH -->
+      <div class="card" style="box-shadow:none;border-color:rgba(255,255,255,.06)">
+        <div class="card-header open" id="hSynth">
+          <span class="card-header-label">Mukudu Machine · RS-09 vibe</span>
+          <span class="card-toggle open" id="tSynth">▼</span>
+        </div>
+        <div class="card-body" id="bSynth">
+          <div class="fx-grid">
+            <div class="ctrl">
+              <div class="ctrl-head"><span class="ctrl-lbl">Attack</span><span class="ctrl-val" id="attackValue">0.10s</span></div>
+              <input id="rAtk" type="range" min="0.005" max="0.60" step="0.005" value="0.10">
+            </div>
+            <div class="ctrl">
+              <div class="ctrl-head"><span class="ctrl-lbl">Release</span><span class="ctrl-val" id="releaseValue">1.50s</span></div>
+              <input id="rRel" type="range" min="0.10" max="5.00" step="0.01" value="1.50">
+            </div>
+            <div class="ctrl">
+              <div class="ctrl-head"><span class="ctrl-lbl">Brightness</span><span class="ctrl-val" id="brightnessValue">50%</span></div>
+              <input id="rBri" type="range" min="0" max="1" step="0.01" value="0.50">
+            </div>
+            <div class="ctrl">
+              <div class="ctrl-head"><span class="ctrl-lbl">Ensemble</span><span class="ctrl-val" id="ensembleValue">60%</span></div>
+              <input id="rEns" type="range" min="0" max="1" step="0.01" value="0.60">
+            </div>
+            <div class="ctrl">
+              <div class="ctrl-head"><span class="ctrl-lbl">Master</span><span class="ctrl-val" id="vMaster">30%</span></div>
+              <input id="rMaster" type="range" min="0" max="1" step="0.01" value="0.30">
+            </div>
+            <div class="ctrl">
+              <div class="ctrl-head"><span class="ctrl-lbl">Chorus</span><span class="ctrl-val" id="vCh">on</span></div>
+              <div style="display:flex;gap:8px;align-items:center">
+                <button id="btnChorus" class="btn xs grn">ON</button>
+                <button id="btnOrgan" class="btn xs">ORGAN</button>
+                <button id="btnStrings" class="btn xs grn">STR</button>
+              </div>
+              <div style="font-size:9px;color:var(--ink-dim);margin-top:6px;letter-spacing:.06em">
+                toggle sources
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
 
-        // ============================================
-        // SEQUENCER PLAYBACK
-        // ============================================
-        let sequencerInterval = null;
+      <div class="hint">
+        • AUDIO : obligatoire sur mobile (débloque WebAudio).<br/>
+        • METRO : clique quarter-notes, accent sur le temps 1 (4/4).<br/>
+        • Tape Sat + Tape Echo Verb : chaînés après le synth (comme tes autres plugins).
+      </div>
+    </div>
+  </div>
 
-        function startSequencer() {
-            if (state.playing) return;
-            initAudio();
-            state.playing = true;
-            state.currentStep = -1;
-            document.getElementById('playBtn').classList.add('playing');
-            
-            const stepTime = (60 / state.bpm) * 1000 / 4; // 16th notes
-            
-            sequencerInterval = setInterval(() => {
-                state.currentStep = (state.currentStep + 1) % 16;
-                const step = state.steps[state.currentStep];
-                
-                if (step.active) {
-                    const notes = getChordNotes(step.root, step.chordType, step.voicing, step.bass);
-                    playChord(notes, step.velocity, step.duration);
-                }
-                
-                renderSteps();
-            }, stepTime);
-        }
+</div>
 
-        function stopSequencer() {
-            state.playing = false;
-            state.currentStep = -1;
-            document.getElementById('playBtn').classList.remove('playing');
-            clearInterval(sequencerInterval);
-            stopAllVoices();
-            renderSteps();
-        }
+<script>
+(() => {
+"use strict";
 
-        // ============================================
-        // KNOB INTERACTION
-        // ============================================
-        function initKnobs() {
-            document.querySelectorAll('.knob').forEach(knob => {
-                let isDragging = false;
-                let startY = 0;
-                let startValue = 0;
-                
-                knob.addEventListener('mousedown', (e) => {
-                    isDragging = true;
-                    startY = e.clientY;
-                    startValue = parseFloat(knob.dataset.value);
-                });
-                
-                document.addEventListener('mousemove', (e) => {
-                    if (!isDragging) return;
-                    const delta = (startY - e.clientY) / 100;
-                    let newValue = Math.max(0, Math.min(1, startValue + delta));
-                    
-                    const param = knob.dataset.param;
-                    knob.dataset.value = newValue;
-                    
-                    // Update rotation
-                    const rotation = -135 + newValue * 270;
-                    knob.style.transform = `rotate(${rotation}deg)`;
-                    
-                    // Update state and display
-                    if (param === 'attack') {
-                        state.synth.attack = newValue * 2;
-                        document.getElementById('attackValue').textContent = state.synth.attack.toFixed(2) + 's';
-                    } else if (param === 'release') {
-                        state.synth.release = newValue * 4;
-                        document.getElementById('releaseValue').textContent = state.synth.release.toFixed(2) + 's';
-                    } else if (param === 'brightness') {
-                        state.synth.brightness = newValue;
-                        document.getElementById('brightnessValue').textContent = Math.round(newValue * 100) + '%';
-                    } else if (param === 'ensemble') {
-                        state.synth.ensemble = newValue;
-                        document.getElementById('ensembleValue').textContent = Math.round(newValue * 100) + '%';
-                    }
-                });
-                
-                document.addEventListener('mouseup', () => {
-                    isDragging = false;
-                });
-            });
-        }
+/* =========================
+   THEORY / DATA
+========================= */
+const NOTES = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
 
-        function initSwitches() {
-            document.querySelectorAll('.switch').forEach(sw => {
-                sw.addEventListener('click', () => {
-                    sw.classList.toggle('active');
-                    const param = sw.dataset.param;
-                    state.synth[param] = sw.classList.contains('active');
-                });
-            });
-        }
+const SCALES = {
+  major: [0,2,4,5,7,9,11],
+  minor: [0,2,3,5,7,8,10],
+  harmonicMinor: [0,2,3,5,7,8,11],
+  melodicMinor: [0,2,3,5,7,9,11],
+  dorian: [0,2,3,5,7,9,10],
+  phrygian: [0,1,3,5,7,8,10],
+  lydian: [0,2,4,6,7,9,11],
+  mixolydian: [0,2,4,5,7,9,10],
+  locrian: [0,1,3,5,6,8,10]
+};
 
-        // ============================================
-        // EVENT LISTENERS
-        // ============================================
-        function initEventListeners() {
-            // Transport
-            document.getElementById('playBtn').addEventListener('click', () => {
-                if (state.playing) stopSequencer();
-                else startSequencer();
-            });
-            document.getElementById('stopBtn').addEventListener('click', stopSequencer);
-            document.getElementById('bpmInput').addEventListener('change', (e) => {
-                state.bpm = parseInt(e.target.value) || 120;
-                if (state.playing) {
-                    stopSequencer();
-                    startSequencer();
-                }
-            });
-            
-            // Key & Scale
-            document.getElementById('keySelect').addEventListener('change', (e) => {
-                state.key = e.target.value;
-                renderScaleNotes();
-                renderScaleDegrees();
-                renderPianoRoll();
-            });
-            document.getElementById('scaleSelect').addEventListener('change', (e) => {
-                state.scale = e.target.value;
-                renderScaleNotes();
-                renderScaleDegrees();
-                renderPianoRoll();
-            });
-            
-            // Step Parameters
-            document.getElementById('rootSelect').addEventListener('change', (e) => {
-                state.steps[state.selectedStep].root = e.target.value;
-                state.steps[state.selectedStep].active = true;
-                renderSteps();
-                renderPianoRoll();
-                previewCurrentChord();
-            });
-            document.getElementById('chordTypeSelect').addEventListener('change', (e) => {
-                state.steps[state.selectedStep].chordType = e.target.value;
-                state.steps[state.selectedStep].active = true;
-                renderSteps();
-                renderPianoRoll();
-                previewCurrentChord();
-            });
-            document.getElementById('voicingSelect').addEventListener('change', (e) => {
-                state.steps[state.selectedStep].voicing = e.target.value;
-                renderPianoRoll();
-                previewCurrentChord();
-            });
-            document.getElementById('bassSelect').addEventListener('change', (e) => {
-                state.steps[state.selectedStep].bass = e.target.value;
-                renderSteps();
-                renderPianoRoll();
-                previewCurrentChord();
-            });
-            document.getElementById('durationSelect').addEventListener('change', (e) => {
-                state.steps[state.selectedStep].duration = parseFloat(e.target.value);
-            });
-            document.getElementById('velocitySlider').addEventListener('input', (e) => {
-                state.steps[state.selectedStep].velocity = parseInt(e.target.value);
-                document.getElementById('velocityValue').textContent = e.target.value;
-            });
-            
-            // Step Actions
-            document.getElementById('clearAllBtn').addEventListener('click', () => {
-                state.steps.forEach(step => step.active = false);
-                renderSteps();
-                renderPianoRoll();
-            });
-            document.getElementById('randomBtn').addEventListener('click', () => {
-                const chords = getScaleChords(state.key, state.scale);
-                state.steps.forEach((step, i) => {
-                    if (Math.random() > 0.3) {
-                        const chord = chords[Math.floor(Math.random() * chords.length)];
-                        step.active = true;
-                        step.root = chord.root;
-                        step.chordType = chord.type;
-                        step.velocity = 80 + Math.floor(Math.random() * 40);
-                    } else {
-                        step.active = false;
-                    }
-                });
-                renderSteps();
-                updateParamsUI();
-                renderPianoRoll();
-            });
-            document.getElementById('copyBtn').addEventListener('click', () => {
-                state.clipboard = {...state.steps[state.selectedStep]};
-            });
-            document.getElementById('pasteBtn').addEventListener('click', () => {
-                if (state.clipboard) {
-                    state.steps[state.selectedStep] = {...state.clipboard};
-                    renderSteps();
-                    updateParamsUI();
-                    renderPianoRoll();
-                }
-            });
-            
-            // Keyboard shortcuts
-            document.addEventListener('keydown', (e) => {
-                if (e.code === 'Space') {
-                    e.preventDefault();
-                    if (state.playing) stopSequencer();
-                    else startSequencer();
-                }
-                if (e.code === 'ArrowLeft') {
-                    state.selectedStep = Math.max(0, state.selectedStep - 1);
-                    renderSteps();
-                    updateParamsUI();
-                    renderPianoRoll();
-                }
-                if (e.code === 'ArrowRight') {
-                    state.selectedStep = Math.min(15, state.selectedStep + 1);
-                    renderSteps();
-                    updateParamsUI();
-                    renderPianoRoll();
-                }
-            });
-        }
+const CHORD_INTERVALS = {
+  maj: [0,4,7],
+  min: [0,3,7],
+  dim: [0,3,6],
+  aug: [0,4,8],
+  sus2:[0,2,7],
+  sus4:[0,5,7],
+  maj7:[0,4,7,11],
+  min7:[0,3,7,10],
+  dom7:[0,4,7,10],
+  dim7:[0,3,6,9],
+  m7b5:[0,3,6,10],
+  add9:[0,4,7,14],
+  maj9:[0,4,7,11,14],
+  min9:[0,3,7,10,14]
+};
 
-        // ============================================
-        // INITIALIZATION
-        // ============================================
-        function init() {
-            // Set initial chord on step 1
-            state.steps[0].active = true;
-            state.steps[0].root = 'C';
-            state.steps[0].chordType = 'maj';
-            
-            renderScaleNotes();
-            renderScaleDegrees();
-            renderSteps();
-            renderPianoRoll();
-            updateParamsUI();
-            initKnobs();
-            initSwitches();
-            initEventListeners();
-            
-            // Initialize knob positions
-            document.querySelectorAll('.knob').forEach(knob => {
-                const value = parseFloat(knob.dataset.value);
-                const rotation = -135 + value * 270;
-                knob.style.transform = `rotate(${rotation}deg)`;
-            });
-        }
+const CHORD_NAMES = {
+  maj:'', min:'m', dim:'°', aug:'+',
+  sus2:'sus2', sus4:'sus4',
+  maj7:'M7', min7:'m7', dom7:'7', dim7:'°7', m7b5:'ø7',
+  add9:'add9', maj9:'M9', min9:'m9'
+};
 
-        // Start when DOM is ready
-        document.addEventListener('DOMContentLoaded', init);
-    </script>
+const DEGREE_NAMES = ['I','II','III','IV','V','VI','VII'];
+const SCALE_CHORD_TYPES = {
+  major: ['maj','min','min','maj','maj','min','dim'],
+  minor: ['min','dim','maj','min','min','maj','maj'],
+  harmonicMinor: ['min','dim','aug','min','maj','maj','dim'],
+  melodicMinor: ['min','min','aug','maj','maj','dim','dim'],
+  dorian: ['min','min','maj','maj','min','dim','maj'],
+  phrygian: ['min','maj','maj','min','dim','maj','min'],
+  lydian: ['maj','maj','min','dim','maj','min','min'],
+  mixolydian: ['maj','min','dim','maj','min','min','maj'],
+  locrian: ['dim','maj','min','min','maj','maj','min']
+};
+
+function clamp(x,a,b){ return Math.min(b,Math.max(a,x)); }
+function mod(n,m){ return ((n%m)+m)%m; }
+function pc(name){ return NOTES.indexOf(name); }
+
+/* =========================
+   STATE
+========================= */
+const state = {
+  key:'C',
+  scale:'major',
+  bpm:120,
+  playing:false,
+  currentStep:-1,
+  selectedStep:0,
+  steps: Array.from({length:16}, (_,i)=>({
+    active: i%4===0,
+    root: 'C',
+    chordType: 'maj',
+    voicing: 'close',
+    bass: 'root',
+    duration: 1,
+    velocity: 100
+  })),
+  clipboard: null,
+
+  // synth
+  synth:{
+    attack:0.10,
+    release:1.50,
+    brightness:0.50,
+    ensemble:0.60,
+    strings:true,
+    organ:false,
+    chorus:true
+  },
+
+  // fx
+  metOn:false,
+  metVol:0.35,
+  sat:0.20,
+  echoMix:0.20,
+  echoTime:0.32,
+  echoFb:0.35,
+
+  master:0.30
+};
+
+/* =========================
+   UI HELPERS
+========================= */
+function setRangePct(el){
+  const v=parseFloat(el.value),mn=parseFloat(el.min||0),mx=parseFloat(el.max||1);
+  el.style.setProperty("--pct",(((v-mn)/(mx-mn))*100).toFixed(2)+"%");
+}
+function wireRange(id, fn){
+  const el=document.getElementById(id);
+  if(!el) return;
+  setRangePct(el);
+  const on=()=>{ setRangePct(el); fn(parseFloat(el.value)); refreshTop(); };
+  el.addEventListener("input", on);
+  el.addEventListener("change", on);
+}
+
+/* =========================
+   AUDIO (RS-09-ish) + FX
+   Chain:
+     voicesBus -> tapeSat -> echoVerb (delay+fb+lp+wow) -> masterGain -> destination
+   Metronome is separate into masterGain.
+========================= */
+let AC=null;
+let masterGain=null;
+
+let voicesBus=null;
+
+// tape sat
+let satNode=null;
+
+// echo
+let echoIn=null, echoDelay=null, echoFbGain=null, echoWet=null, echoDry=null, echoLP=null;
+let wowLFO=null, wowGain=null;
+
+// chorus-ish (simple ensemble)
+let chorIn=null, chorOut=null, chorWet=null, chorDry=null, chorDelays=[], chorLFOs=[], chorLfoG=[];
+
+// met
+let metGain=null;
+
+// voice tracking
+let activeVoices=[];
+
+function ensureAudio(){
+  if(AC) return;
+  AC = new (window.AudioContext || window.webkitAudioContext)({latencyHint:"interactive"});
+
+  masterGain = AC.createGain();
+  masterGain.gain.value = state.master;
+  masterGain.connect(AC.destination);
+
+  metGain = AC.createGain();
+  metGain.gain.value = state.metVol;
+  metGain.connect(masterGain);
+
+  voicesBus = AC.createGain();
+
+  // ── Tape Saturation (waveshaper) ──
+  satNode = AC.createWaveShaper();
+  satNode.oversample = "2x";
+  satNode.curve = makeSatCurve(state.sat);
+
+  // ── Tape Echo Verb (delay+fb+lp+wow) ──
+  echoIn = AC.createGain();
+  echoDry = AC.createGain();
+  echoWet = AC.createGain();
+  echoDry.gain.value = 1.0;
+  echoWet.gain.value = state.echoMix;
+
+  echoDelay = AC.createDelay(1.0);
+  echoDelay.delayTime.value = state.echoTime;
+
+  echoFbGain = AC.createGain();
+  echoFbGain.gain.value = state.echoFb;
+
+  echoLP = AC.createBiquadFilter();
+  echoLP.type = "lowpass";
+  echoLP.frequency.value = 4200;
+  echoLP.Q.value = 0.75;
+
+  // wow/flutter on delayTime
+  wowLFO = AC.createOscillator();
+  wowLFO.type = "sine";
+  wowLFO.frequency.value = 0.35;
+  wowGain = AC.createGain();
+  wowGain.gain.value = 0.0025;
+  wowLFO.connect(wowGain);
+  wowGain.connect(echoDelay.delayTime);
+  wowLFO.start();
+
+  // routing echo
+  echoIn.connect(echoDry);
+  echoIn.connect(echoDelay);
+
+  echoDelay.connect(echoLP);
+  echoLP.connect(echoWet);
+
+  // feedback loop
+  echoLP.connect(echoFbGain);
+  echoFbGain.connect(echoDelay);
+
+  // ── Chorus/Ensemble (simple) ──
+  chorIn = AC.createGain();
+  chorOut = AC.createGain();
+  chorDry = AC.createGain();
+  chorWet = AC.createGain();
+
+  chorDry.gain.value = 1.0;
+  chorWet.gain.value = state.synth.ensemble;
+
+  chorIn.connect(chorDry);
+  chorDry.connect(chorOut);
+
+  for(let i=0;i<3;i++){
+    const d = AC.createDelay(0.05);
+    d.delayTime.value = 0.016 + i*0.002;
+
+    const lfo = AC.createOscillator();
+    lfo.type="sine";
+    lfo.frequency.value = 0.20 + i*0.12;
+
+    const lg = AC.createGain();
+    lg.gain.value = 0.0018 + i*0.0003;
+
+    lfo.connect(lg);
+    lg.connect(d.delayTime);
+    lfo.start();
+
+    chorIn.connect(d);
+    d.connect(chorWet);
+
+    chorDelays.push(d);
+    chorLFOs.push(lfo);
+    chorLfoG.push(lg);
+  }
+  chorWet.connect(chorOut);
+
+  // Final chain
+  voicesBus.connect(chorIn);
+  chorOut.connect(satNode);
+  satNode.connect(echoIn);
+  echoDry.connect(masterGain);
+  echoWet.connect(masterGain);
+
+  applyAudioParams();
+}
+
+function makeSatCurve(amount){
+  const a = clamp(amount,0,1);
+  const k = 8 + a*42; // stronger with amount
+  const n = 2048;
+  const curve = new Float32Array(n);
+  for(let i=0;i<n;i++){
+    const x = (i/(n-1))*2 - 1;
+    // soft clip + a pinch of asymmetry (tape-ish)
+    const y = Math.tanh(x*(1+k)) / Math.tanh(1+k);
+    const bias = (a*0.20);
+    curve[i] = Math.tanh((x + bias)* (1 + k*0.85)) / Math.tanh(1 + k*0.85);
+  }
+  return curve;
+}
+
+function noteToFreq(note, octave=4){
+  const noteIndex = NOTES.indexOf(note);
+  return 440 * Math.pow(2, (noteIndex - 9 + (octave - 4) * 12) / 12);
+}
+
+function createStringVoice(freq, velocity){
+  const now = AC.currentTime;
+  const vol = (velocity/127) * 0.75;
+
+  const osc1 = AC.createOscillator();
+  const osc2 = AC.createOscillator();
+  const osc3 = AC.createOscillator();
+  osc1.type = 'sawtooth';
+  osc2.type = 'sawtooth';
+  osc3.type = 'sawtooth';
+
+  const det = 0.003 + state.synth.ensemble*0.007;
+  osc1.frequency.value = freq;
+  osc2.frequency.value = freq*(1+det);
+  osc3.frequency.value = freq*(1-det);
+
+  const filter = AC.createBiquadFilter();
+  filter.type = 'lowpass';
+  filter.frequency.value = 900 + state.synth.brightness * 5200;
+  filter.Q.value = 0.55;
+
+  const env = AC.createGain();
+  env.gain.value = 0;
+
+  const mix = AC.createGain();
+  mix.gain.value = 0.33;
+
+  osc1.connect(mix);
+  osc2.connect(mix);
+  osc3.connect(mix);
+  mix.connect(filter);
+  filter.connect(env);
+  env.connect(voicesBus);
+
+  env.gain.setValueAtTime(0.0001, now);
+  env.gain.linearRampToValueAtTime(vol, now + state.synth.attack);
+
+  osc1.start(now); osc2.start(now); osc3.start(now);
+
+  return { oscs:[osc1,osc2,osc3], env, filter };
+}
+
+function createOrganVoice(freq, velocity){
+  const now = AC.currentTime;
+  const harmonics = [1,2,3,4,6,8];
+  const levels = [1,.55,.35,.25,.20,.14];
+
+  const mixer = AC.createGain();
+  mixer.gain.value = 0.15;
+
+  const oscs=[];
+  harmonics.forEach((h,i)=>{
+    const o=AC.createOscillator();
+    o.type="sine";
+    o.frequency.value=freq*h;
+    const g=AC.createGain();
+    g.gain.value = levels[i]*0.12*(velocity/127);
+    o.connect(g); g.connect(mixer);
+    o.start(now);
+    oscs.push(o);
+  });
+
+  const env=AC.createGain();
+  env.gain.value=0;
+  mixer.connect(env);
+  env.connect(voicesBus);
+
+  env.gain.setValueAtTime(0.0001, now);
+  env.gain.linearRampToValueAtTime(0.55, now + 0.01);
+
+  return { oscs, env };
+}
+
+function stopAllVoices(){
+  activeVoices.forEach(v=>{
+    (v.oscs||[]).forEach(o=>{ try{o.stop();}catch(e){} });
+  });
+  activeVoices = [];
+}
+
+function releaseVoices(){
+  if(!AC) return;
+  const now = AC.currentTime;
+  activeVoices.forEach(v=>{
+    if(!v.env) return;
+    v.env.gain.cancelScheduledValues(now);
+    v.env.gain.setValueAtTime(v.env.gain.value, now);
+    v.env.gain.linearRampToValueAtTime(0.0001, now + state.synth.release);
+  });
+  setTimeout(()=>stopAllVoices(), state.synth.release*1000 + 120);
+}
+
+function playChord(noteObjs, velocity, durationBeats){
+  ensureAudio();
+  // do NOT kill voices instantly; release previous for stringy overlap
+  releaseVoices();
+
+  // schedule new chord
+  const durSec = durationBeats * (60/state.bpm);
+  const offAt = AC.currentTime + durSec;
+
+  noteObjs.forEach(n=>{
+    const f = noteToFreq(n.name, n.octave);
+    if(state.synth.strings){
+      const v = createStringVoice(f, velocity);
+      activeVoices.push(v);
+    }
+    if(state.synth.organ){
+      const v = createOrganVoice(f, velocity);
+      activeVoices.push(v);
+    }
+  });
+
+  // auto-release at chord end
+  setTimeout(()=>releaseVoices(), durSec*1000);
+}
+
+function applyAudioParams(){
+  if(!AC) return;
+
+  masterGain.gain.setTargetAtTime(state.master, AC.currentTime, 0.02);
+
+  // chorus/ensemble depth & wet
+  chorWet.gain.setTargetAtTime(state.synth.chorus ? state.synth.ensemble : 0.0, AC.currentTime, 0.03);
+  const depthBase = 0.0008 + state.synth.ensemble*0.0032;
+  chorLfoG.forEach((g,i)=>{
+    g.gain.setTargetAtTime(state.synth.chorus ? depthBase*(1+i*0.22) : 0.00001, AC.currentTime, 0.03);
+  });
+
+  // sat
+  satNode.curve = makeSatCurve(state.sat);
+
+  // echo
+  echoWet.gain.setTargetAtTime(state.echoMix, AC.currentTime, 0.03);
+  echoDelay.delayTime.setTargetAtTime(state.echoTime, AC.currentTime, 0.03);
+  echoFbGain.gain.setTargetAtTime(state.echoFb, AC.currentTime, 0.03);
+  // darker as feedback rises
+  echoLP.frequency.setTargetAtTime(5200 - state.echoFb*2200, AC.currentTime, 0.05);
+  wowGain.gain.setTargetAtTime(0.0010 + state.echoMix*0.0040, AC.currentTime, 0.05);
+  wowLFO.frequency.setTargetAtTime(0.25 + state.echoTime*0.8, AC.currentTime, 0.05);
+
+  // met
+  metGain.gain.setTargetAtTime(state.metVol, AC.currentTime, 0.02);
+}
+
+function metroClick(time, accent=false){
+  if(!AC) return;
+  const osc = AC.createOscillator();
+  const g = AC.createGain();
+  const hp = AC.createBiquadFilter();
+  hp.type="highpass"; hp.frequency.value = 900;
+
+  osc.type="square";
+  osc.frequency.setValueAtTime(accent? 1400 : 1000, time);
+
+  g.gain.setValueAtTime(0.0001, time);
+  g.gain.exponentialRampToValueAtTime(accent? 0.35 : 0.22, time + 0.002);
+  g.gain.exponentialRampToValueAtTime(0.0001, time + 0.035);
+
+  osc.connect(hp);
+  hp.connect(g);
+  g.connect(metGain);
+
+  osc.start(time);
+  osc.stop(time + 0.05);
+}
+
+/* =========================
+   CHORD BUILDING
+========================= */
+function getScaleNotes(key, scale){
+  const keyIndex = pc(key);
+  const intervals = SCALES[scale] || SCALES.major;
+  return intervals.map(i => NOTES[(keyIndex + i) % 12]);
+}
+
+function getScaleChords(key, scale){
+  const scaleNotes = getScaleNotes(key, scale);
+  const chordTypes = SCALE_CHORD_TYPES[scale] || SCALE_CHORD_TYPES.major;
+  return scaleNotes.map((note,i)=>({
+    root: note,
+    type: chordTypes[i],
+    degree: DEGREE_NAMES[i],
+    degreeLower: (i===0||i===3||i===4)? DEGREE_NAMES[i] : DEGREE_NAMES[i].toLowerCase()
+  }));
+}
+
+function getChordNotes(root, chordType, voicing, bassNote){
+  const rootIndex = pc(root);
+  const intervals = CHORD_INTERVALS[chordType] || [0,4,7];
+
+  const notes = intervals.map(iv=>{
+    const ni = (rootIndex + iv) % 12;
+    return NOTES[ni];
+  });
+
+  let objs = notes.map((name,i)=>{
+    let octave = 4;
+    if(voicing === 'open' && i>0) octave = (i%2===0)?4:5;
+    if(voicing === 'drop2' && i===1) octave = 3;
+    if(voicing === 'drop3' && i===2) octave = 3;
+    if(voicing === 'spread') octave = 3 + i;
+    return {name, octave};
+  });
+
+  // bass
+  const actualBass = bassNote === 'root' ? root : bassNote;
+  objs.unshift({name: actualBass, octave: 2});
+  return objs;
+}
+
+/* =========================
+   RENDER UI
+========================= */
+const els = {
+  kBpm: document.getElementById("kBpm"),
+  kKey: document.getElementById("kKey"),
+  kScale: document.getElementById("kScale"),
+  kStep: document.getElementById("kStep"),
+  kChord: document.getElementById("kChord"),
+
+  btnAudio: document.getElementById("btnAudio"),
+  btnPlay: document.getElementById("btnPlay"),
+  btnStop: document.getElementById("btnStop"),
+  btnMetro: document.getElementById("btnMetro"),
+  btnMetOn: document.getElementById("btnMetOn"),
+
+  keySelect: document.getElementById("keySelect"),
+  scaleSelect: document.getElementById("scaleSelect"),
+  scaleNotes: document.getElementById("scaleNotes"),
+  scaleDegrees: document.getElementById("scaleDegrees"),
+
+  stepsContainer: document.getElementById("stepsContainer"),
+  selectedStepNum: document.getElementById("selectedStepNum"),
+
+  rootSelect: document.getElementById("rootSelect"),
+  chordTypeSelect: document.getElementById("chordTypeSelect"),
+  voicingSelect: document.getElementById("voicingSelect"),
+  bassSelect: document.getElementById("bassSelect"),
+  durationSelect: document.getElementById("durationSelect"),
+  velocitySlider: document.getElementById("velocitySlider"),
+  velocityValue: document.getElementById("velocityValue"),
+
+  vBpm: document.getElementById("vBpm"),
+
+  vRoot: document.getElementById("vRoot"),
+  vType: document.getElementById("vType"),
+  vVoi: document.getElementById("vVoi"),
+  vBass: document.getElementById("vBass"),
+  vDur: document.getElementById("vDur"),
+
+  // synth
+  attackValue: document.getElementById("attackValue"),
+  releaseValue: document.getElementById("releaseValue"),
+  brightnessValue: document.getElementById("brightnessValue"),
+  ensembleValue: document.getElementById("ensembleValue"),
+  vMaster: document.getElementById("vMaster"),
+  vCh: document.getElementById("vCh"),
+  btnChorus: document.getElementById("btnChorus"),
+  btnOrgan: document.getElementById("btnOrgan"),
+  btnStrings: document.getElementById("btnStrings"),
+
+  // fx
+  vMet: document.getElementById("vMet"),
+  vSat: document.getElementById("vSat"),
+  vEcho: document.getElementById("vEcho"),
+
+  // actions
+  btnClearAll: document.getElementById("btnClearAll"),
+  btnRandom: document.getElementById("btnRandom"),
+  btnCopy: document.getElementById("btnCopy"),
+  btnPaste: document.getElementById("btnPaste"),
+};
+
+function refreshTop(){
+  els.kBpm.textContent = String(state.bpm);
+  els.vBpm.textContent = String(state.bpm);
+
+  els.kKey.textContent = state.key;
+  const sname = els.scaleSelect.options[els.scaleSelect.selectedIndex]?.textContent || state.scale;
+  els.kScale.textContent = sname;
+
+  // params display
+  const st = state.steps[state.selectedStep];
+  els.selectedStepNum.textContent = String(state.selectedStep+1);
+  els.velocityValue.textContent = String(st.velocity);
+
+  els.vRoot.textContent = st.root;
+  els.vType.textContent = (CHORD_NAMES[st.chordType] === '' ? 'Maj' : CHORD_NAMES[st.chordType]);
+  els.vVoi.textContent = st.voicing;
+  els.vBass.textContent = st.bass;
+  els.vDur.textContent = String(st.duration);
+
+  // fx
+  els.vMet.textContent = state.metOn ? "on" : "off";
+  els.vSat.textContent = state.sat.toFixed(2);
+  els.vEcho.textContent = `mix ${state.echoMix.toFixed(2)}`;
+
+  // synth
+  els.attackValue.textContent = state.synth.attack.toFixed(2)+"s";
+  els.releaseValue.textContent = state.synth.release.toFixed(2)+"s";
+  els.brightnessValue.textContent = Math.round(state.synth.brightness*100)+"%";
+  els.ensembleValue.textContent = Math.round(state.synth.ensemble*100)+"%";
+  els.vMaster.textContent = Math.round(state.master*100)+"%";
+  els.vCh.textContent = state.synth.chorus ? "on" : "off";
+
+  // audio
+  if(AC) applyAudioParams();
+
+  // met buttons state
+  els.btnMetro.classList.toggle("active", state.metOn);
+  els.btnMetOn.classList.toggle("active", state.metOn);
+}
+
+function renderKeyMenus(){
+  els.keySelect.innerHTML = NOTES.map(n=>`<option value="${n}">${n}</option>`).join("");
+  els.rootSelect.innerHTML = NOTES.map(n=>`<option value="${n}">${n}</option>`).join("");
+
+  // bass: root + all
+  els.bassSelect.innerHTML =
+    `<option value="root">Fondamentale</option>` +
+    NOTES.map(n=>`<option value="${n}">${n}</option>`).join("");
+
+  els.keySelect.value = state.key;
+  els.rootSelect.value = state.steps[state.selectedStep].root;
+  els.bassSelect.value = state.steps[state.selectedStep].bass;
+}
+
+function renderScaleNotes(){
+  const scaleNotes = getScaleNotes(state.key, state.scale);
+  els.scaleNotes.innerHTML = "";
+  NOTES.forEach(n=>{
+    const d=document.createElement("div");
+    d.className="note" + (scaleNotes.includes(n) ? " in" : "") + (n===state.key ? " root" : "");
+    d.textContent = n;
+    els.scaleNotes.appendChild(d);
+  });
+}
+
+function renderScaleDegrees(){
+  const chords = getScaleChords(state.key, state.scale);
+  els.scaleDegrees.innerHTML = chords.map(ch=>(
+    `<div class="deg" data-root="${ch.root}" data-type="${ch.type}">
+      <div class="d">${ch.degreeLower}</div>
+      <div class="c">${ch.root}${CHORD_NAMES[ch.type]}</div>
+    </div>`
+  )).join("");
+
+  els.scaleDegrees.querySelectorAll(".deg").forEach(el=>{
+    el.addEventListener("click",()=>{
+      const st = state.steps[state.selectedStep];
+      st.root = el.dataset.root;
+      st.chordType = el.dataset.type;
+      st.active = true;
+      updateParamsUI();
+      renderSteps();
+      previewCurrentChord();
+    });
+  });
+}
+
+function renderSteps(){
+  els.stepsContainer.innerHTML = state.steps.map((st,i)=>{
+    const chordName = st.active ? `${st.root}${CHORD_NAMES[st.chordType]}` : "—";
+    const bassDisplay = (st.active && st.bass !== "root") ? `/${st.bass}` : "";
+    const cls = [
+      "step",
+      st.active ? "active" : "",
+      i===state.selectedStep ? "selected" : "",
+      i===state.currentStep ? "playing" : ""
+    ].filter(Boolean).join(" ");
+    return `
+      <div class="${cls}" data-step="${i}">
+        <span class="n">${i+1}</span>
+        <span class="ch">${chordName}</span>
+        <span class="ba">${bassDisplay}</span>
+      </div>
+    `;
+  }).join("");
+
+  els.stepsContainer.querySelectorAll(".step").forEach(el=>{
+    el.addEventListener("click",(e)=>{
+      const idx = parseInt(el.dataset.step,10);
+      if(e.shiftKey){
+        state.steps[idx].active = !state.steps[idx].active;
+      }else{
+        state.selectedStep = idx;
+      }
+      updateParamsUI();
+      renderSteps();
+      previewCurrentChord();
+    });
+
+    el.addEventListener("dblclick",()=>{
+      const idx = parseInt(el.dataset.step,10);
+      state.steps[idx].active = !state.steps[idx].active;
+      renderSteps();
+    });
+  });
+}
+
+function updateParamsUI(){
+  const st = state.steps[state.selectedStep];
+  els.rootSelect.value = st.root;
+  els.chordTypeSelect.value = st.chordType;
+  els.voicingSelect.value = st.voicing;
+  els.bassSelect.value = st.bass;
+  els.durationSelect.value = String(st.duration);
+  els.velocitySlider.value = String(st.velocity);
+  refreshTop();
+}
+
+function previewCurrentChord(){
+  const st = state.steps[state.selectedStep];
+  if(!st.active) return;
+  const notes = getChordNotes(st.root, st.chordType, st.voicing, st.bass);
+  playChord(notes, st.velocity, 0.5);
+}
+
+/* =========================
+   SEQUENCER
+========================= */
+let intervalId = null;
+let metIntervalId = null;
+
+function stepMs(){ return (60/state.bpm)*1000/4; } // 16th
+
+function startSequencer(){
+  ensureAudio();
+  if(AC.state==="suspended") AC.resume();
+
+  if(state.playing) return;
+  state.playing = true;
+  state.currentStep = -1;
+
+  els.btnPlay.classList.add("playing");
+  els.btnPlay.textContent = "⏸ PAUSE";
+
+  const t = stepMs();
+  intervalId = setInterval(()=>{
+    state.currentStep = (state.currentStep + 1) % 16;
+    const st = state.steps[state.currentStep];
+
+    // update top
+    els.kStep.textContent = String(state.currentStep+1);
+    els.kChord.textContent = st.active ? `${st.root}${CHORD_NAMES[st.chordType]}` : "—";
+
+    if(st.active){
+      const notes = getChordNotes(st.root, st.chordType, st.voicing, st.bass);
+      playChord(notes, st.velocity, st.duration);
+    }
+    renderSteps();
+  }, t);
+
+  // metronome scheduling: simple setInterval on quarter note
+  startMetronome();
+}
+
+function stopSequencer(){
+  state.playing = false;
+  state.currentStep = -1;
+  if(intervalId){ clearInterval(intervalId); intervalId=null; }
+  stopMetronome();
+  releaseVoices();
+  renderSteps();
+
+  els.btnPlay.classList.remove("playing");
+  els.btnPlay.textContent = "▶ PLAY";
+  els.kStep.textContent = "—";
+  els.kChord.textContent = "—";
+}
+
+function startMetronome(){
+  stopMetronome();
+  if(!state.metOn || !AC) return;
+
+  let beat = 0;
+  const qMs = (60/state.bpm)*1000; // quarter
+  metIntervalId = setInterval(()=>{
+    const t = AC.currentTime + 0.01;
+    const accent = (beat % 4) === 0;
+    metroClick(t, accent);
+    beat++;
+  }, qMs);
+}
+
+function stopMetronome(){
+  if(metIntervalId){ clearInterval(metIntervalId); metIntervalId=null; }
+}
+
+/* =========================
+   COLLAPSIBLES
+========================= */
+function setupCollapsible(hId,bId,tId){
+  const h=document.getElementById(hId),b=document.getElementById(bId),t=document.getElementById(tId);
+  if(!h||!b||!t)return;
+  h.addEventListener("click",e=>{
+    if(e.target.closest("button")) return;
+    const open=!b.classList.contains("collapsed");
+    b.classList.toggle("collapsed",open);
+    h.classList.toggle("open",!open);
+    t.classList.toggle("open",!open);
+  });
+}
+setupCollapsible("hKey","bKey","tKey");
+setupCollapsible("hNotes","bNotes","tNotes");
+setupCollapsible("hDeg","bDeg","tDeg");
+setupCollapsible("hSeq","bSeq","tSeq");
+setupCollapsible("hFx","bFx","tFx");
+setupCollapsible("hSynth","bSynth","tSynth");
+
+/* =========================
+   WIRE EVENTS
+========================= */
+els.btnAudio.addEventListener("click", async ()=>{
+  ensureAudio();
+  try{
+    if(AC.state==="suspended") await AC.resume();
+    els.btnAudio.classList.add("active");
+    els.btnAudio.textContent = "AUDIO ✓";
+  }catch(e){}
+});
+
+els.btnPlay.addEventListener("click", ()=>{ state.playing ? stopSequencer() : startSequencer(); });
+els.btnStop.addEventListener("click", stopSequencer);
+
+els.btnMetro.addEventListener("click", ()=>{
+  ensureAudio();
+  state.metOn = !state.metOn;
+  refreshTop();
+  if(state.playing){ startMetronome(); }
+});
+els.btnMetOn.addEventListener("click", ()=>{
+  ensureAudio();
+  state.metOn = !state.metOn;
+  refreshTop();
+  if(state.playing){ startMetronome(); }
+});
+
+els.keySelect.addEventListener("change", e=>{
+  state.key = e.target.value;
+  renderScaleNotes(); renderScaleDegrees();
+  // update preview for current step
+  previewCurrentChord();
+  refreshTop();
+});
+els.scaleSelect.addEventListener("change", e=>{
+  state.scale = e.target.value;
+  renderScaleNotes(); renderScaleDegrees();
+  previewCurrentChord();
+  refreshTop();
+});
+
+els.rootSelect.addEventListener("change", e=>{
+  const st = state.steps[state.selectedStep];
+  st.root = e.target.value;
+  st.active = true;
+  updateParamsUI();
+  renderSteps();
+  previewCurrentChord();
+});
+els.chordTypeSelect.addEventListener("change", e=>{
+  const st = state.steps[state.selectedStep];
+  st.chordType = e.target.value;
+  st.active = true;
+  updateParamsUI();
+  renderSteps();
+  previewCurrentChord();
+});
+els.voicingSelect.addEventListener("change", e=>{
+  state.steps[state.selectedStep].voicing = e.target.value;
+  updateParamsUI();
+  previewCurrentChord();
+});
+els.bassSelect.addEventListener("change", e=>{
+  state.steps[state.selectedStep].bass = e.target.value;
+  updateParamsUI();
+  renderSteps();
+  previewCurrentChord();
+});
+els.durationSelect.addEventListener("change", e=>{
+  state.steps[state.selectedStep].duration = parseFloat(e.target.value);
+  updateParamsUI();
+});
+els.velocitySlider.addEventListener("input", e=>{
+  state.steps[state.selectedStep].velocity = parseInt(e.target.value,10);
+  updateParamsUI();
+});
+
+els.btnClearAll.addEventListener("click", ()=>{
+  state.steps.forEach(s=>s.active=false);
+  renderSteps();
+});
+els.btnRandom.addEventListener("click", ()=>{
+  const chords = getScaleChords(state.key, state.scale);
+  state.steps.forEach((s,i)=>{
+    if(Math.random()>0.30){
+      const ch = chords[Math.floor(Math.random()*chords.length)];
+      s.active=true;
+      s.root=ch.root;
+      s.chordType=ch.type;
+      s.velocity=80 + Math.floor(Math.random()*40);
+      s.duration = [0.5,1,1,2][Math.floor(Math.random()*4)];
+      s.voicing = ["close","open","drop2","spread"][Math.floor(Math.random()*4)];
+      s.bass = (Math.random()<0.75) ? "root" : NOTES[Math.floor(Math.random()*12)];
+    }else{
+      s.active=false;
+    }
+  });
+  renderSteps();
+  updateParamsUI();
+});
+els.btnCopy.addEventListener("click", ()=>{
+  state.clipboard = {...state.steps[state.selectedStep]};
+});
+els.btnPaste.addEventListener("click", ()=>{
+  if(!state.clipboard) return;
+  state.steps[state.selectedStep] = {...state.clipboard};
+  renderSteps();
+  updateParamsUI();
+  previewCurrentChord();
+});
+
+// Ranges: BPM + synth + fx
+wireRange("rBpm", v=>{
+  state.bpm = Math.round(v);
+  if(state.playing){
+    // restart timers to apply tempo immediately
+    stopSequencer();
+    startSequencer();
+  }else{
+    refreshTop();
+  }
+});
+
+wireRange("rMetVol", v=>{
+  state.metVol = v;
+  if(AC) applyAudioParams();
+});
+
+wireRange("rSat", v=>{
+  state.sat = v;
+  if(AC) applyAudioParams();
+});
+
+wireRange("rEchoMix", v=>{
+  state.echoMix = v;
+  if(AC) applyAudioParams();
+});
+wireRange("rEchoTime", v=>{
+  state.echoTime = v;
+  if(AC) applyAudioParams();
+});
+wireRange("rEchoFb", v=>{
+  state.echoFb = v;
+  if(AC) applyAudioParams();
+});
+
+wireRange("rAtk", v=>{
+  state.synth.attack = v;
+});
+wireRange("rRel", v=>{
+  state.synth.release = v;
+});
+wireRange("rBri", v=>{
+  state.synth.brightness = v;
+});
+wireRange("rEns", v=>{
+  state.synth.ensemble = v;
+  if(AC) applyAudioParams();
+});
+wireRange("rMaster", v=>{
+  state.master = v;
+  if(AC) applyAudioParams();
+});
+
+// toggles
+els.btnChorus.addEventListener("click", ()=>{
+  ensureAudio();
+  state.synth.chorus = !state.synth.chorus;
+  els.btnChorus.classList.toggle("grn", state.synth.chorus);
+  els.btnChorus.textContent = state.synth.chorus ? "ON" : "OFF";
+  applyAudioParams();
+  refreshTop();
+});
+els.btnStrings.addEventListener("click", ()=>{
+  state.synth.strings = !state.synth.strings;
+  els.btnStrings.classList.toggle("grn", state.synth.strings);
+});
+els.btnOrgan.addEventListener("click", ()=>{
+  state.synth.organ = !state.synth.organ;
+  els.btnOrgan.classList.toggle("grn", state.synth.organ);
+});
+
+// keyboard shortcuts
+window.addEventListener("keydown",(e)=>{
+  if(e.key===" "){ e.preventDefault(); state.playing ? stopSequencer() : startSequencer(); }
+  if(e.key.toLowerCase()==="m"){ state.metOn=!state.metOn; refreshTop(); if(state.playing) startMetronome(); }
+});
+
+/* =========================
+   INIT
+========================= */
+function init(){
+  // build menus
+  renderKeyMenus();
+  els.scaleSelect.value = state.scale;
+
+  // init first step
+  state.steps[0].active=true;
+  state.steps[0].root=state.key;
+  state.steps[0].chordType='maj';
+
+  // set selects to selected step
+  updateParamsUI();
+
+  // render panels
+  renderScaleNotes();
+  renderScaleDegrees();
+  renderSteps();
+  refreshTop();
+
+  // init toggles visuals
+  els.btnChorus.classList.toggle("grn", state.synth.chorus);
+  els.btnOrgan.classList.toggle("grn", state.synth.organ);
+  els.btnStrings.classList.toggle("grn", state.synth.strings);
+
+  // range pct for any ranges not wired yet
+  ["rBpm","rMetVol","rSat","rEchoMix","rEchoTime","rEchoFb","rAtk","rRel","rBri","rEns","rMaster","velocitySlider"].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el && el.type==="range") setRangePct(el);
+  });
+}
+document.addEventListener("DOMContentLoaded", init);
+
+})();
+</script>
 </body>
 </html>
