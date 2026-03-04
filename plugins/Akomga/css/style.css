@@ -753,3 +753,40 @@ input[type="range"]::-moz-range-track {
     transform: scale(0.95);
   }
 }
+
+
+/* =========================
+   PAD EDITOR + PAD SELECT
+   ========================= */
+
+.pad.selected {
+  border-color: var(--accent-primary);
+  box-shadow: 0 0 0 2px rgba(230, 57, 70, 0.25), 0 0 18px var(--active-glow);
+}
+
+/* Panneau Pad Editor : reprend le style des sections existantes */
+.pad-editor .pad-editor-meta {
+  display: flex;
+  gap: var(--space-sm);
+  align-items: center;
+  font-size: 0.65rem;
+  color: var(--text-muted);
+  letter-spacing: 0.06em;
+}
+
+.pad-editor .pad-edit-name {
+  color: var(--text-secondary);
+  font-weight: 600;
+  max-width: 220px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Sur mobile, un peu plus compact */
+@media (max-width: 600px) {
+  .pad-editor .pad-editor-meta {
+    flex-wrap: wrap;
+    gap: var(--space-xs);
+  }
+}
