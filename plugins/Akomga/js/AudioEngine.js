@@ -46,7 +46,7 @@ export class AudioEngine {
     // Initialisation des effets Lo-Fi
     this.effects = new LoFiEffects(this.ctx);
     this.effects.connect(this.ctx.destination);
-    this.effects.applyPreset('SP1200');
+    this.effects.applyPreset('MPC60');
 
     // Chargement des samples par défaut
     await this.loadDefaultSamples();
