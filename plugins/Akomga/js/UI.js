@@ -1,6 +1,17 @@
 /**
  * UI.js
  * Interface moderne avec support tactile complet (mobile + desktop)
+ * + Sélection de pad + édition Pitch/Volume par pad
+ *
+ * Requis côté HTML (index.html) : ajouter le panneau "Pad Editor" avec ces IDs :
+ *  - pad-editor (section) + pad-edit-id + pad-edit-name
+ *  - pad-pitch + pad-pitch-val + pad-pitch-fill
+ *  - pad-vol + pad-vol-val + pad-vol-fill
+ *
+ * Requis côté AudioEngine :
+ *  - getPadParams(padId) -> { pitch, volume }
+ *  - setPadPitch(padId, semitones)
+ *  - setPadVolume(padId, volume01)
  */
 
 export class UI {
@@ -15,6 +26,10 @@ export class UI {
     this.padColors = ['#e63946', '#ff6b35', '#f7c948', '#2ecc71', '#4ecdc4', '#9b59b6'];
 
     this.isMobile = this.detectMobile();
+
+    // --- Pad edit state ---
+    this.selectedPadId = 0;
+    this._longPressTimer = null;
   }
 
   detectMobile() {
@@ -33,9 +48,12 @@ export class UI {
     this.initSliderFills();
     this.updateHints();
 
-    // Optionnel : si tu veux appliquer le preset actif au chargement
+    // Optionnel : appliquer le preset actif au chargement
     const activePreset = document.querySelector('.preset-btn.active')?.dataset?.preset;
     if (activePreset) this.applyPreset(activePreset);
+
+    // Sélection par défaut + synchro panneau si présent
+    this.selectPad(0);
   }
 
   updateHints() {
@@ -43,8 +61,8 @@ export class UI {
     if (!hint) return;
 
     hint.textContent = this.isMobile
-      ? 'Tap pour jouer · 📁 pour charger'
-      : 'Clic pour jouer · 📁 ou clic droit pour charger';
+      ? 'Tap pour jouer · 📁 pour charger · appui long pour éditer'
+      : 'Clic pour jouer · 📁 ou clic droit pour charger · Alt+clic pour éditer';
   }
 
   // ---------------------------
@@ -151,23 +169,52 @@ export class UI {
     // === PADS ===
     const padsGrid = document.getElementById('pads-grid');
     if (padsGrid) {
-      padsGrid.addEventListener('pointerdown', (e) => {
-        const loadBtn = e.target.closest('.pad-load-btn');
-        if (loadBtn) {
-          e.preventDefault();
-          e.stopPropagation();
-          const padId = parseInt(loadBtn.dataset.padId, 10);
-          this.openFilePicker(padId);
-          return;
-        }
+      padsGrid.addEventListener(
+        'pointerdown',
+        (e) => {
+          const loadBtn = e.target.closest('.pad-load-btn');
+          if (loadBtn) {
+            e.preventDefault();
+            e.stopPropagation();
+            const padId = parseInt(loadBtn.dataset.padId, 10);
+            this.openFilePicker(padId);
+            return;
+          }
 
-        const pad = e.target.closest('.pad');
-        if (pad) {
+          const pad = e.target.closest('.pad');
+          if (!pad) return;
+
           const padId = parseInt(pad.dataset.padId, 10);
-          this.triggerPad(padId);
-        }
-      }, { passive: false });
 
+          // Desktop : Alt+clic = sélectionner/éditer au lieu de jouer
+          if (!this.isMobile && e.altKey) {
+            e.preventDefault();
+            this.selectPad(padId);
+            return;
+          }
+
+          // Mobile : appui long => sélectionner (sans empêcher le tap normal)
+          if (this.isMobile) {
+            clearTimeout(this._longPressTimer);
+            this._longPressTimer = setTimeout(() => {
+              this.selectPad(padId);
+              if (navigator.vibrate) navigator.vibrate(15);
+            }, 350);
+          }
+
+          // Tap normal = play
+          this.triggerPad(padId);
+        },
+        { passive: false }
+      );
+
+      // Fin de gesture : annuler l'appui long
+      const cancelLongPress = () => clearTimeout(this._longPressTimer);
+      padsGrid.addEventListener('pointerup', cancelLongPress);
+      padsGrid.addEventListener('pointercancel', cancelLongPress);
+      padsGrid.addEventListener('pointerleave', cancelLongPress);
+
+      // Clic droit desktop : charger un sample
       padsGrid.addEventListener('contextmenu', (e) => {
         e.preventDefault();
         const pad = e.target.closest('.pad');
@@ -176,12 +223,15 @@ export class UI {
         this.openFilePicker(padId);
       });
 
+      // File inputs
       padsGrid.querySelectorAll('input[type="file"]').forEach((input, idx) => {
         input.addEventListener('change', async (e) => {
           const file = e.target.files?.[0];
           if (!file) return;
           await this.handleFileSelect(idx, file);
           e.target.value = '';
+          // garde la sélection si on recharge le pad sélectionné
+          if (idx === this.selectedPadId) this.selectPad(idx);
         });
       });
     }
@@ -240,6 +290,22 @@ export class UI {
         btn.classList.add('active');
         this.applyPreset(btn.dataset.preset);
       });
+    });
+
+    // === PAD EDITOR (Pitch/Volume) ===
+    document.getElementById('pad-pitch')?.addEventListener('input', (e) => {
+      const st = parseInt(e.target.value, 10) || 0;
+      this.audioEngine.setPadPitch?.(this.selectedPadId, st);
+      this.updatePadPitchDisplay();
+      this.updateSliderFillByInputId('pad-pitch');
+    });
+
+    document.getElementById('pad-vol')?.addEventListener('input', (e) => {
+      const pct = parseInt(e.target.value, 10) || 0;
+      const vol01 = Math.max(0, Math.min(1, pct / 100));
+      this.audioEngine.setPadVolume?.(this.selectedPadId, vol01);
+      this.updatePadVolDisplay();
+      this.updateSliderFillByInputId('pad-vol');
     });
   }
 
@@ -352,7 +418,6 @@ export class UI {
   // ---------------------------
 
   initSliderFills() {
-    // On calcule toutes les barres au chargement
     const ids = [
       'bit-depth',
       'sample-rate',
@@ -360,6 +425,9 @@ export class UI {
       'drive',
       'vinyl-noise',
       'compression',
+      // PAD EDITOR (si présent)
+      'pad-pitch',
+      'pad-vol',
       // bpm/swing n'ont pas de <div fill> dans ton HTML actuel (OK)
     ];
     ids.forEach((id) => this.updateSliderFillByInputId(id));
@@ -369,7 +437,6 @@ export class UI {
     const input = document.getElementById(inputId);
     if (!input) return;
 
-    // mapping des ids -> fill ids (selon ton index.html)
     const fillMap = {
       'bit-depth': 'bit-depth-fill',
       'sample-rate': 'sample-rate-fill',
@@ -377,9 +444,11 @@ export class UI {
       'drive': 'drive-fill',
       'vinyl-noise': 'vinyl-fill',
       'compression': 'comp-fill',
-      // si tu ajoutes plus tard:
-      // 'bpm': 'bpm-fill',
-      // 'swing': 'swing-fill',
+
+      // PAD EDITOR
+      'pad-pitch': 'pad-pitch-fill',
+      'pad-vol': 'pad-vol-fill',
+      // bpm/swing : pas de fill dans ton HTML
     };
 
     const fillId = fillMap[inputId];
@@ -401,46 +470,16 @@ export class UI {
   // ---------------------------
 
   applyPreset(presetName) {
-    // Valeurs “musicales” de base (ajuste selon ton engine)
     const presets = {
-      SP1200: {
-        bitDepth: 12,
-        sampleRate: 26040,
-        filter: 5500,
-        drive: 25,
-        vinylNoise: 15,
-        compression: 50,
-      },
-      MPC60: {
-        bitDepth: 12,
-        sampleRate: 32000,
-        filter: 9000,
-        drive: 15,
-        vinylNoise: 8,
-        compression: 35,
-      },
-      Dirty: {
-        bitDepth: 8,
-        sampleRate: 12000,
-        filter: 4500,
-        drive: 45,
-        vinylNoise: 35,
-        compression: 55,
-      },
-      Clean: {
-        bitDepth: 16,
-        sampleRate: 44100,
-        filter: 12000,
-        drive: 5,
-        vinylNoise: 0,
-        compression: 20,
-      },
+      SP1200: { bitDepth: 12, sampleRate: 26040, filter: 5500, drive: 25, vinylNoise: 15, compression: 50 },
+      MPC60: { bitDepth: 12, sampleRate: 32000, filter: 9000, drive: 15, vinylNoise: 8, compression: 35 },
+      Dirty:  { bitDepth: 8,  sampleRate: 12000, filter: 4500, drive: 45, vinylNoise: 35, compression: 55 },
+      Clean:  { bitDepth: 16, sampleRate: 44100, filter: 12000, drive: 5,  vinylNoise: 0,  compression: 20 },
     };
 
     const p = presets[presetName];
     if (!p) return;
 
-    // setEffect + synchro sliders (en réutilisant les listeners existants via dispatch input)
     const mapToInputId = {
       bitDepth: 'bit-depth',
       sampleRate: 'sample-rate',
@@ -460,6 +499,59 @@ export class UI {
         input.dispatchEvent(new Event('input', { bubbles: true }));
       }
     });
+  }
+
+  // ---------------------------
+  // PAD SELECTION + EDITOR SYNC
+  // ---------------------------
+
+  selectPad(padId) {
+    this.selectedPadId = padId;
+
+    // highlight visuel si tu veux (ajoute du CSS .pad.selected)
+    this.padElements.forEach((p, i) => p.classList.toggle('selected', i === padId));
+
+    const editor = document.getElementById('pad-editor');
+    if (editor) editor.hidden = false;
+
+    const info = this.audioEngine.getSampleInfo(padId);
+    document.getElementById('pad-edit-id')?.textContent = String(padId + 1);
+    document.getElementById('pad-edit-name')?.textContent = info?.name || 'EMPTY';
+
+    const params = this.audioEngine.getPadParams?.(padId) || { pitch: 0, volume: 0.8 };
+
+    const pitchInput = document.getElementById('pad-pitch');
+    const volInput = document.getElementById('pad-vol');
+
+    if (pitchInput) {
+      pitchInput.value = String(params.pitch ?? 0);
+      this.updatePadPitchDisplay();
+      this.updateSliderFillByInputId('pad-pitch');
+    }
+
+    if (volInput) {
+      volInput.value = String(Math.round((params.volume ?? 0.8) * 100));
+      this.updatePadVolDisplay();
+      this.updateSliderFillByInputId('pad-vol');
+    }
+  }
+
+  updatePadPitchDisplay() {
+    const pitchInput = document.getElementById('pad-pitch');
+    const valEl = document.getElementById('pad-pitch-val');
+    if (!pitchInput || !valEl) return;
+
+    const st = parseInt(pitchInput.value, 10) || 0;
+    valEl.textContent = `${st} st`;
+  }
+
+  updatePadVolDisplay() {
+    const volInput = document.getElementById('pad-vol');
+    const valEl = document.getElementById('pad-vol-val');
+    if (!volInput || !valEl) return;
+
+    const pct = parseInt(volInput.value, 10) || 0;
+    valEl.textContent = `${pct}%`;
   }
 
   // ---------------------------
