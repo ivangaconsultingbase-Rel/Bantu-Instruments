@@ -462,7 +462,7 @@ applyPreset(presetName) {
   this.setSliderValueAndFire('drive', p.drive);
   this.setSliderValueAndFire('vinyl-noise', p.vinylNoise);
   this.setSliderValueAndFire('compression', p.compression);
-}
+
     // setEffect + synchro sliders (en réutilisant les listeners existants via dispatch input)
     const mapToInputId = {
       bitDepth: 'bit-depth',
