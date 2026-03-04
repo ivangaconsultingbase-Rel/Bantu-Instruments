@@ -2,102 +2,183 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>LoFi Boom Bap Sampler</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#0a0a0a">
+  <title>LoFi Sampler SP-6000</title>
+  
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  
   <link rel="stylesheet" href="css/style.css">
-  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Roboto+Mono&display=swap" rel="stylesheet">
 </head>
 <body>
+  
   <div class="sampler-container">
     
-    <!-- Header avec écran LCD style vintage -->
+    <!-- Header -->
     <header class="sampler-header">
       <div class="lcd-screen">
-        <span class="lcd-title">LOFI SP-6000</span>
-        <span class="lcd-info">BPM: <span id="bpm-display">90</span> | SWING: <span id="swing-display">0</span>%</span>
+        <span class="lcd-title">SP-6000</span>
+        <span class="lcd-info">
+          BPM <span id="bpm-display">90</span> · 
+          SWING <span id="swing-display">0</span>%
+        </span>
       </div>
-      <div class="led-indicator" id="led"></div>
+      <div class="header-indicators">
+        <div class="led-indicator" id="led"></div>
+      </div>
     </header>
 
-    <!-- Section des Pads -->
+    <!-- Pads Section -->
     <section class="pads-section">
-      <h2>PADS</h2>
-      <div class="pads-grid">
-        <!-- Les 6 pads seront générés en JS -->
+      <div class="section-header">
+        <h2>Pads</h2>
+        <span class="hint" id="pad-hint">Tap pour jouer · 📁 pour charger</span>
+      </div>
+      <div class="section-content">
+        <div class="pads-grid" id="pads-grid">
+          <!-- Généré par JS -->
+        </div>
       </div>
     </section>
 
-    <!-- Section Effets Lo-Fi -->
+    <!-- Effects Section -->
     <section class="effects-section">
-      <h2>LOFI FX</h2>
-      <div class="effects-grid">
-        
-        <div class="effect-control">
-          <label>BIT DEPTH</label>
-          <input type="range" id="bit-depth" min="4" max="16" value="12">
-          <span class="value-display" id="bit-depth-val">12</span>
+      <div class="section-header">
+        <h2>LoFi FX</h2>
+        <div class="presets-container">
+          <button class="preset-btn active" data-preset="SP1200">SP1200</button>
+          <button class="preset-btn" data-preset="MPC60">MPC60</button>
+          <button class="preset-btn" data-preset="Dirty">DIRTY</button>
+          <button class="preset-btn" data-preset="Clean">CLEAN</button>
         </div>
+      </div>
+      <div class="section-content">
+        <div class="effects-grid">
+          
+          <div class="effect-control">
+            <div class="effect-label">
+              <label>Bit Depth</label>
+              <span class="effect-value" id="bit-depth-val">12</span>
+            </div>
+            <div class="slider-container">
+              <div class="slider-fill" id="bit-depth-fill"></div>
+              <input type="range" id="bit-depth" min="4" max="16" value="12">
+            </div>
+          </div>
 
-        <div class="effect-control">
-          <label>SAMPLE RATE</label>
-          <input type="range" id="sample-rate" min="4000" max="44100" value="26040">
-          <span class="value-display" id="sample-rate-val">26040</span>
+          <div class="effect-control">
+            <div class="effect-label">
+              <label>Sample Rate</label>
+              <span class="effect-value" id="sample-rate-val">26k</span>
+            </div>
+            <div class="slider-container">
+              <div class="slider-fill" id="sample-rate-fill"></div>
+              <input type="range" id="sample-rate" min="4000" max="44100" value="26040" step="100">
+            </div>
+          </div>
+
+          <div class="effect-control">
+            <div class="effect-label">
+              <label>Filter</label>
+              <span class="effect-value" id="filter-val">5.5k</span>
+            </div>
+            <div class="slider-container">
+              <div class="slider-fill" id="filter-fill"></div>
+              <input type="range" id="filter-cutoff" min="200" max="12000" value="5500">
+            </div>
+          </div>
+
+          <div class="effect-control">
+            <div class="effect-label">
+              <label>Drive</label>
+              <span class="effect-value" id="drive-val">25</span>
+            </div>
+            <div class="slider-container">
+              <div class="slider-fill" id="drive-fill"></div>
+              <input type="range" id="drive" min="0" max="100" value="25">
+            </div>
+          </div>
+
+          <div class="effect-control">
+            <div class="effect-label">
+              <label>Vinyl</label>
+              <span class="effect-value" id="vinyl-val">15</span>
+            </div>
+            <div class="slider-container">
+              <div class="slider-fill" id="vinyl-fill"></div>
+              <input type="range" id="vinyl-noise" min="0" max="100" value="15">
+            </div>
+          </div>
+
+          <div class="effect-control">
+            <div class="effect-label">
+              <label>Compress</label>
+              <span class="effect-value" id="comp-val">50</span>
+            </div>
+            <div class="slider-container">
+              <div class="slider-fill" id="comp-fill"></div>
+              <input type="range" id="compression" min="0" max="100" value="50">
+            </div>
+          </div>
+
         </div>
-
-        <div class="effect-control">
-          <label>FILTER</label>
-          <input type="range" id="filter-cutoff" min="200" max="8000" value="6000">
-          <span class="value-display" id="filter-val">6000</span>
-        </div>
-
-        <div class="effect-control">
-          <label>DRIVE</label>
-          <input type="range" id="drive" min="0" max="100" value="20">
-          <span class="value-display" id="drive-val">20</span>
-        </div>
-
-        <div class="effect-control">
-          <label>VINYL NOISE</label>
-          <input type="range" id="vinyl-noise" min="0" max="100" value="15">
-          <span class="value-display" id="vinyl-val">15</span>
-        </div>
-
-        <div class="effect-control">
-          <label>COMPRESSION</label>
-          <input type="range" id="compression" min="0" max="100" value="60">
-          <span class="value-display" id="comp-val">60</span>
-        </div>
-
       </div>
     </section>
 
-    <!-- Séquenceur -->
+    <!-- Sequencer Section -->
     <section class="sequencer-section">
-      <h2>SEQUENCER</h2>
-      
-      <div class="sequencer-controls">
-        <div class="transport">
-          <button id="play-btn" class="transport-btn">▶ PLAY</button>
-          <button id="stop-btn" class="transport-btn">■ STOP</button>
-          <button id="clear-btn" class="transport-btn">✕ CLEAR</button>
+      <div class="section-header">
+        <h2>Sequencer</h2>
+      </div>
+      <div class="section-content">
+        
+        <div class="sequencer-controls">
+          <div class="transport">
+            <button id="play-btn" class="transport-btn">
+              <svg viewBox="0 0 24 24"><polygon points="5,3 19,12 5,21"/></svg>
+              PLAY
+            </button>
+            <button id="stop-btn" class="transport-btn">
+              <svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16"/></svg>
+              STOP
+            </button>
+            <button id="clear-btn" class="transport-btn">
+              <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18" stroke="currentColor" stroke-width="2"/><line x1="6" y1="6" x2="18" y2="18" stroke="currentColor" stroke-width="2"/></svg>
+              CLEAR
+            </button>
+          </div>
+          
+          <div class="tempo-control">
+            <label>BPM</label>
+            <input type="range" id="bpm" min="60" max="140" value="90">
+            <span class="tempo-value" id="bpm-val">90</span>
+          </div>
+          
+          <div class="tempo-control">
+            <label>SWING</label>
+            <input type="range" id="swing" min="0" max="75" value="0">
+            <span class="tempo-value" id="swing-val">0%</span>
+          </div>
+        </div>
+
+        <!-- Step numbers -->
+        <div class="seq-header" id="seq-header">
+          <!-- Généré par JS -->
+        </div>
+
+        <div class="sequencer-grid" id="sequencer-grid">
+          <!-- Généré par JS -->
         </div>
         
-        <div class="tempo-controls">
-          <label>BPM</label>
-          <input type="range" id="bpm" min="60" max="140" value="90">
-          <label>SWING</label>
-          <input type="range" id="swing" min="0" max="75" value="0">
-        </div>
-      </div>
-
-      <div class="sequencer-grid" id="sequencer-grid">
-        <!-- Grille générée en JS: 6 lignes (pads) x 16 steps -->
       </div>
     </section>
 
     <!-- Footer -->
     <footer class="sampler-footer">
-      <p>Clic droit sur un pad pour charger votre sample</p>
+      <p>Clavier: Q W E / A S D · Espace: Play/Stop</p>
     </footer>
 
   </div>
