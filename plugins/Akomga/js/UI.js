@@ -1,12 +1,19 @@
 /**
  * UI.js
- * Interface moderne avec support tactile complet (mobile + desktop)
- * + Sélection de pad + édition Pitch/Volume par pad
+ * Version SAFE : compatible CSS "ancienne structure"
+ * - Pads en <button class="pad"> (pas <div>)
+ * - Séquenceur "flat grid" (label + 16 boutons directement dans #sequencer-grid)
  *
- * Requis côté HTML (index.html) : ajouter le panneau "Pad Editor" avec ces IDs :
- *  - pad-editor (section) + pad-edit-id + pad-edit-name
- *  - pad-pitch + pad-pitch-val + pad-pitch-fill
- *  - pad-vol + pad-vol-val + pad-vol-fill
+ * + Support tactile (pointer events)
+ * + Bouton 📁 + clic droit pour charger
+ * + Slider fill divs
+ * + Presets
+ * + Sélection pad + Pitch/Volume (Alt+clic desktop / appui long mobile)
+ *
+ * Requis côté HTML (Pad Editor) :
+ *  - #pad-editor (section) + #pad-edit-id + #pad-edit-name
+ *  - #pad-pitch + #pad-pitch-val + #pad-pitch-fill
+ *  - #pad-vol + #pad-vol-val + #pad-vol-fill
  *
  * Requis côté AudioEngine :
  *  - getPadParams(padId) -> { pitch, volume }
@@ -20,14 +27,14 @@ export class UI {
     this.sequencer = sequencer;
 
     this.padElements = [];
-    this.stepElements = [];
+    this.stepElements = []; // [padId][step]
 
     this.padKeys = ['Q', 'W', 'E', 'A', 'S', 'D'];
     this.padColors = ['#e63946', '#ff6b35', '#f7c948', '#2ecc71', '#4ecdc4', '#9b59b6'];
 
     this.isMobile = this.detectMobile();
 
-    // --- Pad edit state ---
+    // Pad edit
     this.selectedPadId = 0;
     this._longPressTimer = null;
   }
@@ -48,11 +55,10 @@ export class UI {
     this.initSliderFills();
     this.updateHints();
 
-    // Optionnel : appliquer le preset actif au chargement
     const activePreset = document.querySelector('.preset-btn.active')?.dataset?.preset;
     if (activePreset) this.applyPreset(activePreset);
 
-    // Sélection par défaut + synchro panneau si présent
+    // sélection par défaut si pad editor présent
     this.selectPad(0);
   }
 
@@ -66,12 +72,16 @@ export class UI {
   }
 
   // ---------------------------
-  // RENDER
+  // RENDER (SAFE DOM)
   // ---------------------------
 
   renderPads() {
-    const grid = document.getElementById('pads-grid');
-    if (!grid) return;
+    // Ton HTML a .pads-grid + #pads-grid : on accepte les deux
+    const grid = document.querySelector('.pads-grid') || document.getElementById('pads-grid');
+    if (!grid) {
+      console.error('[UI] pads grid introuvable (#pads-grid/.pads-grid).');
+      return;
+    }
 
     grid.innerHTML = '';
     this.padElements = [];
@@ -79,31 +89,20 @@ export class UI {
     for (let i = 0; i < 6; i++) {
       const info = this.audioEngine.getSampleInfo(i);
 
-      const pad = document.createElement('div');
+      // IMPORTANT: button.pad (compatible CSS ancien)
+      const pad = document.createElement('button');
       pad.className = 'pad';
+      pad.type = 'button';
       pad.dataset.padId = i;
 
+      // IMPORTANT: on garde les classes "pad-number/pad-name/pad-key"
       pad.innerHTML = `
-        <div class="pad-header">
-          <span class="pad-number">${i + 1}</span>
-          <span class="pad-key">${this.padKeys[i] || ''}</span>
-        </div>
+        <span class="pad-number">${i + 1}</span>
+        <span class="pad-name">${info?.name || 'EMPTY'}</span>
+        <span class="pad-key">${this.padKeys[i] || ''}</span>
 
-        <div class="pad-footer">
-          <span class="pad-name">${info?.name || 'EMPTY'}</span>
-        </div>
-
-        <button class="pad-load-btn" data-pad-id="${i}" aria-label="Charger sample" type="button">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-            <polyline points="17 8 12 3 7 8"/>
-            <line x1="12" y1="3" x2="12" y2="15"/>
-          </svg>
-        </button>
-
-        <input class="pad-file" type="file"
-          accept="audio/*,.wav,.mp3,.ogg,.aac,.m4a,.flac"
-          id="file-${i}">
+        <button class="pad-load-btn" data-pad-id="${i}" aria-label="Charger sample" type="button" title="Charger sample">📁</button>
+        <input type="file" class="pad-file" accept="audio/*,.wav,.mp3,.ogg,.aac,.m4a,.flac" id="file-${i}">
       `;
 
       grid.appendChild(pad);
@@ -112,6 +111,7 @@ export class UI {
   }
 
   renderSequencer() {
+    // Header numéros (optionnel)
     const header = document.getElementById('seq-header');
     if (header) {
       header.innerHTML = '';
@@ -122,24 +122,22 @@ export class UI {
       }
     }
 
+    // IMPORTANT: séquenceur "flat grid"
     const grid = document.getElementById('sequencer-grid');
-    if (!grid) return;
+    if (!grid) {
+      console.error('[UI] sequencer grid introuvable (#sequencer-grid).');
+      return;
+    }
 
     grid.innerHTML = '';
     this.stepElements = [];
 
     for (let padId = 0; padId < 6; padId++) {
-      const row = document.createElement('div');
-      row.className = 'seq-row';
-
       const label = document.createElement('div');
       label.className = 'seq-row-label';
       label.textContent = padId + 1;
-      if (this.padColors?.[padId]) label.style.background = this.padColors[padId];
-      row.appendChild(label);
-
-      const stepsContainer = document.createElement('div');
-      stepsContainer.className = 'seq-steps';
+      label.style.background = this.padColors[padId] || '';
+      grid.appendChild(label);
 
       const rowSteps = [];
       for (let step = 0; step < 16; step++) {
@@ -148,15 +146,12 @@ export class UI {
         stepEl.type = 'button';
         stepEl.dataset.padId = padId;
         stepEl.dataset.step = step;
+
         if (step % 4 === 0) stepEl.classList.add('beat-marker');
 
-        stepsContainer.appendChild(stepEl);
+        grid.appendChild(stepEl);
         rowSteps.push(stepEl);
       }
-
-      row.appendChild(stepsContainer);
-      grid.appendChild(row);
-
       this.stepElements.push(rowSteps);
     }
   }
@@ -167,11 +162,12 @@ export class UI {
 
   bindEvents() {
     // === PADS ===
-    const padsGrid = document.getElementById('pads-grid');
+    const padsGrid = document.querySelector('.pads-grid') || document.getElementById('pads-grid');
     if (padsGrid) {
       padsGrid.addEventListener(
         'pointerdown',
         (e) => {
+          // Click sur 📁
           const loadBtn = e.target.closest('.pad-load-btn');
           if (loadBtn) {
             e.preventDefault();
@@ -186,14 +182,14 @@ export class UI {
 
           const padId = parseInt(pad.dataset.padId, 10);
 
-          // Desktop : Alt+clic = sélectionner/éditer au lieu de jouer
+          // Desktop: Alt+clic = sélectionner/éditer
           if (!this.isMobile && e.altKey) {
             e.preventDefault();
             this.selectPad(padId);
             return;
           }
 
-          // Mobile : appui long => sélectionner (sans empêcher le tap normal)
+          // Mobile: appui long = sélectionner/éditer
           if (this.isMobile) {
             clearTimeout(this._longPressTimer);
             this._longPressTimer = setTimeout(() => {
@@ -208,13 +204,12 @@ export class UI {
         { passive: false }
       );
 
-      // Fin de gesture : annuler l'appui long
-      const cancelLongPress = () => clearTimeout(this._longPressTimer);
-      padsGrid.addEventListener('pointerup', cancelLongPress);
-      padsGrid.addEventListener('pointercancel', cancelLongPress);
-      padsGrid.addEventListener('pointerleave', cancelLongPress);
+      const cancelLong = () => clearTimeout(this._longPressTimer);
+      padsGrid.addEventListener('pointerup', cancelLong);
+      padsGrid.addEventListener('pointercancel', cancelLong);
+      padsGrid.addEventListener('pointerleave', cancelLong);
 
-      // Clic droit desktop : charger un sample
+      // Clic droit desktop = charger
       padsGrid.addEventListener('contextmenu', (e) => {
         e.preventDefault();
         const pad = e.target.closest('.pad');
@@ -228,9 +223,11 @@ export class UI {
         input.addEventListener('change', async (e) => {
           const file = e.target.files?.[0];
           if (!file) return;
+
           await this.handleFileSelect(idx, file);
           e.target.value = '';
-          // garde la sélection si on recharge le pad sélectionné
+
+          // refresh editor si pad sélectionné
           if (idx === this.selectedPadId) this.selectPad(idx);
         });
       });
@@ -262,17 +259,15 @@ export class UI {
     document.getElementById('bpm')?.addEventListener('input', (e) => {
       const bpm = parseInt(e.target.value, 10);
       this.sequencer.setBPM(bpm);
-      document.getElementById('bpm-display').textContent = bpm;
-      document.getElementById('bpm-val').textContent = bpm;
-      this.updateSliderFillByInputId('bpm'); // si tu ajoutes un fill plus tard
+      document.getElementById('bpm-display')?.textContent = bpm;
+      document.getElementById('bpm-val')?.textContent = bpm;
     });
 
     document.getElementById('swing')?.addEventListener('input', (e) => {
       const swing = parseInt(e.target.value, 10);
       this.sequencer.setSwing(swing);
-      document.getElementById('swing-display').textContent = swing;
-      document.getElementById('swing-val').textContent = `${swing}%`;
-      this.updateSliderFillByInputId('swing'); // si tu ajoutes un fill plus tard
+      document.getElementById('swing-display')?.textContent = swing;
+      document.getElementById('swing-val')?.textContent = `${swing}%`;
     });
 
     // === EFFECTS ===
@@ -318,15 +313,12 @@ export class UI {
     const apply = () => {
       const raw = Number(input.value);
       this.audioEngine.setEffect(effectParam, raw);
-
       if (display) display.textContent = formatFn(raw);
-
-      // met à jour ta div slider-fill correspondante
       this.updateSliderFillByInputId(inputId);
     };
 
     input.addEventListener('input', apply);
-    apply(); // synchro initiale
+    apply();
   }
 
   bindKeyboard() {
@@ -414,23 +406,20 @@ export class UI {
   }
 
   // ---------------------------
-  // SLIDER FILLS (ta structure HTML)
+  // SLIDER FILLS
   // ---------------------------
 
   initSliderFills() {
-    const ids = [
+    [
       'bit-depth',
       'sample-rate',
       'filter-cutoff',
       'drive',
       'vinyl-noise',
       'compression',
-      // PAD EDITOR (si présent)
       'pad-pitch',
       'pad-vol',
-      // bpm/swing n'ont pas de <div fill> dans ton HTML actuel (OK)
-    ];
-    ids.forEach((id) => this.updateSliderFillByInputId(id));
+    ].forEach((id) => this.updateSliderFillByInputId(id));
   }
 
   updateSliderFillByInputId(inputId) {
@@ -445,10 +434,9 @@ export class UI {
       'vinyl-noise': 'vinyl-fill',
       'compression': 'comp-fill',
 
-      // PAD EDITOR
+      // Pad editor
       'pad-pitch': 'pad-pitch-fill',
       'pad-vol': 'pad-vol-fill',
-      // bpm/swing : pas de fill dans ton HTML
     };
 
     const fillId = fillMap[inputId];
@@ -466,7 +454,7 @@ export class UI {
   }
 
   // ---------------------------
-  // PRESETS (alignés sur ton HTML)
+  // PRESETS
   // ---------------------------
 
   applyPreset(presetName) {
@@ -502,13 +490,13 @@ export class UI {
   }
 
   // ---------------------------
-  // PAD SELECTION + EDITOR SYNC
+  // PAD EDITOR
   // ---------------------------
 
   selectPad(padId) {
     this.selectedPadId = padId;
 
-    // highlight visuel si tu veux (ajoute du CSS .pad.selected)
+    // highlight optionnel (CSS .pad.selected)
     this.padElements.forEach((p, i) => p.classList.toggle('selected', i === padId));
 
     const editor = document.getElementById('pad-editor');
@@ -540,7 +528,6 @@ export class UI {
     const pitchInput = document.getElementById('pad-pitch');
     const valEl = document.getElementById('pad-pitch-val');
     if (!pitchInput || !valEl) return;
-
     const st = parseInt(pitchInput.value, 10) || 0;
     valEl.textContent = `${st} st`;
   }
@@ -549,13 +536,12 @@ export class UI {
     const volInput = document.getElementById('pad-vol');
     const valEl = document.getElementById('pad-vol-val');
     if (!volInput || !valEl) return;
-
     const pct = parseInt(volInput.value, 10) || 0;
     valEl.textContent = `${pct}%`;
   }
 
   // ---------------------------
-  // PAD TRIGGER + DISPLAY
+  // PLAY + UI FEEDBACK
   // ---------------------------
 
   triggerPad(padId) {
