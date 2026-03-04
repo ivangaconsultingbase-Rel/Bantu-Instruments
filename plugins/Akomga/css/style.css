@@ -802,3 +802,18 @@ input[type="range"]::-moz-range-track {
   animation: pulse 0.5s ease infinite;
   background: var(--accent-secondary);
 }
+
+/* Metronome button active */
+#met-btn.active{
+  background: var(--accent-muted);
+  border-color: var(--accent-primary);
+  color: var(--text-primary);
+}
+
+/* Accent steps: petit liseré + point lumineux */
+.seq-step.accent{
+  box-shadow: inset 0 0 0 2px rgba(255,255,255,.18), 0 0 10px rgba(230,57,70,.22);
+}
+.seq-step.accent.active{
+  box-shadow: inset 0 0 0 2px rgba(255,255,255,.25), 0 0 14px rgba(230,57,70,.35);
+}
