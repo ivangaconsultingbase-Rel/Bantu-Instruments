@@ -1,23 +1,19 @@
 /**
  * UI.js
- * Compatible avec ton style.css actuel :
- * - Pads: <div class="pad"> + .pad-header/.pad-footer + .pad-load-btn
+ * Elektron dark/red — mobile+desktop
+ * - Pads: <div class="pad"> + .pad-header/.pad-footer/.pad-load-btn
  * - Sequencer: .seq-row + .seq-steps
+ * - Support tactile (pointer)
+ * - Charger sample: bouton 📁 + clic droit desktop
+ * - Presets + slider fills
+ * - Sélection pad + Pad Editor Pitch/Volume
  *
- * + Support tactile complet (pointer)
- * + Bouton 📁 + clic droit pour charger
- * + Presets + slider fills
- * + Sélection de pad + Pad Editor (Pitch/Volume)
- *
- * Requis côté HTML (Pad Editor) :
- *  - #pad-editor (section) + #pad-edit-id + #pad-edit-name
- *  - #pad-pitch + #pad-pitch-val + #pad-pitch-fill
- *  - #pad-vol + #pad-vol-val + #pad-vol-fill
- *
- * Requis côté AudioEngine :
- *  - getPadParams(padId) -> { pitch, volume }
- *  - setPadPitch(padId, semitones)
- *  - setPadVolume(padId, volume01)
+ * Mobile:
+ *  - Tap = play
+ *  - Appui long (350ms) = sélectionner / éditer (ne joue pas)
+ * Desktop:
+ *  - Clic = play
+ *  - Alt+clic = sélectionner / éditer
  */
 
 export class UI {
@@ -33,8 +29,10 @@ export class UI {
 
     this.isMobile = this.detectMobile();
 
-    // Pad selection + long press
+    // Pad editor state
     this.selectedPadId = 0;
+
+    // Long-press (mobile)
     this._lpTimer = null;
     this._lpTriggered = false;
     this._pendingPadId = null;
@@ -56,11 +54,11 @@ export class UI {
     this.initSliderFills();
     this.updateHints();
 
-    // Preset actif au chargement
+    // Appliquer preset actif
     const activePreset = document.querySelector('.preset-btn.active')?.dataset?.preset;
     if (activePreset) this.applyPreset(activePreset);
 
-    // Sélection par défaut (si pad-editor présent)
+    // Sélection par défaut (si panel présent)
     this.selectPad(0);
   }
 
@@ -162,7 +160,6 @@ export class UI {
         stepEl.type = 'button';
         stepEl.dataset.padId = padId;
         stepEl.dataset.step = step;
-
         if (step % 4 === 0) stepEl.classList.add('beat-marker');
 
         stepsContainer.appendChild(stepEl);
@@ -186,6 +183,7 @@ export class UI {
       padsGrid.addEventListener(
         'pointerdown',
         (e) => {
+          // Bouton 📁
           const loadBtn = e.target.closest('.pad-load-btn');
           if (loadBtn) {
             e.preventDefault();
@@ -200,14 +198,14 @@ export class UI {
 
           const padId = parseInt(pad.dataset.padId, 10);
 
-          // Desktop: Alt+clic => select (pas play)
+          // Desktop: Alt+clic => select/edit
           if (!this.isMobile && e.altKey) {
             e.preventDefault();
             this.selectPad(padId);
             return;
           }
 
-          // Mobile: long press => select (pas play)
+          // Mobile: appui long => select/edit (ne joue pas)
           if (this.isMobile) {
             this._lpTriggered = false;
             this._pendingPadId = padId;
@@ -219,8 +217,7 @@ export class UI {
               if (navigator.vibrate) navigator.vibrate(15);
             }, 350);
 
-            // on NE joue PAS tout de suite; on attend pointerup
-            return;
+            return; // attendre pointerup pour décider de jouer
           }
 
           // Desktop normal: play
@@ -247,11 +244,7 @@ export class UI {
         this._lpTriggered = false;
       });
 
-      padsGrid.addEventListener('pointerleave', () => {
-        clearTimeout(this._lpTimer);
-      });
-
-      // Clic droit desktop => open file picker
+      // Clic droit desktop => charger
       padsGrid.addEventListener('contextmenu', (e) => {
         e.preventDefault();
         const pad = e.target.closest('.pad');
@@ -260,13 +253,15 @@ export class UI {
         this.openFilePicker(padId);
       });
 
-      // File inputs
+      // Inputs file
       padsGrid.querySelectorAll('input[type="file"]').forEach((input, idx) => {
         input.addEventListener('change', async (e) => {
           const file = e.target.files?.[0];
           if (!file) return;
+
           await this.handleFileSelect(idx, file);
           e.target.value = '';
+
           if (idx === this.selectedPadId) this.selectPad(idx);
         });
       });
@@ -533,7 +528,6 @@ export class UI {
   selectPad(padId) {
     this.selectedPadId = padId;
 
-    // highlight (CSS patch fourni plus bas)
     this.padElements.forEach((p, i) => p.classList.toggle('selected', i === padId));
 
     const editor = document.getElementById('pad-editor');
@@ -578,7 +572,7 @@ export class UI {
   }
 
   // ---------------------------
-  // PLAY + UI FEEDBACK
+  // PAD TRIGGER + DISPLAY
   // ---------------------------
 
   triggerPad(padId) {
