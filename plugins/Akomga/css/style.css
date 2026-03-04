@@ -777,7 +777,7 @@ input[type="range"]::-moz-range-track {
 .pad-editor .pad-edit-name {
   color: var(--text-secondary);
   font-weight: 600;
-  max-width: 220px;
+  max-width: 240px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
