@@ -12,14 +12,9 @@ export class UI {
     this.stepElements = [];
 
     this.padKeys = ['Q', 'W', 'E', 'A', 'S', 'D'];
-
-    // Optionnel : si ton HTML/CSS utilise des couleurs par ligne
     this.padColors = ['#e63946', '#ff6b35', '#f7c948', '#2ecc71', '#4ecdc4', '#9b59b6'];
 
     this.isMobile = this.detectMobile();
-
-    // évite le double trigger pointerdown->click sur certains navigateurs
-    this._lastPointerDownAt = 0;
   }
 
   detectMobile() {
@@ -37,17 +32,19 @@ export class UI {
     this.bindKeyboard();
     this.initSliderFills();
     this.updateHints();
+
+    // Optionnel : si tu veux appliquer le preset actif au chargement
+    const activePreset = document.querySelector('.preset-btn.active')?.dataset?.preset;
+    if (activePreset) this.applyPreset(activePreset);
   }
 
   updateHints() {
     const hint = document.getElementById('pad-hint');
     if (!hint) return;
 
-    if (this.isMobile) {
-      hint.textContent = 'Tap pour jouer · 📁 pour charger un sample';
-    } else {
-      hint.textContent = 'Clic pour jouer · 📁 ou clic droit pour charger';
-    }
+    hint.textContent = this.isMobile
+      ? 'Tap pour jouer · 📁 pour charger'
+      : 'Clic pour jouer · 📁 ou clic droit pour charger';
   }
 
   // ---------------------------
@@ -86,7 +83,9 @@ export class UI {
           </svg>
         </button>
 
-        <input class="pad-file" type="file" accept="audio/*,.wav,.mp3,.ogg,.aac,.m4a,.flac" id="file-${i}">
+        <input class="pad-file" type="file"
+          accept="audio/*,.wav,.mp3,.ogg,.aac,.m4a,.flac"
+          id="file-${i}">
       `;
 
       grid.appendChild(pad);
@@ -95,7 +94,6 @@ export class UI {
   }
 
   renderSequencer() {
-    // Header numéroté (si présent)
     const header = document.getElementById('seq-header');
     if (header) {
       header.innerHTML = '';
@@ -106,7 +104,6 @@ export class UI {
       }
     }
 
-    // Grille
     const grid = document.getElementById('sequencer-grid');
     if (!grid) return;
 
@@ -120,12 +117,7 @@ export class UI {
       const label = document.createElement('div');
       label.className = 'seq-row-label';
       label.textContent = padId + 1;
-
-      // si tu veux des couleurs par ligne
-      if (this.padColors?.[padId]) {
-        label.style.background = this.padColors[padId];
-      }
-
+      if (this.padColors?.[padId]) label.style.background = this.padColors[padId];
       row.appendChild(label);
 
       const stepsContainer = document.createElement('div');
@@ -138,7 +130,6 @@ export class UI {
         stepEl.type = 'button';
         stepEl.dataset.padId = padId;
         stepEl.dataset.step = step;
-
         if (step % 4 === 0) stepEl.classList.add('beat-marker');
 
         stepsContainer.appendChild(stepEl);
@@ -147,6 +138,7 @@ export class UI {
 
       row.appendChild(stepsContainer);
       grid.appendChild(row);
+
       this.stepElements.push(rowSteps);
     }
   }
@@ -156,12 +148,10 @@ export class UI {
   // ---------------------------
 
   bindEvents() {
-    // === PADS (pointer) ===
+    // === PADS ===
     const padsGrid = document.getElementById('pads-grid');
     if (padsGrid) {
       padsGrid.addEventListener('pointerdown', (e) => {
-        this._lastPointerDownAt = performance.now();
-
         const loadBtn = e.target.closest('.pad-load-btn');
         if (loadBtn) {
           e.preventDefault();
@@ -178,7 +168,6 @@ export class UI {
         }
       }, { passive: false });
 
-      // Clic droit desktop
       padsGrid.addEventListener('contextmenu', (e) => {
         e.preventDefault();
         const pad = e.target.closest('.pad');
@@ -187,18 +176,17 @@ export class UI {
         this.openFilePicker(padId);
       });
 
-      // Fichiers
       padsGrid.querySelectorAll('input[type="file"]').forEach((input, idx) => {
         input.addEventListener('change', async (e) => {
           const file = e.target.files?.[0];
           if (!file) return;
           await this.handleFileSelect(idx, file);
-          e.target.value = ''; // permet de re-sélectionner le même fichier
+          e.target.value = '';
         });
       });
     }
 
-    // === SEQUENCER (pointer) ===
+    // === SEQUENCER ===
     const seqGrid = document.getElementById('sequencer-grid');
     if (seqGrid) {
       seqGrid.addEventListener('pointerdown', (e) => {
@@ -216,50 +204,36 @@ export class UI {
     }
 
     // === TRANSPORT ===
-    const playBtn = document.getElementById('play-btn');
-    const stopBtn = document.getElementById('stop-btn');
-    const clearBtn = document.getElementById('clear-btn');
-
-    if (playBtn) playBtn.addEventListener('click', () => this.handlePlayToggle());
-    if (stopBtn) stopBtn.addEventListener('click', () => this.handleStop());
-    if (clearBtn) clearBtn.addEventListener('click', () => this.handleClear());
+    document.getElementById('play-btn')?.addEventListener('click', () => this.handlePlayToggle());
+    document.getElementById('stop-btn')?.addEventListener('click', () => this.handleStop());
+    document.getElementById('clear-btn')?.addEventListener('click', () => this.handleClear());
 
     // === TEMPO ===
-    const bpmInput = document.getElementById('bpm');
-    if (bpmInput) {
-      bpmInput.addEventListener('input', (e) => {
-        const bpm = parseInt(e.target.value, 10);
-        this.sequencer.setBPM(bpm);
-        const d1 = document.getElementById('bpm-display');
-        const d2 = document.getElementById('bpm-val');
-        if (d1) d1.textContent = bpm;
-        if (d2) d2.textContent = bpm;
-        this.updateSliderFill(e.target);
-      });
-    }
+    document.getElementById('bpm')?.addEventListener('input', (e) => {
+      const bpm = parseInt(e.target.value, 10);
+      this.sequencer.setBPM(bpm);
+      document.getElementById('bpm-display').textContent = bpm;
+      document.getElementById('bpm-val').textContent = bpm;
+      this.updateSliderFillByInputId('bpm'); // si tu ajoutes un fill plus tard
+    });
 
-    const swingInput = document.getElementById('swing');
-    if (swingInput) {
-      swingInput.addEventListener('input', (e) => {
-        const swing = parseInt(e.target.value, 10);
-        this.sequencer.setSwing(swing);
-        const d1 = document.getElementById('swing-display');
-        const d2 = document.getElementById('swing-val');
-        if (d1) d1.textContent = swing;
-        if (d2) d2.textContent = `${swing}%`;
-        this.updateSliderFill(e.target);
-      });
-    }
+    document.getElementById('swing')?.addEventListener('input', (e) => {
+      const swing = parseInt(e.target.value, 10);
+      this.sequencer.setSwing(swing);
+      document.getElementById('swing-display').textContent = swing;
+      document.getElementById('swing-val').textContent = `${swing}%`;
+      this.updateSliderFillByInputId('swing'); // si tu ajoutes un fill plus tard
+    });
 
     // === EFFECTS ===
-    this.bindEffectControl('bit-depth', 'bitDepth', 'bit-depth-val', (v) => v);
+    this.bindEffectControl('bit-depth', 'bitDepth', 'bit-depth-val', (v) => `${Math.round(v)}`);
     this.bindEffectControl('sample-rate', 'sampleRate', 'sample-rate-val', (v) => `${Math.round(v / 1000)}k`);
     this.bindEffectControl('filter-cutoff', 'filter', 'filter-val', (v) => `${(v / 1000).toFixed(1)}k`);
-    this.bindEffectControl('drive', 'drive', 'drive-val', (v) => v);
-    this.bindEffectControl('vinyl-noise', 'vinylNoise', 'vinyl-val', (v) => v);
-    this.bindEffectControl('compression', 'compression', 'comp-val', (v) => v);
+    this.bindEffectControl('drive', 'drive', 'drive-val', (v) => `${Math.round(v)}`);
+    this.bindEffectControl('vinyl-noise', 'vinylNoise', 'vinyl-val', (v) => `${Math.round(v)}`);
+    this.bindEffectControl('compression', 'compression', 'comp-val', (v) => `${Math.round(v)}`);
 
-    // === PRESETS (optionnel) ===
+    // === PRESETS ===
     document.querySelectorAll('.preset-btn').forEach((btn) => {
       btn.addEventListener('click', () => {
         document.querySelectorAll('.preset-btn').forEach((b) => b.classList.remove('active'));
@@ -277,42 +251,36 @@ export class UI {
 
     const apply = () => {
       const raw = Number(input.value);
-      // Certains params peuvent être float dans ton engine => on ne force pas parseInt
       this.audioEngine.setEffect(effectParam, raw);
 
       if (display) display.textContent = formatFn(raw);
-      this.updateSliderFill(input);
+
+      // met à jour ta div slider-fill correspondante
+      this.updateSliderFillByInputId(inputId);
     };
 
     input.addEventListener('input', apply);
-    // applique une fois au chargement pour synchro UI
-    apply();
+    apply(); // synchro initiale
   }
 
   bindKeyboard() {
-    // Sur mobile, le clavier n’est pas utile + ça peut gêner
-    // Mais on peut le laisser actif, c'est sans risque.
     document.addEventListener('keydown', (e) => {
-      // évite Space de scroller
-      if (e.code === 'Space') e.preventDefault();
-
-      const key = e.key?.toUpperCase?.() || '';
+      const key = (e.key || '').toUpperCase();
       const padIndex = this.padKeys.indexOf(key);
 
       if (padIndex !== -1) {
         e.preventDefault();
         this.triggerPad(padIndex);
-        return;
       }
 
-      // Space = toggle
       if (e.code === 'Space') {
+        e.preventDefault();
         this.handlePlayToggle();
       }
     });
 
     document.addEventListener('keyup', (e) => {
-      const key = e.key?.toUpperCase?.() || '';
+      const key = (e.key || '').toUpperCase();
       const padIndex = this.padKeys.indexOf(key);
       if (padIndex !== -1 && this.padElements[padIndex]) {
         this.padElements[padIndex].classList.remove('active');
@@ -321,7 +289,7 @@ export class UI {
   }
 
   // ---------------------------
-  // PAD FILE LOADING
+  // FILE LOADING
   // ---------------------------
 
   openFilePicker(padId) {
@@ -331,27 +299,18 @@ export class UI {
     const input = pad.querySelector('input[type="file"]');
     if (!input) return;
 
-    // showPicker si dispo (Chrome/Edge). Sinon click standard.
     try {
-      if (typeof input.showPicker === 'function') {
-        input.showPicker();
-      } else {
-        input.click();
-      }
-    } catch (err) {
-      // fallback ultra-safe
-      try { input.click(); } catch (_) {}
+      if (typeof input.showPicker === 'function') input.showPicker();
+      else input.click();
+    } catch {
+      try { input.click(); } catch {}
     }
   }
 
   async handleFileSelect(padId, file) {
-    if (!file) return;
-
     try {
       await this.audioEngine.loadSampleFromFile(padId, file);
       this.updatePadDisplay(padId);
-
-      // petit feedback
       if (this.isMobile && navigator.vibrate) navigator.vibrate([10, 30, 10]);
     } catch (error) {
       console.error('Erreur chargement sample:', error);
@@ -368,18 +327,18 @@ export class UI {
 
     if (this.sequencer.isPlaying) {
       this.sequencer.stop();
-      if (playBtn) playBtn.classList.remove('active');
+      playBtn?.classList.remove('active');
       this.clearPlayingIndicators();
     } else {
       this.sequencer.start();
-      if (playBtn) playBtn.classList.add('active');
+      playBtn?.classList.add('active');
     }
   }
 
   handleStop() {
     const playBtn = document.getElementById('play-btn');
     this.sequencer.stop();
-    if (playBtn) playBtn.classList.remove('active');
+    playBtn?.classList.remove('active');
     this.clearPlayingIndicators();
   }
 
@@ -389,111 +348,158 @@ export class UI {
   }
 
   // ---------------------------
-  // SLIDERS "FILLED" (optionnel)
+  // SLIDER FILLS (ta structure HTML)
   // ---------------------------
 
   initSliderFills() {
-    // Si ton CSS utilise un custom prop --fill, on le met à jour
-    const sliders = document.querySelectorAll('input[type="range"]');
-    sliders.forEach((s) => this.updateSliderFill(s));
+    // On calcule toutes les barres au chargement
+    const ids = [
+      'bit-depth',
+      'sample-rate',
+      'filter-cutoff',
+      'drive',
+      'vinyl-noise',
+      'compression',
+      // bpm/swing n'ont pas de <div fill> dans ton HTML actuel (OK)
+    ];
+    ids.forEach((id) => this.updateSliderFillByInputId(id));
   }
 
-  updateSliderFill(slider) {
-    if (!slider || slider.type !== 'range') return;
+  updateSliderFillByInputId(inputId) {
+    const input = document.getElementById(inputId);
+    if (!input) return;
 
-    const min = Number(slider.min || 0);
-    const max = Number(slider.max || 100);
-    const val = Number(slider.value || 0);
-
-    const pct = max === min ? 0 : ((val - min) / (max - min)) * 100;
-    slider.style.setProperty('--fill', `${pct}%`);
-
-    // Bonus : si tu styles via background-size
-    // slider.style.backgroundSize = `${pct}% 100%`;
-  }
-
-  // ---------------------------
-  // PRESETS (optionnel)
-  // ---------------------------
-
-  applyPreset(presetName) {
-    // Tu peux adapter selon ton audioEngine.
-    // Ici, on fait un mapping simple et safe.
-    const presets = {
-      lofi: {
-        bitDepth: 10,
-        sampleRate: 18000,
-        filter: 8000,
-        drive: 15,
-        vinylNoise: 20,
-        compression: 35,
-      },
-      clean: {
-        bitDepth: 16,
-        sampleRate: 44100,
-        filter: 18000,
-        drive: 0,
-        vinylNoise: 0,
-        compression: 15,
-      },
-      dirty: {
-        bitDepth: 8,
-        sampleRate: 12000,
-        filter: 4500,
-        drive: 35,
-        vinylNoise: 35,
-        compression: 45,
-      },
+    // mapping des ids -> fill ids (selon ton index.html)
+    const fillMap = {
+      'bit-depth': 'bit-depth-fill',
+      'sample-rate': 'sample-rate-fill',
+      'filter-cutoff': 'filter-fill',
+      'drive': 'drive-fill',
+      'vinyl-noise': 'vinyl-fill',
+      'compression': 'comp-fill',
+      // si tu ajoutes plus tard:
+      // 'bpm': 'bpm-fill',
+      // 'swing': 'swing-fill',
     };
 
-    const p = presets[presetName];
-    if (!p) return;
+    const fillId = fillMap[inputId];
+    if (!fillId) return;
 
-    Object.entries(p).forEach(([k, v]) => {
-      // essaie de set l'effet
-      try { this.audioEngine.setEffect(k, v); } catch (_) {}
+    const fill = document.getElementById(fillId);
+    if (!fill) return;
 
-      // synchro slider si présent
-      const mapToInputId = {
-        bitDepth: 'bit-depth',
-        sampleRate: 'sample-rate',
-        filter: 'filter-cutoff',
-        drive: 'drive',
-        vinylNoise: 'vinyl-noise',
-        compression: 'compression',
-      };
+    const min = Number(input.min ?? 0);
+    const max = Number(input.max ?? 100);
+    const val = Number(input.value ?? 0);
+    const pct = max === min ? 0 : ((val - min) / (max - min)) * 100;
 
-      const id = mapToInputId[k];
-      if (id) {
-        const input = document.getElementById(id);
-        if (input) {
-          input.value = v;
-          input.dispatchEvent(new Event('input', { bubbles: true }));
-        }
+    fill.style.width = `${pct}%`;
+  }
+
+  // ---------------------------
+  // PRESETS (alignés sur ton HTML)
+  // ---------------------------
+
+  setSliderValueAndFire(inputId, value) {
+  const input = document.getElementById(inputId);
+  if (!input) return;
+  input.value = value;
+  input.dispatchEvent(new Event('input', { bubbles: true }));
+}
+
+applyPreset(presetName) {
+  const presets = {
+    SP1200: {
+      bitDepth: 12,
+      sampleRate: 26040,
+      filter: 5500,
+      drive: 25,
+      vinylNoise: 15,
+      compression: 50,
+    },
+    MPC60: {
+      bitDepth: 12,
+      sampleRate: 32000,
+      filter: 9000,
+      drive: 15,
+      vinylNoise: 8,
+      compression: 35,
+    },
+    Dirty: {
+      bitDepth: 8,
+      sampleRate: 12000,
+      filter: 4500,
+      drive: 45,
+      vinylNoise: 35,
+      compression: 55,
+    },
+    Clean: {
+      bitDepth: 16,
+      sampleRate: 44100,
+      filter: 12000,
+      drive: 5,
+      vinylNoise: 0,
+      compression: 20,
+    },
+  };
+
+  const p = presets[presetName];
+  if (!p) return;
+
+  // 1) Appliquer dans l'audio engine (noms EXACTS de ton switch)
+  Object.entries(p).forEach(([param, value]) => {
+    try {
+      this.audioEngine.setEffect(param, value);
+    } catch (e) {
+      console.warn('Preset: setEffect failed for', param, e);
+    }
+  });
+
+  // 2) Synchro UI sliders + labels via les events "input" déjà branchés
+  this.setSliderValueAndFire('bit-depth', p.bitDepth);
+  this.setSliderValueAndFire('sample-rate', p.sampleRate);
+  this.setSliderValueAndFire('filter-cutoff', p.filter);
+  this.setSliderValueAndFire('drive', p.drive);
+  this.setSliderValueAndFire('vinyl-noise', p.vinylNoise);
+  this.setSliderValueAndFire('compression', p.compression);
+}
+    // setEffect + synchro sliders (en réutilisant les listeners existants via dispatch input)
+    const mapToInputId = {
+      bitDepth: 'bit-depth',
+      sampleRate: 'sample-rate',
+      filter: 'filter-cutoff',
+      drive: 'drive',
+      vinylNoise: 'vinyl-noise',
+      compression: 'compression',
+    };
+
+    Object.entries(p).forEach(([param, value]) => {
+      try { this.audioEngine.setEffect(param, value); } catch {}
+
+      const inputId = mapToInputId[param];
+      const input = inputId ? document.getElementById(inputId) : null;
+      if (input) {
+        input.value = value;
+        input.dispatchEvent(new Event('input', { bubbles: true }));
       }
     });
   }
 
   // ---------------------------
-  // AUDIO TRIGGER + DISPLAY
+  // PAD TRIGGER + DISPLAY
   // ---------------------------
 
   triggerPad(padId) {
     const pad = this.padElements[padId];
     if (!pad) return;
 
-    // Feedback visuel
     pad.classList.add('active');
     setTimeout(() => pad.classList.remove('active'), 100);
 
-    // LED si présente
     const led = document.getElementById('led');
-    if (led) {
-      led.classList.add('active');
-      setTimeout(() => led.classList.remove('active'), 100);
-    }
+    led?.classList.add('active');
+    setTimeout(() => led?.classList.remove('active'), 100);
 
-    // Audio
     this.audioEngine.playSample(padId);
   }
 
@@ -507,13 +513,11 @@ export class UI {
   }
 
   // ---------------------------
-  // SEQUENCER CALLBACKS
+  // SEQUENCER CALLBACK
   // ---------------------------
 
-  // Callback appelé par le séquenceur
   onStepChange(step) {
     this.clearPlayingIndicators();
-
     if (step < 0) return;
 
     for (let padId = 0; padId < 6; padId++) {
@@ -522,10 +526,8 @@ export class UI {
     }
 
     const led = document.getElementById('led');
-    if (led) {
-      led.classList.add('active');
-      setTimeout(() => led.classList.remove('active'), 50);
-    }
+    led?.classList.add('active');
+    setTimeout(() => led?.classList.remove('active'), 50);
   }
 
   clearPlayingIndicators() {
