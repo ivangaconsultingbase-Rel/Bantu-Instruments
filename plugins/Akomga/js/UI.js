@@ -1,6 +1,6 @@
 /**
  * UI.js
- * Elektron dark/red — mobile+desktop
+ * Compatible avec ton style.css + index.html
  * - Pads: <div class="pad"> + .pad-header/.pad-footer/.pad-load-btn
  * - Sequencer: .seq-row + .seq-steps
  * - Support tactile (pointer)
@@ -38,6 +38,24 @@ export class UI {
     this._pendingPadId = null;
   }
 
+  // --------- small DOM helpers (avoid optional-chain assignment) ---------
+  $(id) { return document.getElementById(id); }
+
+  setText(id, value) {
+    const el = this.$(id);
+    if (el) el.textContent = String(value);
+  }
+
+  addClass(id, cls) {
+    const el = this.$(id);
+    if (el) el.classList.add(cls);
+  }
+
+  removeClass(id, cls) {
+    const el = this.$(id);
+    if (el) el.classList.remove(cls);
+  }
+
   detectMobile() {
     return (
       ('ontouchstart' in window) ||
@@ -63,7 +81,7 @@ export class UI {
   }
 
   updateHints() {
-    const hint = document.getElementById('pad-hint');
+    const hint = this.$('pad-hint');
     if (!hint) return;
 
     hint.textContent = this.isMobile
@@ -76,7 +94,7 @@ export class UI {
   // ---------------------------
 
   renderPads() {
-    const grid = document.getElementById('pads-grid');
+    const grid = this.$('pads-grid');
     if (!grid) {
       console.error('[UI] #pads-grid introuvable');
       return;
@@ -121,7 +139,7 @@ export class UI {
   }
 
   renderSequencer() {
-    const header = document.getElementById('seq-header');
+    const header = this.$('seq-header');
     if (header) {
       header.innerHTML = '';
       for (let step = 0; step < 16; step++) {
@@ -131,7 +149,7 @@ export class UI {
       }
     }
 
-    const grid = document.getElementById('sequencer-grid');
+    const grid = this.$('sequencer-grid');
     if (!grid) {
       console.error('[UI] #sequencer-grid introuvable');
       return;
@@ -178,7 +196,7 @@ export class UI {
 
   bindEvents() {
     // === PADS ===
-    const padsGrid = document.getElementById('pads-grid');
+    const padsGrid = this.$('pads-grid');
     if (padsGrid) {
       padsGrid.addEventListener(
         'pointerdown',
@@ -268,7 +286,7 @@ export class UI {
     }
 
     // === SEQUENCER ===
-    const seqGrid = document.getElementById('sequencer-grid');
+    const seqGrid = this.$('sequencer-grid');
     if (seqGrid) {
       seqGrid.addEventListener('pointerdown', (e) => {
         const stepEl = e.target.closest('.seq-step');
@@ -285,23 +303,23 @@ export class UI {
     }
 
     // === TRANSPORT ===
-    document.getElementById('play-btn')?.addEventListener('click', () => this.handlePlayToggle());
-    document.getElementById('stop-btn')?.addEventListener('click', () => this.handleStop());
-    document.getElementById('clear-btn')?.addEventListener('click', () => this.handleClear());
+    this.$('play-btn')?.addEventListener('click', () => this.handlePlayToggle());
+    this.$('stop-btn')?.addEventListener('click', () => this.handleStop());
+    this.$('clear-btn')?.addEventListener('click', () => this.handleClear());
 
     // === TEMPO ===
-    document.getElementById('bpm')?.addEventListener('input', (e) => {
+    this.$('bpm')?.addEventListener('input', (e) => {
       const bpm = parseInt(e.target.value, 10);
       this.sequencer.setBPM(bpm);
-      document.getElementById('bpm-display')?.textContent = bpm;
-      document.getElementById('bpm-val')?.textContent = bpm;
+      this.setText('bpm-display', bpm);
+      this.setText('bpm-val', bpm);
     });
 
-    document.getElementById('swing')?.addEventListener('input', (e) => {
+    this.$('swing')?.addEventListener('input', (e) => {
       const swing = parseInt(e.target.value, 10);
       this.sequencer.setSwing(swing);
-      document.getElementById('swing-display')?.textContent = swing;
-      document.getElementById('swing-val')?.textContent = `${swing}%`;
+      this.setText('swing-display', swing);
+      this.setText('swing-val', `${swing}%`);
     });
 
     // === EFFECTS ===
@@ -322,14 +340,14 @@ export class UI {
     });
 
     // === PAD EDITOR ===
-    document.getElementById('pad-pitch')?.addEventListener('input', (e) => {
+    this.$('pad-pitch')?.addEventListener('input', (e) => {
       const st = parseInt(e.target.value, 10) || 0;
       this.audioEngine.setPadPitch?.(this.selectedPadId, st);
       this.updatePadPitchDisplay();
       this.updateSliderFillByInputId('pad-pitch');
     });
 
-    document.getElementById('pad-vol')?.addEventListener('input', (e) => {
+    this.$('pad-vol')?.addEventListener('input', (e) => {
       const pct = parseInt(e.target.value, 10) || 0;
       const vol01 = Math.max(0, Math.min(1, pct / 100));
       this.audioEngine.setPadVolume?.(this.selectedPadId, vol01);
@@ -339,10 +357,10 @@ export class UI {
   }
 
   bindEffectControl(inputId, effectParam, displayId, formatFn = (v) => v) {
-    const input = document.getElementById(inputId);
+    const input = this.$(inputId);
     if (!input) return;
 
-    const display = document.getElementById(displayId);
+    const display = this.$(displayId);
 
     const apply = () => {
       const raw = Number(input.value);
@@ -415,22 +433,22 @@ export class UI {
   // ---------------------------
 
   handlePlayToggle() {
-    const playBtn = document.getElementById('play-btn');
+    const playBtn = this.$('play-btn');
 
     if (this.sequencer.isPlaying) {
       this.sequencer.stop();
-      playBtn?.classList.remove('active');
+      if (playBtn) playBtn.classList.remove('active');
       this.clearPlayingIndicators();
     } else {
       this.sequencer.start();
-      playBtn?.classList.add('active');
+      if (playBtn) playBtn.classList.add('active');
     }
   }
 
   handleStop() {
-    const playBtn = document.getElementById('play-btn');
+    const playBtn = this.$('play-btn');
     this.sequencer.stop();
-    playBtn?.classList.remove('active');
+    if (playBtn) playBtn.classList.remove('active');
     this.clearPlayingIndicators();
   }
 
@@ -457,7 +475,7 @@ export class UI {
   }
 
   updateSliderFillByInputId(inputId) {
-    const input = document.getElementById(inputId);
+    const input = this.$(inputId);
     if (!input) return;
 
     const fillMap = {
@@ -474,7 +492,7 @@ export class UI {
     const fillId = fillMap[inputId];
     if (!fillId) return;
 
-    const fill = document.getElementById(fillId);
+    const fill = this.$(fillId);
     if (!fill) return;
 
     const min = Number(input.min ?? 0);
@@ -513,7 +531,7 @@ export class UI {
       try { this.audioEngine.setEffect(param, value); } catch {}
 
       const inputId = mapToInputId[param];
-      const input = inputId ? document.getElementById(inputId) : null;
+      const input = inputId ? this.$(inputId) : null;
       if (input) {
         input.value = value;
         input.dispatchEvent(new Event('input', { bubbles: true }));
@@ -530,17 +548,17 @@ export class UI {
 
     this.padElements.forEach((p, i) => p.classList.toggle('selected', i === padId));
 
-    const editor = document.getElementById('pad-editor');
+    const editor = this.$('pad-editor');
     if (editor) editor.hidden = false;
 
     const info = this.audioEngine.getSampleInfo(padId);
-    document.getElementById('pad-edit-id')?.textContent = String(padId + 1);
-    document.getElementById('pad-edit-name')?.textContent = info?.name || 'EMPTY';
+    this.setText('pad-edit-id', padId + 1);
+    this.setText('pad-edit-name', info?.name || 'EMPTY');
 
     const params = this.audioEngine.getPadParams?.(padId) || { pitch: 0, volume: 0.8 };
 
-    const pitchInput = document.getElementById('pad-pitch');
-    const volInput = document.getElementById('pad-vol');
+    const pitchInput = this.$('pad-pitch');
+    const volInput = this.$('pad-vol');
 
     if (pitchInput) {
       pitchInput.value = String(params.pitch ?? 0);
@@ -556,16 +574,16 @@ export class UI {
   }
 
   updatePadPitchDisplay() {
-    const pitchInput = document.getElementById('pad-pitch');
-    const valEl = document.getElementById('pad-pitch-val');
+    const pitchInput = this.$('pad-pitch');
+    const valEl = this.$('pad-pitch-val');
     if (!pitchInput || !valEl) return;
     const st = parseInt(pitchInput.value, 10) || 0;
     valEl.textContent = `${st} st`;
   }
 
   updatePadVolDisplay() {
-    const volInput = document.getElementById('pad-vol');
-    const valEl = document.getElementById('pad-vol-val');
+    const volInput = this.$('pad-vol');
+    const valEl = this.$('pad-vol-val');
     if (!volInput || !valEl) return;
     const pct = parseInt(volInput.value, 10) || 0;
     valEl.textContent = `${pct}%`;
@@ -582,9 +600,11 @@ export class UI {
     pad.classList.add('active');
     setTimeout(() => pad.classList.remove('active'), 100);
 
-    const led = document.getElementById('led');
-    led?.classList.add('active');
-    setTimeout(() => led?.classList.remove('active'), 100);
+    const led = this.$('led');
+    if (led) {
+      led.classList.add('active');
+      setTimeout(() => led.classList.remove('active'), 100);
+    }
 
     this.audioEngine.playSample(padId);
   }
@@ -611,9 +631,11 @@ export class UI {
       if (el) el.classList.add('playing');
     }
 
-    const led = document.getElementById('led');
-    led?.classList.add('active');
-    setTimeout(() => led?.classList.remove('active'), 50);
+    const led = this.$('led');
+    if (led) {
+      led.classList.add('active');
+      setTimeout(() => led.classList.remove('active'), 50);
+    }
   }
 
   clearPlayingIndicators() {
