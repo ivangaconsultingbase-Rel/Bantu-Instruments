@@ -85,7 +85,7 @@ startButton.innerHTML = `
       font-size: 0.85em;
     }
   </style>
-  <h1>LOFI AK-612</h1>
+  <h1>LOFI SP-6000</h1>
   <button id="start-btn">▶ DÉMARRER</button>
   <p>Touches: Q W E A S D pour les pads | ESPACE pour play/stop</p>
 `;
