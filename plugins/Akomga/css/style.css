@@ -817,3 +817,33 @@ input[type="range"]::-moz-range-track {
 .seq-step.accent.active{
   box-shadow: inset 0 0 0 2px rgba(255,255,255,.25), 0 0 14px rgba(230,57,70,.35);
 }
+
+/* =========================
+   iOS: empêcher double-tap zoom sur zones de contrôle
+   ========================= */
+
+/* Empêche les gestes de zoom (double tap / double click) sur les contrôles */
+.pads-grid,
+.sequencer-grid,
+.seq-header,
+.transport,
+.effects-section,
+.pad-editor {
+  touch-action: manipulation; /* autorise tap, pas de double-tap zoom */
+}
+
+/* Sur les éléments hyper interactifs */
+.pad,
+.pad-load-btn,
+.seq-step,
+.transport-btn,
+.preset-btn,
+input[type="range"] {
+  touch-action: manipulation;
+}
+
+/* Empêche la sélection/zoom "text" accidentels */
+.pad, .seq-step, .transport-btn, .preset-btn {
+  -webkit-user-select: none;
+  user-select: none;
+}
