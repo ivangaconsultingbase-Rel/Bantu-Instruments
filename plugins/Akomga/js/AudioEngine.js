@@ -18,6 +18,10 @@ export class AudioEngine {
       volume: 0.8, // gain linéaire
     }));
 
+    // Paramètres par pad (pour Pad Editor)
+    this.padPitch = Array(6).fill(0);   // semitones
+    this.padVolume = Array(6).fill(0.8); // 0..1
+
     // Samples par défaut
     this.defaultSamples = [
       { id: 0, name: 'KICK', url: 'samples/kick.wav', key: 'Q' },
@@ -27,6 +31,23 @@ export class AudioEngine {
       { id: 4, name: 'CHOP 1', url: 'samples/chop1.wav', key: 'S' },
       { id: 5, name: 'CHOP 2', url: 'samples/chop2.wav', key: 'D' }
     ];
+
+      getPadParams(padId) {
+    return {
+      pitch: this.padPitch[padId] ?? 0,
+      volume: this.padVolume[padId] ?? 0.8
+    };
+  }
+
+  setPadPitch(padId, semitones) {
+    const st = Math.max(-24, Math.min(24, Number(semitones) || 0));
+    this.padPitch[padId] = st;
+  }
+
+  setPadVolume(padId, volume01) {
+    const v = Math.max(0, Math.min(1, Number(volume01)));
+    this.padVolume[padId] = v;
+  }
   }
 
   async init() {
@@ -119,23 +140,24 @@ export class AudioEngine {
     this.padParams[padId].volume = v;
   }
 
-  playSample(padId, time = 0, velocity = 1) {
+    playSample(padId, time = 0, velocity = 1) {
     const sample = this.samples.get(padId);
-    if (!sample || !sample.buffer || !this.ctx) return;
-
-    const { pitch, volume } = this.getPadParams(padId);
+    if (!sample || !sample.buffer) return;
 
     const source = this.ctx.createBufferSource();
     source.buffer = sample.buffer;
 
-    // Pitch simple (sans time-stretch)
-    source.playbackRate.value = Math.pow(2, (pitch || 0) / 12);
+    // Pitch (semitones -> cents)
+    const st = this.padPitch[padId] ?? 0;
+    source.detune.value = st * 100;
 
-    // Gain individuel par pad
+    // Gain = base * padVolume * velocity
+    const vel = Math.max(0, Math.min(1, Number(velocity)));
+    const padVol = this.padVolume[padId] ?? 0.8;
+
     const gainNode = this.ctx.createGain();
-    gainNode.gain.value = 0.8 * Math.max(0, Math.min(1, velocity));
+    gainNode.gain.value = 0.8 * padVol * vel;
 
-    // Connexion vers la chaîne d'effets
     source.connect(gainNode);
     gainNode.connect(this.effects.getInput());
 
