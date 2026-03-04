@@ -1,7 +1,6 @@
 /**
  * UI.js
  * Interface moderne avec support tactile complet (mobile + desktop)
- * Aligné sur ton index.html (IDs, slider-fill divs, presets SP1200/MPC60/Dirty/Clean)
  */
 
 export class UI {
@@ -34,7 +33,7 @@ export class UI {
     this.initSliderFills();
     this.updateHints();
 
-    // Applique le preset actif au chargement (si présent)
+    // Optionnel : si tu veux appliquer le preset actif au chargement
     const activePreset = document.querySelector('.preset-btn.active')?.dataset?.preset;
     if (activePreset) this.applyPreset(activePreset);
   }
@@ -95,7 +94,6 @@ export class UI {
   }
 
   renderSequencer() {
-    // Step numbers
     const header = document.getElementById('seq-header');
     if (header) {
       header.innerHTML = '';
@@ -106,7 +104,6 @@ export class UI {
       }
     }
 
-    // Grid
     const grid = document.getElementById('sequencer-grid');
     if (!grid) return;
 
@@ -154,29 +151,23 @@ export class UI {
     // === PADS ===
     const padsGrid = document.getElementById('pads-grid');
     if (padsGrid) {
-      // Pointerdown: tap/click
-      padsGrid.addEventListener(
-        'pointerdown',
-        (e) => {
-          const loadBtn = e.target.closest('.pad-load-btn');
-          if (loadBtn) {
-            e.preventDefault();
-            e.stopPropagation();
-            const padId = parseInt(loadBtn.dataset.padId, 10);
-            this.openFilePicker(padId);
-            return;
-          }
+      padsGrid.addEventListener('pointerdown', (e) => {
+        const loadBtn = e.target.closest('.pad-load-btn');
+        if (loadBtn) {
+          e.preventDefault();
+          e.stopPropagation();
+          const padId = parseInt(loadBtn.dataset.padId, 10);
+          this.openFilePicker(padId);
+          return;
+        }
 
-          const pad = e.target.closest('.pad');
-          if (pad) {
-            const padId = parseInt(pad.dataset.padId, 10);
-            this.triggerPad(padId);
-          }
-        },
-        { passive: false }
-      );
+        const pad = e.target.closest('.pad');
+        if (pad) {
+          const padId = parseInt(pad.dataset.padId, 10);
+          this.triggerPad(padId);
+        }
+      }, { passive: false });
 
-      // Clic droit desktop
       padsGrid.addEventListener('contextmenu', (e) => {
         e.preventDefault();
         const pad = e.target.closest('.pad');
@@ -185,13 +176,12 @@ export class UI {
         this.openFilePicker(padId);
       });
 
-      // File inputs
       padsGrid.querySelectorAll('input[type="file"]').forEach((input, idx) => {
         input.addEventListener('change', async (e) => {
           const file = e.target.files?.[0];
           if (!file) return;
           await this.handleFileSelect(idx, file);
-          e.target.value = ''; // allow re-select same file
+          e.target.value = '';
         });
       });
     }
@@ -222,21 +212,17 @@ export class UI {
     document.getElementById('bpm')?.addEventListener('input', (e) => {
       const bpm = parseInt(e.target.value, 10);
       this.sequencer.setBPM(bpm);
-      const d1 = document.getElementById('bpm-display');
-      const d2 = document.getElementById('bpm-val');
-      if (d1) d1.textContent = bpm;
-      if (d2) d2.textContent = bpm;
-      // pas de slider-fill dans ton HTML pour bpm (OK)
+      document.getElementById('bpm-display').textContent = bpm;
+      document.getElementById('bpm-val').textContent = bpm;
+      this.updateSliderFillByInputId('bpm'); // si tu ajoutes un fill plus tard
     });
 
     document.getElementById('swing')?.addEventListener('input', (e) => {
       const swing = parseInt(e.target.value, 10);
       this.sequencer.setSwing(swing);
-      const d1 = document.getElementById('swing-display');
-      const d2 = document.getElementById('swing-val');
-      if (d1) d1.textContent = swing;
-      if (d2) d2.textContent = `${swing}%`;
-      // pas de slider-fill dans ton HTML pour swing (OK)
+      document.getElementById('swing-display').textContent = swing;
+      document.getElementById('swing-val').textContent = `${swing}%`;
+      this.updateSliderFillByInputId('swing'); // si tu ajoutes un fill plus tard
     });
 
     // === EFFECTS ===
@@ -268,11 +254,13 @@ export class UI {
       this.audioEngine.setEffect(effectParam, raw);
 
       if (display) display.textContent = formatFn(raw);
+
+      // met à jour ta div slider-fill correspondante
       this.updateSliderFillByInputId(inputId);
     };
 
     input.addEventListener('input', apply);
-    apply(); // sync initial
+    apply(); // synchro initiale
   }
 
   bindKeyboard() {
@@ -315,9 +303,7 @@ export class UI {
       if (typeof input.showPicker === 'function') input.showPicker();
       else input.click();
     } catch {
-      try {
-        input.click();
-      } catch {}
+      try { input.click(); } catch {}
     }
   }
 
@@ -325,7 +311,6 @@ export class UI {
     try {
       await this.audioEngine.loadSampleFromFile(padId, file);
       this.updatePadDisplay(padId);
-
       if (this.isMobile && navigator.vibrate) navigator.vibrate([10, 30, 10]);
     } catch (error) {
       console.error('Erreur chargement sample:', error);
@@ -363,11 +348,20 @@ export class UI {
   }
 
   // ---------------------------
-  // SLIDER FILLS (div.slider-fill)
+  // SLIDER FILLS (ta structure HTML)
   // ---------------------------
 
   initSliderFills() {
-    const ids = ['bit-depth', 'sample-rate', 'filter-cutoff', 'drive', 'vinyl-noise', 'compression'];
+    // On calcule toutes les barres au chargement
+    const ids = [
+      'bit-depth',
+      'sample-rate',
+      'filter-cutoff',
+      'drive',
+      'vinyl-noise',
+      'compression',
+      // bpm/swing n'ont pas de <div fill> dans ton HTML actuel (OK)
+    ];
     ids.forEach((id) => this.updateSliderFillByInputId(id));
   }
 
@@ -375,6 +369,7 @@ export class UI {
     const input = document.getElementById(inputId);
     if (!input) return;
 
+    // mapping des ids -> fill ids (selon ton index.html)
     const fillMap = {
       'bit-depth': 'bit-depth-fill',
       'sample-rate': 'sample-rate-fill',
@@ -382,6 +377,9 @@ export class UI {
       'drive': 'drive-fill',
       'vinyl-noise': 'vinyl-fill',
       'compression': 'comp-fill',
+      // si tu ajoutes plus tard:
+      // 'bpm': 'bpm-fill',
+      // 'swing': 'swing-fill',
     };
 
     const fillId = fillMap[inputId];
@@ -402,14 +400,8 @@ export class UI {
   // PRESETS (alignés sur ton HTML)
   // ---------------------------
 
-  setSliderValueAndFire(inputId, value) {
-    const input = document.getElementById(inputId);
-    if (!input) return;
-    input.value = value;
-    input.dispatchEvent(new Event('input', { bubbles: true }));
-  }
-
   applyPreset(presetName) {
+    // Valeurs “musicales” de base (ajuste selon ton engine)
     const presets = {
       SP1200: {
         bitDepth: 12,
@@ -448,22 +440,26 @@ export class UI {
     const p = presets[presetName];
     if (!p) return;
 
-    // 1) AudioEngine (noms EXACTS attendus par ton switch)
+    // setEffect + synchro sliders (en réutilisant les listeners existants via dispatch input)
+    const mapToInputId = {
+      bitDepth: 'bit-depth',
+      sampleRate: 'sample-rate',
+      filter: 'filter-cutoff',
+      drive: 'drive',
+      vinylNoise: 'vinyl-noise',
+      compression: 'compression',
+    };
+
     Object.entries(p).forEach(([param, value]) => {
-      try {
-        this.audioEngine.setEffect(param, value);
-      } catch (e) {
-        console.warn('Preset: setEffect failed for', param, e);
+      try { this.audioEngine.setEffect(param, value); } catch {}
+
+      const inputId = mapToInputId[param];
+      const input = inputId ? document.getElementById(inputId) : null;
+      if (input) {
+        input.value = value;
+        input.dispatchEvent(new Event('input', { bubbles: true }));
       }
     });
-
-    // 2) Synchro UI via events "input"
-    this.setSliderValueAndFire('bit-depth', p.bitDepth);
-    this.setSliderValueAndFire('sample-rate', p.sampleRate);
-    this.setSliderValueAndFire('filter-cutoff', p.filter);
-    this.setSliderValueAndFire('drive', p.drive);
-    this.setSliderValueAndFire('vinyl-noise', p.vinylNoise);
-    this.setSliderValueAndFire('compression', p.compression);
   }
 
   // ---------------------------
