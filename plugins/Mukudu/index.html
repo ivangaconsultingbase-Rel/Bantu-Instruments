@@ -153,16 +153,46 @@ select:focus{ border-color:rgba(217,53,53,.55); }
 .grid3{ display:grid; grid-template-columns:1fr; gap:10px; }
 @media(min-width:900px){ .grid3{ grid-template-columns:1fr 1fr 1.2fr; } }
 
+/* ── SCALE NOTES (INFO ONLY) ── */
 .scale-notes{ display:flex; gap:6px; flex-wrap:wrap; }
 .note{
   width:42px; height:42px; border-radius:var(--r-sm);
-  border:1px solid rgba(255,255,255,.09); background:var(--s2);
+  border:1px dashed rgba(255,255,255,.12);
+  background:rgba(0,0,0,.18);
   display:flex; align-items:center; justify-content:center;
-  font-weight:900; font-size:11px; color:var(--ink-mid);
+  font-weight:900; font-size:11px;
+  color:rgba(220,228,240,.35);
+  cursor:default;
+  pointer-events:none; /* ✅ makes it clear: non cliquable */
+  position:relative;
 }
-.note.in{ border-color:rgba(46,201,138,.45); background:rgba(46,201,138,.10); color:rgba(46,201,138,.92); }
-.note.root{ border-color:rgba(217,53,53,.75); background:rgba(217,53,53,.14); color:#fff; }
+.note.in{
+  border-color:rgba(46,201,138,.22);
+  background:rgba(46,201,138,.05);
+  color:rgba(46,201,138,.55);
+}
+.note.root{
+  border-color:rgba(217,53,53,.28);
+  background:rgba(217,53,53,.06);
+  color:rgba(240,68,68,.65);
+}
+.notes-info{
+  display:flex; align-items:center; gap:8px; flex-wrap:wrap;
+  margin-bottom:8px;
+}
+.badge-info{
+  display:inline-flex; align-items:center; justify-content:center;
+  width:18px; height:18px; border-radius:999px;
+  border:1px solid rgba(255,255,255,.12);
+  color:rgba(220,228,240,.45);
+  font-size:11px; font-weight:900;
+  background:rgba(0,0,0,.18);
+}
+.notes-info span{
+  font-size:9px; color:var(--ink-dim); letter-spacing:.06em;
+}
 
+/* Degrees */
 .degrees{ display:flex; gap:6px; flex-wrap:wrap; }
 .deg{
   min-width:92px; border:1px solid rgba(255,255,255,.09); background:rgba(0,0,0,.18);
@@ -174,6 +204,7 @@ select:focus{ border-color:rgba(217,53,53,.55); }
 .deg .d{ font-size:9px; color:var(--ink-dim); letter-spacing:.12em; text-transform:uppercase; }
 .deg .c{ font-size:12px; font-weight:900; margin-top:2px; color:var(--ink); }
 
+/* Steps */
 .steps{ display:grid; grid-template-columns:repeat(8,1fr); gap:6px; }
 @media(min-width:820px){ .steps{ grid-template-columns:repeat(16,1fr); } }
 
@@ -315,12 +346,17 @@ select:focus{ border-color:rgba(217,53,53,.55); }
       </div>
     </div>
 
+    <!-- ✅ HIDDEN BY DEFAULT + CLEAR “INFO ONLY” -->
     <div class="card">
-      <div class="card-header open" id="hNotes">
+      <div class="card-header" id="hNotes">
         <span class="card-header-label">Notes de la gamme</span>
-        <span class="card-toggle open" id="tNotes">▼</span>
+        <span class="card-toggle" id="tNotes">▼</span>
       </div>
-      <div class="card-body" id="bNotes">
+      <div class="card-body collapsed" id="bNotes">
+        <div class="notes-info">
+          <span class="badge-info">i</span>
+          <span>Info uniquement (non cliquable) — repère visuel des notes de la gamme.</span>
+        </div>
         <div class="scale-notes" id="scaleNotes"></div>
       </div>
     </div>
@@ -339,7 +375,8 @@ select:focus{ border-color:rgba(217,53,53,.55); }
   <div class="card">
     <div class="card-header open" id="hSeq">
       <span class="card-header-label" id="seqLabel">Séquenceur</span>
-      <button id="btnLen" class="btn xs">LEN: 64</button>
+      <!-- ✅ default LEN is now 16 (set by JS init) -->
+      <button id="btnLen" class="btn xs">LEN: 16</button>
       <button id="btnMode" class="btn xs amb" style="margin-right:4px">MODE: LEGATO</button>
       <button id="btnClearAll" class="btn xs" style="margin-right:4px">CLR</button>
       <button id="btnRandom" class="btn xs amb" style="margin-right:4px">RAND</button>
@@ -350,6 +387,7 @@ select:focus{ border-color:rgba(217,53,53,.55); }
     <div class="card-body" id="bSeq">
       <div class="steps" id="stepsContainer"></div>
       <div class="divider"></div>
+
       <div class="card" style="box-shadow:none;border-color:rgba(255,255,255,.06)">
         <div class="card-header open" id="hParams" style="cursor:default">
           <span class="card-header-label" style="color:var(--ink-mid)">Édition step <span id="selectedStepNum">1</span></span>
@@ -403,49 +441,7 @@ select:focus{ border-color:rgba(217,53,53,.55); }
 
       <div class="divider"></div>
 
-      <div class="card" style="box-shadow:none;border-color:rgba(255,255,255,.06)">
-        <div class="card-header open" id="hFx">
-          <span class="card-header-label">FX · Metronome · Tape</span>
-          <span class="card-toggle open" id="tFx">▼</span>
-        </div>
-        <div class="card-body" id="bFx">
-          <div class="fx-grid">
-            <div class="ctrl">
-              <div class="ctrl-head"><span class="ctrl-lbl">Metronome</span><span class="ctrl-val" id="vMet">off</span></div>
-              <div style="display:flex;gap:6px;align-items:center">
-                <button id="btnMetOn" class="btn xs"><span class="led"></span> ON/OFF</button>
-                <div style="flex:1"><input id="rMetVol" type="range" min="0" max="1" step="0.01" value="0.35"></div>
-              </div>
-              <div style="font-size:9px;color:var(--ink-dim);margin-top:6px;letter-spacing:.06em">accent beat 1 (4/4)</div>
-            </div>
-            <div class="ctrl">
-              <div class="ctrl-head"><span class="ctrl-lbl">Tape Sat</span><span class="ctrl-val" id="vSat">0.00</span></div>
-              <input id="rSat" type="range" min="0" max="1" step="0.01" value="0.00">
-              <div style="font-size:9px;color:var(--ink-dim);margin-top:6px;letter-spacing:.06em">OFF par défaut</div>
-            </div>
-            <div class="ctrl">
-              <div class="ctrl-head"><span class="ctrl-lbl">Tape Echo Verb</span><span class="ctrl-val" id="vEcho">mix 0.00</span></div>
-              <div style="display:grid;gap:8px">
-                <input id="rEchoMix" type="range" min="0" max="1" step="0.01" value="0.00">
-                <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-                  <div>
-                    <div style="font-size:8.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-dim);margin-bottom:5px">Time</div>
-                    <input id="rEchoTime" type="range" min="0.08" max="0.65" step="0.005" value="0.32">
-                  </div>
-                  <div>
-                    <div style="font-size:8.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-dim);margin-bottom:5px">FB</div>
-                    <input id="rEchoFb" type="range" min="0" max="0.85" step="0.01" value="0.35">
-                  </div>
-                </div>
-              </div>
-              <div style="font-size:9px;color:var(--ink-dim);margin-top:6px;letter-spacing:.06em">OFF par défaut</div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="divider"></div>
-
+      <!-- ✅ Mukudu Machine first -->
       <div class="card" style="box-shadow:none;border-color:rgba(255,255,255,.06)">
         <div class="card-header open" id="hSynth">
           <span class="card-header-label">Mukudu Machine · RS-09 vibe</span>
@@ -480,6 +476,50 @@ select:focus{ border-color:rgba(217,53,53,.55); }
               <div style="font-size:9px;color:var(--ink-dim);margin-top:6px;letter-spacing:.06em">
                 Organ ON · Chorus OFF · Blend = crossfade STR/ORG
               </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ✅ FX moved UNDER Mukudu + hidden by default -->
+      <div class="divider"></div>
+
+      <div class="card" style="box-shadow:none;border-color:rgba(255,255,255,.06)">
+        <div class="card-header" id="hFx">
+          <span class="card-header-label">FX · Metronome · Tape</span>
+          <span class="card-toggle" id="tFx">▼</span>
+        </div>
+        <div class="card-body collapsed" id="bFx">
+          <div class="fx-grid">
+            <div class="ctrl">
+              <div class="ctrl-head"><span class="ctrl-lbl">Metronome</span><span class="ctrl-val" id="vMet">off</span></div>
+              <div style="display:flex;gap:6px;align-items:center">
+                <button id="btnMetOn" class="btn xs"><span class="led"></span> ON/OFF</button>
+                <div style="flex:1"><input id="rMetVol" type="range" min="0" max="1" step="0.01" value="0.35"></div>
+              </div>
+              <div style="font-size:9px;color:var(--ink-dim);margin-top:6px;letter-spacing:.06em">accent beat 1 (4/4)</div>
+            </div>
+            <div class="ctrl">
+              <div class="ctrl-head"><span class="ctrl-lbl">Tape Sat</span><span class="ctrl-val" id="vSat">0.00</span></div>
+              <input id="rSat" type="range" min="0" max="1" step="0.01" value="0.00">
+              <div style="font-size:9px;color:var(--ink-dim);margin-top:6px;letter-spacing:.06em">OFF par défaut</div>
+            </div>
+            <div class="ctrl">
+              <div class="ctrl-head"><span class="ctrl-lbl">Tape Echo Verb</span><span class="ctrl-val" id="vEcho">mix 0.00</span></div>
+              <div style="display:grid;gap:8px">
+                <input id="rEchoMix" type="range" min="0" max="1" step="0.01" value="0.00">
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+                  <div>
+                    <div style="font-size:8.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-dim);margin-bottom:5px">Time</div>
+                    <input id="rEchoTime" type="range" min="0.08" max="0.65" step="0.005" value="0.32">
+                  </div>
+                  <div>
+                    <div style="font-size:8.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-dim);margin-bottom:5px">FB</div>
+                    <input id="rEchoFb" type="range" min="0" max="0.85" step="0.01" value="0.35">
+                  </div>
+                </div>
+              </div>
+              <div style="font-size:9px;color:var(--ink-dim);margin-top:6px;letter-spacing:.06em">OFF par défaut</div>
             </div>
           </div>
         </div>
@@ -580,7 +620,7 @@ function pc(name){ return NOTES.indexOf(name); }
 const state = {
   key:'C', scale:'major', bpm:120,
   playing:false, currentStep:-1, selectedStep:0, playMode:"LEGATO",
-  seqLen:64, steps:[], clipboard:null,
+  seqLen:16, steps:[], clipboard:null,   // ✅ default 16
   synth:{ attack:0.10, release:1.50, brightness:0.40, ensemble:0.60, strings:true, organ:true, chorus:false, blend:1.00 },
   metOn:false, metVol:0.35, sat:0.00, echoMix:0.00, echoTime:0.32, echoFb:0.35, master:0.30
 };
@@ -707,7 +747,6 @@ function applyAudioParams(forceInstant=false){
   masterGain.gain.setTargetAtTime(state.master,t,0.02);
 
   const x=clamp(state.synth.blend,0,1);
-  // ✅ Reduced gains: was ~1.0, now 0.60 / 0.50
   const targetStr=state.synth.strings?(1-x)*0.60:0.0;
   const targetOrg=state.synth.organ?x*0.52:0.0;
   stringsGain.gain.cancelScheduledValues(t); organGain.gain.cancelScheduledValues(t);
@@ -729,7 +768,6 @@ function applyAudioParams(forceInstant=false){
   wowGain.gain.setTargetAtTime(0.001+state.echoMix*0.004,t,0.05);
   wowLFO.frequency.setTargetAtTime(0.25+state.echoTime*0.8,t,0.05);
 
-  // Brightness more conservative — max ~6500 Hz
   toneLP.frequency.setTargetAtTime(800+state.synth.brightness*5700,t,0.05);
   toneHS.gain.setTargetAtTime(-5.0-state.synth.brightness*3.0,t,0.05);
   metGain.gain.setTargetAtTime(state.metVol,t,0.02);
@@ -747,18 +785,15 @@ function metroClick(time,accent=false){
   osc.start(time); osc.stop(time+0.05);
 }
 
-/* ── IMPROVED STRING VOICE ──
-   All-triangle, per-voice LP, velocity-tracked cutoff,
-   greatly reduced amplitude, minimal detuning
-*/
+/* ── STRING VOICE ── */
 function createStringVoice(freq,velocity,startTime){
   const t0=startTime??AC.currentTime;
   const velScale=velocity/127;
-  const vol=velScale*0.26; // ✅ much quieter than original 0.70
+  const vol=velScale*0.26;
 
   const o1=AC.createOscillator(), o2=AC.createOscillator(), o3=AC.createOscillator();
-  o1.type='triangle'; o2.type='triangle'; o3.type='triangle'; // ✅ all triangle = warmer
-  const det=0.0014+state.synth.ensemble*0.0038; // ✅ subtle detuning
+  o1.type='triangle'; o2.type='triangle'; o3.type='triangle';
+  const det=0.0014+state.synth.ensemble*0.0038;
   o1.frequency.setValueAtTime(freq,t0);
   o2.frequency.setValueAtTime(freq*(1+det),t0);
   o3.frequency.setValueAtTime(freq*(1-det),t0);
@@ -766,7 +801,7 @@ function createStringVoice(freq,velocity,startTime){
   const voiceLP=AC.createBiquadFilter();
   voiceLP.type='lowpass';
   voiceLP.frequency.setValueAtTime(clamp(400+velScale*(state.synth.brightness*3200),280,3800),t0);
-  voiceLP.Q.value=0.40; // ✅ no resonance
+  voiceLP.Q.value=0.40;
 
   const env=AC.createGain(); env.gain.setValueAtTime(0.0001,t0);
   const mix=AC.createGain();
@@ -798,23 +833,23 @@ function createStringVoice(freq,velocity,startTime){
   };
 }
 
-/* ── ORGAN VOICE (softer harmonics) ── */
+/* ── ORGAN VOICE ── */
 function createOrganVoice(freq,velocity,startTime){
   const t0=startTime??AC.currentTime;
   const harmonics=[1,2,3,4,6,8];
-  const levels=[1,.42,.26,.16,.10,.06]; // ✅ rolled-off harmonics
+  const levels=[1,.42,.26,.16,.10,.06];
 
-  const mixer=AC.createGain(); mixer.gain.value=0.11; // ✅ was 0.15
+  const mixer=AC.createGain(); mixer.gain.value=0.11;
   const oscs=[];
   harmonics.forEach((h,i)=>{
     const o=AC.createOscillator(); o.type="sine";
     o.frequency.setValueAtTime(freq*h,t0);
-    const g=AC.createGain(); g.gain.setValueAtTime(levels[i]*0.095*(velocity/127),t0); // ✅ was 0.12
+    const g=AC.createGain(); g.gain.setValueAtTime(levels[i]*0.095*(velocity/127),t0);
     o.connect(g); g.connect(mixer); o.start(t0); oscs.push(o);
   });
   const env=AC.createGain(); env.gain.setValueAtTime(0.0001,t0);
   mixer.connect(env); env.connect(organBus);
-  env.gain.linearRampToValueAtTime(0.48,t0+0.014); // ✅ slight ramp avoids click
+  env.gain.linearRampToValueAtTime(0.48,t0+0.014);
 
   return {
     oscs, env, _stopT:t0,
@@ -834,7 +869,7 @@ function createOrganVoice(freq,velocity,startTime){
   };
 }
 
-/* ── DRUM SYNTHESIS (TR-606 style) ── */
+/* ── DRUM SYNTHESIS ── */
 function triggerBD(t0,vol){
   const osc=AC.createOscillator(), ampEnv=AC.createGain(), g=AC.createGain();
   g.gain.value=vol*1.05;
@@ -844,7 +879,6 @@ function triggerBD(t0,vol){
   ampEnv.gain.setValueAtTime(0.0001,t0);
   ampEnv.gain.linearRampToValueAtTime(0.90,t0+0.003);
   ampEnv.gain.exponentialRampToValueAtTime(0.0001,t0+0.38);
-  // click
   const ck=AC.createOscillator(), ckEnv=AC.createGain();
   ck.type="square"; ck.frequency.value=160;
   ckEnv.gain.setValueAtTime(0.0001,t0);
@@ -854,7 +888,6 @@ function triggerBD(t0,vol){
   osc.connect(ampEnv); ampEnv.connect(g); g.connect(drumBus);
   osc.start(t0); osc.stop(t0+0.42);
 }
-
 function triggerSD(t0,vol){
   const toneOsc=AC.createOscillator(), toneEnv=AC.createGain();
   toneOsc.type="triangle";
@@ -883,7 +916,6 @@ function triggerSD(t0,vol){
   toneOsc.start(t0); toneOsc.stop(t0+0.20);
   noise.start(t0); noise.stop(t0+0.25);
 }
-
 function triggerHH(t0,vol){
   const bufSize=Math.floor(AC.sampleRate*0.10);
   const buf=AC.createBuffer(1,bufSize,AC.sampleRate);
@@ -899,7 +931,6 @@ function triggerHH(t0,vol){
   noise.connect(bp); bp.connect(hp); hp.connect(env); env.connect(drumBus);
   noise.start(t0); noise.stop(t0+0.09);
 }
-
 function triggerCY(t0,vol){
   const freqs=[540,693,871,1168,1471,1828];
   const g=AC.createGain(); g.gain.value=vol*0.33;
@@ -926,7 +957,6 @@ function triggerCY(t0,vol){
   noise.start(t0); noise.stop(t0+0.86);
   env.connect(g); g.connect(drumBus);
 }
-
 function triggerDrum(id,t0){
   if(!AC) return;
   const v=drumState.volumes[id]??0.7;
@@ -1123,7 +1153,7 @@ function previewCurrentChord(){
 }
 
 function setSeqLen(newLen){
-  newLen=[16,32,64].includes(newLen)?newLen:64;
+  newLen=[16,32,64].includes(newLen)?newLen:16;
   if(state.steps.length<newLen){
     state.steps=state.steps.concat(Array.from({length:newLen-state.steps.length},()=>makeDefaultStep()));
   } else if(state.steps.length>newLen){ state.steps=state.steps.slice(0,newLen); }
@@ -1138,7 +1168,7 @@ function setSeqLen(newLen){
 let intervalId=null, metIntervalId=null;
 function stepMs(){ return (60/state.bpm)*1000/4; }
 function computeChordOffTime(stepIndex,t0,durationBeats){
-  const sLen=stepLenSec(), durSteps=durBeatsToSteps(durationBeats), nominalEnd=t0+durSteps*sLen;
+  const sLen=stepLenSec(), durSteps=Math.max(1,Math.round(durationBeats*4)), nominalEnd=t0+durSteps*sLen;
   if(state.playMode==="CHOKE") return nominalEnd;
   const k=stepsToNextActive(stepIndex);
   if(k!=null){ const ns=t0+k*sLen; if(ns<nominalEnd) return ns; }
@@ -1281,17 +1311,22 @@ function setDrumLen(newLen){
 
 /* ── COLLAPSIBLES ── */
 function setupCollapsible(hId,bId,tId){
-  const h=$(''+hId), b=$(''+bId), t=$(''+tId);
+  const h=$(hId), b=$(bId), t=$(tId);
   if(!h||!b||!t) return;
   h.addEventListener("click",e=>{
     if(e.target.closest("button")||e.target.closest("input")) return;
     const open=!b.classList.contains("collapsed");
-    b.classList.toggle("collapsed",open); h.classList.toggle("open",!open); t.classList.toggle("open",!open);
+    b.classList.toggle("collapsed",open);
+    h.classList.toggle("open",!open);
+    t.classList.toggle("open",!open);
   });
 }
-setupCollapsible("hKey","bKey","tKey"); setupCollapsible("hNotes","bNotes","tNotes");
-setupCollapsible("hDeg","bDeg","tDeg"); setupCollapsible("hSeq","bSeq","tSeq");
-setupCollapsible("hFx","bFx","tFx"); setupCollapsible("hSynth","bSynth","tSynth");
+setupCollapsible("hKey","bKey","tKey");
+setupCollapsible("hNotes","bNotes","tNotes");   // ✅ starts collapsed (HTML)
+setupCollapsible("hDeg","bDeg","tDeg");
+setupCollapsible("hSeq","bSeq","tSeq");
+setupCollapsible("hFx","bFx","tFx");           // ✅ starts collapsed (HTML)
+setupCollapsible("hSynth","bSynth","tSynth");
 setupCollapsible("hDrum","bDrum","tDrum");
 
 /* ── EVENTS ── */
@@ -1316,8 +1351,13 @@ els.btnRandom.addEventListener("click",()=>{
   const chords=getScaleChords(state.key,state.scale);
   for(let i=0;i<state.seqLen;i++){
     const s=state.steps[i];
-    if(Math.random()>0.30){ const ch=chords[Math.floor(Math.random()*chords.length)]; s.active=true; s.root=ch.root; s.chordType=ch.type; s.velocity=80+Math.floor(Math.random()*40); s.duration=[0.25,0.5,1,2][Math.floor(Math.random()*4)]; s.voicing=["close","open","drop2","spread"][Math.floor(Math.random()*4)]; s.bass=(Math.random()<0.75)?"root":NOTES[Math.floor(Math.random()*12)]; }
-    else{ s.active=false; }
+    if(Math.random()>0.30){
+      const ch=chords[Math.floor(Math.random()*chords.length)];
+      s.active=true; s.root=ch.root; s.chordType=ch.type; s.velocity=80+Math.floor(Math.random()*40);
+      s.duration=[0.25,0.5,1,2][Math.floor(Math.random()*4)];
+      s.voicing=["close","open","drop2","spread"][Math.floor(Math.random()*4)];
+      s.bass=(Math.random()<0.75)?"root":NOTES[Math.floor(Math.random()*12)];
+    } else { s.active=false; }
   }
   renderSteps(); updateParamsUI();
 });
@@ -1375,23 +1415,34 @@ window.addEventListener("keydown",e=>{
 
 /* ── INIT ── */
 function init(){
+  // keep 64 slots as a “memory”, but default visible length is 16
   state.steps=Array.from({length:64},()=>makeDefaultStep());
-  for(let i=0;i<state.seqLen;i++){
-    state.steps[i].active=(i%4===0&&i<16); state.steps[i].root=state.key;
+
+  // simple default pattern in the first 16 steps
+  for(let i=0;i<16;i++){
+    state.steps[i].active=(i%4===0);
+    state.steps[i].root=state.key;
     state.steps[i].chordType=(i%8===0)?"maj7":"maj";
   }
   state.steps[0].active=true;
+
   renderKeyMenus();
   $('scaleSelect').value=state.scale;
-  const rBlend=$('rBlend'); if(rBlend){ rBlend.value=String(state.synth.blend); setRangePct(rBlend); }
-  const rMaster=$('rMaster'); if(rMaster){ rMaster.value=String(state.master); setRangePct(rMaster); }
-  const rBri=$('rBri'); if(rBri){ rBri.value=String(state.synth.brightness); setRangePct(rBri); }
-  updateParamsUI(); renderScaleNotes(); renderScaleDegrees(); renderSteps();
+
+  ["rBlend","rMaster","rBri"].forEach(id=>{
+    const el=$(id); if(el){ setRangePct(el); }
+  });
+
+  // ✅ apply default length = 16
+  setSeqLen(16);
+
+  updateParamsUI();
+  renderScaleNotes(); renderScaleDegrees(); renderSteps();
   renderDrumTracks(); refreshTop();
+
   ["rBpm","rMaster","rMetVol","rSat","rEchoMix","rEchoTime","rEchoFb","rAtk","rRel","rBri","rEns","rBlend","velocitySlider","rSwing"].forEach(id=>{
     const el=$(id); if(el&&el.type==="range") setRangePct(el);
   });
-  setSeqLen(64);
 }
 
 document.addEventListener("DOMContentLoaded",init);
