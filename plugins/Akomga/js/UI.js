@@ -5,6 +5,9 @@
  * - MET/REC: pointerup + touchend (pas seulement click)
  * - HUMAN/TIMING: input + change + pointerup/touchend
  * - resume() sur toutes les interactions critiques
+ *
+ * PATCH anti double-tap zoom (iOS Safari):
+ * - bloque le double-tap zoom sur les pads/controls (pas sur le sequencer pour préserver double-tap accent)
  */
 
 export class UI {
@@ -33,11 +36,14 @@ export class UI {
     this._stepLpTimer = null;
     this._stepLpTriggered = false;
 
-    // Mobile: double-tap detection for Accent
+    // Mobile: double-tap detection for Accent (steps)
     this._lastTap = { padId: null, step: null, t: 0 };
 
     // Anti double-trigger (pointerup + touchend)
     this._tapGuard = new WeakMap();
+
+    // Anti double-tap zoom (pads/controls)
+    this._antiZoomLastTap = { t: 0, x: 0, y: 0 };
   }
 
   // ---------- DOM helpers ----------
@@ -64,6 +70,61 @@ export class UI {
   }
 
   /**
+   * Anti double-tap zoom for iOS Safari.
+   * IMPORTANT: we DO NOT apply this on the sequencer grid, to preserve double-tap accent.
+   */
+  installAntiDoubleTapZoom() {
+    if (!this.isMobile) return;
+
+    const root = document.querySelector('.sampler-container') || document.body;
+
+    // Only block double-tap zoom if it happens on pads/controls (NOT on sequencer)
+    const shouldGuard = (target) => {
+      if (!target) return false;
+
+      // Never guard inside sequencer grid (we use double tap for accent there)
+      if (target.closest?.('#sequencer-grid') || target.closest?.('.sequencer-grid')) return false;
+
+      // Guard pads + controls
+      if (
+        target.closest?.('#pads-grid') ||
+        target.closest?.('.pads-grid') ||
+        target.closest?.('.transport') ||
+        target.closest?.('.transport-btn') ||
+        target.closest?.('.preset-btn') ||
+        target.closest?.('.effects-section') ||
+        target.closest?.('.pad-editor') ||
+        target.closest?.('input[type="range"]') ||
+        target.closest?.('.pad') ||
+        target.closest?.('.pad-load-btn')
+      ) return true;
+
+      return false;
+    };
+
+    root.addEventListener('touchend', (e) => {
+      if (!shouldGuard(e.target)) return;
+      if (!e.changedTouches || e.changedTouches.length === 0) return;
+
+      const now = performance.now();
+      const touch = e.changedTouches[0];
+      const x = touch.clientX;
+      const y = touch.clientY;
+
+      const dt = now - this._antiZoomLastTap.t;
+      const dx = Math.abs(x - this._antiZoomLastTap.x);
+      const dy = Math.abs(y - this._antiZoomLastTap.y);
+
+      // Double tap fast and close position => preventDefault (blocks zoom)
+      if (dt > 0 && dt < 280 && dx < 24 && dy < 24) {
+        e.preventDefault();
+      }
+
+      this._antiZoomLastTap = { t: now, x, y };
+    }, { passive: false });
+  }
+
+  /**
    * Bind "tap" in a mobile-safe way (iOS Safari sometimes drops click).
    * We use pointerup + touchend fallback and a guard to avoid double fire.
    */
@@ -71,7 +132,6 @@ export class UI {
     if (!el) return;
 
     const guarded = (e) => {
-      // avoid duplicate triggers on iOS (pointerup + touchend)
       const now = performance.now();
       const last = this._tapGuard.get(el) || 0;
       if (now - last < 220) return;
@@ -106,7 +166,6 @@ export class UI {
     inputEl.addEventListener('pointerup', handler, { passive: false });
     inputEl.addEventListener('touchend', handler, { passive: false });
 
-    // init sync
     apply();
   }
 
@@ -133,19 +192,19 @@ export class UI {
 
     // IMPORTANT: pousser HUMAN/TIMING au sequencer dès le chargement
     this.applyHumanizeFromUI(true);
+
+    // PATCH iOS: empêcher double-tap zoom sur pads/controls
+    this.installAntiDoubleTapZoom();
   }
 
   syncTransportToggles() {
-    // REC
     const recOn = !!this.sequencer.isRecording;
     this.$('rec-btn')?.classList.toggle('active', recOn);
     document.body.classList.toggle('recording', recOn);
 
-    // MET
     const metOn = !!this.sequencer.metronomeEnabled;
     this.$('met-btn')?.classList.toggle('active', metOn);
 
-    // HUMAN labels only (apply to engine handled separately)
     const human = this.$('humanize');
     if (human) {
       const pct = parseInt(human.value, 10) || 0;
@@ -450,15 +509,12 @@ export class UI {
     }
 
     // === TRANSPORT ===
-    // Desktop click OK, but iOS needs pointerup/touchend => use bindTap everywhere critical
     this.bindTap(this.$('play-btn'), () => this.handlePlayToggle());
     this.bindTap(this.$('clear-btn'), () => this.handleClear());
-
     this.bindTap(this.$('rec-btn'), () => this.handleRecToggle());
     this.bindTap(this.$('met-btn'), () => this.handleMetToggle());
 
     // === TEMPO ===
-    // input OK on iOS most of the time; but we keep normal listeners
     this.$('bpm')?.addEventListener('input', (e) => {
       const bpm = parseInt(e.target.value, 10);
       this.sequencer.setBPM(bpm);
@@ -504,7 +560,6 @@ export class UI {
     });
 
     // === PAD EDITOR ===
-    // iOS slider: we can keep input, but better bindRange for consistency
     this.bindRange(this.$('pad-pitch'), (st) => {
       const v = Math.max(-24, Math.min(24, Math.round(st)));
       this.audioEngine.setPadPitch?.(this.selectedPadId, v);
@@ -534,7 +589,6 @@ export class UI {
       this.updateSliderFillByInputId(inputId);
     };
 
-    // input OK for FX even on iOS generally, but we resume to be safe
     input.addEventListener('input', () => { this.safeResume(); apply(); });
     input.addEventListener('change', () => { this.safeResume(); apply(); });
     apply();
@@ -589,8 +643,6 @@ export class UI {
 
     if (btn) btn.classList.toggle('active', isOn);
 
-    // Petit "tic" immédiat pour confirmer sur iOS (si dispo)
-    // (Ne remplace pas le scheduling du metronome, c'est juste un feedback)
     if (isOn) {
       try {
         const t = this.audioEngine.getCurrentTime?.() ?? 0;
@@ -756,8 +808,6 @@ export class UI {
       'pad-pitch': 'pad-pitch-fill',
       'pad-vol': 'pad-vol-fill',
       // (si tu ajoutes des fill pour humanize plus tard, mappe-les ici)
-      // 'humanize': 'humanize-fill',
-      // 'humanize-time': 'humanize-time-fill',
     };
 
     const fillId = fillMap[inputId];
@@ -828,7 +878,6 @@ export class UI {
 
     const params = this.audioEngine.getPadParams?.(padId) || { pitch: 0, volume: 0.8 };
 
-    // Handled by bindRange, but we still set initial values
     const pitchInput = this.$('pad-pitch');
     const volInput = this.$('pad-vol');
 
