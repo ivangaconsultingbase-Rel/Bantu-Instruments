@@ -253,9 +253,12 @@ export class AudioEngine {
     return this.ctx?.currentTime || 0;
   }
 
-  resume() {
-    if (this.ctx?.state === 'suspended') {
-      this.ctx.resume();
+resume() {
+  try {
+    if (this.ctx && this.ctx.state !== 'running') {
+      return this.ctx.resume();
     }
-  }
+  } catch (e) {}
+  return Promise.resolve();
+}
 }
