@@ -30,6 +30,11 @@ export class AudioEngine {
     this.padPitch = Array(6).fill(0);     // -24..+24
     // Volume 0..1
     this.padVolume = Array(6).fill(0.8);  // défaut 80%
+
+        // Metronome
+    this.metronomeEnabled = false;
+    this.metronomeLevel = 0.25; // 0..1
+    
   }
 
   async init() {
@@ -172,6 +177,49 @@ export class AudioEngine {
     this.padVolume[padId] = v;
   }
 
+
+  setMetronomeEnabled(on) {
+    this.metronomeEnabled = !!on;
+  }
+
+  setMetronomeLevel(level01) {
+    this.metronomeLevel = Math.max(0, Math.min(1, Number(level01)));
+  }
+
+  /**
+   * Click simple (osc + enveloppe)
+   * @param {number} time temps audio
+   * @param {boolean} accent true = downbeat plus aigu/fort
+   */
+  playClick(time, accent = false) {
+    if (!this.ctx) return;
+    if (!this.metronomeEnabled) return;
+
+    const t = Math.max(this.ctx.currentTime, time);
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+
+    const freq = accent ? 2200 : 1500;
+    const level = (accent ? 1.0 : 0.7) * this.metronomeLevel;
+
+    osc.type = 'square';
+    osc.frequency.setValueAtTime(freq, t);
+
+    // enveloppe très courte
+    gain.gain.setValueAtTime(0.0001, t);
+    gain.gain.exponentialRampToValueAtTime(level, t + 0.002);
+    gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.05);
+
+    osc.connect(gain);
+
+    // Click direct vers destination (pas dans FX)
+    gain.connect(this.ctx.destination);
+
+    osc.start(t);
+    osc.stop(t + 0.06);
+  }
+
+  
   // ---------------------------
   // Accès aux contrôles d'effets
   // ---------------------------
