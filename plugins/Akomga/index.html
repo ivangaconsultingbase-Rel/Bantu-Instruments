@@ -44,6 +44,42 @@
       </div>
     </section>
 
+<section class="pad-editor" id="pad-editor" hidden>
+  <div class="section-header">
+    <h2>Pad Edit</h2>
+    <div class="pad-editor-meta">
+      <span>PAD <span id="pad-edit-id">1</span></span>
+      <span class="pad-edit-name" id="pad-edit-name">EMPTY</span>
+    </div>
+  </div>
+
+  <div class="section-content">
+    <div class="effects-grid">
+      <div class="effect-control">
+        <div class="effect-label">
+          <label>Pitch</label>
+          <span class="effect-value" id="pad-pitch-val">0 st</span>
+        </div>
+        <div class="slider-container">
+          <div class="slider-fill" id="pad-pitch-fill"></div>
+          <input type="range" id="pad-pitch" min="-24" max="24" value="0" step="1">
+        </div>
+      </div>
+
+      <div class="effect-control">
+        <div class="effect-label">
+          <label>Volume</label>
+          <span class="effect-value" id="pad-vol-val">80%</span>
+        </div>
+        <div class="slider-container">
+          <div class="slider-fill" id="pad-vol-fill"></div>
+          <input type="range" id="pad-vol" min="0" max="100" value="80" step="1">
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+    
     <!-- Effects Section -->
     <section class="effects-section">
       <div class="section-header">
