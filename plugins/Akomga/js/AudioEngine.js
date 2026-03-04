@@ -119,7 +119,7 @@ export class AudioEngine {
     this.padParams[padId].volume = v;
   }
 
-  playSample(padId, time = 0) {
+  playSample(padId, time = 0, velocity = 1) {
     const sample = this.samples.get(padId);
     if (!sample || !sample.buffer || !this.ctx) return;
 
@@ -133,7 +133,7 @@ export class AudioEngine {
 
     // Gain individuel par pad
     const gainNode = this.ctx.createGain();
-    gainNode.gain.value = Number.isFinite(volume) ? volume : 0.8;
+    gainNode.gain.value = 0.8 * Math.max(0, Math.min(1, velocity));
 
     // Connexion vers la chaîne d'effets
     source.connect(gainNode);
