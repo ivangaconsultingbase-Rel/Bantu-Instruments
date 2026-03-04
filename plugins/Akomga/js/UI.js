@@ -256,73 +256,71 @@ export class UI {
       });
     }
 
-    // === SEQUENCER ===
+       // === SEQUENCER ===
     const seqGrid = this.$('sequencer-grid');
     if (seqGrid) {
-      // Desktop: Shift+pointerdown => cycle velocity
+      // On mémorise ce qui a été touché (mobile robuste)
+      this._downStep = { padId: null, step: null, el: null };
+      this._stepLpTriggered = false;
+
       seqGrid.addEventListener('pointerdown', (e) => {
         const stepEl = e.target.closest('.seq-step');
         if (!stepEl) return;
 
+        e.preventDefault();
+
         const padId = parseInt(stepEl.dataset.padId, 10);
         const step = parseInt(stepEl.dataset.step, 10);
 
-        // Mobile long-press => velocity cycle
-        if (this.isMobile) {
-          this._stepLpTriggered = false;
-          this._pendingStepEl = stepEl;
+        this._downStep = { padId, step, el: stepEl };
+        this._stepLpTriggered = false;
 
+        // Desktop: Shift => cycle velocity
+        if (!this.isMobile && e.shiftKey) {
+          this.cycleStepVelocity(padId, step);
+          this._stepLpTriggered = true; // éviter toggle au pointerup
+          return;
+        }
+
+        // Mobile: long-press => cycle velocity
+        if (this.isMobile) {
           clearTimeout(this._stepLpTimer);
           this._stepLpTimer = setTimeout(() => {
             this._stepLpTriggered = true;
             this.cycleStepVelocity(padId, step);
             if (navigator.vibrate) navigator.vibrate(10);
           }, 320);
-
-          return; // attendre pointerup pour toggle si pas longpress
         }
+      }, { passive: false });
 
-        // Desktop: shift => cycle velocity
-        if (e.shiftKey) {
-          this.cycleStepVelocity(padId, step);
+      seqGrid.addEventListener('pointerup', () => {
+        clearTimeout(this._stepLpTimer);
+
+        const { padId, step, el } = this._downStep || {};
+        if (padId === null || step === null || !el) return;
+
+        // si longpress ou shift a déjà fait le boulot => on ne toggle pas
+        if (this._stepLpTriggered) {
+          this._downStep = { padId: null, step: null, el: null };
+          this._stepLpTriggered = false;
           return;
         }
 
-        // Normal toggle
+        // Toggle normal
         const isActive = this.sequencer.toggleStep(padId, step);
-        this.updateStepAppearance(stepEl, isActive ? this.sequencer.getStepVelocity(padId, step) : 0);
+        const v = isActive ? this.sequencer.getStepVelocity(padId, step) : 0;
+        this.updateStepAppearance(el, v);
 
-        if (this.isMobile && navigator.vibrate) navigator.vibrate(10);
-      });
-
-      // Mobile: pointerup => toggle si pas longpress
-      seqGrid.addEventListener('pointerup', (e) => {
-        if (!this.isMobile) return;
-
-        clearTimeout(this._stepLpTimer);
-
-        const stepEl = e.target.closest('.seq-step');
-        if (!stepEl) return;
-
-        const padId = parseInt(stepEl.dataset.padId, 10);
-        const step = parseInt(stepEl.dataset.step, 10);
-
-        if (!this._stepLpTriggered) {
-          const isActive = this.sequencer.toggleStep(padId, step);
-          this.updateStepAppearance(stepEl, isActive ? this.sequencer.getStepVelocity(padId, step) : 0);
-        }
-
-        this._pendingStepEl = null;
-        this._stepLpTriggered = false;
+        this._downStep = { padId: null, step: null, el: null };
       });
 
       seqGrid.addEventListener('pointercancel', () => {
         clearTimeout(this._stepLpTimer);
-        this._pendingStepEl = null;
+        this._downStep = { padId: null, step: null, el: null };
         this._stepLpTriggered = false;
       });
     }
-
+    
     // === TRANSPORT ===
     this.$('play-btn')?.addEventListener('click', () => this.handlePlayToggle());
     this.$('stop-btn')?.addEventListener('click', () => this.handleStop());
