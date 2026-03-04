@@ -790,3 +790,15 @@ input[type="range"]::-moz-range-track {
     gap: var(--space-xs);
   }
 }
+
+/* REC button */
+.rec-btn svg { fill: currentColor; }
+.rec-btn.active {
+  background: var(--accent-secondary);
+  border-color: var(--accent-secondary);
+  color: white;
+}
+.recording .led-indicator {
+  animation: pulse 0.5s ease infinite;
+  background: var(--accent-secondary);
+}
