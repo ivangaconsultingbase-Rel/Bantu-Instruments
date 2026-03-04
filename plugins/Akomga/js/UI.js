@@ -1,14 +1,13 @@
 /**
  * UI.js
- * Version SAFE : compatible CSS "ancienne structure"
- * - Pads en <button class="pad"> (pas <div>)
- * - Séquenceur "flat grid" (label + 16 boutons directement dans #sequencer-grid)
+ * Compatible avec ton style.css actuel :
+ * - Pads: <div class="pad"> + .pad-header/.pad-footer + .pad-load-btn
+ * - Sequencer: .seq-row + .seq-steps
  *
- * + Support tactile (pointer events)
+ * + Support tactile complet (pointer)
  * + Bouton 📁 + clic droit pour charger
- * + Slider fill divs
- * + Presets
- * + Sélection pad + Pitch/Volume (Alt+clic desktop / appui long mobile)
+ * + Presets + slider fills
+ * + Sélection de pad + Pad Editor (Pitch/Volume)
  *
  * Requis côté HTML (Pad Editor) :
  *  - #pad-editor (section) + #pad-edit-id + #pad-edit-name
@@ -27,16 +26,18 @@ export class UI {
     this.sequencer = sequencer;
 
     this.padElements = [];
-    this.stepElements = []; // [padId][step]
+    this.stepElements = [];
 
     this.padKeys = ['Q', 'W', 'E', 'A', 'S', 'D'];
     this.padColors = ['#e63946', '#ff6b35', '#f7c948', '#2ecc71', '#4ecdc4', '#9b59b6'];
 
     this.isMobile = this.detectMobile();
 
-    // Pad edit
+    // Pad selection + long press
     this.selectedPadId = 0;
-    this._longPressTimer = null;
+    this._lpTimer = null;
+    this._lpTriggered = false;
+    this._pendingPadId = null;
   }
 
   detectMobile() {
@@ -55,10 +56,11 @@ export class UI {
     this.initSliderFills();
     this.updateHints();
 
+    // Preset actif au chargement
     const activePreset = document.querySelector('.preset-btn.active')?.dataset?.preset;
     if (activePreset) this.applyPreset(activePreset);
 
-    // sélection par défaut si pad editor présent
+    // Sélection par défaut (si pad-editor présent)
     this.selectPad(0);
   }
 
@@ -68,18 +70,17 @@ export class UI {
 
     hint.textContent = this.isMobile
       ? 'Tap pour jouer · 📁 pour charger · appui long pour éditer'
-      : 'Clic pour jouer · 📁 ou clic droit pour charger · Alt+clic pour éditer';
+      : 'Clic pour jouer · 📁/clic droit pour charger · Alt+clic pour éditer';
   }
 
   // ---------------------------
-  // RENDER (SAFE DOM)
+  // RENDER
   // ---------------------------
 
   renderPads() {
-    // Ton HTML a .pads-grid + #pads-grid : on accepte les deux
-    const grid = document.querySelector('.pads-grid') || document.getElementById('pads-grid');
+    const grid = document.getElementById('pads-grid');
     if (!grid) {
-      console.error('[UI] pads grid introuvable (#pads-grid/.pads-grid).');
+      console.error('[UI] #pads-grid introuvable');
       return;
     }
 
@@ -89,20 +90,31 @@ export class UI {
     for (let i = 0; i < 6; i++) {
       const info = this.audioEngine.getSampleInfo(i);
 
-      // IMPORTANT: button.pad (compatible CSS ancien)
-      const pad = document.createElement('button');
+      const pad = document.createElement('div');
       pad.className = 'pad';
-      pad.type = 'button';
       pad.dataset.padId = i;
 
-      // IMPORTANT: on garde les classes "pad-number/pad-name/pad-key"
       pad.innerHTML = `
-        <span class="pad-number">${i + 1}</span>
-        <span class="pad-name">${info?.name || 'EMPTY'}</span>
-        <span class="pad-key">${this.padKeys[i] || ''}</span>
+        <div class="pad-header">
+          <span class="pad-number">${i + 1}</span>
+          <span class="pad-key">${this.padKeys[i] || ''}</span>
+        </div>
 
-        <button class="pad-load-btn" data-pad-id="${i}" aria-label="Charger sample" type="button" title="Charger sample">📁</button>
-        <input type="file" class="pad-file" accept="audio/*,.wav,.mp3,.ogg,.aac,.m4a,.flac" id="file-${i}">
+        <div class="pad-footer">
+          <span class="pad-name">${info?.name || 'EMPTY'}</span>
+        </div>
+
+        <button class="pad-load-btn" data-pad-id="${i}" aria-label="Charger sample" type="button">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="17 8 12 3 7 8"/>
+            <line x1="12" y1="3" x2="12" y2="15"/>
+          </svg>
+        </button>
+
+        <input class="pad-file" type="file"
+          accept="audio/*,.wav,.mp3,.ogg,.aac,.m4a,.flac"
+          id="file-${i}">
       `;
 
       grid.appendChild(pad);
@@ -111,7 +123,6 @@ export class UI {
   }
 
   renderSequencer() {
-    // Header numéros (optionnel)
     const header = document.getElementById('seq-header');
     if (header) {
       header.innerHTML = '';
@@ -122,10 +133,9 @@ export class UI {
       }
     }
 
-    // IMPORTANT: séquenceur "flat grid"
     const grid = document.getElementById('sequencer-grid');
     if (!grid) {
-      console.error('[UI] sequencer grid introuvable (#sequencer-grid).');
+      console.error('[UI] #sequencer-grid introuvable');
       return;
     }
 
@@ -133,11 +143,17 @@ export class UI {
     this.stepElements = [];
 
     for (let padId = 0; padId < 6; padId++) {
+      const row = document.createElement('div');
+      row.className = 'seq-row';
+
       const label = document.createElement('div');
       label.className = 'seq-row-label';
       label.textContent = padId + 1;
-      label.style.background = this.padColors[padId] || '';
-      grid.appendChild(label);
+      if (this.padColors?.[padId]) label.style.background = this.padColors[padId];
+      row.appendChild(label);
+
+      const stepsContainer = document.createElement('div');
+      stepsContainer.className = 'seq-steps';
 
       const rowSteps = [];
       for (let step = 0; step < 16; step++) {
@@ -149,9 +165,12 @@ export class UI {
 
         if (step % 4 === 0) stepEl.classList.add('beat-marker');
 
-        grid.appendChild(stepEl);
+        stepsContainer.appendChild(stepEl);
         rowSteps.push(stepEl);
       }
+
+      row.appendChild(stepsContainer);
+      grid.appendChild(row);
       this.stepElements.push(rowSteps);
     }
   }
@@ -162,12 +181,11 @@ export class UI {
 
   bindEvents() {
     // === PADS ===
-    const padsGrid = document.querySelector('.pads-grid') || document.getElementById('pads-grid');
+    const padsGrid = document.getElementById('pads-grid');
     if (padsGrid) {
       padsGrid.addEventListener(
         'pointerdown',
         (e) => {
-          // Click sur 📁
           const loadBtn = e.target.closest('.pad-load-btn');
           if (loadBtn) {
             e.preventDefault();
@@ -182,34 +200,58 @@ export class UI {
 
           const padId = parseInt(pad.dataset.padId, 10);
 
-          // Desktop: Alt+clic = sélectionner/éditer
+          // Desktop: Alt+clic => select (pas play)
           if (!this.isMobile && e.altKey) {
             e.preventDefault();
             this.selectPad(padId);
             return;
           }
 
-          // Mobile: appui long = sélectionner/éditer
+          // Mobile: long press => select (pas play)
           if (this.isMobile) {
-            clearTimeout(this._longPressTimer);
-            this._longPressTimer = setTimeout(() => {
+            this._lpTriggered = false;
+            this._pendingPadId = padId;
+
+            clearTimeout(this._lpTimer);
+            this._lpTimer = setTimeout(() => {
+              this._lpTriggered = true;
               this.selectPad(padId);
               if (navigator.vibrate) navigator.vibrate(15);
             }, 350);
+
+            // on NE joue PAS tout de suite; on attend pointerup
+            return;
           }
 
-          // Tap normal = play
+          // Desktop normal: play
           this.triggerPad(padId);
         },
         { passive: false }
       );
 
-      const cancelLong = () => clearTimeout(this._longPressTimer);
-      padsGrid.addEventListener('pointerup', cancelLong);
-      padsGrid.addEventListener('pointercancel', cancelLong);
-      padsGrid.addEventListener('pointerleave', cancelLong);
+      // Mobile: pointerup => si pas long-press, play
+      padsGrid.addEventListener('pointerup', () => {
+        if (!this.isMobile) return;
 
-      // Clic droit desktop = charger
+        clearTimeout(this._lpTimer);
+        if (!this._lpTriggered && this._pendingPadId !== null) {
+          this.triggerPad(this._pendingPadId);
+        }
+        this._pendingPadId = null;
+        this._lpTriggered = false;
+      });
+
+      padsGrid.addEventListener('pointercancel', () => {
+        clearTimeout(this._lpTimer);
+        this._pendingPadId = null;
+        this._lpTriggered = false;
+      });
+
+      padsGrid.addEventListener('pointerleave', () => {
+        clearTimeout(this._lpTimer);
+      });
+
+      // Clic droit desktop => open file picker
       padsGrid.addEventListener('contextmenu', (e) => {
         e.preventDefault();
         const pad = e.target.closest('.pad');
@@ -223,11 +265,8 @@ export class UI {
         input.addEventListener('change', async (e) => {
           const file = e.target.files?.[0];
           if (!file) return;
-
           await this.handleFileSelect(idx, file);
           e.target.value = '';
-
-          // refresh editor si pad sélectionné
           if (idx === this.selectedPadId) this.selectPad(idx);
         });
       });
@@ -287,7 +326,7 @@ export class UI {
       });
     });
 
-    // === PAD EDITOR (Pitch/Volume) ===
+    // === PAD EDITOR ===
     document.getElementById('pad-pitch')?.addEventListener('input', (e) => {
       const st = parseInt(e.target.value, 10) || 0;
       this.audioEngine.setPadPitch?.(this.selectedPadId, st);
@@ -433,8 +472,6 @@ export class UI {
       'drive': 'drive-fill',
       'vinyl-noise': 'vinyl-fill',
       'compression': 'comp-fill',
-
-      // Pad editor
       'pad-pitch': 'pad-pitch-fill',
       'pad-vol': 'pad-vol-fill',
     };
@@ -496,7 +533,7 @@ export class UI {
   selectPad(padId) {
     this.selectedPadId = padId;
 
-    // highlight optionnel (CSS .pad.selected)
+    // highlight (CSS patch fourni plus bas)
     this.padElements.forEach((p, i) => p.classList.toggle('selected', i === padId));
 
     const editor = document.getElementById('pad-editor');
