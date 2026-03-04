@@ -1,8 +1,8 @@
 /**
  * Sequencer.js
- * Séquenceur 16 steps avec swing
- * + Velocity per-step (grid = 0..1)
- * + Live REC (quantized)
+ * 16 steps + swing
+ * - grid = velocity (0..1)
+ * - live REC stable via lastPlayedStep
  */
 
 export class Sequencer {
@@ -14,34 +14,37 @@ export class Sequencer {
     this.pads = 6;
     this.bpm = 90;
     this.swing = 0;
-    this.currentStep = 0;
+
+    this.currentStep = 0;     // step "next to schedule"
+    this.lastPlayedStep = -1; // step actually played (important for REC)
     this.isPlaying = false;
     this.intervalId = null;
 
-    // IMPORTANT: grid stocke la VELOCITY (0..1)
-    // 0 = off ; >0 = on
+    // grid stores velocity: 0=off, >0=on
     this.defaultVelocity = 0.8;
-    this.grid = Array.from({ length: this.pads }, () =>
-      Array(this.steps).fill(0)
-    );
+    this.grid = Array.from({ length: this.pads }, () => Array(this.steps).fill(0));
 
     // Live REC
     this.isRecording = false;
-    this.quantizeRec = true;  // rec quantizé sur step le + proche
-    this.recOverdub = true;   // si false: écrase; si true: max(existing, new)
-    this.recVelocity = 0.9;   // vélocité par défaut en rec
+    this.quantizeRec = true;
+    this.recOverdub = true;
+    this.recVelocity = 0.9;
 
     // Scheduler
     this.nextStepTime = 0;
-    this.scheduleAheadTime = 0.1; // s
+    this.scheduleAheadTime = 0.1;
     this.lookahead = 25; // ms
   }
 
-  // --- Step state (velocity) ---
+  // ---------- Step state ----------
   toggleStep(padId, step) {
     const v = this.grid[padId][step] || 0;
     this.grid[padId][step] = v > 0 ? 0 : this.defaultVelocity;
     return this.grid[padId][step] > 0;
+  }
+
+  clearStep(padId, step) {
+    this.grid[padId][step] = 0;
   }
 
   isStepActive(padId, step) {
@@ -54,16 +57,11 @@ export class Sequencer {
 
   setStepVelocity(padId, step, velocity01) {
     const v = Math.max(0, Math.min(1, Number(velocity01)));
-    // si step est off, on l'allume implicitement
-    this.grid[padId][step] = v;
+    this.grid[padId][step] = v; // if v=0 it becomes off
     return v;
   }
 
-  clearStep(padId, step) {
-    this.grid[padId][step] = 0;
-  }
-
-  // --- Transport/tempo ---
+  // ---------- Tempo ----------
   setBPM(bpm) {
     this.bpm = Math.max(60, Math.min(200, bpm));
   }
@@ -73,100 +71,112 @@ export class Sequencer {
   }
 
   getStepDuration() {
-    // 16 steps = 1 mesure 4/4 => 1 step = 1/16 note => beat/4
     return (60 / this.bpm) / 4;
   }
 
   getSwingOffset() {
-    // swing appliqué aux steps impairs
     return this.getStepDuration() * (this.swing / 100) * 0.5;
   }
 
-  // --- Live REC ---
+  // ---------- Live REC ----------
   setRecording(isOn) {
     this.isRecording = !!isOn;
   }
 
   /**
-   * Enregistre un hit.
-   * - Si playing: quantize sur step le plus proche.
-   * - Si not playing: écrit sur currentStep (0 par défaut).
+   * Enregistre un hit sur le step "le plus logique":
+   * - si playing: lastPlayedStep (ou lastPlayedStep+1 si tu préfères "en avant")
+   * - si quantizeRec: step nearest (approx) autour de lastPlayedStep
    */
   recordHit(padId, velocity = this.recVelocity, time = this.audioEngine.getCurrentTime()) {
     const v = Math.max(0, Math.min(1, Number(velocity)));
 
-    let targetStep = this.currentStep;
+    let target = 0;
 
-    if (this.isPlaying && this.quantizeRec) {
-      targetStep = this._getNearestStepForTime(time);
-    }
-
-    if (!this.recOverdub) {
-      this.grid[padId][targetStep] = v;
+    if (!this.isPlaying) {
+      // si pas en lecture, on écrit sur currentStep (souvent 0)
+      target = this.currentStep || 0;
     } else {
-      this.grid[padId][targetStep] = Math.max(this.grid[padId][targetStep] || 0, v);
-    }
+      // base robuste = step qui vient d'être joué
+      const base = this.lastPlayedStep >= 0 ? this.lastPlayedStep : this.currentStep;
 
-    return targetStep;
-  }
-
-  /**
-   * Calcule le step dont le playTime est le plus proche de "time"
-   * en tenant compte du swing.
-   */
-  _getNearestStepForTime(time) {
-    const stepDur = this.getStepDuration();
-    if (stepDur <= 0) return this.currentStep;
-
-    // On estime la position dans la mesure courante en partant de nextStepTime-stepDur
-    // (approx stable même avec scheduling)
-    const base = this.nextStepTime - stepDur; // "début" approximatif du step courant
-    let rel = time - base;
-
-    // Normalise dans [0, steps*stepDur)
-    const loopDur = this.steps * stepDur;
-    rel = ((rel % loopDur) + loopDur) % loopDur;
-
-    // On teste chaque step en prenant son swingTime
-    let bestStep = 0;
-    let bestDist = Infinity;
-
-    for (let s = 0; s < this.steps; s++) {
-      let st = s * stepDur;
-      if (s % 2 === 1) st += this.getSwingOffset();
-      const dist = Math.abs(rel - st);
-      if (dist < bestDist) {
-        bestDist = dist;
-        bestStep = s;
+      if (!this.quantizeRec) {
+        target = base;
+      } else {
+        // quantize léger autour du "base", pour éviter les dérives du scheduler
+        target = this._nearestAroundBase(time, base);
       }
     }
-    return bestStep;
+
+    const prev = this.grid[padId][target] || 0;
+    this.grid[padId][target] = this.recOverdub ? Math.max(prev, v) : v;
+
+    return target;
   }
 
-  // --- Start/stop/scheduler ---
+  // Cherche le step le plus proche dans une fenêtre autour de base (±2 steps)
+  _nearestAroundBase(time, baseStep) {
+    const stepDur = this.getStepDuration();
+    if (stepDur <= 0) return baseStep;
+
+    // on prend une fenêtre réduite pour stabilité
+    const candidates = [];
+    for (let d = -2; d <= 2; d++) {
+      const s = (baseStep + d + this.steps) % this.steps;
+      candidates.push(s);
+    }
+
+    // approx du "playTime" de baseStep: nextStepTime a déjà avancé,
+    // on reconstruit une référence locale
+    const now = this.audioEngine.getCurrentTime();
+    const dt = Math.max(-0.5, Math.min(0.5, time - now)); // clamp
+    const ref = now + dt;
+
+    let best = baseStep;
+    let bestDist = Infinity;
+
+    for (const s of candidates) {
+      let offset = (s - baseStep);
+      if (offset > this.steps / 2) offset -= this.steps;
+      if (offset < -this.steps / 2) offset += this.steps;
+
+      let t = ref + offset * stepDur;
+      if (s % 2 === 1) t += this.getSwingOffset();
+
+      const dist = Math.abs(time - t);
+      if (dist < bestDist) {
+        bestDist = dist;
+        best = s;
+      }
+    }
+    return best;
+  }
+
+  // ---------- Transport ----------
   start() {
     if (this.isPlaying) return;
 
     this.audioEngine.resume();
     this.isPlaying = true;
-    this.currentStep = 0;
-    this.nextStepTime = this.audioEngine.getCurrentTime();
 
+    this.currentStep = 0;
+    this.lastPlayedStep = -1;
+
+    this.nextStepTime = this.audioEngine.getCurrentTime();
     this.schedule();
   }
 
   stop() {
     this.isPlaying = false;
     this.currentStep = 0;
+    this.lastPlayedStep = -1;
 
     if (this.intervalId) {
       clearTimeout(this.intervalId);
       this.intervalId = null;
     }
 
-    if (this.onStepChange) {
-      this.onStepChange(-1);
-    }
+    if (this.onStepChange) this.onStepChange(-1);
   }
 
   schedule() {
@@ -183,15 +193,15 @@ export class Sequencer {
   }
 
   playStep(step, time) {
+    // IMPORTANT: step réellement joué
+    this.lastPlayedStep = step;
+
     let playTime = time;
     if (step % 2 === 1) playTime += this.getSwingOffset();
 
     for (let padId = 0; padId < this.pads; padId++) {
       const vel = this.getStepVelocity(padId, step);
-      if (vel > 0) {
-        // 3e argument: velocity (si tu patches AudioEngine)
-        this.audioEngine.playSample(padId, playTime, vel);
-      }
+      if (vel > 0) this.audioEngine.playSample(padId, playTime, vel);
     }
 
     const delay = (playTime - this.audioEngine.getCurrentTime()) * 1000;
@@ -206,19 +216,11 @@ export class Sequencer {
   }
 
   clear() {
-    this.grid = Array.from({ length: this.pads }, () =>
-      Array(this.steps).fill(0)
-    );
+    this.grid = Array.from({ length: this.pads }, () => Array(this.steps).fill(0));
   }
 
-  // --- Import/Export ---
   exportPattern() {
-    return JSON.stringify({
-      grid: this.grid,
-      bpm: this.bpm,
-      swing: this.swing,
-      version: 2
-    });
+    return JSON.stringify({ grid: this.grid, bpm: this.bpm, swing: this.swing, version: 2 });
   }
 
   importPattern(json) {
@@ -228,7 +230,7 @@ export class Sequencer {
       this.bpm = data.bpm || 90;
       this.swing = data.swing || 0;
 
-      // migration si ancien format bool
+      // migration bool -> vel
       if (Array.isArray(this.grid) && typeof this.grid?.[0]?.[0] === 'boolean') {
         this.grid = this.grid.map(row => row.map(on => (on ? this.defaultVelocity : 0)));
       }
