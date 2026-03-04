@@ -1,19 +1,7 @@
 /**
  * UI.js
- * Compatible avec ton style.css + index.html
- * - Pads: <div class="pad"> + .pad-header/.pad-footer/.pad-load-btn
- * - Sequencer: .seq-row + .seq-steps
- * - Support tactile (pointer)
- * - Charger sample: bouton 📁 + clic droit desktop
- * - Presets + slider fills
- * - Sélection pad + Pad Editor Pitch/Volume
- *
- * Mobile:
- *  - Tap = play
- *  - Appui long (350ms) = sélectionner / éditer (ne joue pas)
- * Desktop:
- *  - Clic = play
- *  - Alt+clic = sélectionner / éditer
+ * + Velocity per-step (Shift+clic / long-press mobile)
+ * + Live REC (REC button)
  */
 
 export class UI {
@@ -29,31 +17,26 @@ export class UI {
 
     this.isMobile = this.detectMobile();
 
-    // Pad editor state
+    // Pad editor
     this.selectedPadId = 0;
 
-    // Long-press (mobile)
+    // Long-press pad (mobile)
     this._lpTimer = null;
     this._lpTriggered = false;
     this._pendingPadId = null;
+
+    // Long-press step (mobile)
+    this._stepLpTimer = null;
+    this._stepLpTriggered = false;
+    this._pendingStepEl = null;
   }
 
-  // --------- small DOM helpers (avoid optional-chain assignment) ---------
+  // ---------- DOM helpers ----------
   $(id) { return document.getElementById(id); }
 
   setText(id, value) {
     const el = this.$(id);
     if (el) el.textContent = String(value);
-  }
-
-  addClass(id, cls) {
-    const el = this.$(id);
-    if (el) el.classList.add(cls);
-  }
-
-  removeClass(id, cls) {
-    const el = this.$(id);
-    if (el) el.classList.remove(cls);
   }
 
   detectMobile() {
@@ -72,12 +55,11 @@ export class UI {
     this.initSliderFills();
     this.updateHints();
 
-    // Appliquer preset actif
     const activePreset = document.querySelector('.preset-btn.active')?.dataset?.preset;
     if (activePreset) this.applyPreset(activePreset);
 
-    // Sélection par défaut (si panel présent)
     this.selectPad(0);
+    this.syncSequencerUIFromData(); // important si pattern importé
   }
 
   updateHints() {
@@ -198,57 +180,50 @@ export class UI {
     // === PADS ===
     const padsGrid = this.$('pads-grid');
     if (padsGrid) {
-      padsGrid.addEventListener(
-        'pointerdown',
-        (e) => {
-          // Bouton 📁
-          const loadBtn = e.target.closest('.pad-load-btn');
-          if (loadBtn) {
-            e.preventDefault();
-            e.stopPropagation();
-            const padId = parseInt(loadBtn.dataset.padId, 10);
-            this.openFilePicker(padId);
-            return;
-          }
+      padsGrid.addEventListener('pointerdown', (e) => {
+        const loadBtn = e.target.closest('.pad-load-btn');
+        if (loadBtn) {
+          e.preventDefault();
+          e.stopPropagation();
+          const padId = parseInt(loadBtn.dataset.padId, 10);
+          this.openFilePicker(padId);
+          return;
+        }
 
-          const pad = e.target.closest('.pad');
-          if (!pad) return;
+        const pad = e.target.closest('.pad');
+        if (!pad) return;
 
-          const padId = parseInt(pad.dataset.padId, 10);
+        const padId = parseInt(pad.dataset.padId, 10);
 
-          // Desktop: Alt+clic => select/edit
-          if (!this.isMobile && e.altKey) {
-            e.preventDefault();
+        // Desktop: Alt+clic => select/edit
+        if (!this.isMobile && e.altKey) {
+          e.preventDefault();
+          this.selectPad(padId);
+          return;
+        }
+
+        // Mobile: long press => select/edit (no play)
+        if (this.isMobile) {
+          this._lpTriggered = false;
+          this._pendingPadId = padId;
+
+          clearTimeout(this._lpTimer);
+          this._lpTimer = setTimeout(() => {
+            this._lpTriggered = true;
             this.selectPad(padId);
-            return;
-          }
+            if (navigator.vibrate) navigator.vibrate(15);
+          }, 350);
+          return;
+        }
 
-          // Mobile: appui long => select/edit (ne joue pas)
-          if (this.isMobile) {
-            this._lpTriggered = false;
-            this._pendingPadId = padId;
+        // Desktop normal: play
+        this.triggerPad(padId);
+      }, { passive: false });
 
-            clearTimeout(this._lpTimer);
-            this._lpTimer = setTimeout(() => {
-              this._lpTriggered = true;
-              this.selectPad(padId);
-              if (navigator.vibrate) navigator.vibrate(15);
-            }, 350);
-
-            return; // attendre pointerup pour décider de jouer
-          }
-
-          // Desktop normal: play
-          this.triggerPad(padId);
-        },
-        { passive: false }
-      );
-
-      // Mobile: pointerup => si pas long-press, play
       padsGrid.addEventListener('pointerup', () => {
         if (!this.isMobile) return;
-
         clearTimeout(this._lpTimer);
+
         if (!this._lpTriggered && this._pendingPadId !== null) {
           this.triggerPad(this._pendingPadId);
         }
@@ -262,7 +237,6 @@ export class UI {
         this._lpTriggered = false;
       });
 
-      // Clic droit desktop => charger
       padsGrid.addEventListener('contextmenu', (e) => {
         e.preventDefault();
         const pad = e.target.closest('.pad');
@@ -271,15 +245,12 @@ export class UI {
         this.openFilePicker(padId);
       });
 
-      // Inputs file
       padsGrid.querySelectorAll('input[type="file"]').forEach((input, idx) => {
         input.addEventListener('change', async (e) => {
           const file = e.target.files?.[0];
           if (!file) return;
-
           await this.handleFileSelect(idx, file);
           e.target.value = '';
-
           if (idx === this.selectedPadId) this.selectPad(idx);
         });
       });
@@ -288,6 +259,7 @@ export class UI {
     // === SEQUENCER ===
     const seqGrid = this.$('sequencer-grid');
     if (seqGrid) {
+      // Desktop: Shift+pointerdown => cycle velocity
       seqGrid.addEventListener('pointerdown', (e) => {
         const stepEl = e.target.closest('.seq-step');
         if (!stepEl) return;
@@ -295,10 +267,59 @@ export class UI {
         const padId = parseInt(stepEl.dataset.padId, 10);
         const step = parseInt(stepEl.dataset.step, 10);
 
+        // Mobile long-press => velocity cycle
+        if (this.isMobile) {
+          this._stepLpTriggered = false;
+          this._pendingStepEl = stepEl;
+
+          clearTimeout(this._stepLpTimer);
+          this._stepLpTimer = setTimeout(() => {
+            this._stepLpTriggered = true;
+            this.cycleStepVelocity(padId, step);
+            if (navigator.vibrate) navigator.vibrate(10);
+          }, 320);
+
+          return; // attendre pointerup pour toggle si pas longpress
+        }
+
+        // Desktop: shift => cycle velocity
+        if (e.shiftKey) {
+          this.cycleStepVelocity(padId, step);
+          return;
+        }
+
+        // Normal toggle
         const isActive = this.sequencer.toggleStep(padId, step);
-        stepEl.classList.toggle('active', isActive);
+        this.updateStepAppearance(stepEl, isActive ? this.sequencer.getStepVelocity(padId, step) : 0);
 
         if (this.isMobile && navigator.vibrate) navigator.vibrate(10);
+      });
+
+      // Mobile: pointerup => toggle si pas longpress
+      seqGrid.addEventListener('pointerup', (e) => {
+        if (!this.isMobile) return;
+
+        clearTimeout(this._stepLpTimer);
+
+        const stepEl = e.target.closest('.seq-step');
+        if (!stepEl) return;
+
+        const padId = parseInt(stepEl.dataset.padId, 10);
+        const step = parseInt(stepEl.dataset.step, 10);
+
+        if (!this._stepLpTriggered) {
+          const isActive = this.sequencer.toggleStep(padId, step);
+          this.updateStepAppearance(stepEl, isActive ? this.sequencer.getStepVelocity(padId, step) : 0);
+        }
+
+        this._pendingStepEl = null;
+        this._stepLpTriggered = false;
+      });
+
+      seqGrid.addEventListener('pointercancel', () => {
+        clearTimeout(this._stepLpTimer);
+        this._pendingStepEl = null;
+        this._stepLpTriggered = false;
       });
     }
 
@@ -306,6 +327,9 @@ export class UI {
     this.$('play-btn')?.addEventListener('click', () => this.handlePlayToggle());
     this.$('stop-btn')?.addEventListener('click', () => this.handleStop());
     this.$('clear-btn')?.addEventListener('click', () => this.handleClear());
+
+    // REC
+    this.$('rec-btn')?.addEventListener('click', () => this.handleRecToggle());
 
     // === TEMPO ===
     this.$('bpm')?.addEventListener('input', (e) => {
@@ -399,6 +423,72 @@ export class UI {
   }
 
   // ---------------------------
+  // LIVE REC
+  // ---------------------------
+
+  handleRecToggle() {
+    const btn = this.$('rec-btn');
+    const isOn = !this.sequencer.isRecording;
+
+    this.sequencer.setRecording(isOn);
+
+    if (btn) btn.classList.toggle('active', isOn);
+    document.body.classList.toggle('recording', isOn);
+  }
+
+  // ---------------------------
+  // VELOCITY UI
+  // ---------------------------
+
+  cycleStepVelocity(padId, step) {
+    const vel = this.sequencer.getStepVelocity(padId, step);
+
+    // cycle: OFF -> 0.5 -> 0.8 -> 1.0 -> OFF
+    let next = 0;
+    if (vel <= 0) next = 0.5;
+    else if (vel < 0.65) next = 0.8;
+    else if (vel < 0.95) next = 1.0;
+    else next = 0;
+
+    const stepEl = this.stepElements?.[padId]?.[step];
+    if (!stepEl) return;
+
+    if (next === 0) {
+      this.sequencer.clearStep?.(padId, step);
+      this.updateStepAppearance(stepEl, 0);
+    } else {
+      this.sequencer.setStepVelocity(padId, step, next);
+      this.updateStepAppearance(stepEl, next);
+    }
+  }
+
+  updateStepAppearance(stepEl, velocity01) {
+    const v = Math.max(0, Math.min(1, Number(velocity01)));
+    const on = v > 0;
+
+    stepEl.classList.toggle('active', on);
+
+    // “bright” selon vélocité
+    if (on) {
+      const opacity = 0.35 + 0.65 * v; // 0.35..1
+      stepEl.style.opacity = String(opacity);
+    } else {
+      stepEl.style.opacity = '';
+    }
+  }
+
+  syncSequencerUIFromData() {
+    for (let padId = 0; padId < 6; padId++) {
+      for (let step = 0; step < 16; step++) {
+        const el = this.stepElements?.[padId]?.[step];
+        if (!el) continue;
+        const v = this.sequencer.getStepVelocity ? this.sequencer.getStepVelocity(padId, step) : 0;
+        this.updateStepAppearance(el, v);
+      }
+    }
+  }
+
+  // ---------------------------
   // FILE LOADING
   // ---------------------------
 
@@ -455,6 +545,7 @@ export class UI {
   handleClear() {
     this.sequencer.clear();
     this.clearAllSteps();
+    this.syncSequencerUIFromData();
   }
 
   // ---------------------------
@@ -463,14 +554,8 @@ export class UI {
 
   initSliderFills() {
     [
-      'bit-depth',
-      'sample-rate',
-      'filter-cutoff',
-      'drive',
-      'vinyl-noise',
-      'compression',
-      'pad-pitch',
-      'pad-vol',
+      'bit-depth','sample-rate','filter-cutoff','drive','vinyl-noise','compression',
+      'pad-pitch','pad-vol',
     ].forEach((id) => this.updateSliderFillByInputId(id));
   }
 
@@ -590,7 +675,7 @@ export class UI {
   }
 
   // ---------------------------
-  // PAD TRIGGER + DISPLAY
+  // PAD TRIGGER + LIVE REC
   // ---------------------------
 
   triggerPad(padId) {
@@ -606,7 +691,25 @@ export class UI {
       setTimeout(() => led.classList.remove('active'), 100);
     }
 
-    this.audioEngine.playSample(padId);
+    // Live REC (quantized, overdub) si actif
+    if (this.sequencer.isRecording) {
+      const t = this.audioEngine.getCurrentTime();
+      const targetStep = this.sequencer.recordHit(padId, this.sequencer.recVelocity ?? 0.9, t);
+
+      // UI update immédiate du step enregistré
+      const stepEl = this.stepElements?.[padId]?.[targetStep];
+      if (stepEl) {
+        const v = this.sequencer.getStepVelocity(padId, targetStep);
+        this.updateStepAppearance(stepEl, v);
+
+        // petit flash
+        stepEl.classList.add('playing');
+        setTimeout(() => stepEl.classList.remove('playing'), 80);
+      }
+    }
+
+    // Audio (velocity "live" = 1.0, la dynamique seq vient du sequencer)
+    this.audioEngine.playSample(padId, 0, 1);
   }
 
   updatePadDisplay(padId) {
@@ -644,5 +747,7 @@ export class UI {
 
   clearAllSteps() {
     document.querySelectorAll('.seq-step.active').forEach((el) => el.classList.remove('active'));
+    // reset opacity too
+    document.querySelectorAll('.seq-step').forEach((el) => { el.style.opacity = ''; });
   }
 }
