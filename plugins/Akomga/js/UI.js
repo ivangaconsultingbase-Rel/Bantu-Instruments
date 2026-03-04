@@ -452,7 +452,6 @@ export class UI {
     // === TRANSPORT ===
     // Desktop click OK, but iOS needs pointerup/touchend => use bindTap everywhere critical
     this.bindTap(this.$('play-btn'), () => this.handlePlayToggle());
-    this.bindTap(this.$('stop-btn'), () => this.handleStop());
     this.bindTap(this.$('clear-btn'), () => this.handleClear());
 
     this.bindTap(this.$('rec-btn'), () => this.handleRecToggle());
