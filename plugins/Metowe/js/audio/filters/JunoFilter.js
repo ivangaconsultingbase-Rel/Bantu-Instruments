@@ -20,9 +20,9 @@ export class JunoFilter {
       f.Q.value = 0.8;
     });
 
-    // feedback (stabilisé)
+    // feedback stabilisé
     this.feedback = ctx.createGain();
-    this.feedback.gain.value = 0.0;
+    this.feedback.gain.value = 0;
 
     // routing
     this.input.connect(this.drive);
@@ -34,7 +34,7 @@ export class JunoFilter {
 
     this.stage4.connect(this.output);
 
-    // feedback depuis la sortie du ladder vers l’entrée (plus logique)
+    // feedback depuis la sortie
     this.stage4.connect(this.feedback);
     this.feedback.connect(this.input);
 
@@ -54,7 +54,6 @@ export class JunoFilter {
     const f = Math.max(80, Math.min(12000, Number(freq) || 2400));
     this._cutoff = f;
 
-    // IMPORTANT: smooth léger
     const tc = 0.015;
     [this.stage1, this.stage2, this.stage3, this.stage4].forEach(s => {
       try {
@@ -64,14 +63,13 @@ export class JunoFilter {
     });
   }
 
-  // resonance 0..1
-  setResonance(res, time = this.ctx.currentTime) {
+  setResonance(res01, time = this.ctx.currentTime) {
     const t = Math.max(this.ctx.currentTime, time);
-    const r = Math.max(0, Math.min(1, Number(res) || 0));
+    const r = Math.max(0, Math.min(1, Number(res01) || 0));
     this._res = r;
 
-    // cap pour éviter l’auto-osc / CPU spikes
-    const fb = Math.min(0.65, r * 0.55);
+    // CAP important : au-delà, ça part vite en instabilité / CPU
+    const fb = Math.min(0.55, r * 0.45);
 
     try {
       this.feedback.gain.cancelScheduledValues(t);
@@ -98,7 +96,7 @@ export class JunoFilter {
     const curve = new Float32Array(n);
     for (let i = 0; i < n; i++) {
       const x = (i * 2) / (n - 1) - 1;
-      curve[i] = Math.tanh(x * 1.6);
+      curve[i] = Math.tanh(x * 1.4);
     }
     return curve;
   }
