@@ -1,358 +1,81 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no" />
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="mobile-web-app-capable" content="yes">
-  <meta name="theme-color" content="#0a0a0a" />
-  <title>AKOMGA SYNTH — Poly Chords Sequencer</title>
 
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/style.css" />
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+
+<title>Juno Groovebox</title>
+
+<link rel="stylesheet" href="css/style.css">
+
 </head>
 
 <body>
-  <div class="sampler-container">
 
-    <!-- Header -->
-    <header class="sampler-header">
-      <div class="lcd-screen">
-        <span class="lcd-title">AKOMGA SYNTH</span>
-        <span class="lcd-info">
-          BPM <span id="bpm-display">96</span> ·
-          SWING <span id="swing-display">0</span>% ·
-          SCALE <span id="scale-display">MINOR</span> ·
-          ROOT <span id="scale-root-val">A</span>
-        </span>
-      </div>
+<div class="app">
 
-      <div class="header-indicators">
-        <div class="led-indicator" id="led"></div>
-      </div>
-    </header>
+<header>
 
-    <!-- Synth Section -->
-    <section class="synth-section">
-      <div class="section-header">
-        <h2>Synth</h2>
-        <span class="hint" id="synth-hint">Tap clavier pour jouer · Space = Play/Pause</span>
-      </div>
+<h1>JUNO GROOVEBOX</h1>
 
-      <div class="section-content">
+<div class="transport">
 
-        <div class="seg-row">
-          <div class="seg-group">
-            <span class="seg-label">WAVE</span>
-            <div class="seg-buttons">
-              <button class="seg-btn active" data-wave="SAW" type="button">SAW</button>
-              <button class="seg-btn" data-wave="PULSE" type="button">PULSE</button>
-              <button class="seg-btn" data-wave="TRI" type="button">TRI</button>
-            </div>
-          </div>
+<button id="play">PLAY</button>
+<button id="stop">STOP</button>
 
-          <div class="seg-group">
-            <span class="seg-label">ROOT</span>
-            <div class="seg-buttons">
-              <button class="seg-btn" data-root="C" type="button">C</button>
-              <button class="seg-btn" data-root="D" type="button">D</button>
-              <button class="seg-btn" data-root="E" type="button">E</button>
-              <button class="seg-btn active" data-root="A" type="button">A</button>
-            </div>
-          </div>
+</div>
 
-          <div class="seg-group">
-            <span class="seg-label">CHORD</span>
-            <div class="seg-buttons">
-              <button class="seg-btn active" data-chordmode="TRIAD" type="button">TRIAD</button>
-              <button class="seg-btn" data-chordmode="SEVENTH" type="button">7TH</button>
-            </div>
-          </div>
+</header>
 
-          <div class="seg-group">
-            <span class="seg-label">INV</span>
-            <div class="seg-buttons">
-              <button class="seg-btn active" data-inv="0" type="button">0</button>
-              <button class="seg-btn" data-inv="1" type="button">1</button>
-              <button class="seg-btn" data-inv="2" type="button">2</button>
-            </div>
-          </div>
 
-          <div class="seg-group">
-            <span class="seg-label">HOLD</span>
-            <button id="hold-btn" class="toggle-btn" type="button">HOLD</button>
-          </div>
-        </div>
+<section class="sequencer">
 
-        <div class="effects-grid synth-grid">
+<div id="seq-grid"></div>
 
-          <div class="effect-control">
-            <div class="effect-label">
-              <label>Cutoff</label>
-              <span class="effect-value" id="cutoff-val">2.2k</span>
-            </div>
-            <div class="slider-container">
-              <div class="slider-fill" id="cutoff-fill"></div>
-              <input type="range" id="cutoff" min="80" max="12000" value="2200" step="1">
-            </div>
-          </div>
+</section>
 
-          <div class="effect-control">
-            <div class="effect-label">
-              <label>Res</label>
-              <span class="effect-value" id="res-val">0.12</span>
-            </div>
-            <div class="slider-container">
-              <div class="slider-fill" id="res-fill"></div>
-              <input type="range" id="res" min="0" max="0.95" value="0.12" step="0.01">
-            </div>
-          </div>
 
-          <div class="effect-control">
-            <div class="effect-label">
-              <label>Env Amt</label>
-              <span class="effect-value" id="envAmt-val">1.2k</span>
-            </div>
-            <div class="slider-container">
-              <div class="slider-fill" id="envAmt-fill"></div>
-              <input type="range" id="envAmt" min="0" max="6000" value="1200" step="1">
-            </div>
-          </div>
+<section class="synth">
 
-          <div class="effect-control">
-            <div class="effect-label">
-              <label>Attack</label>
-              <span class="effect-value" id="attack-val">8ms</span>
-            </div>
-            <div class="slider-container">
-              <div class="slider-fill" id="attack-fill"></div>
-              <input type="range" id="attack" min="0.001" max="1.2" value="0.008" step="0.001">
-            </div>
-          </div>
+<label>Cutoff
+<input id="cutoff" type="range" min="200" max="12000" value="8000">
+</label>
 
-          <div class="effect-control">
-            <div class="effect-label">
-              <label>Decay</label>
-              <span class="effect-value" id="decay-val">140ms</span>
-            </div>
-            <div class="slider-container">
-              <div class="slider-fill" id="decay-fill"></div>
-              <input type="range" id="decay" min="0.001" max="1.5" value="0.14" step="0.001">
-            </div>
-          </div>
+<label>Res
+<input id="res" type="range" min="0" max="1" step="0.01" value="0.3">
+</label>
 
-          <div class="effect-control">
-            <div class="effect-label">
-              <label>Sustain</label>
-              <span class="effect-value" id="sustain-val">0.70</span>
-            </div>
-            <div class="slider-container">
-              <div class="slider-fill" id="sustain-fill"></div>
-              <input type="range" id="sustain" min="0" max="1" value="0.7" step="0.01">
-            </div>
-          </div>
+<label>Wave
+<select id="wave">
+<option value="sawtooth">SAW</option>
+<option value="square">SQUARE</option>
+<option value="triangle">TRI</option>
+</select>
+</label>
 
-          <div class="effect-control">
-            <div class="effect-label">
-              <label>Release</label>
-              <span class="effect-value" id="release-val">120ms</span>
-            </div>
-            <div class="slider-container">
-              <div class="slider-fill" id="release-fill"></div>
-              <input type="range" id="release" min="0.001" max="2.0" value="0.12" step="0.001">
-            </div>
-          </div>
+</section>
 
-          <div class="effect-control">
-            <div class="effect-label">
-              <label>Glide</label>
-              <span class="effect-value" id="glide-val">40ms</span>
-            </div>
-            <div class="slider-container">
-              <div class="slider-fill" id="glide-fill"></div>
-              <input type="range" id="glide" min="0" max="160" value="40" step="1">
-            </div>
-          </div>
 
-          <div class="effect-control">
-            <div class="effect-label">
-              <label>Master</label>
-              <span class="effect-value" id="master-val">90%</span>
-            </div>
-            <div class="slider-container">
-              <div class="slider-fill" id="master-fill"></div>
-              <input type="range" id="master" min="0" max="100" value="90" step="1">
-            </div>
-          </div>
+<section class="fx">
 
-        </div>
+<label>Chorus
+<input id="chorus" type="range" min="0" max="1" step="0.01" value="0.2">
+</label>
 
-        <!-- Keyboard -->
-        <div class="keyboard-wrap">
-          <div class="keyboard-header">
-            <span class="kbd-title">Keyboard</span>
-            <span class="kbd-hint">Tap = note · Hold = sustain</span>
-          </div>
-          <div class="keyboard" id="keyboard">
-            <!-- generated by UI -->
-          </div>
-        </div>
+<label>Drive
+<input id="drive" type="range" min="0" max="1" step="0.01" value="0.1">
+</label>
 
-      </div>
-    </section>
+<label>Reverb
+<input id="reverb" type="range" min="0" max="1" step="0.01" value="0.2">
+</label>
 
-    <!-- Sequencer Section -->
-    <section class="sequencer-section">
-      <div class="section-header">
-        <h2>Sequencer</h2>
-        <span class="hint" id="seq-hint">Tap = degré · Double tap = Accent · Appui long = Octave</span>
-      </div>
+</section>
 
-      <div class="section-content">
+</div>
 
-        <div class="sequencer-controls">
-          <div class="transport">
-            <button id="play-btn" class="transport-btn" type="button">
-              <svg viewBox="0 0 24 24"><polygon points="5,3 19,12 5,21"/></svg>
-              PLAY
-            </button>
+<script type="module" src="js/main.js"></script>
 
-            <button id="clear-btn" class="transport-btn" type="button">
-              <svg viewBox="0 0 24 24">
-                <line x1="18" y1="6" x2="6" y2="18" stroke="currentColor" stroke-width="2"/>
-                <line x1="6" y1="6" x2="18" y2="18" stroke="currentColor" stroke-width="2"/>
-              </svg>
-              CLEAR
-            </button>
-
-            <button id="met-btn" class="transport-btn" type="button">MET</button>
-          </div>
-
-          <div class="tempo-control">
-            <label>BPM</label>
-            <input type="range" id="bpm" min="60" max="160" value="96">
-            <span class="tempo-value" id="bpm-val">96</span>
-          </div>
-
-          <div class="tempo-control">
-            <label>SWING</label>
-            <input type="range" id="swing" min="0" max="75" value="0">
-            <span class="tempo-value" id="swing-val">0%</span>
-          </div>
-
-          <div class="tempo-control wide">
-            <label>HUMAN</label>
-            <div class="slider-container mini">
-              <div class="slider-fill" id="humanize-fill"></div>
-              <input type="range" id="humanize" min="0" max="30" value="0" step="1">
-            </div>
-            <span class="tempo-value" id="humanize-val">0%</span>
-          </div>
-
-          <div class="tempo-control wide">
-            <label>TIMING</label>
-            <div class="slider-container mini">
-              <div class="slider-fill" id="humanize-time-fill"></div>
-              <input type="range" id="humanize-time" min="0" max="20" value="0" step="1">
-            </div>
-            <span class="tempo-value" id="humanize-time-val">0ms</span>
-          </div>
-        </div>
-
-        <!-- Step numbers -->
-        <div class="seq-header" id="seq-header"></div>
-
-        <div class="sequencer-grid" id="sequencer-grid"></div>
-
-      </div>
-    </section>
-
-    <!-- FX Section -->
-    <section class="effects-section">
-      <div class="section-header">
-        <h2>FX</h2>
-        <span class="hint">Chorus · Drive · Crush · Reverb · Comp · Mix</span>
-      </div>
-
-      <div class="section-content">
-        <div class="effects-grid">
-
-          <div class="effect-control">
-            <div class="effect-label">
-              <label>Chorus</label>
-              <span class="effect-value" id="chorusMix-val">45%</span>
-            </div>
-            <div class="slider-container">
-              <div class="slider-fill" id="chorusMix-fill"></div>
-              <input type="range" id="chorusMix" min="0" max="100" value="45" step="1">
-            </div>
-          </div>
-
-          <div class="effect-control">
-            <div class="effect-label">
-              <label>Drive</label>
-              <span class="effect-value" id="drive-val">12</span>
-            </div>
-            <div class="slider-container">
-              <div class="slider-fill" id="drive-fill"></div>
-              <input type="range" id="drive" min="0" max="100" value="12" step="1">
-            </div>
-          </div>
-
-          <div class="effect-control">
-            <div class="effect-label">
-              <label>Crush</label>
-              <span class="effect-value" id="crush-val">0</span>
-            </div>
-            <div class="slider-container">
-              <div class="slider-fill" id="crush-fill"></div>
-              <input type="range" id="crush" min="0" max="100" value="0" step="1">
-            </div>
-          </div>
-
-          <div class="effect-control">
-            <div class="effect-label">
-              <label>Reverb</label>
-              <span class="effect-value" id="reverb-val">18%</span>
-            </div>
-            <div class="slider-container">
-              <div class="slider-fill" id="reverb-fill"></div>
-              <input type="range" id="reverb" min="0" max="100" value="18" step="1">
-            </div>
-          </div>
-
-          <div class="effect-control">
-            <div class="effect-label">
-              <label>Comp</label>
-              <span class="effect-value" id="comp-val">25</span>
-            </div>
-            <div class="slider-container">
-              <div class="slider-fill" id="comp-fill"></div>
-              <input type="range" id="comp" min="0" max="100" value="25" step="1">
-            </div>
-          </div>
-
-          <div class="effect-control">
-            <div class="effect-label">
-              <label>Mix</label>
-              <span class="effect-value" id="mix-val">35%</span>
-            </div>
-            <div class="slider-container">
-              <div class="slider-fill" id="mix-fill"></div>
-              <input type="range" id="mix" min="0" max="100" value="35" step="1">
-            </div>
-          </div>
-
-        </div>
-      </div>
-    </section>
-
-    <footer class="sampler-footer">
-      <p>Space: Play/Pause · Mobile: Double-tap = Accent · Long-press = Octave</p>
-    </footer>
-  </div>
-
-  <script type="module" src="js/main.js"></script>
 </body>
 </html>
