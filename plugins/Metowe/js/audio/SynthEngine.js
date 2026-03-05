@@ -12,7 +12,7 @@
  */
 
 import { Voice } from './Voice.js'
-import { JunoChorus } from './fx/JunoChorus.js'
+import { JunoChorus } from '../fx/JunoChorus.js'
 
 export class SynthEngine {
 
