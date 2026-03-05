@@ -3,37 +3,33 @@ import { JunoFilter } from "./filters/JunoFilter.js";
 import { EcoFilter } from "./filters/EcoFilter.js";
 
 /**
- * Voice.js
- * - OSC: SAW + PULSE (PWM) + MIX
- * - Filter: EcoFilter (mobile) or JunoFilter (HQ)
- * - ADSR amp + filter env scheduled on AudioContext timeline
- * - Glide/portamento
- * - Drive waveshaper
- *
- * Exposes this.saw and this.pulse for SynthEngine detune.
+ * Voice.js (stabilized)
+ * - Filter env is "momentary" (A+D) then returns to cutoff knob
+ * - Cutoff always stays responsive (cancelScheduledValues everywhere)
+ * - Softer amp defaults (less "drum punch")
  */
 export class Voice {
   constructor(ctx, opts = {}) {
     this.ctx = ctx;
 
-    // -------- params --------
+    // params
     this.wave = "saw";
     this.pwmDuty = 0.5;
 
-    this.driveAmount = 1.6;
+    this.driveAmount = 1.2; // softer
 
     this.cutoff = 2400;
-    this.resonance = 0.15;
-    this.filterEnvAmt = 0.25;
+    this.resonance = 0.12;     // safer default
+    this.filterEnvAmt = 0.25;  // subtle
 
     this.glideTime = 0.04;
 
-    this.adsr = { a: 0.02, d: 0.35, s: 0.8, r: 0.6 };
+    this.adsr = { a: 0.02, d: 0.35, s: 0.85, r: 0.65 };
 
-    // eco / HQ
+    // filter choice
     this.useEcoFilter = !!opts.useEcoFilter;
 
-    // -------- graph --------
+    // graph
     this.output = ctx.createGain();
 
     this.amp = ctx.createGain();
@@ -50,7 +46,6 @@ export class Voice {
     this.sawGain.gain.value = 1;
     this.pulseGain.gain.value = 0;
 
-    // routing
     this.sawGain.connect(this.filter.input);
     this.pulseGain.connect(this.filter.input);
 
@@ -68,9 +63,7 @@ export class Voice {
   connect(node) { this.output.connect(node); }
   disconnect() { try { this.output.disconnect(); } catch {} }
 
-  // -----------------------
-  // PARAMS
-  // -----------------------
+  // ---------------- PARAMS ----------------
   setWave(mode) {
     const m = String(mode || "").toLowerCase();
     this.wave = (m === "pulse" || m === "mix" || m === "saw") ? m : "saw";
@@ -100,6 +93,7 @@ export class Voice {
     if (res != null) this.resonance = Math.max(0, Math.min(1, Number(res) || 0));
     if (env != null) this.filterEnvAmt = Math.max(0, Math.min(1, Number(env) || 0));
 
+    // ALWAYS apply now and cancel future ramps
     const t = this.ctx.currentTime;
     this._applyFilterAt(t);
   }
@@ -116,9 +110,7 @@ export class Voice {
     this.glideTime = Math.max(0, Math.min(0.3, Number(sec) || 0));
   }
 
-  // -----------------------
-  // NOTE ON/OFF (timeline)
-  // -----------------------
+  // ---------------- NOTE ON/OFF ----------------
   noteOn(note, vel = 1, when = this.ctx.currentTime) {
     const t = Math.max(this.ctx.currentTime, when);
     const velocity = Math.max(0, Math.min(1, Number(vel) || 0));
@@ -128,14 +120,12 @@ export class Voice {
 
     const freq = this._midiToFreq(note);
 
-    // OSC
     this.saw = this.ctx.createOscillator();
     this.saw.type = "sawtooth";
 
     this.pulse = this.ctx.createOscillator();
     this.pulse.setPeriodicWave(this._makePulseWave(this.pwmDuty));
 
-    // glide
     if (this.glideTime > 0) {
       this.saw.frequency.setTargetAtTime(freq, t, this.glideTime);
       this.pulse.frequency.setTargetAtTime(freq, t, this.glideTime);
@@ -150,7 +140,7 @@ export class Voice {
     this._applyWaveMix();
     this._applyFilterAt(t);
     this._applyAmpEnvAt(t, velocity);
-    this._applyFilterEnvAt(t);
+    this._applyFilterEnvAt(t); // now “momentary env”
 
     this.saw.start(t);
     this.pulse.start(t);
@@ -183,9 +173,7 @@ export class Voice {
     }, Math.max(0, (stopT - this.ctx.currentTime) * 1000) + 10);
   }
 
-  // -----------------------
-  // INTERNALS
-  // -----------------------
+  // ---------------- INTERNALS ----------------
   _applyWaveMix() {
     const t = this.ctx.currentTime;
     let saw = 1, pulse = 0;
@@ -206,8 +194,8 @@ export class Voice {
   _applyAmpEnvAt(t, velocity) {
     const { a, d, s } = this.adsr;
 
-    // moins “drum”: peak plus doux
-    const peak = 0.10 + 0.90 * velocity;
+    // less punchy than before
+    const peak = 0.08 + 0.72 * velocity;
     const sustain = Math.max(0.0001, peak * s);
 
     try {
@@ -222,30 +210,34 @@ export class Voice {
     } catch {}
   }
 
+  /**
+   * FILTER ENV (momentary)
+   * - Attack to peak
+   * - Decay back to BASE cutoff (knob)
+   * => The cutoff slider remains obviously effective after the env.
+   */
   _applyFilterEnvAt(t) {
-    const { a, d, s } = this.adsr;
+    const { a, d } = this.adsr;
 
     const base = this.cutoff;
-    const maxExtra = (this.useEcoFilter ? 6000 : 9000) * this.filterEnvAmt;
-
+    const maxExtra = (this.useEcoFilter ? 4500 : 6500) * this.filterEnvAmt;
     const peak = Math.min(12000, base + maxExtra);
-    const sustain = Math.min(12000, base + maxExtra * s);
 
-    // base
+    // base now
     this.filter.setCutoff?.(base, t);
 
-    // attack (ramp)
+    // attack to peak
     this.filter.rampCutoff?.(peak, Math.max(0.001, a), t);
 
-    // decay (ramp)
-    this.filter.rampCutoff?.(sustain, Math.max(0.001, d), t + Math.max(0.001, a));
+    // decay back to base (important!)
+    this.filter.rampCutoff?.(base, Math.max(0.001, d), t + Math.max(0.001, a));
   }
 
   _updateDriveCurve() {
     const amt = Math.max(0, this.driveAmount);
     const n = this.useEcoFilter ? 512 : 1024;
     const curve = new Float32Array(n);
-    const k = 1 + amt * 3.2;
+    const k = 1 + amt * 2.4;
 
     for (let i = 0; i < n; i++) {
       const x = (i * 2) / (n - 1) - 1;
