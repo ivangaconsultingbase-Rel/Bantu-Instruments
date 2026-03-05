@@ -1,32 +1,24 @@
-// /js/main.js
-import { AudioEngine } from './audio/AudioEngine.js';
-import { Sequencer } from './sequencer/Sequencer.js';
-import { UI } from './ui/UI.js';
+import {SynthEngine} from "./audio/SynthEngine.js"
+import {Sequencer} from "./sequencer/Sequencer.js"
+import {UI} from "./ui/UI.js"
 
-const audio = new AudioEngine();
+const synth=new SynthEngine()
 
-let ui = null;
-const sequencer = new Sequencer(audio, (step) => {
-  ui?.onStepChange(step);
-});
+let ui
 
-ui = new UI(audio, sequencer);
+const sequencer=new Sequencer(
+synth,
+(step)=>ui.onStepChange(step)
+)
 
-async function boot() {
-  await audio.init();
-  ui.init();
+ui=new UI(synth,sequencer)
 
-  // iOS/mobile: unlock AudioContext on first user gesture
-  const unlock = async () => {
-    try { await audio.resume(); } catch {}
-    window.removeEventListener('pointerdown', unlock, true);
-    window.removeEventListener('touchstart', unlock, true);
-    window.removeEventListener('click', unlock, true);
-  };
+async function boot(){
 
-  window.addEventListener('pointerdown', unlock, true);
-  window.addEventListener('touchstart', unlock, true);
-  window.addEventListener('click', unlock, true);
+await synth.init()
+
+ui.init()
+
 }
 
-boot();
+boot()
