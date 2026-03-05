@@ -130,21 +130,28 @@ export class Voice {
 
   setFilter(cut,res,env){
 
-    if(cut!=null){
-      this.cutoff = Math.max(80,Math.min(12000,cut))
-      this.filter.setCutoff(this.cutoff)
-    }
+if(cut!=null){
+this.cutoff = Math.max(80,Math.min(12000,cut))
+this.filter.setCutoff(this.cutoff)
+}
 
-    if(res!=null){
-      this.resonance = Math.max(0,Math.min(1,res))
-      this.filter.setResonance(this.resonance)
-    }
+if(res!=null){
+this.resonance = Math.max(0,Math.min(1,res))
+this.filter.setResonance(this.resonance)
+}
 
-    if(env!=null){
-      this.filterEnvAmt = Math.max(0,Math.min(1,env))
-    }
+if(env!=null){
+this.filterEnvAmt = Math.max(0,Math.min(1,env))
+}
 
-  }
+// IMPORTANT
+// update immédiat si note tenue
+
+if(this._isOn){
+this.filter.setCutoff(this.cutoff)
+}
+
+}
 
   setADSR(aMs,dMs,sPct,rMs){
 
