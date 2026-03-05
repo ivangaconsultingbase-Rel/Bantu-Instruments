@@ -1,35 +1,37 @@
+// js/audio/Voice.js
+import { JunoFilter } from "./filters/JunoFilter.js";
+import { EcoFilter } from "./filters/EcoFilter.js";
+
 /**
- * Voice.js — LITE (stable / mobile friendly)
+ * Voice.js
  * - OSC: SAW + PULSE (PWM) + MIX
- * - VCF: single Biquad LP (log mapping)
- * - AMP ADSR (audio timeline)
- * - Filter env (audio timeline)
+ * - Filter: EcoFilter (mobile) or JunoFilter (HQ)
+ * - ADSR amp + filter env scheduled on AudioContext timeline
  * - Glide/portamento
  * - Drive waveshaper
  *
- * Exposes:
- *   this.saw, this.pulse (OscillatorNodes)
+ * Exposes this.saw and this.pulse for SynthEngine detune.
  */
-
 export class Voice {
   constructor(ctx, opts = {}) {
     this.ctx = ctx;
 
     // -------- params --------
-    this.wave = "saw";         // saw | pulse | mix
-    this.pwmDuty = 0.5;        // 0.05..0.95
+    this.wave = "saw";
+    this.pwmDuty = 0.5;
+
     this.driveAmount = 1.6;
 
-    this.cutoff = 2400;        // Hz
-    this.resonance = 0.15;     // 0..1
-    this.filterEnvAmt = 0.25;  // 0..1
+    this.cutoff = 2400;
+    this.resonance = 0.15;
+    this.filterEnvAmt = 0.25;
 
     this.glideTime = 0.04;
 
-    this.adsr = { a: 0.02, d: 0.35, s: 0.8, r: 0.6 }; // seconds
+    this.adsr = { a: 0.02, d: 0.35, s: 0.8, r: 0.6 };
 
-    // eco
-    this.eco = !!opts.useEcoFilter;
+    // eco / HQ
+    this.useEcoFilter = !!opts.useEcoFilter;
 
     // -------- graph --------
     this.output = ctx.createGain();
@@ -37,22 +39,21 @@ export class Voice {
     this.amp = ctx.createGain();
     this.amp.gain.value = 0.0001;
 
-    this.filter = ctx.createBiquadFilter();
-    this.filter.type = "lowpass";
+    this.filter = this.useEcoFilter ? new EcoFilter(ctx) : new JunoFilter(ctx);
 
     this.drive = ctx.createWaveShaper();
-    this.drive.oversample = this.eco ? "none" : "2x";
+    this.drive.oversample = this.useEcoFilter ? "none" : "2x";
     this._updateDriveCurve();
 
-    // OSC mixer
     this.sawGain = ctx.createGain();
     this.pulseGain = ctx.createGain();
     this.sawGain.gain.value = 1;
     this.pulseGain.gain.value = 0;
 
-    // routing: (osc->mix) -> filter -> drive -> amp -> output
-    this.sawGain.connect(this.filter);
-    this.pulseGain.connect(this.filter);
+    // routing
+    this.sawGain.connect(this.filter.input);
+    this.pulseGain.connect(this.filter.input);
+
     this.filter.connect(this.drive);
     this.drive.connect(this.amp);
     this.amp.connect(this.output);
@@ -79,9 +80,10 @@ export class Voice {
   setPWM(pct) {
     let x = Number(pct);
     if (!Number.isFinite(x)) x = 50;
-    if (x > 1.001) x /= 100;        // accept 0..100 or 0..1
+    if (x > 1.001) x /= 100;
     x = Math.max(0, Math.min(1, x));
-    this.pwmDuty = 0.05 + x * 0.90;
+
+    this.pwmDuty = 0.05 + x * 0.9;
 
     if (this.pulse) {
       try { this.pulse.setPeriodicWave(this._makePulseWave(this.pwmDuty)); } catch {}
@@ -98,7 +100,6 @@ export class Voice {
     if (res != null) this.resonance = Math.max(0, Math.min(1, Number(res) || 0));
     if (env != null) this.filterEnvAmt = Math.max(0, Math.min(1, Number(env) || 0));
 
-    // apply immediately (use timeline smoothing)
     const t = this.ctx.currentTime;
     this._applyFilterAt(t);
   }
@@ -116,18 +117,18 @@ export class Voice {
   }
 
   // -----------------------
-  // NOTE ON/OFF (audio time)
+  // NOTE ON/OFF (timeline)
   // -----------------------
-  noteOn(midiNote, velocity = 1, when = this.ctx.currentTime) {
+  noteOn(note, vel = 1, when = this.ctx.currentTime) {
     const t = Math.max(this.ctx.currentTime, when);
-    const vel = Math.max(0, Math.min(1, Number(velocity) || 0));
+    const velocity = Math.max(0, Math.min(1, Number(vel) || 0));
 
-    this.note = midiNote;
+    this.note = note;
     this._isOn = true;
 
-    const freq = this._midiToFreq(midiNote);
+    const freq = this._midiToFreq(note);
 
-    // create oscillators
+    // OSC
     this.saw = this.ctx.createOscillator();
     this.saw.type = "sawtooth";
 
@@ -147,12 +148,8 @@ export class Voice {
     this.pulse.connect(this.pulseGain);
 
     this._applyWaveMix();
-
-    // base filter
     this._applyFilterAt(t);
-
-    // envelopes
-    this._applyAmpEnvAt(t, vel);
+    this._applyAmpEnvAt(t, velocity);
     this._applyFilterEnvAt(t);
 
     this.saw.start(t);
@@ -167,7 +164,6 @@ export class Voice {
 
     const r = this.adsr.r;
 
-    // amp release
     try {
       this.amp.gain.cancelScheduledValues(t);
       const current = Math.max(0.0001, this.amp.gain.value);
@@ -175,12 +171,10 @@ export class Voice {
       this.amp.gain.exponentialRampToValueAtTime(0.0001, t + Math.max(0.01, r));
     } catch {}
 
-    // stop OSC after release
     const stopT = t + Math.max(0.05, r) + 0.02;
     try { this.saw?.stop(stopT); } catch {}
     try { this.pulse?.stop(stopT); } catch {}
 
-    // cleanup
     setTimeout(() => {
       try { this.saw?.disconnect(); } catch {}
       try { this.pulse?.disconnect(); } catch {}
@@ -194,39 +188,26 @@ export class Voice {
   // -----------------------
   _applyWaveMix() {
     const t = this.ctx.currentTime;
-    const tc = 0.01;
-
     let saw = 1, pulse = 0;
     if (this.wave === "pulse") { saw = 0; pulse = 1; }
     if (this.wave === "mix") { saw = 0.7; pulse = 0.7; }
 
     try {
-      this.sawGain.gain.setTargetAtTime(saw, t, tc);
-      this.pulseGain.gain.setTargetAtTime(pulse, t, tc);
-    } catch {
-      this.sawGain.gain.value = saw;
-      this.pulseGain.gain.value = pulse;
-    }
+      this.sawGain.gain.setTargetAtTime(saw, t, 0.01);
+      this.pulseGain.gain.setTargetAtTime(pulse, t, 0.01);
+    } catch {}
   }
 
   _applyFilterAt(t) {
-    // perceptual mapping: slider feels “active” both low & high
-    const f = Math.max(80, Math.min(12000, this.cutoff));
-    const q = 0.7 + this.resonance * 12.0; // stable range
-
-    try {
-      this.filter.frequency.cancelScheduledValues(t);
-      this.filter.Q.cancelScheduledValues(t);
-
-      this.filter.frequency.setTargetAtTime(f, t, 0.015);
-      this.filter.Q.setTargetAtTime(q, t, 0.02);
-    } catch {}
+    this.filter.setCutoff?.(this.cutoff, t);
+    this.filter.setResonance?.(this.resonance, t);
   }
 
   _applyAmpEnvAt(t, velocity) {
     const { a, d, s } = this.adsr;
 
-    const peak = 0.10 + 0.90 * velocity;   // soften a bit (less “drum”)
+    // moins “drum”: peak plus doux
+    const peak = 0.10 + 0.90 * velocity;
     const sustain = Math.max(0.0001, peak * s);
 
     try {
@@ -244,33 +225,27 @@ export class Voice {
   _applyFilterEnvAt(t) {
     const { a, d, s } = this.adsr;
 
-    const base = Math.max(80, Math.min(12000, this.cutoff));
-    const maxExtra = (this.eco ? 6000 : 9000) * this.filterEnvAmt;
+    const base = this.cutoff;
+    const maxExtra = (this.useEcoFilter ? 6000 : 9000) * this.filterEnvAmt;
 
     const peak = Math.min(12000, base + maxExtra);
     const sustain = Math.min(12000, base + maxExtra * s);
 
-    try {
-      // base at t
-      this.filter.frequency.cancelScheduledValues(t);
-      this.filter.frequency.setValueAtTime(base, t);
+    // base
+    this.filter.setCutoff?.(base, t);
 
-      // attack
-      const ta = t + Math.max(0.001, a);
-      this.filter.frequency.linearRampToValueAtTime(peak, ta);
+    // attack (ramp)
+    this.filter.rampCutoff?.(peak, Math.max(0.001, a), t);
 
-      // decay
-      const td = ta + Math.max(0.001, d);
-      this.filter.frequency.linearRampToValueAtTime(sustain, td);
-    } catch {}
+    // decay (ramp)
+    this.filter.rampCutoff?.(sustain, Math.max(0.001, d), t + Math.max(0.001, a));
   }
 
   _updateDriveCurve() {
     const amt = Math.max(0, this.driveAmount);
-    const n = this.eco ? 512 : 1024;
+    const n = this.useEcoFilter ? 512 : 1024;
     const curve = new Float32Array(n);
-
-    const k = 1 + amt * 3.2; // softer than before
+    const k = 1 + amt * 3.2;
 
     for (let i = 0; i < n; i++) {
       const x = (i * 2) / (n - 1) - 1;
@@ -280,7 +255,7 @@ export class Voice {
   }
 
   _makePulseWave(duty) {
-    const N = this.eco ? 32 : 64; // eco reduces harmonics
+    const N = this.useEcoFilter ? 32 : 64;
     const real = new Float32Array(N + 1);
     const imag = new Float32Array(N + 1);
 
