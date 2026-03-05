@@ -1,9 +1,4 @@
 // js/audio/AudioEngine.js
-// WebAudio + AudioWorklet synth engine (poly)
-// - noteOn(time, midi, vel, gateSec, accent)
-// - setParam(name, value)
-// GPL project: keep THIRD_PARTY_NOTICES for any imported code later.
-
 export class AudioEngine {
   constructor() {
     this.ctx = null;
@@ -18,63 +13,56 @@ export class AudioEngine {
       latencyHint: "interactive",
     });
 
-    // Load worklet
+    // IMPORTANT: Chorus module is imported by SynthProcessor, so only add SynthProcessor
     await this.ctx.audioWorklet.addModule("js/audio/worklets/SynthProcessor.js");
 
-    // Create node
     this.node = new AudioWorkletNode(this.ctx, "akomga-synth", {
       numberOfInputs: 0,
       numberOfOutputs: 1,
-      outputChannelCount: [2], // stereo
+      outputChannelCount: [2],
     });
 
     this.node.connect(this.ctx.destination);
 
-    // Default params (safe)
+    // Defaults (match UI)
     this.setParam("master", 0.9);
     this.setParam("cutoff", 2200);
-    this.setParam("res", 0.12);      // soft resonance (MVP)
-    this.setParam("envAmt", 1200);   // filter env amount (Hz)
+    this.setParam("res", 0.12);
+    this.setParam("envAmt", 1200);
+
     this.setParam("attack", 0.008);
     this.setParam("decay", 0.14);
     this.setParam("sustain", 0.55);
     this.setParam("release", 0.12);
 
-    this.setParam("waveMix", 0.65);  // 0..1 (saw->pulse)
+    this.setParam("waveMix", 0.65);
     this.setParam("pulseWidth", 0.55);
     this.setParam("sub", 0.25);
     this.setParam("noise", 0.03);
 
-    // LFO
     this.setParam("lfoRate", 0.6);
     this.setParam("lfoToPitch", 0.0);
     this.setParam("lfoToCutoff", 0.12);
     this.setParam("lfoToPW", 0.10);
+
+    // Chorus defaults
+    this.setParam("chorusOn", 1);
+    this.setParam("chorusRate", 0.8);
+    this.setParam("chorusDepth", 9.0);
+    this.setParam("chorusMix", 0.45);
 
     this.isInitialized = true;
   }
 
   resume() {
     try {
-      if (this.ctx && this.ctx.state !== "running") {
-        return this.ctx.resume();
-      }
+      if (this.ctx && this.ctx.state !== "running") return this.ctx.resume();
     } catch {}
     return Promise.resolve();
   }
 
-  getCurrentTime() {
-    return this.ctx?.currentTime ?? 0;
-  }
+  getCurrentTime() { return this.ctx?.currentTime ?? 0; }
 
-  /**
-   * Schedule a note event
-   * @param {number} time audio time (sec)
-   * @param {number} midi 0..127
-   * @param {number} vel 0..1
-   * @param {number} gateSec duration in seconds
-   * @param {boolean} accent accent boost
-   */
   noteOn(time, midi, vel = 0.9, gateSec = 0.12, accent = false) {
     if (!this.node) return;
     this.node.port.postMessage({
@@ -87,9 +75,6 @@ export class AudioEngine {
     });
   }
 
-  /**
-   * Set synth param (processor side)
-   */
   setParam(name, value) {
     if (!this.node) return;
     this.node.port.postMessage({ type: "param", name, value: Number(value) });
