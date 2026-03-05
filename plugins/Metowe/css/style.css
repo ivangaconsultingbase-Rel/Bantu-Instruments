@@ -338,3 +338,57 @@ section {
   .seq-header { padding-left: 27px; }
   .seq-step { min-width: 24px; }
 }
+
+
+/* ---------------------------------------
+   SYNTH / FX blocks (UI sampler-like)
+--------------------------------------- */
+
+.fx-grid{
+  display:grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-md);
+}
+
+.fx-block{
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: var(--space-md);
+  display:flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.fx-title{
+  font-family: 'JetBrains Mono', monospace;
+  font-size: .75rem;
+  letter-spacing: .12em;
+  color: var(--text-secondary);
+  font-weight: 700;
+}
+
+.fx-row{
+  display:grid;
+  grid-template-columns: 56px 1fr 52px;
+  gap: var(--space-sm);
+  align-items:center;
+}
+
+.fx-row label{
+  font-size: .65rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  letter-spacing: .08em;
+}
+
+.fx-row input[type="range"]{
+  width: 100%;
+}
+
+/* Mobile: 1 colonne */
+@media (max-width: 600px){
+  .fx-grid{
+    grid-template-columns: 1fr;
+  }
+}
