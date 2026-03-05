@@ -312,26 +312,36 @@ export class Voice {
 
   }
 
-  _applyFilterEnvAt(t){
+ _applyFilterEnvAt(t){
 
-    const {a,d,s}=this.adsr
+const {a,d,s}=this.adsr
 
-    const base=this.cutoff
+const base = this.cutoff
 
-    const maxExtra=9000*this.filterEnvAmt
+const maxExtra = 9000 * this.filterEnvAmt
 
-    const peak=base+maxExtra
+const peak = Math.min(12000, base + maxExtra)
 
-    const sustain=base+(maxExtra*s)
+const sustain = Math.min(12000, base + maxExtra * s)
 
-    const ta=t+a
-    const td=ta+d
+const ta = t + a
+const td = ta + d
 
-    this.filter.setCutoff(base)
+// base
 
-    setTimeout(()=>{
-      this.filter.setCutoff(peak)
-    },a*1000)
+this.filter.setCutoff(base)
+
+// attack
+
+this.filter.rampCutoff(peak, a)
+
+// decay
+
+setTimeout(()=>{
+  this.filter.rampCutoff(sustain, d)
+}, a * 1000)
+
+}
 
     setTimeout(()=>{
       this.filter.setCutoff(sustain)
