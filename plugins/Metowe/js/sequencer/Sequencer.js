@@ -1,3 +1,4 @@
+// js/sequencer/Sequencer.js
 export class Sequencer {
   constructor(synthEngine, onStepChange) {
     this.synth = synthEngine;
@@ -21,11 +22,8 @@ export class Sequencer {
     this.humanizeTimeMs = 8;
 
     this.nextStepTime = 0;
-
-    // ✅ bigger buffer for iOS scroll / UI jank
-    const mobileish = !!this.synth?.isMobile;
-    this.scheduleAheadTime = mobileish ? 0.55 : 0.25; // increased
-    this.lookahead = mobileish ? 30 : 25;
+    this.scheduleAheadTime = 0.12;
+    this.lookahead = 25;
 
     this.grid = Array.from({ length: this.lanes }, () =>
       Array.from({ length: this.steps }, () => this._emptyEvent())
@@ -103,9 +101,7 @@ export class Sequencer {
     return (this.baseOctave * 12) + (base % 12);
   }
 
-  _minorScaleSemis() {
-    return [0, 2, 3, 5, 7, 8, 10];
-  }
+  _minorScaleSemis() { return [0, 2, 3, 5, 7, 8, 10]; }
 
   _degreeToMidi(degree, octOffset = 0) {
     const root = this._rootMidi();
@@ -136,7 +132,7 @@ export class Sequencer {
     this.isPlaying = true;
     this.currentStep = 0;
     this.lastPlayedStep = -1;
-    this.nextStepTime = this.synth.getCurrentTime() + 0.02;
+    this.nextStepTime = this.synth.getCurrentTime();
 
     this._schedule();
   }
@@ -178,7 +174,7 @@ export class Sequencer {
     let t = time;
     if (step % 2 === 1) t += this.getSwingOffset();
 
-    // UI highlight best effort
+    // Visual (timer ok)
     const delay = (t - this.synth.getCurrentTime()) * 1000;
     setTimeout(() => {
       if (this.isPlaying) this.onStepChange?.(step);
@@ -188,10 +184,12 @@ export class Sequencer {
       const ev = this.grid[lane][step];
       if (!ev?.on || ev.mute) continue;
 
+      // humanize timing
       let tt = t;
       const jMs = this.humanizeTimeMs;
       if (jMs > 0) tt += (Math.random() * 2 - 1) * (jMs / 1000);
 
+      // humanize vel
       let vel = Math.max(0, Math.min(1, Number(ev.vel ?? 0.85)));
       const h = this.humanizePct / 100;
       if (h > 0) vel = Math.max(0, Math.min(1, vel * (1 + (Math.random() * 2 - 1) * h)));
