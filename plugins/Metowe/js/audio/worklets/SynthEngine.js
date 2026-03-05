@@ -1,105 +1,119 @@
-import {Voice} from "./Voice.js"
+import { Voice } from "./Voice.js";
 
-import {Chorus} from "../fx/Chorus.js"
-import {Distortion} from "../fx/Distortion.js"
-import {Compressor} from "../fx/Compressor.js"
-import {Bitcrusher} from "../fx/Bitcrusher.js"
-import {Reverb} from "../fx/Reverb.js"
+import { Chorus } from "../fx/Chorus.js";
+import { Distortion } from "../fx/Distortion.js";
+import { Bitcrusher } from "../fx/Bitcrusher.js";
+import { Compressor } from "../fx/Compressor.js";
+import { Reverb } from "../fx/Reverb.js";
 
-export class SynthEngine{
+export class SynthEngine {
+  constructor(){
+    this.ctx = null;
 
-constructor(){
+    // master
+    this.master = null;
 
-this.ctx=null
+    // params
+    this.maxVoices = 10;
 
-this.master=null
+    this.osc1Type = "sawtooth";
+    this.osc2Type = "square";
+    this.detune = 7; // cents
 
-this.voices=[]
+    this.subMix = 0.30;   // 0..1
+    this.noiseMix = 0.10; // 0..1
 
-this.maxVoices=8
+    this.cutoff = 8000;
+    this.res = 0.25;      // 0..1
+    this.envAmt = 0.40;   // 0..1
 
-this.wave="sawtooth"
+    // ADSR (seconds)
+    this.a = 0.010;
+    this.d = 0.250;
+    this.s = 0.65;        // 0..1
+    this.r = 0.350;
 
-this.cutoff=8000
-this.res=0.3
+    // FX
+    this.chorus = null;
+    this.drive = null;
+    this.crush = null;
+    this.comp = null;
+    this.reverb = null;
 
-// FX
+    // input point for voices
+    this.input = null;
+  }
 
-this.chorus=null
-this.distortion=null
-this.bitcrusher=null
-this.compressor=null
-this.reverb=null
+  async init(){
+    this.ctx = new (window.AudioContext || window.webkitAudioContext)();
 
-}
+    this.master = this.ctx.createGain();
+    this.master.gain.value = 0.8;
 
-async init(){
+    // FX chain (placeholders, same API you can keep for GPL ports)
+    this.chorus = new Chorus(this.ctx);
+    this.drive  = new Distortion(this.ctx);
+    this.crush  = new Bitcrusher(this.ctx);
+    this.comp   = new Compressor(this.ctx);
+    this.reverb = new Reverb(this.ctx);
 
-this.ctx=new(window.AudioContext||window.webkitAudioContext)()
+    this.chorus.connect(this.drive.input);
+    this.drive.connect(this.crush.input);
+    this.crush.connect(this.comp.input);
+    this.comp.connect(this.reverb.input);
+    this.reverb.connect(this.master);
 
-this.master=this.ctx.createGain()
-this.master.gain.value=0.8
+    this.master.connect(this.ctx.destination);
 
-// FX chain
+    // voices go into chorus input
+    this.input = this.chorus.input;
+  }
 
-this.chorus=new Chorus(this.ctx)
-this.distortion=new Distortion(this.ctx)
-this.bitcrusher=new Bitcrusher(this.ctx)
-this.compressor=new Compressor(this.ctx)
-this.reverb=new Reverb(this.ctx)
+  async resume(){
+    if (this.ctx?.state === "suspended") {
+      await this.ctx.resume();
+    }
+  }
 
-// connect
+  now(){
+    return this.ctx?.currentTime || 0;
+  }
 
-this.chorus.connect(this.distortion.input)
+  // Called by UI
+  setMaster01(v){ this.master.gain.value = Math.max(0, Math.min(1, v)); }
 
-this.distortion.connect(this.bitcrusher.input)
+  setOsc1Type(t){ this.osc1Type = t; }
+  setOsc2Type(t){ this.osc2Type = t; }
+  setDetuneCents(c){ this.detune = Math.max(0, Math.min(20, Number(c)||0)); }
 
-this.bitcrusher.connect(this.compressor.input)
+  setSubMix01(v){ this.subMix = Math.max(0, Math.min(1, Number(v)||0)); }
+  setNoiseMix01(v){ this.noiseMix = Math.max(0, Math.min(1, Number(v)||0)); }
 
-this.compressor.connect(this.reverb.input)
+  setCutoff(v){ this.cutoff = Math.max(200, Math.min(12000, Number(v)||8000)); }
+  setRes01(v){ this.res = Math.max(0, Math.min(1, Number(v)||0)); }
+  setEnvAmt01(v){ this.envAmt = Math.max(0, Math.min(1, Number(v)||0)); }
 
-this.reverb.connect(this.master)
+  setADSR(aMs, dMs, sPct, rMs){
+    this.a = Math.max(0, (Number(aMs)||0)/1000);
+    this.d = Math.max(0, (Number(dMs)||0)/1000);
+    this.s = Math.max(0, Math.min(1, (Number(sPct)||0)/100));
+    this.r = Math.max(0, (Number(rMs)||0)/1000);
+  }
 
-this.master.connect(this.ctx.destination)
+  // FX controls (0..1)
+  setChorus01(v){ this.chorus.setMix(Math.max(0,Math.min(1,Number(v)||0))); }
+  setDrive01(v){ this.drive.setDrive(Math.max(0,Math.min(1,Number(v)||0))); }
+  setCrush01(v){ this.crush.setAmount(Math.max(0,Math.min(1,Number(v)||0))); }
+  setComp01(v){ this.comp.setAmount(Math.max(0,Math.min(1,Number(v)||0))); }
+  setReverb01(v){ this.reverb.setMix(Math.max(0,Math.min(1,Number(v)||0))); }
 
-}
+  // poly note
+  noteOn(midi, velocity=0.8, time=0, length=0.30){
+    if (!this.ctx) return;
+    const t = time > 0 ? time : this.now();
+    const v = Math.max(0, Math.min(1, Number(velocity)||0));
 
-resume(){
-
-if(this.ctx.state==="suspended")
-this.ctx.resume()
-
-}
-
-getCurrentTime(){
-
-return this.ctx.currentTime
-
-}
-
-playNote(note,velocity,time,length=0.4){
-
-const voice=new Voice(
-this.ctx,
-this.chorus.input,
-note,
-velocity,
-time,
-length,
-this
-)
-
-voice.start()
-
-this.voices.push(voice)
-
-if(this.voices.length>this.maxVoices)
-this.voices.shift()
-
-}
-
-setCutoff(v){this.cutoff=v}
-setRes(v){this.res=v}
-setWave(v){this.wave=v}
-
+    const voice = new Voice(this.ctx, this.input, this, midi, v, t, length);
+    voice.start();
+  }
 }
