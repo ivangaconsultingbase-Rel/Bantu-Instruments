@@ -1,17 +1,20 @@
 // js/main.js
 import { AudioEngine } from "./audio/AudioEngine.js";
 import { Sequencer } from "./sequencer/Sequencer.js";
+import { UI } from "./ui/UI.js";
 
 // Si tu as déjà un UI.js complet, tu l'importes ici.
 // import { UI } from "./ui/UI.js";
 
-const audioEngine = new AudioEngine();
-await audioEngine.init();
+const audio = new AudioEngine();
+await audio.init();
 
-const sequencer = new Sequencer(audioEngine, (step) => {
-  // hook UI: highlight current step
-  // console.log("step", step);
-});
+const ui = new UI(audio, null);
+
+const seq = new Sequencer(audio, (step) => ui.onStepChange(step));
+ui.sequencer = seq;
+
+ui.init();
 
 // Quick wiring: play button example
 const playBtn = document.getElementById("play-btn");
