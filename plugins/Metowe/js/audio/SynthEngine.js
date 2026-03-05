@@ -30,7 +30,8 @@ export class SynthEngine {
     this.bitcrusher = new BitCrusherNode(this.ctx);
 
     this.lfo = new LFO(this.ctx);
-
+    this.lfo.connect(voice.pwmGain);
+    
     // routing
     this.chorus.connect(this.bitcrusher.input);
     this.bitcrusher.connect(this.masterGain);
