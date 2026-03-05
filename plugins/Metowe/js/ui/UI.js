@@ -1,72 +1,120 @@
-import { SCALES } from "../sequencer/Scale.js";
-
 export class UI {
-  constructor(synth, seq){
+  constructor(synth, sequencer) {
     this.synth = synth;
-    this.seq = seq;
+    this.seq = sequencer;
 
-    this.steps = [];
-    this.keys = [];
+    this.isMobile = this._detectMobile();
 
-    this.isMobile = (('ontouchstart' in window) || (navigator.maxTouchPoints > 0) || window.matchMedia('(hover: none)').matches);
-
+    this.stepEls = []; // [lane][step]
+    this._down = { lane: null, step: null, t: 0, el: null };
     this._lpTimer = null;
-    this._lpTriggered = false;
+    this._lastTap = { lane: null, step: null, t: 0 };
   }
 
-  $(id){ return document.getElementById(id); }
-  setText(id, v){ const el = this.$(id); if (el) el.textContent = String(v); }
+  _detectMobile() {
+    return (('ontouchstart' in window) || (navigator.maxTouchPoints > 0) || window.matchMedia('(hover: none)').matches);
+  }
 
-  init(){
-    this._buildKeyboard();
-    this._buildSequencer();
+  $(id) { return document.getElementById(id); }
+  setText(id, v) { const el = this.$(id); if (el) el.textContent = String(v); }
+
+  init() {
+    this._renderKeyboard();
+    this._renderSequencer();
     this._bind();
-
-    this._syncAllDisplays();
-    this._renderStepsText();
-
-    this.setText("hint", this.isMobile ? "Tap Play, puis touche le clavier (mobile)" : "Click Play, puis joue au clavier (desktop)");
-
-    // ensure audible on iOS: first user gesture resumes AudioContext
-    const resumeOnce = async () => {
-      await this.synth.resume();
-      window.removeEventListener("pointerdown", resumeOnce);
-    };
-    window.addEventListener("pointerdown", resumeOnce, { once: true });
+    this._syncAll();
   }
 
-  _blinkLed(){
-    const led = this.$("led");
-    if (!led) return;
-    led.classList.add("active");
-    setTimeout(() => led.classList.remove("active"), 80);
+  _renderKeyboard() {
+    const kb = this.$("keyboard");
+    if (!kb) return;
+
+    const keys = [
+      { k: "A", n: 60 }, { k: "S", n: 62 }, { k: "D", n: 64 }, { k: "F", n: 65 },
+      { k: "G", n: 67 }, { k: "H", n: 69 }, { k: "J", n: 71 }, { k: "K", n: 72 },
+    ];
+
+    kb.innerHTML = "";
+    keys.forEach(o => {
+      const d = document.createElement("div");
+      d.className = "kkey";
+      d.dataset.note = String(o.n);
+      d.dataset.key = o.k;
+      d.textContent = o.k;
+      kb.appendChild(d);
+    });
   }
 
-  _bind(){
-    // play toggle
-    this.$("play-btn")?.addEventListener("click", () => {
-      if (this.seq.isPlaying){
-        this.seq.stop();
-        this.$("play-btn")?.classList.remove("active");
-      } else {
-        this.seq.start();
-        this.$("play-btn")?.classList.add("active");
+  _renderSequencer() {
+    // header 1..16
+    const head = this.$("seq-header");
+    if (head) {
+      head.innerHTML = "";
+      for (let s = 0; s < this.seq.steps; s++) {
+        const sp = document.createElement("span");
+        sp.textContent = String(s + 1);
+        head.appendChild(sp);
       }
+    }
+
+    const grid = this.$("sequencer-grid");
+    if (!grid) return;
+
+    grid.innerHTML = "";
+    this.stepEls = [];
+
+    for (let lane = 0; lane < this.seq.lanes; lane++) {
+      const row = document.createElement("div");
+      row.className = "seq-row";
+
+      const lab = document.createElement("div");
+      lab.className = "seq-row-label";
+      lab.textContent = String(lane + 1);
+      row.appendChild(lab);
+
+      const steps = document.createElement("div");
+      steps.className = "seq-steps";
+
+      const rowEls = [];
+      for (let s = 0; s < this.seq.steps; s++) {
+        const b = document.createElement("button");
+        b.type = "button";
+        b.className = "seq-step";
+        b.dataset.lane = String(lane);
+        b.dataset.step = String(s);
+        if (s % 4 === 0) b.classList.add("beat-marker");
+
+        const t = document.createElement("div");
+        t.className = "txt";
+        t.textContent = "-";
+        b.appendChild(t);
+
+        steps.appendChild(b);
+        rowEls.push(b);
+      }
+
+      row.appendChild(steps);
+      grid.appendChild(row);
+      this.stepEls.push(rowEls);
+    }
+  }
+
+  _bind() {
+    // Transport
+    this.$("play-btn")?.addEventListener("click", () => {
+      this.seq.togglePlay();
+      this.$("play-btn")?.classList.toggle("active", this.seq.isPlaying);
     });
 
     this.$("clear-btn")?.addEventListener("click", () => {
       this.seq.clear();
-      this._renderStepsText();
+      this.seq.loadDefaultPattern(); // garde l'esprit “play = musical”
+      this._syncAll();
     });
 
-    this.$("rand-btn")?.addEventListener("click", () => {
-      this.seq.randomize();
-      this._renderStepsText();
-    });
-
-    // tempo/human/swing
+    // BPM/Swing/Humanize
     this.$("bpm")?.addEventListener("input", (e) => {
-      const v = parseInt(e.target.value, 10) || 90;
+      const v = parseInt(e.target.value, 10) || 96;
       this.seq.setBPM(v);
       this.setText("bpm-display", v);
       this.setText("bpm-val", v);
@@ -79,316 +127,177 @@ export class UI {
       this.setText("swing-val", `${v}%`);
     });
 
-    this.$("human")?.addEventListener("input", (e) => {
+    this.$("humanize")?.addEventListener("input", (e) => {
       const v = parseInt(e.target.value, 10) || 0;
-      this.seq.setHuman(v);
-      this.setText("human-display", v);
-      this.setText("human-val", `${v}%`);
+      this.seq.setHumanize(v);
+      this.setText("humanize-val", `${v}%`);
     });
 
-    // musical
-    this.$("scale")?.addEventListener("change", (e) => {
-      this.seq.setScale(e.target.value);
-      this._renderStepsText();
+    this.$("humanize-time")?.addEventListener("input", (e) => {
+      const v = parseInt(e.target.value, 10) || 0;
+      this.seq.setHumanizeTime(v);
+      this.setText("humanize-time-val", `${v}ms`);
     });
 
+    // Root/Oct
     this.$("root")?.addEventListener("change", (e) => {
-      this.seq.setRoot(parseInt(e.target.value, 10));
-      this._renderStepsText();
+      this.seq.setRoot(e.target.value);
+      this.setText("scale-display", `${this.seq.root} MIN`);
     });
 
-    this.$("mode")?.addEventListener("change", (e) => {
-      this.seq.setMode(e.target.value);
+    this.$("oct")?.addEventListener("input", (e) => {
+      const v = parseInt(e.target.value, 10) || 4;
+      this.seq.setOctave(v);
+      this.setText("oct-val", v);
     });
 
-    // synth params
-    this.$("osc1")?.addEventListener("change", (e) => this.synth.setOsc1Type(e.target.value));
-    this.$("osc2")?.addEventListener("change", (e) => this.synth.setOsc2Type(e.target.value));
+    // Keyboard play (touch + click)
+    this.$("keyboard")?.addEventListener("pointerdown", (e) => {
+      const key = e.target.closest(".kkey");
+      if (!key) return;
+      e.preventDefault();
+      const n = parseInt(key.dataset.note, 10);
+      key.classList.add("active");
+      this.synth.noteOn(n, 1);
+      if (navigator.vibrate) navigator.vibrate(8);
+    }, { passive: false });
 
-    this.$("detune")?.addEventListener("input", (e) => {
-      const v = parseInt(e.target.value, 10) || 0;
-      this.synth.setDetuneCents(v);
-      this.setText("detune-val", v);
+    this.$("keyboard")?.addEventListener("pointerup", (e) => {
+      const key = e.target.closest(".kkey");
+      if (!key) return;
+      const n = parseInt(key.dataset.note, 10);
+      key.classList.remove("active");
+      this.synth.noteOff(n);
     });
 
-    this.$("sub")?.addEventListener("input", (e) => {
-      const v = parseInt(e.target.value, 10) || 0;
-      this.synth.setSubMix01(v/100);
-      this.setText("sub-val", `${v}%`);
-    });
-
-    this.$("noise")?.addEventListener("input", (e) => {
-      const v = parseInt(e.target.value, 10) || 0;
-      this.synth.setNoiseMix01(v/100);
-      this.setText("noise-val", `${v}%`);
-    });
-
-    this.$("master")?.addEventListener("input", (e) => {
-      const v = parseInt(e.target.value, 10) || 0;
-      this.synth.setMaster01(v/100);
-      this.setText("master-val", `${v}%`);
-    });
-
-    this.$("cutoff")?.addEventListener("input", (e) => {
-      const v = parseInt(e.target.value, 10) || 8000;
-      this.synth.setCutoff(v);
-      this.setText("cutoff-val", `${(v/1000).toFixed(1)}k`);
-    });
-
-    this.$("res")?.addEventListener("input", (e) => {
-      const v = parseInt(e.target.value, 10) || 0;
-      this.synth.setRes01(v/100);
-      this.setText("res-val", `${v}%`);
-    });
-
-    this.$("envamt")?.addEventListener("input", (e) => {
-      const v = parseInt(e.target.value, 10) || 0;
-      this.synth.setEnvAmt01(v/100);
-      this.setText("envamt-val", `${v}%`);
-    });
-
-    const applyADSR = () => {
-      const a = parseInt(this.$("a")?.value || "0", 10);
-      const d = parseInt(this.$("d")?.value || "0", 10);
-      const s = parseInt(this.$("s")?.value || "0", 10);
-      const r = parseInt(this.$("r")?.value || "0", 10);
-      this.synth.setADSR(a,d,s,r);
-      this.setText("a-val", `${a}ms`);
-      this.setText("d-val", `${d}ms`);
-      this.setText("s-val", `${s}%`);
-      this.setText("r-val", `${r}ms`);
-    };
-
-    this.$("a")?.addEventListener("input", applyADSR);
-    this.$("d")?.addEventListener("input", applyADSR);
-    this.$("s")?.addEventListener("input", applyADSR);
-    this.$("r")?.addEventListener("input", applyADSR);
-    applyADSR();
-
-    // FX params
-    this.$("chorus")?.addEventListener("input", (e) => {
-      const v = parseInt(e.target.value, 10) || 0;
-      this.synth.setChorus01(v/100);
-      this.setText("chorus-val", `${v}%`);
-    });
-
-    this.$("drive")?.addEventListener("input", (e) => {
-      const v = parseInt(e.target.value, 10) || 0;
-      this.synth.setDrive01(v/100);
-      this.setText("drive-val", `${v}%`);
-    });
-
-    this.$("crush")?.addEventListener("input", (e) => {
-      const v = parseInt(e.target.value, 10) || 0;
-      this.synth.setCrush01(v/100);
-      this.setText("crush-val", `${v}%`);
-    });
-
-    this.$("comp")?.addEventListener("input", (e) => {
-      const v = parseInt(e.target.value, 10) || 0;
-      this.synth.setComp01(v/100);
-      this.setText("comp-val", `${v}%`);
-    });
-
-    this.$("reverb")?.addEventListener("input", (e) => {
-      const v = parseInt(e.target.value, 10) || 0;
-      this.synth.setReverb01(v/100);
-      this.setText("reverb-val", `${v}%`);
-    });
-  }
-
-  _syncAllDisplays(){
-    // transport defaults already match HTML values
-    this.setText("bpm-display", this.$("bpm")?.value || "90");
-    this.setText("bpm-val", this.$("bpm")?.value || "90");
-    this.setText("swing-display", this.$("swing")?.value || "0");
-    this.setText("swing-val", `${this.$("swing")?.value || "0"}%`);
-    this.setText("human-display", this.$("human")?.value || "0");
-    this.setText("human-val", `${this.$("human")?.value || "0"}%`);
-
-    this.setText("detune-val", this.$("detune")?.value || "7");
-    this.setText("sub-val", `${this.$("sub")?.value || "30"}%`);
-    this.setText("noise-val", `${this.$("noise")?.value || "10"}%`);
-    this.setText("master-val", `${this.$("master")?.value || "80"}%`);
-
-    const cutoff = parseInt(this.$("cutoff")?.value || "8000",10);
-    this.setText("cutoff-val", `${(cutoff/1000).toFixed(1)}k`);
-    this.setText("res-val", `${this.$("res")?.value || "25"}%`);
-    this.setText("envamt-val", `${this.$("envamt")?.value || "40"}%`);
-
-    this.setText("chorus-val", `${this.$("chorus")?.value || "25"}%`);
-    this.setText("drive-val", `${this.$("drive")?.value || "12"}%`);
-    this.setText("crush-val", `${this.$("crush")?.value || "0"}%`);
-    this.setText("comp-val", `${this.$("comp")?.value || "25"}%`);
-    this.setText("reverb-val", `${this.$("reverb")?.value || "18"}%`);
-
-    // apply initial to engine
-    this.synth.setMaster01((parseInt(this.$("master")?.value||"80",10))/100);
-    this.synth.setDetuneCents(parseInt(this.$("detune")?.value||"7",10));
-    this.synth.setSubMix01((parseInt(this.$("sub")?.value||"30",10))/100);
-    this.synth.setNoiseMix01((parseInt(this.$("noise")?.value||"10",10))/100);
-
-    this.synth.setCutoff(parseInt(this.$("cutoff")?.value||"8000",10));
-    this.synth.setRes01((parseInt(this.$("res")?.value||"25",10))/100);
-    this.synth.setEnvAmt01((parseInt(this.$("envamt")?.value||"40",10))/100);
-
-    this.synth.setChorus01((parseInt(this.$("chorus")?.value||"25",10))/100);
-    this.synth.setDrive01((parseInt(this.$("drive")?.value||"12",10))/100);
-    this.synth.setCrush01((parseInt(this.$("crush")?.value||"0",10))/100);
-    this.synth.setComp01((parseInt(this.$("comp")?.value||"25",10))/100);
-    this.synth.setReverb01((parseInt(this.$("reverb")?.value||"18",10))/100);
-
-    this.seq.setBPM(parseInt(this.$("bpm")?.value||"90",10));
-    this.seq.setSwing(parseInt(this.$("swing")?.value||"0",10));
-    this.seq.setHuman(parseInt(this.$("human")?.value||"0",10));
-
-    this.seq.setScale(this.$("scale")?.value || "aeolian");
-    this.seq.setRoot(parseInt(this.$("root")?.value||"48",10));
-    this.seq.setMode(this.$("mode")?.value || "arp");
-
-    // osc types
-    this.synth.setOsc1Type(this.$("osc1")?.value || "sawtooth");
-    this.synth.setOsc2Type(this.$("osc2")?.value || "square");
-  }
-
-  _buildKeyboard(){
-    const el = this.$("keyboard");
-    if (!el) return;
-
-    // one octave from C to B
-    const labels = ["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"];
-    const black = new Set([1,3,6,8,10]);
-
-    const base = 60; // C4
-    el.innerHTML = "";
-    this.keys = [];
-
-    labels.forEach((name, i) => {
-      const k = document.createElement("div");
-      k.className = "key" + (black.has(i) ? " black" : "");
-      k.textContent = name;
-      k.dataset.midi = String(base + i);
-
-      k.addEventListener("pointerdown", async (e) => {
+    // Typing keyboard
+    const map = { a:60, s:62, d:64, f:65, g:67, h:69, j:71, k:72 };
+    document.addEventListener("keydown", (e) => {
+      if (e.repeat) return;
+      if (e.code === "Space") {
         e.preventDefault();
-        await this.synth.resume();
-        const midi = parseInt(k.dataset.midi, 10);
-        k.classList.add("active");
-        this._blinkLed();
-        // live poly: chords according to mode selection
-        const mode = this.$("mode")?.value || "arp";
-        if (mode === "chords"){
-          this.synth.noteOn(midi, 0.9, 0, 0.35);
-          this.synth.noteOn(midi+3, 0.65, 0, 0.35);
-          this.synth.noteOn(midi+7, 0.65, 0, 0.35);
-        } else {
-          this.synth.noteOn(midi, 0.9, 0, 0.30);
-        }
-      }, { passive: false });
-
-      const up = () => k.classList.remove("active");
-      k.addEventListener("pointerup", up);
-      k.addEventListener("pointercancel", up);
-
-      el.appendChild(k);
-      this.keys.push(k);
-    });
-  }
-
-  _buildSequencer(){
-    const el = this.$("seq");
-    if (!el) return;
-
-    el.innerHTML = "";
-    this.steps = [];
-
-    for (let i=0;i<16;i++){
-      const s = document.createElement("div");
-      s.className = "step";
-      s.dataset.step = String(i);
-
-      const n = document.createElement("div");
-      n.className = "n";
-      n.textContent = "--";
-
-      const d = document.createElement("div");
-      d.className = "d";
-      d.textContent = String(i+1);
-
-      s.appendChild(n);
-      s.appendChild(d);
-
-      // Tap = cycle step
-      s.addEventListener("pointerdown", (e) => {
-        e.preventDefault();
-        this._lpTriggered = false;
-
-        const step = parseInt(s.dataset.step, 10);
-
-        clearTimeout(this._lpTimer);
-        this._lpTimer = setTimeout(() => {
-          // long press => rest
-          this._lpTriggered = true;
-          this.seq.setRest(step);
-          this._renderStepsText();
-          if (navigator.vibrate) navigator.vibrate(10);
-        }, 340);
-      }, { passive:false });
-
-      s.addEventListener("pointerup", (e) => {
-        e.preventDefault();
-        clearTimeout(this._lpTimer);
-        const step = parseInt(s.dataset.step, 10);
-
-        if (!this._lpTriggered){
-          this.seq.cycleStep(step);
-          this._renderStepsText();
-          if (navigator.vibrate) navigator.vibrate(8);
-        }
-      }, { passive:false });
-
-      s.addEventListener("pointercancel", () => {
-        clearTimeout(this._lpTimer);
-        this._lpTriggered = false;
-      });
-
-      el.appendChild(s);
-      this.steps.push(s);
-    }
-  }
-
-  _renderStepsText(){
-    const scale = SCALES[this.seq.scaleName] || SCALES.aeolian;
-
-    for (let i=0;i<16;i++){
-      const v = this.seq.getStepValue(i);
-      const s = this.steps[i];
-      if (!s) continue;
-
-      const nEl = s.querySelector(".n");
-      if (!nEl) continue;
-
-      if (v === -1){
-        nEl.textContent = "--";
-        s.classList.add("off");
-      } else {
-        const midi = this.seq.degreeToMidi(v);
-        nEl.textContent = this._noteName(midi);
-        s.classList.remove("off");
+        this.seq.togglePlay();
+        this.$("play-btn")?.classList.toggle("active", this.seq.isPlaying);
+        return;
       }
+      const n = map[(e.key || "").toLowerCase()];
+      if (n != null) this.synth.noteOn(n, 1);
+    });
+
+    document.addEventListener("keyup", (e) => {
+      const n = map[(e.key || "").toLowerCase()];
+      if (n != null) this.synth.noteOff(n);
+    });
+
+    // Sequencer edit (mobile friendly)
+    const grid = this.$("sequencer-grid");
+    if (!grid) return;
+
+    grid.addEventListener("pointerdown", (e) => {
+      const el = e.target.closest(".seq-step");
+      if (!el) return;
+      e.preventDefault();
+
+      const lane = parseInt(el.dataset.lane, 10);
+      const step = parseInt(el.dataset.step, 10);
+
+      this._down = { lane, step, t: performance.now(), el };
+
+      // long press => mute toggle
+      clearTimeout(this._lpTimer);
+      this._lpTimer = setTimeout(() => {
+        const muted = this.seq.toggleMute(lane, step);
+        el.style.opacity = muted ? "0.35" : "";
+        if (navigator.vibrate) navigator.vibrate(12);
+      }, 360);
+    }, { passive: false });
+
+    grid.addEventListener("pointerup", (e) => {
+      clearTimeout(this._lpTimer);
+
+      const el = e.target.closest(".seq-step");
+      if (!el) return;
+
+      const lane = parseInt(el.dataset.lane, 10);
+      const step = parseInt(el.dataset.step, 10);
+
+      // if long press already fired, don't do tap action
+      const dt = performance.now() - this._down.t;
+      if (dt > 340) return;
+
+      // double tap => chord toggle
+      const now = performance.now();
+      const last = this._lastTap;
+      const isDouble = (last.lane === lane && last.step === step && (now - last.t) < 260);
+      this._lastTap = { lane, step, t: now };
+
+      if (isDouble) {
+        this.seq.toggleChord(lane, step);
+        this._syncStep(lane, step);
+        if (navigator.vibrate) navigator.vibrate(10);
+        return;
+      }
+
+      // tap logic:
+      // - if off => on
+      // - if on => cycle degree
+      const ev = this.seq.getEvent(lane, step);
+      if (!ev.on) this.seq.toggleStep(lane, step);
+      else this.seq.cycleDegree(lane, step);
+
+      this._syncStep(lane, step);
+
+      if (navigator.vibrate) navigator.vibrate(8);
+    });
+  }
+
+  _syncAll() {
+    // displays
+    this.setText("bpm-display", this.seq.bpm);
+    this.setText("bpm-val", this.seq.bpm);
+    this.setText("swing-display", this.seq.swing);
+    this.setText("swing-val", `${this.seq.swing}%`);
+    this.setText("scale-display", `${this.seq.root} MIN`);
+    this.setText("humanize-val", `${this.seq.humanizePct}%`);
+    this.setText("humanize-time-val", `${this.seq.humanizeTimeMs}ms`);
+    this.setText("oct-val", this.seq.baseOctave);
+
+    for (let lane = 0; lane < this.seq.lanes; lane++) {
+      for (let s = 0; s < this.seq.steps; s++) this._syncStep(lane, s);
     }
   }
 
-  _noteName(midi){
-    const names = ["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"];
-    const n = midi % 12;
-    const o = Math.floor(midi/12) - 1;
-    return `${names[n]}${o}`;
+  _syncStep(lane, step) {
+    const el = this.stepEls?.[lane]?.[step];
+    if (!el) return;
+
+    const ev = this.seq.getEvent(lane, step);
+
+    el.classList.toggle("active", !!ev.on);
+    el.classList.toggle("chord", !!(ev.on && ev.chord));
+
+    // show degree 1..7 (more musical than 0..6)
+    const txt = el.querySelector(".txt");
+    if (txt) txt.textContent = ev.on ? String(ev.degree + 1) : "-";
+
+    // muted display
+    el.style.opacity = ev.mute ? "0.35" : "";
   }
 
-  onStep(step){
-    this.steps.forEach(x => x.classList.remove("playing"));
-    if (step >= 0 && this.steps[step]) this.steps[step].classList.add("playing");
-    this._blinkLed();
+  onStepChange(step) {
+    // clear previous
+    document.querySelectorAll(".seq-step.playing").forEach(n => n.classList.remove("playing"));
+    if (step < 0) return;
+
+    for (let lane = 0; lane < this.seq.lanes; lane++) {
+      const el = this.stepEls?.[lane]?.[step];
+      if (el) el.classList.add("playing");
+    }
+
+    const led = this.$("led");
+    if (led) {
+      led.classList.add("active");
+      setTimeout(() => led.classList.remove("active"), 50);
+    }
   }
 }
