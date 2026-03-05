@@ -49,6 +49,8 @@ export class SynthEngine {
       reverbMix:0
     };
 
+    import { JunoChorus } from "./fx/JunoChorus.js"
+
   }
 
   async init(){
@@ -60,7 +62,10 @@ export class SynthEngine {
     this.master = this.ctx.createGain();
     this.master.gain.value = .9;
 
-    this.master.connect(this.ctx.destination);
+    this.chorus = new JunoChorus(this.ctx)
+
+this.master.connect(this.chorus.input)
+this.chorus.connect(this.ctx.destination)
 
   }
 
