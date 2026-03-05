@@ -1,88 +1,36 @@
-// js/audio/worklets/fx/Chorus.js
-// Simple stereo chorus: 2 modulated delay taps with feedback-less mix
-// Original implementation (OK for GPL project)
+export class Chorus{
 
-const TAU = Math.PI * 2;
+constructor(ctx){
 
-export class Chorus {
-  constructor(sampleRate) {
-    this.sr = sampleRate;
+this.input=ctx.createGain()
+this.output=ctx.createGain()
 
-    // ring buffer (max delay 60ms)
-    this.maxDelayMs = 60;
-    this.bufLen = Math.ceil((this.maxDelayMs / 1000) * this.sr) + 2;
-    this.bufL = new Float32Array(this.bufLen);
-    this.bufR = new Float32Array(this.bufLen);
-    this.w = 0;
+this.delay=ctx.createDelay()
 
-    this.phase = 0;
+this.lfo=ctx.createOscillator()
 
-    // params
-    this.rateHz = 0.8;
-    this.depthMs = 9;    // modulation depth
-    this.baseMs = 14;    // base delay
-    this.mix = 0.45;     // wet mix 0..1
-    this.enabled = true;
-  }
+this.depth=ctx.createGain()
 
-  set(rateHz, depthMs, mix01, enabled = true) {
-    this.rateHz = Math.max(0.01, rateHz);
-    this.depthMs = Math.max(0, depthMs);
-    this.mix = Math.max(0, Math.min(1, mix01));
-    this.enabled = !!enabled;
-  }
+this.lfo.frequency.value=0.25
 
-  _read(buf, delaySamples) {
-    // fractional delay read (linear interp)
-    const len = this.bufLen;
-    let r = this.w - delaySamples;
-    while (r < 0) r += len;
+this.depth.gain.value=0.004
 
-    const i0 = r | 0;
-    const i1 = (i0 + 1) % len;
-    const frac = r - i0;
+this.lfo.connect(this.depth)
 
-    return buf[i0] * (1 - frac) + buf[i1] * frac;
-  }
+this.depth.connect(this.delay.delayTime)
 
-  process(xL, xR) {
-    // write input
-    this.bufL[this.w] = xL;
-    this.bufR[this.w] = xR;
+this.input.connect(this.delay)
 
-    let yL = xL;
-    let yR = xR;
+this.delay.connect(this.output)
 
-    if (this.enabled && this.mix > 0) {
-      // LFO
-      const inc = this.rateHz / this.sr;
-      this.phase += inc;
-      if (this.phase >= 1) this.phase -= 1;
+this.lfo.start()
 
-      // two out-of-phase LFOs
-      const lfo1 = Math.sin(TAU * this.phase);
-      const lfo2 = Math.sin(TAU * (this.phase + 0.25));
+}
 
-      const d1Ms = this.baseMs + this.depthMs * (0.5 + 0.5 * lfo1);
-      const d2Ms = this.baseMs + this.depthMs * (0.5 + 0.5 * lfo2);
+connect(node){
 
-      const d1 = (d1Ms / 1000) * this.sr;
-      const d2 = (d2Ms / 1000) * this.sr;
+this.output.connect(node)
 
-      // cross taps to widen stereo
-      const wetL = 0.6 * this._read(this.bufL, d1) + 0.4 * this._read(this.bufR, d2);
-      const wetR = 0.6 * this._read(this.bufR, d1) + 0.4 * this._read(this.bufL, d2);
+}
 
-      const wet = this.mix;
-      const dry = 1 - wet;
-
-      yL = dry * xL + wet * wetL;
-      yR = dry * xR + wet * wetR;
-    }
-
-    // advance write head
-    this.w = (this.w + 1) % this.bufLen;
-
-    return [yL, yR];
-  }
 }
