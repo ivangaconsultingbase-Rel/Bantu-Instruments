@@ -1,459 +1,483 @@
 /**
  * SynthEngine.js
- * Moteur du synthé polyphonique + scheduling
+ * Polyphonic synth engine
  *
- * PATCH:
- * - Glide / Portamento global
- * - Propagation aux voix existantes
- * - Compatibilité JunoFilter Voice
+ * Features
+ * - polyphony
+ * - unison
+ * - glide / portamento
+ * - Juno filter compatibility
+ * - chorus FX
+ * - sequencer scheduling
  */
 
-import { Voice } from './Voice.js';
+import { Voice } from './Voice.js'
+import { JunoChorus } from './fx/JunoChorus.js'
 
 export class SynthEngine {
 
-  constructor() {
+constructor(){
 
-    this.ctx = null;
+this.ctx = null
 
-    this.polyphony = 8;
-    this.activeVoices = [];
+this.polyphony = 8
+this.activeVoices = []
 
-    this.master = null;
+this.master = null
+this.chorus = null
 
-    // UNISON
-    this.unisonVoices = 1;
-    this.unisonDetune = 10;
+// UNISON
+this.unisonVoices = 1
+this.unisonDetune = 10
 
-    // NEW : Glide
-    this.glideTime = 0.04;
+// GLIDE
+this.glideTime = .04
 
-    // SYNTH PARAMS
-    this.oscWave = 'saw';
-    this.pwmPct = 50;
+// SYNTH PARAMS
+this.oscWave = "saw"
+this.pwmPct = 50
 
-    this.cutoff = 2400;
-    this.resonance = 0.15;
-    this.filterEnvAmt = 0.35;
+this.cutoff = 2400
+this.resonance = .15
+this.filterEnvAmt = .35
 
-    this.adsrMs = { a:10, d:250, s:70, r:500 };
+this.adsrMs = { a:10, d:250, s:70, r:500 }
 
-    this.driveAmount = 2;
+this.driveAmount = 2
 
-    // FX placeholders
-    this.fx = {
-      chorusMix:0,
-      crushAmt:0,
-      driveMix:0,
-      compAmt:0,
-      reverbMix:0
-    };
+// FX parameters
+this.fx = {
 
-    import { JunoChorus } from "./fx/JunoChorus.js"
+chorusMix:.25,
+crushAmt:0,
+driveMix:0,
+compAmt:0,
+reverbMix:0
 
-  }
+}
 
-  async init(){
+}
 
-    if(this.ctx) return;
+async init(){
 
-    this.ctx = new (window.AudioContext||window.webkitAudioContext)();
+if(this.ctx) return
 
-    this.master = this.ctx.createGain();
-    this.master.gain.value = .9;
+this.ctx =
+new (window.AudioContext||window.webkitAudioContext)()
 
-    this.chorus = new JunoChorus(this.ctx)
+// MASTER
+
+this.master = this.ctx.createGain()
+this.master.gain.value = .9
+
+// CHORUS
+
+this.chorus = new JunoChorus(this.ctx)
+this.chorus.setMix(this.fx.chorusMix)
+
+// routing
 
 this.master.connect(this.chorus.input)
 this.chorus.connect(this.ctx.destination)
 
-  }
+}
 
-  resume(){
+resume(){
 
-    if(this.ctx?.state === "suspended")
-      this.ctx.resume();
+if(this.ctx?.state==="suspended")
+this.ctx.resume()
 
-  }
+}
 
-  getCurrentTime(){
-    return this.ctx?.currentTime || 0;
-  }
+getCurrentTime(){
 
-  // =====================================================
-  // UNISON
-  // =====================================================
+return this.ctx?.currentTime || 0
 
-  setUnisonVoices(n){
+}
 
-    this.unisonVoices =
-      Math.max(1,Math.min(6,parseInt(n)||1));
+//////////////////////////////////////////////////////////////////
+// UNISON
+//////////////////////////////////////////////////////////////////
 
-  }
+setUnisonVoices(n){
 
-  setUnisonDetune(c){
+this.unisonVoices =
+Math.max(1,Math.min(6,parseInt(n)||1))
 
-    this.unisonDetune =
-      Math.max(0,Math.min(50,Number(c)||0));
+}
 
-  }
+setUnisonDetune(c){
 
-  // =====================================================
-  // GLIDE
-  // =====================================================
+this.unisonDetune =
+Math.max(0,Math.min(50,Number(c)||0))
 
-  setGlide(sec){
+}
 
-    this.glideTime =
-      Math.max(0,Math.min(.3,Number(sec)||0));
+//////////////////////////////////////////////////////////////////
+// GLIDE
+//////////////////////////////////////////////////////////////////
 
-    this._applyToActiveVoices(v=>{
-      v.setGlide?.(this.glideTime)
-    });
+setGlide(sec){
 
-  }
+this.glideTime =
+Math.max(0,Math.min(.3,Number(sec)||0))
 
-  // =====================================================
-  // DRIVE
-  // =====================================================
+this._applyToActiveVoices(v=>{
+v.setGlide?.(this.glideTime)
+})
 
-  setDrive(amount){
+}
 
-    this.driveAmount =
-      Math.max(0,Number(amount)||0);
+//////////////////////////////////////////////////////////////////
+// DRIVE
+//////////////////////////////////////////////////////////////////
 
-    this._applyToActiveVoices(v=>{
-      v.setDrive?.(this.driveAmount)
-    });
+setDrive(amount){
 
-  }
+this.driveAmount =
+Math.max(0,Number(amount)||0)
 
-  // =====================================================
-  // OSC
-  // =====================================================
+this._applyToActiveVoices(v=>{
+v.setDrive?.(this.driveAmount)
+})
 
-  setOscWave(mode){
+}
 
-    const m = String(mode||"").toLowerCase();
+//////////////////////////////////////////////////////////////////
+// OSC
+//////////////////////////////////////////////////////////////////
 
-    const ok =
-      (m==="saw"||m==="pulse"||m==="mix")
-        ? m
-        : "saw";
+setOscWave(mode){
 
-    this.oscWave = ok;
+const m = String(mode||"").toLowerCase()
 
-    this._applyToActiveVoices(v=>{
-      v.setWave?.(this.oscWave)
-    });
+const ok =
+(m==="saw"||m==="pulse"||m==="mix")
+? m
+: "saw"
 
-  }
+this.oscWave = ok
 
-  setPWM(pct){
+this._applyToActiveVoices(v=>{
+v.setWave?.(this.oscWave)
+})
 
-    let x = Number(pct);
+}
 
-    if(!Number.isFinite(x)) x=50;
+setPWM(pct){
 
-    if(x<=1.001 && x>=0) x*=100;
+let x = Number(pct)
 
-    x=Math.max(0,Math.min(100,x));
+if(!Number.isFinite(x)) x=50
 
-    this.pwmPct = x;
+if(x<=1.001 && x>=0) x*=100
 
-    this._applyToActiveVoices(v=>{
-      v.setPWM?.(this.pwmPct)
-    });
+x=Math.max(0,Math.min(100,x))
 
-  }
+this.pwmPct = x
 
-  // =====================================================
-  // FILTER
-  // =====================================================
+this._applyToActiveVoices(v=>{
+v.setPWM?.(this.pwmPct)
+})
 
-  setCutoff(hz){
+}
 
-    const v = Math.max(
-      80,
-      Math.min(12000,Number(hz)||2400)
-    );
+//////////////////////////////////////////////////////////////////
+// FILTER
+//////////////////////////////////////////////////////////////////
 
-    this.cutoff = v;
+setCutoff(hz){
 
-    this._applyToActiveVoices(v=>{
-      v.setFilter?.(
-        this.cutoff,
-        this.resonance,
-        this.filterEnvAmt
-      )
-    });
+const v =
+Math.max(80,
+Math.min(12000,Number(hz)||2400))
 
-  }
+this.cutoff = v
 
-  setResonance(q){
+this._applyToActiveVoices(v=>{
+v.setFilter?.(
+this.cutoff,
+this.resonance,
+this.filterEnvAmt
+)
+})
 
-    const v =
-      Math.max(0,Math.min(1,Number(q)||0));
+}
 
-    this.resonance = v;
+setResonance(q){
 
-    this._applyToActiveVoices(v=>{
-      v.setFilter?.(
-        this.cutoff,
-        this.resonance,
-        this.filterEnvAmt
-      )
-    });
+const v =
+Math.max(0,
+Math.min(1,Number(q)||0))
 
-  }
+this.resonance = v
 
-  setFilterEnv(amt){
+this._applyToActiveVoices(v=>{
+v.setFilter?.(
+this.cutoff,
+this.resonance,
+this.filterEnvAmt
+)
+})
 
-    const v =
-      Math.max(0,Math.min(1,Number(amt)||0));
+}
 
-    this.filterEnvAmt = v;
+setFilterEnv(amt){
 
-    this._applyToActiveVoices(v=>{
-      v.setFilter?.(
-        this.cutoff,
-        this.resonance,
-        this.filterEnvAmt
-      )
-    });
+const v =
+Math.max(0,
+Math.min(1,Number(amt)||0))
 
-  }
+this.filterEnvAmt = v
 
-  // =====================================================
-  // ADSR
-  // =====================================================
+this._applyToActiveVoices(v=>{
+v.setFilter?.(
+this.cutoff,
+this.resonance,
+this.filterEnvAmt
+)
+})
 
-  setADSR(a,d,s,r){
+}
 
-    const A=Math.max(0,Math.min(2000,a||0));
-    const D=Math.max(0,Math.min(2000,d||0));
-    const S=Math.max(0,Math.min(100,s||0));
-    const R=Math.max(0,Math.min(4000,r||0));
+//////////////////////////////////////////////////////////////////
+// ADSR
+//////////////////////////////////////////////////////////////////
 
-    this.adsrMs = {a:A,d:D,s:S,r:R};
+setADSR(a,d,s,r){
 
-    this._applyToActiveVoices(v=>{
-      v.setADSR?.(A,D,S,R)
-    });
+const A=Math.max(0,Math.min(2000,a||0))
+const D=Math.max(0,Math.min(2000,d||0))
+const S=Math.max(0,Math.min(100,s||0))
+const R=Math.max(0,Math.min(4000,r||0))
 
-  }
+this.adsrMs={a:A,d:D,s:S,r:R}
 
-  // =====================================================
-  // FX PLACEHOLDERS
-  // =====================================================
+this._applyToActiveVoices(v=>{
+v.setADSR?.(A,D,S,R)
+})
 
-  setChorusMix(v){this.fx.chorusMix=this._clamp01(v)}
-  setCrushAmt(v){this.fx.crushAmt=this._clamp01(v)}
-  setDriveMix(v){this.fx.driveMix=this._clamp01(v)}
-  setCompAmt(v){this.fx.compAmt=this._clamp01(v)}
-  setReverbMix(v){this.fx.reverbMix=this._clamp01(v)}
+}
 
-  // =====================================================
-  // VOICE ALLOCATION
-  // =====================================================
+//////////////////////////////////////////////////////////////////
+// FX
+//////////////////////////////////////////////////////////////////
 
-  _stealOneVoice(){
+setChorusMix(v){
 
-    if(this.activeVoices.length===0)
-      return null;
+this.fx.chorusMix = this._clamp01(v)
 
-    let idx=0;
-    let oldest=this.activeVoices[0].startedAt;
+if(this.chorus)
+this.chorus.setMix(this.fx.chorusMix)
 
-    for(let i=1;i<this.activeVoices.length;i++){
+}
 
-      if(this.activeVoices[i].startedAt<oldest){
+setCrushAmt(v){this.fx.crushAmt=this._clamp01(v)}
+setDriveMix(v){this.fx.driveMix=this._clamp01(v)}
+setCompAmt(v){this.fx.compAmt=this._clamp01(v)}
+setReverbMix(v){this.fx.reverbMix=this._clamp01(v)}
 
-        oldest=this.activeVoices[i].startedAt;
-        idx=i;
+//////////////////////////////////////////////////////////////////
+// VOICE MANAGEMENT
+//////////////////////////////////////////////////////////////////
 
-      }
+_stealOneVoice(){
 
-    }
+if(this.activeVoices.length===0)
+return null
 
-    const stolen=this.activeVoices.splice(idx,1)[0];
+let idx=0
+let oldest=this.activeVoices[0].startedAt
 
-    try{stolen.voice.noteOff()}catch{}
+for(let i=1;i<this.activeVoices.length;i++){
 
-    return stolen;
+if(this.activeVoices[i].startedAt<oldest){
 
-  }
+oldest=this.activeVoices[i].startedAt
+idx=i
 
-  _configureNewVoice(v){
+}
 
-    v.setDrive?.(this.driveAmount)
-    v.setWave?.(this.oscWave)
-    v.setPWM?.(this.pwmPct)
+}
 
-    v.setFilter?.(
-      this.cutoff,
-      this.resonance,
-      this.filterEnvAmt
-    )
+const stolen=this.activeVoices.splice(idx,1)[0]
 
-    v.setADSR?.(
-      this.adsrMs.a,
-      this.adsrMs.d,
-      this.adsrMs.s,
-      this.adsrMs.r
-    )
+try{stolen.voice.noteOff()}catch{}
 
-    v.setGlide?.(this.glideTime)
+return stolen
 
-  }
+}
 
-  _allocateVoice(note){
+_configureNewVoice(v){
 
-    while(this.activeVoices.length>=this.polyphony){
+v.setDrive?.(this.driveAmount)
+v.setWave?.(this.oscWave)
+v.setPWM?.(this.pwmPct)
 
-      this._stealOneVoice()
+v.setFilter?.(
+this.cutoff,
+this.resonance,
+this.filterEnvAmt
+)
 
-    }
+v.setADSR?.(
+this.adsrMs.a,
+this.adsrMs.d,
+this.adsrMs.s,
+this.adsrMs.r
+)
 
-    const v=new Voice(this.ctx)
+v.setGlide?.(this.glideTime)
 
-    this._configureNewVoice(v)
+}
 
-    v.connect(this.master)
+_allocateVoice(note){
 
-    const entry={
-      voice:v,
-      note,
-      startedAt:this.getCurrentTime()
-    }
+while(this.activeVoices.length>=this.polyphony){
 
-    this.activeVoices.push(entry)
+this._stealOneVoice()
 
-    return entry
+}
 
-  }
+const v = new Voice(this.ctx)
 
-  _applyToActiveVoices(fn){
+this._configureNewVoice(v)
 
-    for(const e of this.activeVoices){
+v.connect(this.master)
 
-      try{fn(e.voice)}catch{}
+const entry={
+voice:v,
+note,
+startedAt:this.getCurrentTime()
+}
 
-    }
+this.activeVoices.push(entry)
 
-  }
+return entry
 
-  _clamp01(x){
+}
 
-    return Math.max(0,Math.min(1,Number(x)||0))
+_applyToActiveVoices(fn){
 
-  }
+for(const e of this.activeVoices){
 
-  // =====================================================
-  // NOTE API
-  // =====================================================
+try{fn(e.voice)}catch{}
 
-  noteOn(note,vel=1){
+}
 
-    this.resume()
+}
 
-    const velocity=this._clamp01(vel)
+_clamp01(x){
 
-    const u=this.unisonVoices
-    const center=(u-1)/2
+return Math.max(0,Math.min(1,Number(x)||0))
 
-    const created=[]
+}
 
-    for(let i=0;i<u;i++){
+//////////////////////////////////////////////////////////////////
+// NOTE API
+//////////////////////////////////////////////////////////////////
 
-      const entry=this._allocateVoice(note)
+noteOn(note,vel=1){
 
-      const spread=(i-center)*this.unisonDetune
+this.resume()
 
-      try{
-        entry.voice.saw?.detune
-          ?.setValueAtTime(
-            spread,
-            this.getCurrentTime()
-          )
-      }catch{}
+const velocity=this._clamp01(vel)
 
-      try{
-        entry.voice.pulse?.detune
-          ?.setValueAtTime(
-            spread,
-            this.getCurrentTime()
-          )
-      }catch{}
+const u=this.unisonVoices
+const center=(u-1)/2
 
-      entry.voice.noteOn(note,velocity)
+const created=[]
 
-      created.push(entry.voice)
+for(let i=0;i<u;i++){
 
-    }
+const entry=this._allocateVoice(note)
 
-    return created
+const spread=(i-center)*this.unisonDetune
 
-  }
+try{
+entry.voice.saw?.detune
+?.setValueAtTime(
+spread,
+this.getCurrentTime()
+)
+}catch{}
 
-  noteOff(note){
+try{
+entry.voice.pulse?.detune
+?.setValueAtTime(
+spread,
+this.getCurrentTime()
+)
+}catch{}
 
-    const remaining=[]
+entry.voice.noteOn(note,velocity)
 
-    for(const e of this.activeVoices){
+created.push(entry.voice)
 
-      if(e.note===note){
+}
 
-        try{e.voice.noteOff()}catch{}
+return created
 
-      }else{
+}
 
-        remaining.push(e)
+noteOff(note){
 
-      }
+const remaining=[]
 
-    }
+for(const e of this.activeVoices){
 
-    this.activeVoices=remaining
+if(e.note===note){
 
-  }
+try{e.voice.noteOff()}catch{}
 
-  // =====================================================
-  // SEQUENCER SCHEDULING
-  // =====================================================
+}else{
 
-  playNoteAt(note,time,vel=1,duration=.2){
+remaining.push(e)
 
-    const t=Math.max(
-      this.getCurrentTime(),
-      time
-    )
+}
 
-    const delay=(t-this.getCurrentTime())*1000
+}
 
-    setTimeout(()=>{
+this.activeVoices=remaining
 
-      const voices=this.noteOn(note,vel)
+}
 
-      setTimeout(()=>{
+//////////////////////////////////////////////////////////////////
+// SEQUENCER SCHEDULING
+//////////////////////////////////////////////////////////////////
 
-        voices.forEach(v=>{
-          try{v.noteOff()}catch{}
-        })
+playNoteAt(note,time,vel=1,duration=.2){
 
-      },duration*1000)
+const t=Math.max(
+this.getCurrentTime(),
+time
+)
 
-    },Math.max(0,delay))
+const delay=(t-this.getCurrentTime())*1000
 
-  }
+setTimeout(()=>{
 
-  playChordAt(notes,time,vel=1,duration=.3){
+const voices=this.noteOn(note,vel)
 
-    (notes||[])
-      .forEach(n=>
-        this.playNoteAt(n,time,vel,duration)
-      )
+setTimeout(()=>{
 
-  }
+voices.forEach(v=>{
+try{v.noteOff()}catch{}
+})
+
+},duration*1000)
+
+},Math.max(0,delay))
+
+}
+
+playChordAt(notes,time,vel=1,duration=.3){
+
+(notes||[])
+.forEach(n=>
+this.playNoteAt(n,time,vel,duration)
+)
+
+}
 
 }
