@@ -1,27 +1,15 @@
 import { SynthEngine } from "./audio/SynthEngine.js";
+import { Sequencer } from "./sequencer/Sequencer.js";
+import { UI } from "./ui/UI.js";
 
 const synth = new SynthEngine();
-
 await synth.init();
 
-window.addEventListener("pointerdown", () => synth.resume());
+const seq = new Sequencer(synth, (step) => ui.onStepChange(step));
 
-document.addEventListener("keydown", e => {
+const ui = new UI(synth, seq);
 
-  const noteMap = {
-    a:60,
-    s:62,
-    d:64,
-    f:65,
-    g:67,
-    h:69,
-    j:71,
-    k:72
-  };
+// Important sur mobile : unlock audio au premier geste
+window.addEventListener("pointerdown", () => synth.resume(), { once: true });
 
-  const note = noteMap[e.key];
-
-  if(note)
-    synth.noteOn(note);
-
-});
+ui.init();
