@@ -12,28 +12,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
 
-  <!-- Theme CSS (reuse your sampler style.css) -->
   <link rel="stylesheet" href="css/style.css" />
-
-  <!-- Optional small CSS patch for step note labels + accent outline -->
-  <style>
-    .seq-step .step-note{
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      width:100%;
-      height:100%;
-      color: rgba(255,255,255,.92);
-      pointer-events:none;
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 10px;
-      letter-spacing: .02em;
-    }
-    .seq-step.accent{
-      outline: 2px solid var(--accent-tertiary);
-      outline-offset: -2px;
-    }
-  </style>
 </head>
 
 <body>
@@ -55,20 +34,27 @@
       </div>
     </header>
 
-    <!-- Synth Section (same layout style as your sampler FX section) -->
-    <section class="effects-section">
+    <!-- Synth section -->
+    <section class="synth-section">
       <div class="section-header">
         <h2>Synth</h2>
-        <div class="presets-container" aria-label="Synth presets">
-          <button class="preset-btn active" data-synth-preset="JUNO" type="button">JUNO</button>
-          <button class="preset-btn" data-synth-preset="SOFT" type="button">SOFT</button>
-          <button class="preset-btn" data-synth-preset="BASS" type="button">BASS</button>
-          <button class="preset-btn" data-synth-preset="PLUCK" type="button">PLUCK</button>
-        </div>
+        <span class="hint" id="synth-hint">Poly · Juno-ish · Touch friendly</span>
       </div>
 
       <div class="section-content">
         <div class="effects-grid">
+
+          <div class="effect-control">
+            <div class="effect-label">
+              <label for="osc-wave">Wave</label>
+              <span class="effect-value" id="osc-wave-val">SAW</span>
+            </div>
+            <div class="segmented" role="group" aria-label="Waveform">
+              <button type="button" class="seg-btn active" data-wave="SAW">SAW</button>
+              <button type="button" class="seg-btn" data-wave="PULSE">PULSE</button>
+              <button type="button" class="seg-btn" data-wave="TRI">TRI</button>
+            </div>
+          </div>
 
           <div class="effect-control">
             <div class="effect-label">
@@ -83,23 +69,23 @@
 
           <div class="effect-control">
             <div class="effect-label">
-              <label for="envAmt">Env Amt</label>
-              <span class="effect-value" id="envAmt-val">1.2k</span>
-            </div>
-            <div class="slider-container">
-              <div class="slider-fill" id="envAmt-fill"></div>
-              <input type="range" id="envAmt" min="0" max="6000" value="1200" step="1" />
-            </div>
-          </div>
-
-          <div class="effect-control">
-            <div class="effect-label">
               <label for="res">Res</label>
               <span class="effect-value" id="res-val">0.12</span>
             </div>
             <div class="slider-container">
               <div class="slider-fill" id="res-fill"></div>
               <input type="range" id="res" min="0" max="0.95" value="0.12" step="0.01" />
+            </div>
+          </div>
+
+          <div class="effect-control">
+            <div class="effect-label">
+              <label for="envAmt">Env Amt</label>
+              <span class="effect-value" id="envAmt-val">1.2k</span>
+            </div>
+            <div class="slider-container">
+              <div class="slider-fill" id="envAmt-fill"></div>
+              <input type="range" id="envAmt" min="0" max="6000" value="1200" step="1" />
             </div>
           </div>
 
@@ -127,6 +113,17 @@
 
           <div class="effect-control">
             <div class="effect-label">
+              <label for="sustain">Sustain</label>
+              <span class="effect-value" id="sustain-val">0.70</span>
+            </div>
+            <div class="slider-container">
+              <div class="slider-fill" id="sustain-fill"></div>
+              <input type="range" id="sustain" min="0" max="1" value="0.7" step="0.01" />
+            </div>
+          </div>
+
+          <div class="effect-control">
+            <div class="effect-label">
               <label for="release">Release</label>
               <span class="effect-value" id="release-val">120ms</span>
             </div>
@@ -138,34 +135,12 @@
 
           <div class="effect-control">
             <div class="effect-label">
-              <label for="waveMix">WaveMix</label>
-              <span class="effect-value" id="waveMix-val">0.65</span>
+              <label for="master">Master</label>
+              <span class="effect-value" id="master-val">90%</span>
             </div>
             <div class="slider-container">
-              <div class="slider-fill" id="waveMix-fill"></div>
-              <input type="range" id="waveMix" min="0" max="1" value="0.65" step="0.01" />
-            </div>
-          </div>
-
-          <div class="effect-control">
-            <div class="effect-label">
-              <label for="sub">Sub</label>
-              <span class="effect-value" id="sub-val">0.25</span>
-            </div>
-            <div class="slider-container">
-              <div class="slider-fill" id="sub-fill"></div>
-              <input type="range" id="sub" min="0" max="1" value="0.25" step="0.01" />
-            </div>
-          </div>
-
-          <div class="effect-control">
-            <div class="effect-label">
-              <label for="noise">Noise</label>
-              <span class="effect-value" id="noise-val">0.030</span>
-            </div>
-            <div class="slider-container">
-              <div class="slider-fill" id="noise-fill"></div>
-              <input type="range" id="noise" min="0" max="0.25" value="0.03" step="0.001" />
+              <div class="slider-fill" id="master-fill"></div>
+              <input type="range" id="master" min="0" max="100" value="90" step="1" />
             </div>
           </div>
 
@@ -173,58 +148,7 @@
       </div>
     </section>
 
-    <!-- Chorus Section -->
-    <section class="effects-section">
-      <div class="section-header">
-        <h2>Chorus</h2>
-        <div class="presets-container" aria-label="Chorus mode">
-          <button class="preset-btn active" data-chorus-mode="I" type="button">I</button>
-          <button class="preset-btn" data-chorus-mode="II" type="button">II</button>
-          <button class="preset-btn" data-chorus-mode="OFF" type="button">OFF</button>
-        </div>
-      </div>
-
-      <div class="section-content">
-        <div class="effects-grid">
-
-          <div class="effect-control">
-            <div class="effect-label">
-              <label for="chorusRate">Rate</label>
-              <span class="effect-value" id="chorusRate-val">0.80Hz</span>
-            </div>
-            <div class="slider-container">
-              <div class="slider-fill" id="chorusRate-fill"></div>
-              <input type="range" id="chorusRate" min="0.05" max="6" value="0.8" step="0.01" />
-            </div>
-          </div>
-
-          <div class="effect-control">
-            <div class="effect-label">
-              <label for="chorusDepth">Depth</label>
-              <span class="effect-value" id="chorusDepth-val">9.0ms</span>
-            </div>
-            <div class="slider-container">
-              <div class="slider-fill" id="chorusDepth-fill"></div>
-              <input type="range" id="chorusDepth" min="0" max="25" value="9" step="0.1" />
-            </div>
-          </div>
-
-          <div class="effect-control">
-            <div class="effect-label">
-              <label for="chorusMix">Mix</label>
-              <span class="effect-value" id="chorusMix-val">45%</span>
-            </div>
-            <div class="slider-container">
-              <div class="slider-fill" id="chorusMix-fill"></div>
-              <input type="range" id="chorusMix" min="0" max="100" value="45" step="1" />
-            </div>
-          </div>
-
-        </div>
-      </div>
-    </section>
-
-    <!-- Sequencer Section -->
+    <!-- Sequencer section -->
     <section class="sequencer-section">
       <div class="section-header">
         <h2>Sequencer</h2>
@@ -232,8 +156,8 @@
       </div>
 
       <div class="section-content">
-
         <div class="sequencer-controls">
+
           <div class="transport">
             <button id="play-btn" class="transport-btn" type="button">
               <svg viewBox="0 0 24 24"><polygon points="5,3 19,12 5,21"/></svg>
@@ -246,6 +170,15 @@
                 <line x1="6" y1="6" x2="18" y2="18" stroke="currentColor" stroke-width="2"/>
               </svg>
               CLEAR
+            </button>
+
+            <button id="met-btn" class="transport-btn" type="button">
+              <svg viewBox="0 0 24 24">
+                <path d="M6 20h12" fill="none" stroke="currentColor" stroke-width="2"/>
+                <path d="M9 20l2-16h2l2 16" fill="none" stroke="currentColor" stroke-width="2"/>
+                <path d="M12 6l6 4" fill="none" stroke="currentColor" stroke-width="2"/>
+              </svg>
+              MET
             </button>
           </div>
 
@@ -265,13 +198,10 @@
         <!-- Step numbers -->
         <div class="seq-header" id="seq-header"></div>
 
-        <!-- Grid generated by UI.js -->
+        <!-- Grid generated by UI.js later -->
         <div class="sequencer-grid" id="sequencer-grid"></div>
 
-        <!-- Humanize -->
-        <div style="height:16px"></div>
-
-        <div class="effects-grid">
+        <div class="subgrid">
           <div class="effect-control">
             <div class="effect-label">
               <label for="humanize">Human</label>
@@ -296,12 +226,14 @@
 
           <div class="effect-control">
             <div class="effect-label">
-              <label for="master">Master</label>
-              <span class="effect-value" id="master-val">90%</span>
+              <label for="scale-root">Root</label>
+              <span class="effect-value" id="scale-root-val">A</span>
             </div>
-            <div class="slider-container">
-              <div class="slider-fill" id="master-fill"></div>
-              <input type="range" id="master" min="0" max="100" value="90" step="1" />
+            <div class="segmented" role="group" aria-label="Scale Root">
+              <button type="button" class="seg-btn" data-root="C">C</button>
+              <button type="button" class="seg-btn" data-root="D">D</button>
+              <button type="button" class="seg-btn" data-root="E">E</button>
+              <button type="button" class="seg-btn active" data-root="A">A</button>
             </div>
           </div>
         </div>
@@ -309,14 +241,97 @@
       </div>
     </section>
 
-    <!-- Footer -->
+    <!-- FX section (placeholders, actual DSP later) -->
+    <section class="effects-section">
+      <div class="section-header">
+        <h2>FX</h2>
+        <div class="presets-container">
+          <button class="preset-btn active" data-fx-preset="JUNO" type="button">JUNO</button>
+          <button class="preset-btn" data-fx-preset="DIRTY" type="button">DIRTY</button>
+          <button class="preset-btn" data-fx-preset="CLEAN" type="button">CLEAN</button>
+        </div>
+      </div>
+
+      <div class="section-content">
+        <div class="effects-grid">
+
+          <div class="effect-control">
+            <div class="effect-label">
+              <label for="chorusMix">Chorus</label>
+              <span class="effect-value" id="chorusMix-val">45%</span>
+            </div>
+            <div class="slider-container">
+              <div class="slider-fill" id="chorusMix-fill"></div>
+              <input type="range" id="chorusMix" min="0" max="100" value="45" step="1" />
+            </div>
+          </div>
+
+          <div class="effect-control">
+            <div class="effect-label">
+              <label for="drive">Drive</label>
+              <span class="effect-value" id="drive-val">12</span>
+            </div>
+            <div class="slider-container">
+              <div class="slider-fill" id="drive-fill"></div>
+              <input type="range" id="drive" min="0" max="100" value="12" step="1" />
+            </div>
+          </div>
+
+          <div class="effect-control">
+            <div class="effect-label">
+              <label for="crush">Crush</label>
+              <span class="effect-value" id="crush-val">0</span>
+            </div>
+            <div class="slider-container">
+              <div class="slider-fill" id="crush-fill"></div>
+              <input type="range" id="crush" min="0" max="100" value="0" step="1" />
+            </div>
+          </div>
+
+          <div class="effect-control">
+            <div class="effect-label">
+              <label for="reverb">Reverb</label>
+              <span class="effect-value" id="reverb-val">18%</span>
+            </div>
+            <div class="slider-container">
+              <div class="slider-fill" id="reverb-fill"></div>
+              <input type="range" id="reverb" min="0" max="100" value="18" step="1" />
+            </div>
+          </div>
+
+          <div class="effect-control">
+            <div class="effect-label">
+              <label for="comp">Comp</label>
+              <span class="effect-value" id="comp-val">25</span>
+            </div>
+            <div class="slider-container">
+              <div class="slider-fill" id="comp-fill"></div>
+              <input type="range" id="comp" min="0" max="100" value="25" step="1" />
+            </div>
+          </div>
+
+          <div class="effect-control">
+            <div class="effect-label">
+              <label for="mix">FX Mix</label>
+              <span class="effect-value" id="mix-val">35%</span>
+            </div>
+            <div class="slider-container">
+              <div class="slider-fill" id="mix-fill"></div>
+              <input type="range" id="mix" min="0" max="100" value="35" step="1" />
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
     <footer class="sampler-footer">
-      <p>Desktop: Ctrl+click = Accent · Long press / double tap sur mobile</p>
+      <p>AKOMGA · WebAudio · Poly Synth · Minor Scale Seq</p>
     </footer>
 
   </div>
 
-  <!-- Entry -->
+  <!-- Placeholder: you will add js/main.js later -->
   <script type="module" src="js/main.js"></script>
 </body>
 </html>
