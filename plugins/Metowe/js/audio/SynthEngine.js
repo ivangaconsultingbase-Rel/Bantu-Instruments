@@ -3,8 +3,9 @@
  * Polyphonic synth engine
  *
  * PATCH:
- * - coalesce filter param updates (prevents crackles when lots of voices)
- * - chorus mix live
+ * - EcoFilter mode (auto on mobile)
+ * - Less CPU pressure (mobile-friendly defaults)
+ * - Chorus mix live
  */
 
 import { Voice } from "./Voice.js";
@@ -14,7 +15,17 @@ export class SynthEngine {
   constructor() {
     this.ctx = null;
 
-    this.polyphony = 8;
+    // Auto detect mobile-ish (good enough for Safari iOS)
+    this.isMobile = (("ontouchstart" in window) ||
+      (navigator.maxTouchPoints > 0) ||
+      window.matchMedia?.("(hover: none)")?.matches);
+
+    // ✅ Eco ON by default on mobile
+    this.ecoMode = !!this.isMobile;
+
+    // Polyphony (reduce on mobile to avoid crackles)
+    this.polyphony = this.ecoMode ? 6 : 8;
+
     this.activeVoices = [];
 
     this.master = null;
@@ -48,7 +59,7 @@ export class SynthEngine {
       reverbMix: 0,
     };
 
-    // ✅ defer flags (coalesce)
+    // coalesce apply flags
     this._pendingFilterApply = false;
     this._pendingOscApply = false;
     this._pendingEnvApply = false;
@@ -60,7 +71,7 @@ export class SynthEngine {
     this.ctx = new (window.AudioContext || window.webkitAudioContext)();
 
     this.master = this.ctx.createGain();
-    this.master.gain.value = 0.85; // ✅ un poil moins fort
+    this.master.gain.value = this.ecoMode ? 0.80 : 0.85;
 
     this.chorus = new JunoChorus(this.ctx);
     this.chorus.setMix?.(this.fx.chorusMix);
@@ -77,12 +88,24 @@ export class SynthEngine {
     return this.ctx?.currentTime || 0;
   }
 
+  // ✅ allow manual toggle
+  setEcoMode(on) {
+    this.ecoMode = !!on;
+
+    // adjust polyphony immediately (don’t kill current voices)
+    this.polyphony = this.ecoMode ? 6 : 8;
+
+    // Optional: cap unison in eco
+    if (this.ecoMode && this.unisonVoices > 3) this.unisonVoices = 3;
+  }
+
   //////////////////////////////////////////////////////////////
   // UNISON
   //////////////////////////////////////////////////////////////
 
   setUnisonVoices(n) {
-    this.unisonVoices = Math.max(1, Math.min(6, parseInt(n) || 1));
+    const wanted = Math.max(1, Math.min(6, parseInt(n) || 1));
+    this.unisonVoices = this.ecoMode ? Math.min(3, wanted) : wanted;
   }
 
   setUnisonDetune(c) {
@@ -113,8 +136,7 @@ export class SynthEngine {
 
   setOscWave(mode) {
     const m = String(mode || "").toLowerCase();
-    const ok = m === "saw" || m === "pulse" || m === "mix" ? m : "saw";
-    this.oscWave = ok;
+    this.oscWave = (m === "saw" || m === "pulse" || m === "mix") ? m : "saw";
     this._deferOscApply();
   }
 
@@ -122,8 +144,7 @@ export class SynthEngine {
     let x = Number(pct);
     if (!Number.isFinite(x)) x = 50;
     if (x <= 1.001 && x >= 0) x *= 100;
-    x = Math.max(0, Math.min(100, x));
-    this.pwmPct = x;
+    this.pwmPct = Math.max(0, Math.min(100, x));
     this._deferOscApply();
   }
 
@@ -141,7 +162,7 @@ export class SynthEngine {
   }
 
   //////////////////////////////////////////////////////////////
-  // FILTER (✅ coalesced)
+  // FILTER (coalesced)
   //////////////////////////////////////////////////////////////
 
   setCutoff(hz) {
@@ -172,7 +193,7 @@ export class SynthEngine {
   }
 
   //////////////////////////////////////////////////////////////
-  // ADSR (coalesce too)
+  // ADSR (coalesced)
   //////////////////////////////////////////////////////////////
 
   setADSR(a, d, s, r) {
@@ -245,7 +266,8 @@ export class SynthEngine {
   _allocateVoice(note) {
     while (this.activeVoices.length >= this.polyphony) this._stealOneVoice();
 
-    const v = new Voice(this.ctx);
+    // ✅ pass eco mode to Voice
+    const v = new Voice(this.ctx, { useEcoFilter: this.ecoMode });
     this._configureNewVoice(v);
 
     v.connect(this.master);
@@ -296,7 +318,6 @@ export class SynthEngine {
 
   noteOff(note) {
     const remaining = [];
-
     for (const e of this.activeVoices) {
       if (e.note === note) {
         try { e.voice.noteOff(); } catch {}
@@ -304,7 +325,6 @@ export class SynthEngine {
         remaining.push(e);
       }
     }
-
     this.activeVoices = remaining;
   }
 
@@ -318,11 +338,8 @@ export class SynthEngine {
 
     setTimeout(() => {
       const voices = this.noteOn(note, vel);
-
       setTimeout(() => {
-        voices.forEach((v) => {
-          try { v.noteOff(); } catch {}
-        });
+        voices.forEach((v) => { try { v.noteOff(); } catch {} });
       }, duration * 1000);
     }, Math.max(0, delay));
   }
