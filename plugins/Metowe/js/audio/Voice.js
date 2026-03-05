@@ -1,322 +1,390 @@
 /**
  * Voice.js
- * Voix polyphonique type "Juno-ish" (simplifiée)
- * - OSC: SAW + PULSE (PWM)
- * - MIX wave: saw / pulse / mix
- * - VCF: biquad LP + env amount
- * - AMP ADSR
- * - Drive: waveshaper soft clip
+ * Juno-style poly voice
  *
- * IMPORTANT: expose this.saw and this.pulse OscillatorNodes
- * pour compatibilité avec SynthEngine qui fait:
- *   voice.saw.detune.setValueAtTime(...)
- *   voice.pulse.detune.setValueAtTime(...)
+ * PATCHES:
+ * - JunoFilter integration
+ * - Portamento / glide
+ * - PWM stable update
  */
 
+import { JunoFilter } from "./filters/JunoFilter.js";
+
 export class Voice {
-  constructor(ctx) {
+
+  constructor(ctx){
+
     this.ctx = ctx;
 
-    // -------- params (defaults) --------
-    this.wave = 'saw'; // 'saw' | 'pulse' | 'mix'
-    this.pwmDuty = 0.5; // 0.05..0.95 (duty cycle)
-    this.driveAmount = 2.0;
+    // -------- params --------
 
-    // Filter
-    this.cutoff = 2400;        // Hz
-    this.resonance = 0.15;     // 0..1 mapped to Q
-    this.filterEnvAmt = 0.35;  // 0..1
+    this.wave = 'saw';
+    this.pwmDuty = 0.5;
 
-    // ADSR (seconds)
+    this.driveAmount = 2;
+
+    this.cutoff = 2400;
+    this.resonance = 0.15;
+    this.filterEnvAmt = 0.35;
+
+    this.glideTime = 0.04;
+
     this.adsr = {
-      a: 0.01,
-      d: 0.25,
-      s: 0.70,
-      r: 0.50,
-    };
+      a:0.01,
+      d:0.25,
+      s:0.7,
+      r:0.5
+    }
 
     // -------- graph --------
-    this.output = ctx.createGain();
 
-    this.amp = ctx.createGain();
-    this.amp.gain.value = 0.0001;
+    this.output = ctx.createGain()
 
-    this.filter = ctx.createBiquadFilter();
-    this.filter.type = 'lowpass';
+    this.amp = ctx.createGain()
+    this.amp.gain.value = 0.0001
 
-    this.drive = ctx.createWaveShaper();
-    this.drive.oversample = '2x';
-    this._updateDriveCurve();
+    this.filter = new JunoFilter(ctx)
 
-    // OSC mixer
-    this.sawGain = ctx.createGain();
-    this.pulseGain = ctx.createGain();
+    this.drive = ctx.createWaveShaper()
+    this.drive.oversample = "2x"
 
-    this.sawGain.gain.value = 1;
-    this.pulseGain.gain.value = 0;
+    this._updateDriveCurve()
 
-    // routing: (osc -> mix) -> filter -> drive -> amp -> output
-    this.sawGain.connect(this.filter);
-    this.pulseGain.connect(this.filter);
-    this.filter.connect(this.drive);
-    this.drive.connect(this.amp);
-    this.amp.connect(this.output);
+    this.sawGain = ctx.createGain()
+    this.pulseGain = ctx.createGain()
+
+    this.sawGain.gain.value = 1
+    this.pulseGain.gain.value = 0
+
+    // routing
+
+    this.sawGain.connect(this.filter.input)
+    this.pulseGain.connect(this.filter.input)
+
+    this.filter.connect(this.drive)
+    this.drive.connect(this.amp)
+    this.amp.connect(this.output)
 
     // runtime
-    this.saw = null;   // OscillatorNode
-    this.pulse = null; // OscillatorNode (PeriodicWave pulse)
-    this.note = null;
-    this._isOn = false;
-    this._lastFreq = 440;
+
+    this.saw = null
+    this.pulse = null
+
+    this.note = null
+    this._isOn = false
+
+    this._lastFreq = 440
+
   }
 
-  connect(node) {
-    this.output.connect(node);
+  connect(node){
+    this.output.connect(node)
   }
 
-  disconnect() {
-    try { this.output.disconnect(); } catch {}
+  disconnect(){
+    try{this.output.disconnect()}catch{}
   }
 
   // -----------------------
-  // PARAM SETTERS
+  // PARAMS
   // -----------------------
-  setWave(mode) {
-    const m = (mode || '').toLowerCase();
-    this.wave = (m === 'pulse' || m === 'mix' || m === 'saw') ? m : 'saw';
-    this._applyWaveMix();
+
+  setWave(mode){
+
+    const m = (mode || "").toLowerCase()
+
+    this.wave =
+      (m==="pulse"||m==="mix"||m==="saw")
+        ? m
+        : "saw"
+
+    this._applyWaveMix()
+
   }
 
-  setPWM(pct01_or_0_100) {
-    // accept 0..100 or 0..1
-    let x = Number(pct01_or_0_100);
-    if (!Number.isFinite(x)) x = 50;
+  setPWM(pct){
 
-    if (x > 1.001) x = x / 100;
-    x = Math.max(0, Math.min(1, x));
+    let x = Number(pct)
 
-    // duty 5%..95% to avoid degenerate wave
-    const duty = 0.05 + 0.90 * x;
-    this.pwmDuty = duty;
+    if(x>1)x/=100
 
-    if (this.pulse) {
-      try {
-        this.pulse.setPeriodicWave(this._makePulseWave(this.pwmDuty));
-      } catch {}
+    x=Math.max(0,Math.min(1,x))
+
+    this.pwmDuty = 0.05 + x*0.9
+
+    if(this.pulse){
+      this.pulse.setPeriodicWave(
+        this._makePulseWave(this.pwmDuty)
+      )
     }
+
   }
 
-  setDrive(amount) {
-    this.driveAmount = Math.max(0, Number(amount) || 0);
-    this._updateDriveCurve();
+  setDrive(amount){
+
+    this.driveAmount = Math.max(0,Number(amount)||0)
+
+    this._updateDriveCurve()
+
   }
 
-  setFilter(cutoffHz, resonance01, envAmt01) {
-    if (cutoffHz != null) this.cutoff = Math.max(80, Math.min(12000, Number(cutoffHz) || 2400));
-    if (resonance01 != null) this.resonance = Math.max(0, Math.min(1, Number(resonance01) || 0));
-    if (envAmt01 != null) this.filterEnvAmt = Math.max(0, Math.min(1, Number(envAmt01) || 0));
+  setFilter(cut,res,env){
+
+    if(cut!=null){
+      this.cutoff = Math.max(80,Math.min(12000,cut))
+      this.filter.setCutoff(this.cutoff)
+    }
+
+    if(res!=null){
+      this.resonance = Math.max(0,Math.min(1,res))
+      this.filter.setResonance(this.resonance)
+    }
+
+    if(env!=null){
+      this.filterEnvAmt = Math.max(0,Math.min(1,env))
+    }
+
   }
 
-  setADSR(aMs, dMs, sPct, rMs) {
-    const a = Math.max(0, Math.min(2000, Number(aMs) || 0)) / 1000;
-    const d = Math.max(0, Math.min(2000, Number(dMs) || 0)) / 1000;
-    const s = Math.max(0, Math.min(100, Number(sPct) || 0)) / 100;
-    const r = Math.max(0, Math.min(4000, Number(rMs) || 0)) / 1000;
+  setADSR(aMs,dMs,sPct,rMs){
 
-    this.adsr = { a, d, s, r };
+    const a = Math.max(0,Math.min(2000,aMs))/1000
+    const d = Math.max(0,Math.min(2000,dMs))/1000
+    const s = Math.max(0,Math.min(100,sPct))/100
+    const r = Math.max(0,Math.min(4000,rMs))/1000
+
+    this.adsr={a,d,s,r}
+
+  }
+
+  setGlide(sec){
+    this.glideTime = Math.max(0,Math.min(.3,sec))
   }
 
   // -----------------------
-  // NOTE ON/OFF
+  // NOTE ON
   // -----------------------
-  noteOn(midiNote, velocity = 1, when = this.ctx.currentTime) {
-    const t = Math.max(this.ctx.currentTime, when);
-    const vel = Math.max(0, Math.min(1, Number(velocity) || 0));
 
-    this.note = midiNote;
-    this._isOn = true;
+  noteOn(note,vel=1,when=this.ctx.currentTime){
 
-    const freq = this._midiToFreq(midiNote);
-    this._lastFreq = freq;
+    const t = Math.max(this.ctx.currentTime,when)
 
-    // create oscillators
-    this.saw = this.ctx.createOscillator();
-    this.saw.type = 'sawtooth';
-    this.saw.frequency.setValueAtTime(freq, t);
+    const velocity = Math.max(0,Math.min(1,vel))
 
-    this.pulse = this.ctx.createOscillator();
-    this.pulse.setPeriodicWave(this._makePulseWave(this.pwmDuty));
-    this.pulse.frequency.setValueAtTime(freq, t);
+    this.note = note
+    this._isOn = true
 
-    // connect to mixer
-    this.saw.connect(this.sawGain);
-    this.pulse.connect(this.pulseGain);
+    const freq = this._midiToFreq(note)
 
-    // filter base
-    this._applyFilterAt(t);
+    // OSC
 
-    // envelopes
-    this._applyAmpEnvAt(t, vel);
-    this._applyFilterEnvAt(t);
+    this.saw = this.ctx.createOscillator()
+    this.saw.type="sawtooth"
 
-    // start
-    this.saw.start(t);
-    this.pulse.start(t);
+    this.pulse = this.ctx.createOscillator()
+    this.pulse.setPeriodicWave(
+      this._makePulseWave(this.pwmDuty)
+    )
+
+    // PORTAMENTO
+
+    if(this.glideTime>0){
+
+      this.saw.frequency.setTargetAtTime(freq,t,this.glideTime)
+      this.pulse.frequency.setTargetAtTime(freq,t,this.glideTime)
+
+    }else{
+
+      this.saw.frequency.setValueAtTime(freq,t)
+      this.pulse.frequency.setValueAtTime(freq,t)
+
+    }
+
+    this.saw.connect(this.sawGain)
+    this.pulse.connect(this.pulseGain)
+
+    this._applyWaveMix()
+
+    this._applyFilterAt(t)
+
+    this._applyAmpEnvAt(t,velocity)
+
+    this._applyFilterEnvAt(t)
+
+    this.saw.start(t)
+    this.pulse.start(t)
+
   }
 
-  noteOff(when = this.ctx.currentTime) {
-    if (!this._isOn) return;
+  noteOff(when=this.ctx.currentTime){
 
-    const t = Math.max(this.ctx.currentTime, when);
-    this._isOn = false;
+    if(!this._isOn)return
 
-    const r = this.adsr.r;
+    const t = Math.max(this.ctx.currentTime,when)
 
-    // amp release
-    try {
-      this.amp.gain.cancelScheduledValues(t);
-      // start from current value to avoid clicks
-      const current = this.amp.gain.value;
-      this.amp.gain.setValueAtTime(Math.max(0.0001, current), t);
-      this.amp.gain.exponentialRampToValueAtTime(0.0001, t + Math.max(0.01, r));
-    } catch {}
+    this._isOn=false
 
-    // stop OSC after release
-    const stopT = t + Math.max(0.05, r) + 0.02;
-    try { this.saw?.stop(stopT); } catch {}
-    try { this.pulse?.stop(stopT); } catch {}
+    const r = this.adsr.r
 
-    // cleanup
-    setTimeout(() => {
-      try { this.saw?.disconnect(); } catch {}
-      try { this.pulse?.disconnect(); } catch {}
-      this.saw = null;
-      this.pulse = null;
-    }, Math.max(0, (stopT - this.ctx.currentTime) * 1000) + 10);
+    try{
+
+      this.amp.gain.cancelScheduledValues(t)
+
+      const current = this.amp.gain.value
+
+      this.amp.gain.setValueAtTime(current,t)
+
+      this.amp.gain.exponentialRampToValueAtTime(
+        0.0001,
+        t+Math.max(.01,r)
+      )
+
+    }catch{}
+
+    const stopT = t + r + .03
+
+    try{this.saw?.stop(stopT)}catch{}
+    try{this.pulse?.stop(stopT)}catch{}
+
+    setTimeout(()=>{
+
+      try{this.saw?.disconnect()}catch{}
+      try{this.pulse?.disconnect()}catch{}
+
+      this.saw=null
+      this.pulse=null
+
+    },(stopT-this.ctx.currentTime)*1000+10)
+
   }
 
   // -----------------------
   // INTERNALS
   // -----------------------
-  _applyWaveMix() {
-    // smooth-ish (no hard pop)
-    const t = this.ctx.currentTime;
-    const fade = 0.01;
 
-    let saw = 1, pulse = 0;
-    if (this.wave === 'pulse') { saw = 0; pulse = 1; }
-    if (this.wave === 'mix') { saw = 0.7; pulse = 0.7; }
+  _applyWaveMix(){
 
-    try {
-      this.sawGain.gain.cancelScheduledValues(t);
-      this.pulseGain.gain.cancelScheduledValues(t);
+    const t=this.ctx.currentTime
 
-      this.sawGain.gain.setTargetAtTime(saw, t, fade);
-      this.pulseGain.gain.setTargetAtTime(pulse, t, fade);
-    } catch {
-      this.sawGain.gain.value = saw;
-      this.pulseGain.gain.value = pulse;
-    }
+    let saw=1
+    let pulse=0
+
+    if(this.wave==="pulse"){saw=0;pulse=1}
+    if(this.wave==="mix"){saw=.7;pulse=.7}
+
+    this.sawGain.gain.setTargetAtTime(saw,t,.01)
+    this.pulseGain.gain.setTargetAtTime(pulse,t,.01)
+
   }
 
-  _applyFilterAt(t) {
-    const cutoff = Math.max(80, Math.min(12000, this.cutoff));
-    const q = 0.5 + this.resonance * 18; // simple map
+  _applyFilterAt(t){
 
-    try {
-      this.filter.frequency.cancelScheduledValues(t);
-      this.filter.Q.cancelScheduledValues(t);
+    this.filter.setCutoff(this.cutoff)
 
-      this.filter.frequency.setValueAtTime(cutoff, t);
-      this.filter.Q.setValueAtTime(q, t);
-    } catch {}
+    this.filter.setResonance(this.resonance)
+
   }
 
-  _applyAmpEnvAt(t, velocity) {
-    const { a, d, s } = this.adsr;
+  _applyAmpEnvAt(t,velocity){
 
-    // peak gain depends on velocity (very gentle)
-    const peak = 0.12 + 0.88 * velocity; // 0.12..1
-    const sustain = Math.max(0.0001, peak * s);
+    const {a,d,s}=this.adsr
 
-    try {
-      this.amp.gain.cancelScheduledValues(t);
-      this.amp.gain.setValueAtTime(0.0001, t);
+    const peak=.12+.88*velocity
+    const sustain=Math.max(.0001,peak*s)
 
-      // Attack
-      const ta = t + Math.max(0.001, a);
-      this.amp.gain.exponentialRampToValueAtTime(Math.max(0.0002, peak), ta);
+    this.amp.gain.cancelScheduledValues(t)
 
-      // Decay -> sustain
-      const td = ta + Math.max(0.001, d);
-      this.amp.gain.exponentialRampToValueAtTime(Math.max(0.0001, sustain), td);
-    } catch {
-      this.amp.gain.value = peak;
-    }
+    this.amp.gain.setValueAtTime(.0001,t)
+
+    const ta=t+Math.max(.001,a)
+
+    this.amp.gain.exponentialRampToValueAtTime(
+      peak,
+      ta
+    )
+
+    const td=ta+Math.max(.001,d)
+
+    this.amp.gain.exponentialRampToValueAtTime(
+      sustain,
+      td
+    )
+
   }
 
-  _applyFilterEnvAt(t) {
-    const { a, d, s } = this.adsr;
+  _applyFilterEnvAt(t){
 
-    // env opens filter by a fraction of cutoff range
-    const base = Math.max(80, Math.min(12000, this.cutoff));
-    const maxExtra = 9000 * this.filterEnvAmt; // musical-ish
-    const peak = Math.max(80, Math.min(12000, base + maxExtra));
-    const sustain = Math.max(80, Math.min(12000, base + maxExtra * s));
+    const {a,d,s}=this.adsr
 
-    try {
-      this.filter.frequency.cancelScheduledValues(t);
-      this.filter.frequency.setValueAtTime(base, t);
+    const base=this.cutoff
 
-      const ta = t + Math.max(0.001, a);
-      this.filter.frequency.linearRampToValueAtTime(peak, ta);
+    const maxExtra=9000*this.filterEnvAmt
 
-      const td = ta + Math.max(0.001, d);
-      this.filter.frequency.linearRampToValueAtTime(sustain, td);
-    } catch {}
+    const peak=base+maxExtra
+
+    const sustain=base+(maxExtra*s)
+
+    const ta=t+a
+    const td=ta+d
+
+    this.filter.setCutoff(base)
+
+    setTimeout(()=>{
+      this.filter.setCutoff(peak)
+    },a*1000)
+
+    setTimeout(()=>{
+      this.filter.setCutoff(sustain)
+    },(a+d)*1000)
+
   }
 
-  _updateDriveCurve() {
-    // Soft clip curve, amount 0..10+
-    const amt = Math.max(0, this.driveAmount);
-    const n = 1024;
-    const curve = new Float32Array(n);
+  _updateDriveCurve(){
 
-    // if amt=0 => almost linear
-    const k = 1 + amt * 4;
+    const n=1024
 
-    for (let i = 0; i < n; i++) {
-      const x = (i * 2) / (n - 1) - 1; // -1..1
-      // tanh-ish approximation
-      curve[i] = Math.tanh(k * x) / Math.tanh(k);
-    }
-    this.drive.curve = curve;
-  }
+    const curve=new Float32Array(n)
 
-  _makePulseWave(duty) {
-    // Pulse Fourier series:
-    // a_n = (2/(nπ)) * sin(nπduty), for n>=1
-    // We create a periodic wave with N harmonics.
-    const N = 64;
-    const real = new Float32Array(N + 1);
-    const imag = new Float32Array(N + 1);
+    const k=1+this.driveAmount*4
 
-    real[0] = 0;
-    imag[0] = 0;
+    for(let i=0;i<n;i++){
 
-    const d = Math.max(0.05, Math.min(0.95, duty));
+      const x=i*2/(n-1)-1
 
-    for (let n = 1; n <= N; n++) {
-      const an = (2 / (n * Math.PI)) * Math.sin(n * Math.PI * d);
-      // put it in sine component for a classic pulse feel
-      real[n] = 0;
-      imag[n] = an;
+      curve[i]=Math.tanh(k*x)/Math.tanh(k)
+
     }
 
-    return this.ctx.createPeriodicWave(real, imag, { disableNormalization: false });
+    this.drive.curve=curve
+
   }
 
-  _midiToFreq(note) {
-    return 440 * Math.pow(2, (note - 69) / 12);
+  _makePulseWave(duty){
+
+    const N=64
+
+    const real=new Float32Array(N+1)
+    const imag=new Float32Array(N+1)
+
+    const d=Math.max(.05,Math.min(.95,duty))
+
+    for(let n=1;n<=N;n++){
+
+      const an=(2/(n*Math.PI))*Math.sin(n*Math.PI*d)
+
+      real[n]=0
+      imag[n]=an
+
+    }
+
+    return this.ctx.createPeriodicWave(real,imag)
+
   }
+
+  _midiToFreq(note){
+
+    return 440*Math.pow(2,(note-69)/12)
+
+  }
+
 }
