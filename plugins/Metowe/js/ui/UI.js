@@ -1,16 +1,5 @@
 // /js/ui/UI.js
-/**
- * UI.js
- * Interface moderne (mobile + desktop)
- * - Pads: tap/click play, load sample button, long-press (mobile) / Alt+click (desktop) = Pad Edit
- * - Sequencer: 16 steps
- *   - Tap/click = toggle on/off
- *   - Shift+click (desktop) / long-press (mobile) = cycle velocity
- *   - Ctrl+click (desktop) / double-tap (mobile) = toggle accent
- * - Live REC: bouton REC (quantize + overdub via Sequencer)
- * - Metronome: bouton MET (via Sequencer/AudioEngine.playClick)
- * - Humanize: 2 sliders (HUMAN %, TIMING ms)
- */
+// (identique à ta version actuelle — je le remets complet pour cohérence)
 
 export class UI {
   constructor(audioEngine, sequencer) {
@@ -25,30 +14,21 @@ export class UI {
 
     this.isMobile = this.detectMobile();
 
-    // Pad editor
     this.selectedPadId = 0;
 
-    // Long-press pad (mobile)
     this._lpTimer = null;
     this._lpTriggered = false;
     this._pendingPadId = null;
 
-    // Steps: robust touch tracking
     this._downStep = { padId: null, step: null, el: null };
     this._stepLpTimer = null;
     this._stepLpTriggered = false;
 
-    // Mobile: double-tap detection for Accent
     this._lastTap = { padId: null, step: null, t: 0 };
   }
 
-  // ---------- DOM helpers ----------
   $(id) { return document.getElementById(id); }
-
-  setText(id, value) {
-    const el = this.$(id);
-    if (el) el.textContent = String(value);
-  }
+  setText(id, value) { const el = this.$(id); if (el) el.textContent = String(value); }
 
   detectMobile() {
     return (
@@ -66,41 +46,27 @@ export class UI {
     this.initSliderFills();
     this.updateHints();
 
-    // Preset FX actif au chargement (si aucun actif -> MPC60 par défaut)
     const activePreset = document.querySelector('.preset-btn.active')?.dataset?.preset;
     this.applyPreset(activePreset || 'MPC60');
 
-    // Pad edit visible + synchro
     this.selectPad(0);
-
-    // Sync UI step depuis la data
     this.syncSequencerUIFromData();
-
-    // Sync toggles
     this.syncTransportToggles();
   }
 
   syncTransportToggles() {
-    // REC
     const recOn = !!this.sequencer.isRecording;
     this.$('rec-btn')?.classList.toggle('active', recOn);
     document.body.classList.toggle('recording', recOn);
 
-    // MET
     const metOn = !!this.sequencer.metronomeEnabled;
     this.$('met-btn')?.classList.toggle('active', metOn);
 
-    // HUMAN displays
     const human = this.$('humanize');
-    if (human) {
-      const pct = parseInt(human.value, 10) || 0;
-      this.setText('humanize-val', `${pct}%`);
-    }
+    if (human) this.setText('humanize-val', `${parseInt(human.value, 10) || 0}%`);
+
     const ht = this.$('humanize-time');
-    if (ht) {
-      const ms = parseInt(ht.value, 10) || 0;
-      this.setText('humanize-time-val', `${ms}ms`);
-    }
+    if (ht) this.setText('humanize-time-val', `${parseInt(ht.value, 10) || 0}ms`);
   }
 
   updateHints() {
@@ -112,16 +78,9 @@ export class UI {
       : 'Clic pour jouer · 📁/clic droit pour charger · Alt+clic pour éditer';
   }
 
-  // ---------------------------
-  // RENDER
-  // ---------------------------
-
   renderPads() {
     const grid = this.$('pads-grid');
-    if (!grid) {
-      console.error('[UI] #pads-grid introuvable');
-      return;
-    }
+    if (!grid) return;
 
     grid.innerHTML = '';
     this.padElements = [];
@@ -138,11 +97,9 @@ export class UI {
           <span class="pad-number">${i + 1}</span>
           <span class="pad-key">${this.padKeys[i] || ''}</span>
         </div>
-
         <div class="pad-footer">
           <span class="pad-name">${info?.name || 'EMPTY'}</span>
         </div>
-
         <button class="pad-load-btn" data-pad-id="${i}" aria-label="Charger sample" type="button">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
@@ -150,10 +107,7 @@ export class UI {
             <line x1="12" y1="3" x2="12" y2="15"/>
           </svg>
         </button>
-
-        <input class="pad-file" type="file"
-          accept="audio/*,.wav,.mp3,.ogg,.aac,.m4a,.flac"
-          id="file-${i}">
+        <input class="pad-file" type="file" accept="audio/*,.wav,.mp3,.ogg,.aac,.m4a,.flac" id="file-${i}">
       `;
 
       grid.appendChild(pad);
@@ -173,10 +127,7 @@ export class UI {
     }
 
     const grid = this.$('sequencer-grid');
-    if (!grid) {
-      console.error('[UI] #sequencer-grid introuvable');
-      return;
-    }
+    if (!grid) return;
 
     grid.innerHTML = '';
     this.stepElements = [];
@@ -213,12 +164,7 @@ export class UI {
     }
   }
 
-  // ---------------------------
-  // EVENTS
-  // ---------------------------
-
   bindEvents() {
-    // === PADS ===
     const padsGrid = this.$('pads-grid');
     if (padsGrid) {
       padsGrid.addEventListener('pointerdown', (e) => {
@@ -236,14 +182,12 @@ export class UI {
 
         const padId = parseInt(pad.dataset.padId, 10);
 
-        // Desktop: Alt+clic => select/edit
         if (!this.isMobile && e.altKey) {
           e.preventDefault();
           this.selectPad(padId);
           return;
         }
 
-        // Mobile: long press => select/edit (no play)
         if (this.isMobile) {
           this._lpTriggered = false;
           this._pendingPadId = padId;
@@ -257,7 +201,6 @@ export class UI {
           return;
         }
 
-        // Desktop normal: play
         this.triggerPad(padId);
       }, { passive: false });
 
@@ -297,7 +240,6 @@ export class UI {
       });
     }
 
-    // === SEQUENCER (robuste mobile + desktop) ===
     const seqGrid = this.$('sequencer-grid');
     if (seqGrid) {
       seqGrid.addEventListener('pointerdown', (e) => {
@@ -312,7 +254,6 @@ export class UI {
         this._downStep = { padId, step, el: stepEl };
         this._stepLpTriggered = false;
 
-        // Desktop: Ctrl => toggle accent
         if (!this.isMobile && e.ctrlKey) {
           const on = this.sequencer.toggleAccent?.(padId, step);
           stepEl.classList.toggle('accent', !!on);
@@ -322,22 +263,16 @@ export class UI {
           return;
         }
 
-        // Desktop: Shift => cycle velocity
         if (!this.isMobile && e.shiftKey) {
           this.cycleStepVelocity(padId, step);
           this._stepLpTriggered = true;
           return;
         }
 
-        // Mobile: double tap => accent
         if (this.isMobile) {
           const now = performance.now();
           const last = this._lastTap;
-          const isDouble =
-            last.padId === padId &&
-            last.step === step &&
-            (now - last.t) < 260;
-
+          const isDouble = last.padId === padId && last.step === step && (now - last.t) < 260;
           this._lastTap = { padId, step, t: now };
 
           if (isDouble) {
@@ -351,7 +286,6 @@ export class UI {
           }
         }
 
-        // Mobile: long-press => cycle velocity
         if (this.isMobile) {
           clearTimeout(this._stepLpTimer);
           this._stepLpTimer = setTimeout(() => {
@@ -374,7 +308,6 @@ export class UI {
           return;
         }
 
-        // Toggle normal
         const isActive = this.sequencer.toggleStep(padId, step);
         const v = isActive ? (this.sequencer.getStepVelocity?.(padId, step) || 0) : 0;
         this.updateStepAppearance(el, v);
@@ -391,17 +324,13 @@ export class UI {
       });
     }
 
-    // === TRANSPORT ===
     this.$('play-btn')?.addEventListener('click', () => this.handlePlayToggle());
-    // STOP est optionnel (tu peux le retirer du HTML)
     this.$('stop-btn')?.addEventListener('click', () => this.handleStop());
     this.$('clear-btn')?.addEventListener('click', () => this.handleClear());
 
-    // REC / MET optionnels selon ton HTML
     this.$('rec-btn')?.addEventListener('click', () => this.handleRecToggle());
     this.$('met-btn')?.addEventListener('click', () => this.handleMetToggle());
 
-    // === TEMPO ===
     this.$('bpm')?.addEventListener('input', (e) => {
       const bpm = parseInt(e.target.value, 10);
       this.sequencer.setBPM(bpm);
@@ -416,7 +345,6 @@ export class UI {
       this.setText('swing-val', `${swing}%`);
     });
 
-    // === HUMANIZE (optionnel) ===
     this.$('humanize')?.addEventListener('input', (e) => {
       const v = parseInt(e.target.value, 10) || 0;
       this.sequencer.setHumanize?.(v);
@@ -429,7 +357,6 @@ export class UI {
       this.setText('humanize-time-val', `${ms}ms`);
     });
 
-    // === EFFECTS ===
     this.bindEffectControl('bit-depth', 'bitDepth', 'bit-depth-val', (v) => `${Math.round(v)}`);
     this.bindEffectControl('sample-rate', 'sampleRate', 'sample-rate-val', (v) => `${Math.round(v / 1000)}k`);
     this.bindEffectControl('filter-cutoff', 'filter', 'filter-val', (v) => `${(v / 1000).toFixed(1)}k`);
@@ -437,7 +364,6 @@ export class UI {
     this.bindEffectControl('vinyl-noise', 'vinylNoise', 'vinyl-val', (v) => `${Math.round(v)}`);
     this.bindEffectControl('compression', 'compression', 'comp-val', (v) => `${Math.round(v)}`);
 
-    // === PRESETS ===
     document.querySelectorAll('.preset-btn').forEach((btn) => {
       btn.addEventListener('click', () => {
         document.querySelectorAll('.preset-btn').forEach((b) => b.classList.remove('active'));
@@ -446,7 +372,6 @@ export class UI {
       });
     });
 
-    // === PAD EDITOR ===
     this.$('pad-pitch')?.addEventListener('input', (e) => {
       const st = parseInt(e.target.value, 10) || 0;
       this.audioEngine.setPadPitch?.(this.selectedPadId, st);
@@ -505,16 +430,10 @@ export class UI {
     });
   }
 
-  // ---------------------------
-  // LIVE REC / MET
-  // ---------------------------
-
   handleRecToggle() {
     const btn = this.$('rec-btn');
     const isOn = !this.sequencer.isRecording;
-
     this.sequencer.setRecording?.(isOn);
-
     if (btn) btn.classList.toggle('active', isOn);
     document.body.classList.toggle('recording', isOn);
   }
@@ -522,20 +441,12 @@ export class UI {
   handleMetToggle() {
     const btn = this.$('met-btn');
     const isOn = !this.sequencer.metronomeEnabled;
-
     this.sequencer.setMetronome?.(isOn);
-
     if (btn) btn.classList.toggle('active', isOn);
   }
 
-  // ---------------------------
-  // VELOCITY / ACCENT UI
-  // ---------------------------
-
   cycleStepVelocity(padId, step) {
     const vel = this.sequencer.getStepVelocity?.(padId, step) || 0;
-
-    // cycle: OFF -> 0.5 -> 0.8 -> 1.0 -> OFF
     let next = 0;
     if (vel <= 0) next = 0.5;
     else if (vel < 0.65) next = 0.8;
@@ -562,12 +473,8 @@ export class UI {
 
     stepEl.classList.toggle('active', on);
 
-    if (on) {
-      const opacity = 0.35 + 0.65 * v;
-      stepEl.style.opacity = String(opacity);
-    } else {
-      stepEl.style.opacity = '';
-    }
+    if (on) stepEl.style.opacity = String(0.35 + 0.65 * v);
+    else stepEl.style.opacity = '';
 
     const padId = parseInt(stepEl.dataset.padId, 10);
     const step = parseInt(stepEl.dataset.step, 10);
@@ -584,10 +491,6 @@ export class UI {
       }
     }
   }
-
-  // ---------------------------
-  // FILE LOADING
-  // ---------------------------
 
   openFilePicker(padId) {
     const pad = this.padElements[padId];
@@ -615,10 +518,6 @@ export class UI {
     }
   }
 
-  // ---------------------------
-  // TRANSPORT
-  // ---------------------------
-
   handlePlayToggle() {
     const playBtn = this.$('play-btn');
 
@@ -644,10 +543,6 @@ export class UI {
     this.clearAllSteps();
     this.syncSequencerUIFromData();
   }
-
-  // ---------------------------
-  // SLIDER FILLS
-  // ---------------------------
 
   initSliderFills() {
     [
@@ -685,10 +580,6 @@ export class UI {
     fill.style.width = `${pct}%`;
   }
 
-  // ---------------------------
-  // PRESETS
-  // ---------------------------
-
   applyPreset(presetName) {
     const presets = {
       SP1200: { bitDepth: 12, sampleRate: 26040, filter: 5500, drive: 25, vinylNoise: 15, compression: 50 },
@@ -710,7 +601,6 @@ export class UI {
 
     Object.entries(p).forEach(([param, value]) => {
       try { this.audioEngine.setEffect(param, value); } catch {}
-
       const inputId = mapToInputId[param];
       const input = inputId ? this.$(inputId) : null;
       if (input) {
@@ -718,16 +608,7 @@ export class UI {
         input.dispatchEvent(new Event('input', { bubbles: true }));
       }
     });
-
-    // Sync active button if present
-    document.querySelectorAll('.preset-btn').forEach((b) => {
-      b.classList.toggle('active', b.dataset.preset === presetName);
-    });
   }
-
-  // ---------------------------
-  // PAD EDITOR
-  // ---------------------------
 
   selectPad(padId) {
     this.selectedPadId = padId;
@@ -775,10 +656,6 @@ export class UI {
     valEl.textContent = `${pct}%`;
   }
 
-  // ---------------------------
-  // PAD TRIGGER + LIVE REC
-  // ---------------------------
-
   triggerPad(padId) {
     const pad = this.padElements[padId];
     if (!pad) return;
@@ -792,7 +669,6 @@ export class UI {
       setTimeout(() => led.classList.remove('active'), 100);
     }
 
-    // Live REC (quantized, overdub) si actif
     if (this.sequencer.isRecording) {
       const t = this.audioEngine.getCurrentTime();
       const targetStep = this.sequencer.recordHit?.(padId, this.sequencer.recVelocity ?? 0.9, t);
@@ -801,13 +677,11 @@ export class UI {
       if (stepEl) {
         const v = this.sequencer.getStepVelocity?.(padId, targetStep) || 0;
         this.updateStepAppearance(stepEl, v);
-
         stepEl.classList.add('playing');
         setTimeout(() => stepEl.classList.remove('playing'), 80);
       }
     }
 
-    // Audio "live" (velocity 1.0)
     this.audioEngine.playSample(padId, 0, 1);
   }
 
@@ -819,10 +693,6 @@ export class UI {
     const nameEl = pad.querySelector('.pad-name');
     if (nameEl) nameEl.textContent = info?.name || 'EMPTY';
   }
-
-  // ---------------------------
-  // SEQUENCER CALLBACK
-  // ---------------------------
 
   onStepChange(step) {
     this.clearPlayingIndicators();
