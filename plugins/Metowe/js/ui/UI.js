@@ -1,24 +1,8 @@
 /**
- * UI.js — AKOMGA Synth + Sequencer
- * Aligné avec ton index.html (IDs actuels)
- *
- * Keyboard:
- *  - 8 touches: A S D F G H J K
- *  - Joue la gamme mineure (degrés) selon ROOT + OCT
- *
- * Sequencer:
- *  - 16 steps, 1 piste
- *  - Tap/click = cycle degree (OFF -> 1 -> 2 -> ... -> 7 -> OFF)
- *  - Double tap = toggle chord triad sur le step
- *  - Long press = OFF
- *
- * Transport:
- *  - PLAY toggles start/stop
- *  - CLEAR clears pattern
- *
- * Params:
- *  - BPM, SWING, HUMAN (%), TIMING (ms), ROOT, OCT
- *  - Appelle sequencer.setBPM / setSwing / setHumanize / setHumanizeTime / setRoot / setOct (si dispo)
+ * UI.js — AKOMGA Synth + Sequencer (mobile + desktop)
+ * Compatible avec:
+ *  - ton style.css (kbd/kkey, seq-row, seq-step .txt)
+ *  - ton Sequencer.js (6 lanes, events {on,degree,oct,chord,vel,mute})
  */
 
 export class UI {
@@ -28,34 +12,15 @@ export class UI {
 
     this.isMobile = this.detectMobile();
 
-    // --- keyboard mapping (physical keys)
+    // keyboard mapping
     this.kbKeys = ['A','S','D','F','G','H','J','K'];
     this.kbDown = new Set();
 
-    // --- scale state
-    this.root = 'A';
-    this.oct = 4; // 2..6
-    this.scaleName = 'MIN';
-
-    // A minor degrees semitone offsets (natural minor): 1..7
-    // degree 1 = root (0)
-    this.minorOffsets = [0, 2, 3, 5, 7, 8, 10];
-
-    // root note -> semitone in octave (C=0)
-    this.rootSemis = { C:0, D:2, E:4, F:5, G:7, A:9, B:11 };
-
-    // --- sequencer local pattern (UI-side, syncable to Sequencer if methods exist)
-    this.steps = 16;
-    this.pattern = Array.from({ length: this.steps }, () => ({
-      degree: 0,     // 0 = OFF, else 1..7
-      chord: false,  // triad on/off
-    }));
-
-    // --- gesture helpers
+    // gestures (sequencer)
     this._lpTimer = null;
     this._lpTriggered = false;
-
-    this._lastTap = { step: -1, t: 0 };
+    this._down = { lane: null, step: null, el: null };
+    this._lastTap = { lane: -1, step: -1, t: 0 };
   }
 
   // ---------- helpers ----------
@@ -71,71 +36,41 @@ export class UI {
   }
 
   init() {
-    this.readInitialControls();
     this.renderKeyboard();
     this.renderSequencer();
     this.bindControls();
     this.bindKeyboardPhysical();
-    this.updateDisplays();
-
-    // Optionnel: sync UI <- sequencer si tu exposes une API
-    this.trySyncFromSequencer();
+    this.syncUIFromSequencer();
+    this.syncTopDisplays();
   }
 
-  readInitialControls() {
-    const rootSel = this.$('root');
-    if (rootSel) this.root = rootSel.value || 'A';
+  // ---------- TOP displays ----------
+  syncTopDisplays() {
+    // BPM/SWING displays
+    const bpm = parseInt(this.$('bpm')?.value, 10) || this.sequencer.bpm || 96;
+    const swing = parseInt(this.$('swing')?.value, 10) || this.sequencer.swing || 0;
 
-    const oct = this.$('oct');
-    if (oct) this.oct = parseInt(oct.value, 10) || 4;
-  }
-
-  updateDisplays() {
-    this.setText('scale-display', `${this.root} ${this.scaleName}`);
-
-    const bpm = this.$('bpm')?.value ?? 96;
     this.setText('bpm-display', bpm);
     this.setText('bpm-val', bpm);
 
-    const swing = this.$('swing')?.value ?? 0;
     this.setText('swing-display', swing);
     this.setText('swing-val', `${swing}%`);
 
-    const human = this.$('humanize')?.value ?? 6;
-    this.setText('humanize-val', `${human}%`);
+    // scale
+    const root = this.$('root')?.value || this.sequencer.root || 'A';
+    this.setText('scale-display', `${root} MIN`);
 
-    const ht = this.$('humanize-time')?.value ?? 8;
+    const oct = parseInt(this.$('oct')?.value, 10) || this.sequencer.baseOctave || 4;
+    this.setText('oct-val', oct);
+
+    const hum = parseInt(this.$('humanize')?.value, 10) || this.sequencer.humanizePct || 6;
+    this.setText('humanize-val', `${hum}%`);
+
+    const ht = parseInt(this.$('humanize-time')?.value, 10) || this.sequencer.humanizeTimeMs || 8;
     this.setText('humanize-time-val', `${ht}ms`);
-
-    this.setText('oct-val', this.oct);
   }
 
-  // ---------- scale helpers ----------
-  rootMidi() {
-    // MIDI note of root at current octave
-    // octave 4 => around middle C region (C4=60). Here using C4=60 mapping:
-    // midi = 12*(oct+1) + semis
-    const semis = this.rootSemis[this.root] ?? 9; // default A
-    return 12 * (this.oct + 1) + semis;
-  }
-
-  degreeToMidi(degree1to7) {
-    const d = Math.max(1, Math.min(7, degree1to7));
-    const rootMidi = this.rootMidi();
-    const off = this.minorOffsets[d - 1] ?? 0;
-    return rootMidi + off;
-  }
-
-  buildTriad(degree1to7) {
-    // triade mineure diatonique (approx) : root + third + fifth using scale degrees
-    // For simplicity, use degree, degree+2, degree+4 (wrap in scale)
-    const d = Math.max(1, Math.min(7, degree1to7));
-    const deg2 = ((d + 1) % 7) + 1; // +2 degrees in 1..7 space (wrap)
-    const deg4 = ((d + 3) % 7) + 1; // +4 degrees
-    return [this.degreeToMidi(d), this.degreeToMidi(deg2), this.degreeToMidi(deg4)];
-  }
-
-  // ---------- render keyboard ----------
+  // ---------- Keyboard ----------
   renderKeyboard() {
     const wrap = this.$('keyboard');
     if (!wrap) return;
@@ -143,115 +78,160 @@ export class UI {
     wrap.innerHTML = '';
     wrap.classList.add('kbd');
 
+    // 8 touches: on affiche la lettre + le degré
     this.kbKeys.forEach((k, idx) => {
-      const key = document.createElement('button');
-      key.type = 'button';
-      key.className = 'kbd-key';
-      key.dataset.idx = String(idx);
-      key.dataset.key = k;
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'kkey';
+      btn.dataset.key = k;
 
-      const deg = idx < 7 ? (idx + 1) : 1; // 8e touche = octave root (degree 1)
-      key.dataset.degree = String(deg);
+      const degree = (idx < 7) ? (idx + 1) : 1; // K = root octave
+      btn.dataset.degree = String(degree);
 
-      key.innerHTML = `
-        <div class="kbd-top">
-          <span class="kbd-label">${k}</span>
-          <span class="kbd-deg">${deg}</span>
+      btn.innerHTML = `
+        <div class="kkey-top">
+          <span>${k}</span>
+          <span>${degree}</span>
         </div>
-        <div class="kbd-bot">${this.root} ${this.scaleName}</div>
+        <div class="kkey-bot">MIN</div>
       `;
 
-      wrap.appendChild(key);
+      wrap.appendChild(btn);
     });
 
-    // pointer events (touch friendly)
+    // pointer/touch
     wrap.addEventListener('pointerdown', (e) => {
-      const btn = e.target.closest('.kbd-key');
+      const btn = e.target.closest('.kkey');
       if (!btn) return;
-
       e.preventDefault();
+
       this.synth?.resume?.();
 
-      const deg = parseInt(btn.dataset.degree, 10) || 1;
-      const midi = this.degreeToMidi(deg);
+      const degree = parseInt(btn.dataset.degree, 10) || 1;
+      // On joue un degré “live” via synthEngine
+      this.playDegreeLive(degree);
 
       btn.classList.add('active');
-      this.synth?.noteOn?.(midi, 1);
       btn.setPointerCapture?.(e.pointerId);
     }, { passive: false });
 
-    wrap.addEventListener('pointerup', (e) => {
-      const btn = e.target.closest('.kbd-key');
+    const up = (e) => {
+      const btn = e.target.closest('.kkey');
       if (!btn) return;
-
       e.preventDefault();
 
-      const deg = parseInt(btn.dataset.degree, 10) || 1;
-      const midi = this.degreeToMidi(deg);
-
       btn.classList.remove('active');
-      this.synth?.noteOff?.(midi);
-    }, { passive: false });
+      // relâchement: on coupe toutes les notes live (simple)
+      this.synth?.allNotesOff?.();
+    };
 
-    wrap.addEventListener('pointercancel', (e) => {
-      const btn = e.target.closest('.kbd-key');
-      if (!btn) return;
+    wrap.addEventListener('pointerup', up, { passive: false });
+    wrap.addEventListener('pointercancel', up, { passive: false });
 
-      btn.classList.remove('active');
+    this.refreshKeyboardBottomLabel();
+  }
 
-      const deg = parseInt(btn.dataset.degree, 10) || 1;
-      const midi = this.degreeToMidi(deg);
-      this.synth?.noteOff?.(midi);
+  refreshKeyboardBottomLabel() {
+    const root = this.$('root')?.value || 'A';
+    const oct = parseInt(this.$('oct')?.value, 10) || 4;
+    const wrap = this.$('keyboard');
+    if (!wrap) return;
+
+    wrap.querySelectorAll('.kkey .kkey-bot').forEach((el) => {
+      el.textContent = `${root} MIN · OCT ${oct}`;
     });
   }
 
-  // ---------- render sequencer ----------
+  playDegreeLive(degree1to7) {
+    // Pour jouer live, on recycle les helpers du Sequencer (triade et mapping)
+    // Si ton SynthEngine expose noteOn(note, vel) / noteOff(note) / playNoteAt(...) etc.
+    const lane = 0;
+    const deg0to6 = Math.max(0, Math.min(6, (degree1to7 - 1)));
+    const midi = this.sequencer._degreeToMidi?.(deg0to6, 0);
+
+    if (typeof midi !== 'number') return;
+
+    // noteOn/off live simple
+    this.synth?.noteOn?.(midi, 1);
+  }
+
+  // ---------- Sequencer render (6 lanes) ----------
   renderSequencer() {
     const header = this.$('seq-header');
-    const grid = this.$('sequencer-grid');
-    if (!grid) return;
-
     if (header) {
       header.innerHTML = '';
-      for (let i = 0; i < this.steps; i++) {
-        const s = document.createElement('span');
-        s.textContent = String(i + 1);
-        header.appendChild(s);
+      for (let s = 0; s < this.sequencer.steps; s++) {
+        const sp = document.createElement('span');
+        sp.textContent = String(s + 1);
+        header.appendChild(sp);
       }
     }
+
+    const grid = this.$('sequencer-grid');
+    if (!grid) return;
 
     grid.innerHTML = '';
     grid.classList.add('sequencer-grid');
 
-    for (let step = 0; step < this.steps; step++) {
-      const b = document.createElement('button');
-      b.type = 'button';
-      b.className = 'seq-step';
-      b.dataset.step = String(step);
+    for (let lane = 0; lane < this.sequencer.lanes; lane++) {
+      const row = document.createElement('div');
+      row.className = 'seq-row';
 
-      this.applyStepVisual(b, this.pattern[step]);
+      const lab = document.createElement('div');
+      lab.className = 'seq-row-label';
+      lab.textContent = String(lane + 1);
+      row.appendChild(lab);
 
-      grid.appendChild(b);
+      const stepsWrap = document.createElement('div');
+      stepsWrap.className = 'seq-steps';
+
+      for (let step = 0; step < this.sequencer.steps; step++) {
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'seq-step';
+        b.dataset.lane = String(lane);
+        b.dataset.step = String(step);
+        if (step % 4 === 0) b.classList.add('beat-marker');
+
+        const txt = document.createElement('div');
+        txt.className = 'txt';
+        txt.textContent = '';
+        b.appendChild(txt);
+
+        stepsWrap.appendChild(b);
+      }
+
+      row.appendChild(stepsWrap);
+      grid.appendChild(row);
     }
 
-    // gesture handling
+    this.bindSequencerGestures();
+  }
+
+  bindSequencerGestures() {
+    const grid = this.$('sequencer-grid');
+    if (!grid) return;
+
+    // pointerdown starts long-press timer
     grid.addEventListener('pointerdown', (e) => {
       const el = e.target.closest('.seq-step');
       if (!el) return;
       e.preventDefault();
 
+      const lane = parseInt(el.dataset.lane, 10);
       const step = parseInt(el.dataset.step, 10);
-      if (!Number.isFinite(step)) return;
 
+      this._down = { lane, step, el };
       this._lpTriggered = false;
-      clearTimeout(this._lpTimer);
 
-      // long press => OFF
+      clearTimeout(this._lpTimer);
       this._lpTimer = setTimeout(() => {
         this._lpTriggered = true;
-        this.setStep(step, { degree: 0, chord: false }, true);
+        // long press = mute toggle
+        const muted = this.sequencer.toggleMute(lane, step);
+        this.applyStepVisual(el, this.sequencer.getEvent(lane, step));
         if (this.isMobile && navigator.vibrate) navigator.vibrate(12);
-      }, 330);
+      }, 340);
 
     }, { passive: false });
 
@@ -262,181 +242,169 @@ export class UI {
 
       clearTimeout(this._lpTimer);
 
+      const lane = parseInt(el.dataset.lane, 10);
       const step = parseInt(el.dataset.step, 10);
-      if (!Number.isFinite(step)) return;
 
-      // if long press already handled, do nothing
+      // longpress already handled
       if (this._lpTriggered) {
         this._lpTriggered = false;
+        this._down = { lane: null, step: null, el: null };
         return;
       }
 
-      // double tap => toggle chord
+      // double tap = chord toggle
       const now = performance.now();
-      const isDouble = (this._lastTap.step === step) && (now - this._lastTap.t < 260);
-      this._lastTap = { step, t: now };
+      const isDouble =
+        this._lastTap.lane === lane &&
+        this._lastTap.step === step &&
+        (now - this._lastTap.t) < 260;
+
+      this._lastTap = { lane, step, t: now };
 
       if (isDouble) {
-        const cur = this.pattern[step];
-        const next = { ...cur, chord: !cur.chord };
-        // si OFF, on le met sur degree 1 pour que chord ait un sens
-        if (next.degree === 0) next.degree = 1;
-        this.setStep(step, next, true);
+        this.sequencer.toggleChord(lane, step);
+        this.applyStepVisual(el, this.sequencer.getEvent(lane, step));
         if (this.isMobile && navigator.vibrate) navigator.vibrate(10);
         return;
       }
 
-      // single tap => cycle degree (OFF -> 1..7 -> OFF)
-      const cur = this.pattern[step];
-      const nextDeg = (cur.degree >= 7) ? 0 : (cur.degree + 1);
-      const next = { degree: nextDeg, chord: (nextDeg === 0 ? false : cur.chord) };
-      this.setStep(step, next, true);
+      // single tap = cycle degree, and when wraps to 0 => OFF
+      const newDeg = this.sequencer.cycleDegree(lane, step); // 0..6
+      if (newDeg === 0) {
+        // interpret wrap as OFF (remove event)
+        // toggleStep will flip on/off; here we want off:
+        const ev = this.sequencer.getEvent(lane, step);
+        if (ev.on) this.sequencer.toggleStep(lane, step);
+      }
+
+      this.applyStepVisual(el, this.sequencer.getEvent(lane, step));
       if (this.isMobile && navigator.vibrate) navigator.vibrate(8);
     }, { passive: false });
 
     grid.addEventListener('pointercancel', () => {
       clearTimeout(this._lpTimer);
       this._lpTriggered = false;
+      this._down = { lane: null, step: null, el: null };
     });
   }
 
-  applyStepVisual(el, stepObj) {
-    const on = (stepObj.degree || 0) > 0;
+  applyStepVisual(el, ev) {
+    const on = !!ev?.on;
     el.classList.toggle('active', on);
-    el.classList.toggle('chord', !!stepObj.chord);
+    el.classList.toggle('chord', !!ev?.chord);
+    el.classList.toggle('muted', !!ev?.mute);
 
-    // petit label visuel via data-attr (si tu veux le styler en CSS)
-    if (on) {
-      el.dataset.label = stepObj.chord ? `${stepObj.degree}△` : String(stepObj.degree);
-      el.style.opacity = stepObj.chord ? '1' : '0.85';
-    } else {
-      el.dataset.label = '';
-      el.style.opacity = '';
+    const txt = el.querySelector('.txt');
+    if (!txt) return;
+
+    if (!on) {
+      txt.textContent = '';
+      return;
     }
+
+    // ev.degree est 0..6 => afficher 1..7
+    txt.textContent = String((ev.degree ?? 0) + 1);
   }
 
-  setStep(step, obj, pushToSequencer = false) {
-    this.pattern[step] = { degree: obj.degree || 0, chord: !!obj.chord };
-
+  syncUIFromSequencer() {
     const grid = this.$('sequencer-grid');
-    const el = grid?.querySelector(`.seq-step[data-step="${step}"]`);
-    if (el) this.applyStepVisual(el, this.pattern[step]);
+    if (!grid) return;
 
-    if (pushToSequencer) {
-      // API optionnelle côté Sequencer (si tu l’as)
-      // 1) setStep(step, degree, chord)
-      this.sequencer?.setStep?.(step, this.pattern[step].degree, this.pattern[step].chord);
-      // ou 2) setStepData(step, {degree, chord})
-      this.sequencer?.setStepData?.(step, this.pattern[step]);
+    // Apply all events from sequencer grid
+    for (let lane = 0; lane < this.sequencer.lanes; lane++) {
+      for (let step = 0; step < this.sequencer.steps; step++) {
+        const el = grid.querySelector(`.seq-step[data-lane="${lane}"][data-step="${step}"]`);
+        if (!el) continue;
+        const ev = this.sequencer.getEvent(lane, step);
+        this.applyStepVisual(el, ev);
+      }
     }
   }
 
-  // ---------- bind controls ----------
+  // ---------- Transport / controls ----------
   bindControls() {
-    // Transport
+    // PLAY
     this.$('play-btn')?.addEventListener('click', () => {
-      if (!this.sequencer) return;
-
-      if (this.sequencer.isPlaying) {
-        this.sequencer.stop();
-        this.$('play-btn')?.classList.remove('active');
-      } else {
-        this.synth?.resume?.();
-        this.sequencer.start();
-        this.$('play-btn')?.classList.add('active');
-      }
+      this.sequencer.togglePlay();
+      this.$('play-btn')?.classList.toggle('active', this.sequencer.isPlaying);
     });
 
+    // CLEAR
     this.$('clear-btn')?.addEventListener('click', () => {
-      // clear sequencer side
-      this.sequencer?.clear?.();
-
-      // clear UI side
-      for (let i = 0; i < this.steps; i++) {
-        this.pattern[i] = { degree: 0, chord: false };
-        const el = this.$('sequencer-grid')?.querySelector(`.seq-step[data-step="${i}"]`);
-        if (el) this.applyStepVisual(el, this.pattern[i]);
-      }
+      this.sequencer.clear();
+      this.syncUIFromSequencer();
     });
 
-    // BPM / Swing
+    // BPM
     this.$('bpm')?.addEventListener('input', (e) => {
       const bpm = parseInt(e.target.value, 10) || 96;
-      this.sequencer?.setBPM?.(bpm);
+      this.sequencer.setBPM(bpm);
       this.setText('bpm-display', bpm);
       this.setText('bpm-val', bpm);
     });
 
+    // SWING
     this.$('swing')?.addEventListener('input', (e) => {
       const swing = parseInt(e.target.value, 10) || 0;
-      this.sequencer?.setSwing?.(swing);
+      this.sequencer.setSwing(swing);
       this.setText('swing-display', swing);
       this.setText('swing-val', `${swing}%`);
     });
 
-    // Humanize
+    // HUMAN
     this.$('humanize')?.addEventListener('input', (e) => {
       const v = parseInt(e.target.value, 10) || 0;
-      this.sequencer?.setHumanize?.(v);
+      this.sequencer.setHumanize(v);
       this.setText('humanize-val', `${v}%`);
     });
 
+    // TIMING
     this.$('humanize-time')?.addEventListener('input', (e) => {
       const ms = parseInt(e.target.value, 10) || 0;
-      this.sequencer?.setHumanizeTime?.(ms);
+      this.sequencer.setHumanizeTime(ms);
       this.setText('humanize-time-val', `${ms}ms`);
     });
 
-    // Root / Oct
+    // ROOT
     this.$('root')?.addEventListener('change', (e) => {
-      this.root = e.target.value || 'A';
-      this.setText('scale-display', `${this.root} ${this.scaleName}`);
-      this.sequencer?.setRoot?.(this.root);
-      this.refreshKeyboardLabels();
+      const root = e.target.value || 'A';
+      this.sequencer.setRoot(root);
+      this.setText('scale-display', `${root} MIN`);
+      this.refreshKeyboardBottomLabel();
     });
 
+    // OCT
     this.$('oct')?.addEventListener('input', (e) => {
-      this.oct = parseInt(e.target.value, 10) || 4;
-      this.setText('oct-val', this.oct);
-      this.sequencer?.setOct?.(this.oct);
+      const oct = parseInt(e.target.value, 10) || 4;
+      this.sequencer.setOctave(oct);
+      this.setText('oct-val', oct);
+      this.refreshKeyboardBottomLabel();
     });
   }
 
-  refreshKeyboardLabels() {
-    const wrap = this.$('keyboard');
-    if (!wrap) return;
-    wrap.querySelectorAll('.kbd-key').forEach((btn) => {
-      const bot = btn.querySelector('.kbd-bot');
-      if (bot) bot.textContent = `${this.root} ${this.scaleName}`;
-    });
-  }
-
-  // ---------- physical keyboard ----------
+  // ---------- Physical keyboard ----------
   bindKeyboardPhysical() {
     document.addEventListener('keydown', (e) => {
-      const key = (e.key || '').toUpperCase();
-
-      // space -> play/stop
+      // Space = play/stop
       if (e.code === 'Space') {
         e.preventDefault();
         this.$('play-btn')?.click();
         return;
       }
 
+      const key = (e.key || '').toUpperCase();
       const idx = this.kbKeys.indexOf(key);
       if (idx === -1) return;
-
       if (this.kbDown.has(key)) return;
+
       this.kbDown.add(key);
-
-      const deg = (idx < 7) ? (idx + 1) : 1;
-      const midi = this.degreeToMidi(deg);
-
       this.synth?.resume?.();
-      this.synth?.noteOn?.(midi, 1);
+
+      const degree = (idx < 7) ? (idx + 1) : 1;
+      this.playDegreeLive(degree);
 
       // UI highlight
-      this.$('keyboard')?.querySelector(`.kbd-key[data-key="${key}"]`)?.classList.add('active');
+      this.$('keyboard')?.querySelector(`.kkey[data-key="${key}"]`)?.classList.add('active');
     });
 
     document.addEventListener('keyup', (e) => {
@@ -445,33 +413,33 @@ export class UI {
       if (idx === -1) return;
 
       this.kbDown.delete(key);
+      this.synth?.allNotesOff?.();
 
-      const deg = (idx < 7) ? (idx + 1) : 1;
-      const midi = this.degreeToMidi(deg);
-
-      this.synth?.noteOff?.(midi);
-      this.$('keyboard')?.querySelector(`.kbd-key[data-key="${key}"]`)?.classList.remove('active');
+      this.$('keyboard')?.querySelector(`.kkey[data-key="${key}"]`)?.classList.remove('active');
     });
   }
 
-  // ---------- optional sync from sequencer ----------
-  trySyncFromSequencer() {
-    // Si ton Sequencer expose getPattern() -> [{degree, chord}, ...]
-    const p = this.sequencer?.getPattern?.();
-    if (!Array.isArray(p) || p.length !== this.steps) return;
+  // ---------- Sequencer callback ----------
+  onStepChange(step) {
+    // clear previous playing
+    document.querySelectorAll('.seq-step.playing').forEach((el) => el.classList.remove('playing'));
 
-    for (let i = 0; i < this.steps; i++) {
-      const degree = parseInt(p[i]?.degree, 10) || 0;
-      const chord = !!p[i]?.chord;
-      this.pattern[i] = { degree, chord };
+    if (step < 0) return;
+
+    // mark this column as playing across lanes
+    const grid = this.$('sequencer-grid');
+    if (grid) {
+      for (let lane = 0; lane < this.sequencer.lanes; lane++) {
+        const el = grid.querySelector(`.seq-step[data-lane="${lane}"][data-step="${step}"]`);
+        if (el) el.classList.add('playing');
+      }
     }
 
-    // refresh visuals
-    const grid = this.$('sequencer-grid');
-    if (!grid) return;
-    for (let i = 0; i < this.steps; i++) {
-      const el = grid.querySelector(`.seq-step[data-step="${i}"]`);
-      if (el) this.applyStepVisual(el, this.pattern[i]);
+    // LED
+    const led = this.$('led');
+    if (led) {
+      led.classList.add('active');
+      setTimeout(() => led.classList.remove('active'), 50);
     }
   }
 }
