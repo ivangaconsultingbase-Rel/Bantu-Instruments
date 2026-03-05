@@ -1,40 +1,24 @@
-// js/main.js
-import { AudioEngine } from "./audio/AudioEngine.js";
-import { Sequencer } from "./sequencer/Sequencer.js";
-import { UI } from "./ui/UI.js";
-
-// Si tu as déjà un UI.js complet, tu l'importes ici.
-// import { UI } from "./ui/UI.js";
+import { AudioEngine } from './AudioEngine.js';
+import { Sequencer } from './Sequencer.js';
+import { UI } from './UI.js';
 
 const audio = new AudioEngine();
-await audio.init();
+const sequencer = new Sequencer(audio, (step) => ui.onStepChange(step));
+const ui = new UI(audio, sequencer);
 
-const ui = new UI(audio, null);
+(async function boot() {
+  await audio.init();
+  ui.init();
 
-const seq = new Sequencer(audio, (step) => ui.onStepChange(step));
-ui.sequencer = seq;
+  // Unlock audio on first gesture (iOS safe)
+  const unlock = async () => {
+    await audio.resume();
+    window.removeEventListener('pointerdown', unlock, { capture: true });
+    window.removeEventListener('touchstart', unlock, { capture: true });
+    window.removeEventListener('click', unlock, { capture: true });
+  };
 
-ui.init();
-
-// Quick wiring: play button example
-const playBtn = document.getElementById("play-btn");
-if (playBtn) {
-  playBtn.addEventListener("click", async () => {
-    await audioEngine.resume();
-    if (sequencer.isPlaying) {
-      sequencer.stop();
-      playBtn.classList.remove("active");
-    } else {
-      sequencer.start();
-      playBtn.classList.add("active");
-    }
-  });
-}
-
-// OPTIONAL: simple keyboard note test (Z = root)
-document.addEventListener("keydown", async (e) => {
-  if (e.code === "KeyZ") {
-    await audioEngine.resume();
-    audioEngine.noteOn(audioEngine.getCurrentTime() + 0.01, 48, 0.95, 0.2, true);
-  }
-});
+  window.addEventListener('pointerdown', unlock, { capture: true, passive: true });
+  window.addEventListener('touchstart', unlock, { capture: true, passive: true });
+  window.addEventListener('click', unlock, { capture: true, passive: true });
+})();
