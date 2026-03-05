@@ -46,6 +46,7 @@ export class UI {
   }
 
   init() {
+  console.log("UI INIT")
     this._renderKeyboard();
     this._renderSequencer();
     this._bindControls();
