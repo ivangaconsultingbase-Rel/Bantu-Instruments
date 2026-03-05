@@ -525,18 +525,30 @@ export class UI {
   // =========================================
   // SEQUENCER CALLBACK
   // =========================================
-  onStepChange(step) {
-    // clear previous playing
-    document.querySelectorAll('.seq-step.playing').forEach(el => el.classList.remove('playing'));
-    if (step < 0) return;
+  // Dans js/ui/UI.js, remplace onStepChange(step) par :
 
-    // highlight current column
-    for (let lane=0; lane<6; lane++){
-      const el = this.stepEls?.[lane]?.[step];
-      if (el) el.classList.add('playing');
+onStepChange(step) {
+  // Remove previous column highlight without querySelectorAll
+  if (this._prevStep != null && this._prevStep >= 0) {
+    for (let lane = 0; lane < 6; lane++) {
+      const el = this.stepEls?.[lane]?.[this._prevStep];
+      if (el) el.classList.remove("playing");
     }
-    this._flashLed(50);
   }
+
+  if (step < 0) {
+    this._prevStep = -1;
+    return;
+  }
+
+  for (let lane = 0; lane < 6; lane++) {
+    const el = this.stepEls?.[lane]?.[step];
+    if (el) el.classList.add("playing");
+  }
+
+  this._prevStep = step;
+  this._flashLed(50);
+}
 
   _flashLed(ms=100) {
     const led = this.$('led');
@@ -544,4 +556,4 @@ export class UI {
     led.classList.add('active');
     setTimeout(() => led.classList.remove('active'), ms);
   }
-}
+}e
