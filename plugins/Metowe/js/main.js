@@ -1,24 +1,32 @@
-import { AudioEngine } from './AudioEngine.js';
-import { Sequencer } from './Sequencer.js';
-import { UI } from './UI.js';
+// /js/main.js
+import { AudioEngine } from './audio/AudioEngine.js';
+import { Sequencer } from './sequencer/Sequencer.js';
+import { UI } from './ui/UI.js';
 
 const audio = new AudioEngine();
-const sequencer = new Sequencer(audio, (step) => ui.onStepChange(step));
-const ui = new UI(audio, sequencer);
 
-(async function boot() {
+let ui = null;
+const sequencer = new Sequencer(audio, (step) => {
+  ui?.onStepChange(step);
+});
+
+ui = new UI(audio, sequencer);
+
+async function boot() {
   await audio.init();
   ui.init();
 
-  // Unlock audio on first gesture (iOS safe)
+  // iOS/mobile: unlock AudioContext on first user gesture
   const unlock = async () => {
-    await audio.resume();
-    window.removeEventListener('pointerdown', unlock, { capture: true });
-    window.removeEventListener('touchstart', unlock, { capture: true });
-    window.removeEventListener('click', unlock, { capture: true });
+    try { await audio.resume(); } catch {}
+    window.removeEventListener('pointerdown', unlock, true);
+    window.removeEventListener('touchstart', unlock, true);
+    window.removeEventListener('click', unlock, true);
   };
 
-  window.addEventListener('pointerdown', unlock, { capture: true, passive: true });
-  window.addEventListener('touchstart', unlock, { capture: true, passive: true });
-  window.addEventListener('click', unlock, { capture: true, passive: true });
-})();
+  window.addEventListener('pointerdown', unlock, true);
+  window.addEventListener('touchstart', unlock, true);
+  window.addEventListener('click', unlock, true);
+}
+
+boot();
