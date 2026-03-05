@@ -7,6 +7,9 @@
   <meta name="theme-color" content="#0a0a0a" />
   <title>AKOMGA — Synth + Sequencer</title>
 
+  <!-- Fix favicon 404 (évite la requête /favicon.ico) -->
+  <link rel="icon" href="data:,">
+
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/style.css" />
@@ -29,6 +32,101 @@
       </div>
     </header>
 
+    <!-- SYNTH CONTROLS -->
+    <section id="synth-section">
+      <div class="section-header">
+        <h2>Synth</h2>
+        <span class="hint">OSC · VCF · ENV · AMP</span>
+      </div>
+      <div class="section-content">
+        <div class="fx-grid" id="synth-controls">
+
+          <div class="fx-block">
+            <div class="fx-title">OSC</div>
+
+            <div class="fx-row">
+              <label>WAVE</label>
+              <select id="osc-wave">
+                <option value="saw" selected>SAW</option>
+                <option value="pulse">PULSE</option>
+                <option value="mix">MIX</option>
+              </select>
+            </div>
+
+            <div class="fx-row">
+              <label>PWM</label>
+              <input type="range" id="pwm" min="0" max="100" value="50">
+              <span class="tempo-value" id="pwm-val">50%</span>
+            </div>
+
+            <div class="fx-row">
+              <label>UNISON</label>
+              <input type="range" id="unison" min="1" max="6" value="1" step="1">
+              <span class="tempo-value" id="unison-val">1</span>
+            </div>
+
+            <div class="fx-row">
+              <label>DETUNE</label>
+              <input type="range" id="detune" min="0" max="50" value="10" step="1">
+              <span class="tempo-value" id="detune-val">10c</span>
+            </div>
+          </div>
+
+          <div class="fx-block">
+            <div class="fx-title">VCF</div>
+
+            <div class="fx-row">
+              <label>CUTOFF</label>
+              <input type="range" id="cutoff" min="80" max="12000" value="2400">
+              <span class="tempo-value" id="cutoff-val">2.4k</span>
+            </div>
+
+            <div class="fx-row">
+              <label>RES</label>
+              <input type="range" id="res" min="0" max="100" value="15">
+              <span class="tempo-value" id="res-val">15</span>
+            </div>
+
+            <div class="fx-row">
+              <label>ENV</label>
+              <input type="range" id="fenv" min="0" max="100" value="35">
+              <span class="tempo-value" id="fenv-val">35</span>
+            </div>
+          </div>
+
+          <div class="fx-block">
+            <div class="fx-title">ADSR</div>
+
+            <div class="fx-row">
+              <label>A</label>
+              <input type="range" id="atk" min="0" max="2000" value="10">
+              <span class="tempo-value" id="atk-val">10ms</span>
+            </div>
+
+            <div class="fx-row">
+              <label>D</label>
+              <input type="range" id="dec" min="0" max="2000" value="250">
+              <span class="tempo-value" id="dec-val">250ms</span>
+            </div>
+
+            <div class="fx-row">
+              <label>S</label>
+              <input type="range" id="sus" min="0" max="100" value="70">
+              <span class="tempo-value" id="sus-val">70%</span>
+            </div>
+
+            <div class="fx-row">
+              <label>R</label>
+              <input type="range" id="rel" min="0" max="4000" value="500">
+              <span class="tempo-value" id="rel-val">500ms</span>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- KEYBOARD -->
     <section>
       <div class="section-header">
         <h2>Keyboard</h2>
@@ -39,6 +137,7 @@
       </div>
     </section>
 
+    <!-- SEQUENCER -->
     <section class="sequencer-section">
       <div class="section-header">
         <h2>Sequencer</h2>
@@ -53,7 +152,10 @@
               PLAY
             </button>
             <button id="clear-btn" class="transport-btn">
-              <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18" stroke="currentColor" stroke-width="2"/><line x1="6" y1="6" x2="18" y2="18" stroke="currentColor" stroke-width="2"/></svg>
+              <svg viewBox="0 0 24 24">
+                <line x1="18" y1="6" x2="6" y2="18" stroke="currentColor" stroke-width="2"/>
+                <line x1="6" y1="6" x2="18" y2="18" stroke="currentColor" stroke-width="2"/>
+              </svg>
               CLEAR
             </button>
           </div>
@@ -107,8 +209,66 @@
       </div>
     </section>
 
+    <!-- FX (placeholder UI ready; DSP worklets later) -->
+    <section id="fx-section">
+      <div class="section-header">
+        <h2>FX</h2>
+        <span class="hint">Chorus → Bitcrush → Dist → Comp → Reverb</span>
+      </div>
+      <div class="section-content">
+        <div class="fx-grid">
+
+          <div class="fx-block">
+            <div class="fx-title">CHORUS</div>
+            <div class="fx-row">
+              <label>MIX</label>
+              <input type="range" id="fx-chorus" min="0" max="100" value="25">
+              <span class="tempo-value" id="fx-chorus-val">25%</span>
+            </div>
+          </div>
+
+          <div class="fx-block">
+            <div class="fx-title">BITCRUSH</div>
+            <div class="fx-row">
+              <label>AMT</label>
+              <input type="range" id="fx-crush" min="0" max="100" value="0">
+              <span class="tempo-value" id="fx-crush-val">0%</span>
+            </div>
+          </div>
+
+          <div class="fx-block">
+            <div class="fx-title">DRIVE</div>
+            <div class="fx-row">
+              <label>AMT</label>
+              <input type="range" id="fx-drive" min="0" max="100" value="20">
+              <span class="tempo-value" id="fx-drive-val">20%</span>
+            </div>
+          </div>
+
+          <div class="fx-block">
+            <div class="fx-title">COMP</div>
+            <div class="fx-row">
+              <label>AMT</label>
+              <input type="range" id="fx-comp" min="0" max="100" value="10">
+              <span class="tempo-value" id="fx-comp-val">10%</span>
+            </div>
+          </div>
+
+          <div class="fx-block">
+            <div class="fx-title">REVERB</div>
+            <div class="fx-row">
+              <label>MIX</label>
+              <input type="range" id="fx-rev" min="0" max="100" value="8">
+              <span class="tempo-value" id="fx-rev-val">8%</span>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
     <footer class="sampler-footer">
-      <p>Tap step = note (degree) · Double tap = chord triad · Long press = OFF · Space = Play/Stop</p>
+      <p>Tap step = note · Double tap = chord triad · Long press = mute · Space = Play/Stop</p>
     </footer>
 
   </div>
