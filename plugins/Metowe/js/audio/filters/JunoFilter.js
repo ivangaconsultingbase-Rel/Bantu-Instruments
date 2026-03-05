@@ -1,3 +1,4 @@
+// js/audio/filters/JunoFilter.js
 export class JunoFilter {
   constructor(ctx) {
     this.ctx = ctx;
@@ -5,27 +6,23 @@ export class JunoFilter {
     this.input = ctx.createGain();
     this.output = ctx.createGain();
 
-    // Soft drive pre-filter (Juno-ish “thick”)
     this.drive = ctx.createWaveShaper();
-    this.drive.curve = this._driveCurve(2.0);
+    this.drive.curve = this._driveCurve();
+    this.drive.oversample = "2x";
 
-    // 4-pole-ish cascade (CPU heavy but ok if we throttle updates)
     this.stage1 = ctx.createBiquadFilter();
     this.stage2 = ctx.createBiquadFilter();
     this.stage3 = ctx.createBiquadFilter();
     this.stage4 = ctx.createBiquadFilter();
 
-    [this.stage1, this.stage2, this.stage3, this.stage4].forEach((f) => {
+    [this.stage1, this.stage2, this.stage3, this.stage4].forEach(f => {
       f.type = "lowpass";
-      f.Q.value = 0.707; // will be overridden
+      f.Q.value = 0.8;
     });
 
-    // Resonance feedback loop
+    // feedback (stabilisé)
     this.feedback = ctx.createGain();
-
-    // Light saturation in feedback path to avoid runaway / harsh clicks
-    this.fbSat = ctx.createWaveShaper();
-    this.fbSat.curve = this._driveCurve(1.4);
+    this.feedback.gain.value = 0.0;
 
     // routing
     this.input.connect(this.drive);
@@ -37,116 +34,71 @@ export class JunoFilter {
 
     this.stage4.connect(this.output);
 
-    // feedback: stage4 -> fbSat -> feedback gain -> input
-    this.stage4.connect(this.fbSat);
-    this.fbSat.connect(this.feedback);
+    // feedback depuis la sortie du ladder vers l’entrée (plus logique)
+    this.stage4.connect(this.feedback);
     this.feedback.connect(this.input);
 
-    // defaults
     this._cutoff = 2400;
     this._res = 0.15;
 
-    this.setCutoff(2400, ctx.currentTime);
-    this.setResonance(0.15, ctx.currentTime);
+    this.setCutoff(this._cutoff, ctx.currentTime);
+    this.setResonance(this._res, ctx.currentTime);
   }
 
   connect(node) {
     this.output.connect(node);
   }
 
-  // =========================
-  // API used by Voice.js
-  // =========================
-
-  setCutoff(freq, t = this.ctx.currentTime) {
+  setCutoff(freq, time = this.ctx.currentTime) {
+    const t = Math.max(this.ctx.currentTime, time);
     const f = Math.max(80, Math.min(12000, Number(freq) || 2400));
     this._cutoff = f;
 
-    // Smooth changes (prevents zipper + reduces crackles)
-    const tc = 0.02; // 20ms smoothing
-
-    [this.stage1, this.stage2, this.stage3, this.stage4].forEach((s) => {
+    // IMPORTANT: smooth léger
+    const tc = 0.015;
+    [this.stage1, this.stage2, this.stage3, this.stage4].forEach(s => {
       try {
         s.frequency.cancelScheduledValues(t);
         s.frequency.setTargetAtTime(f, t, tc);
-      } catch {
-        s.frequency.value = f;
-      }
+      } catch {}
     });
   }
 
-  // rampCutoff(targetHz, durationSec, startTime)
-  // Used by Voice filter envelope (attack/decay)
-  rampCutoff(freq, dur = 0.05, t0 = this.ctx.currentTime) {
-    const f = Math.max(80, Math.min(12000, Number(freq) || 2400));
-    const d = Math.max(0.001, Number(dur) || 0.05);
-
-    // Use exponential ramps when possible (needs >0)
-    [this.stage1, this.stage2, this.stage3, this.stage4].forEach((s) => {
-      try {
-        const ap = s.frequency;
-        ap.cancelScheduledValues(t0);
-        // ensure we start from current value
-        const cur = Math.max(80, ap.value || this._cutoff || 2400);
-        ap.setValueAtTime(cur, t0);
-        ap.exponentialRampToValueAtTime(Math.max(80, f), t0 + d);
-      } catch {
-        s.frequency.value = f;
-      }
-    });
-
-    this._cutoff = f;
-  }
-
-  setResonance(res, t = this.ctx.currentTime) {
+  // resonance 0..1
+  setResonance(res, time = this.ctx.currentTime) {
+    const t = Math.max(this.ctx.currentTime, time);
     const r = Math.max(0, Math.min(1, Number(res) || 0));
     this._res = r;
 
-    // More “musical” resonance mapping:
-    // - keep stable and avoid max feedback that explodes CPU/peaks
-    const fb = this._mapResToFeedback(r); // 0..~0.72
-
-    const tc = 0.03;
+    // cap pour éviter l’auto-osc / CPU spikes
+    const fb = Math.min(0.65, r * 0.55);
 
     try {
       this.feedback.gain.cancelScheduledValues(t);
-      this.feedback.gain.setTargetAtTime(fb, t, tc);
-    } catch {
-      this.feedback.gain.value = fb;
-    }
+      this.feedback.gain.setTargetAtTime(fb, t, 0.02);
+    } catch {}
+  }
 
-    // Also shape Q a bit across stages
-    const q = 0.6 + r * 10.0; // 0.6 .. 10.6
-    [this.stage1, this.stage2, this.stage3, this.stage4].forEach((s) => {
+  rampCutoff(targetFreq, durSec = 0.01, startTime = this.ctx.currentTime) {
+    const t0 = Math.max(this.ctx.currentTime, startTime);
+    const t1 = t0 + Math.max(0.001, durSec);
+    const f = Math.max(80, Math.min(12000, Number(targetFreq) || this._cutoff));
+
+    [this.stage1, this.stage2, this.stage3, this.stage4].forEach(s => {
       try {
-        s.Q.cancelScheduledValues(t);
-        s.Q.setTargetAtTime(q, t, 0.03);
-      } catch {
-        s.Q.value = q;
-      }
+        s.frequency.cancelScheduledValues(t0);
+        s.frequency.setValueAtTime(s.frequency.value, t0);
+        s.frequency.linearRampToValueAtTime(f, t1);
+      } catch {}
     });
   }
 
-  // =========================
-  // Helpers
-  // =========================
-
-  _mapResToFeedback(r) {
-    // Stable curve: lots of usable range without hitting self-osc too hard
-    // r=0 -> 0
-    // r=1 -> ~0.72
-    const shaped = Math.pow(r, 1.25);
-    return 0.72 * shaped;
-  }
-
-  _driveCurve(amount = 2.0) {
-    const n = 1024;
+  _driveCurve() {
+    const n = 512;
     const curve = new Float32Array(n);
-    const k = Math.max(0.01, amount);
-
     for (let i = 0; i < n; i++) {
       const x = (i * 2) / (n - 1) - 1;
-      curve[i] = Math.tanh(k * x);
+      curve[i] = Math.tanh(x * 1.6);
     }
     return curve;
   }
