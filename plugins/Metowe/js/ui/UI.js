@@ -1,303 +1,183 @@
+/**
+ * UI.js
+ * UI inspirée du sampler (mobile + desktop) pour le synthé.
+ *
+ * Ce fichier:
+ * - Ne casse pas si certains éléments n'existent pas (IDs optionnels)
+ * - Branche les contrôles: play, bpm, swing (si présents)
+ * - Branche UNISON + DETUNE + DRIVE (si présents)
+ * - Branche un "clavier" si tu as une zone #keyboard (optionnel)
+ *
+ * IMPORTANT:
+ * Adapte les IDs si ton index.html utilise d'autres noms.
+ */
+
 export class UI {
-  constructor(synth, sequencer) {
-    this.synth = synth;
-    this.seq = sequencer;
+  constructor(synthEngine, sequencer) {
+    this.synth = synthEngine;
+    this.sequencer = sequencer;
 
-    this.isMobile = this._detectMobile();
+    this.isMobile = this.detectMobile();
 
-    this.stepEls = []; // [lane][step]
-    this._down = { lane: null, step: null, t: 0, el: null };
-    this._lpTimer = null;
-    this._lastTap = { lane: null, step: null, t: 0 };
+    // simple keyboard mapping
+    this.keyMap = {
+      // row 1
+      'Z': 48, 'S': 49, 'X': 50, 'D': 51, 'C': 52, 'V': 53, 'G': 54, 'B': 55, 'H': 56, 'N': 57, 'J': 58, 'M': 59,
+      // row 2
+      'Q': 60, '2': 61, 'W': 62, '3': 63, 'E': 64, 'R': 65, '5': 66, 'T': 67, '6': 68, 'Y': 69, '7': 70, 'U': 71, 'I': 72
+    };
+
+    this.downKeys = new Set();
   }
 
-  _detectMobile() {
-    return (('ontouchstart' in window) || (navigator.maxTouchPoints > 0) || window.matchMedia('(hover: none)').matches);
-  }
-
+  // ---------- DOM helpers ----------
   $(id) { return document.getElementById(id); }
-  setText(id, v) { const el = this.$(id); if (el) el.textContent = String(v); }
+  setText(id, value) { const el = this.$(id); if (el) el.textContent = String(value); }
+
+  detectMobile() {
+    return (
+      ('ontouchstart' in window) ||
+      (navigator.maxTouchPoints > 0) ||
+      window.matchMedia('(hover: none)').matches
+    );
+  }
 
   init() {
-    this._renderKeyboard();
-    this._renderSequencer();
-    this._bind();
-    this._syncAll();
+    // Init engine if needed (safety)
+    // main.js doit normalement gérer ça, mais on reste safe.
+    this.bindTransport();
+    this.bindSynthControls();
+    this.bindSequencerControls();
+    this.bindKeyboard();
+    this.updateHints();
+
+    // defaults UI -> engine
+    const unison = this.$('unison');
+    if (unison) this.synth.setUnisonVoices(parseInt(unison.value, 10));
+
+    const detune = this.$('detune');
+    if (detune) this.synth.setUnisonDetune(Number(detune.value));
+
+    const drive = this.$('drive');
+    if (drive) this.synth.setDrive(Number(drive.value));
   }
 
-  _renderKeyboard() {
-    const kb = this.$("keyboard");
-    if (!kb) return;
-
-    const keys = [
-      { k: "A", n: 60 }, { k: "S", n: 62 }, { k: "D", n: 64 }, { k: "F", n: 65 },
-      { k: "G", n: 67 }, { k: "H", n: 69 }, { k: "J", n: 71 }, { k: "K", n: 72 },
-    ];
-
-    kb.innerHTML = "";
-    keys.forEach(o => {
-      const d = document.createElement("div");
-      d.className = "kkey";
-      d.dataset.note = String(o.n);
-      d.dataset.key = o.k;
-      d.textContent = o.k;
-      kb.appendChild(d);
-    });
+  updateHints() {
+    // optionnel
+    const hint = this.$('pad-hint');
+    if (!hint) return;
+    hint.textContent = this.isMobile
+      ? 'Tap pour jouer · Clavier tactile'
+      : 'Clavier PC + souris';
   }
 
-  _renderSequencer() {
-    // header 1..16
-    const head = this.$("seq-header");
-    if (head) {
-      head.innerHTML = "";
-      for (let s = 0; s < this.seq.steps; s++) {
-        const sp = document.createElement("span");
-        sp.textContent = String(s + 1);
-        head.appendChild(sp);
+  // ---------------------------
+  // TRANSPORT
+  // ---------------------------
+  bindTransport() {
+    this.$('play-btn')?.addEventListener('click', () => {
+      if (!this.sequencer) return;
+
+      if (this.sequencer.isPlaying) {
+        this.sequencer.stop();
+        this.$('play-btn')?.classList.remove('active');
+      } else {
+        this.synth.resume?.();
+        this.sequencer.start();
+        this.$('play-btn')?.classList.add('active');
       }
-    }
+    });
 
-    const grid = this.$("sequencer-grid");
-    if (!grid) return;
+    this.$('clear-btn')?.addEventListener('click', () => {
+      this.sequencer?.clear?.();
+    });
 
-    grid.innerHTML = "";
-    this.stepEls = [];
-
-    for (let lane = 0; lane < this.seq.lanes; lane++) {
-      const row = document.createElement("div");
-      row.className = "seq-row";
-
-      const lab = document.createElement("div");
-      lab.className = "seq-row-label";
-      lab.textContent = String(lane + 1);
-      row.appendChild(lab);
-
-      const steps = document.createElement("div");
-      steps.className = "seq-steps";
-
-      const rowEls = [];
-      for (let s = 0; s < this.seq.steps; s++) {
-        const b = document.createElement("button");
-        b.type = "button";
-        b.className = "seq-step";
-        b.dataset.lane = String(lane);
-        b.dataset.step = String(s);
-        if (s % 4 === 0) b.classList.add("beat-marker");
-
-        const t = document.createElement("div");
-        t.className = "txt";
-        t.textContent = "-";
-        b.appendChild(t);
-
-        steps.appendChild(b);
-        rowEls.push(b);
-      }
-
-      row.appendChild(steps);
-      grid.appendChild(row);
-      this.stepEls.push(rowEls);
-    }
+    // NOTE: tu veux enlever STOP => ne rien binder si absent
+    this.$('stop-btn')?.addEventListener('click', () => {
+      this.sequencer?.stop?.();
+      this.$('play-btn')?.classList.remove('active');
+    });
   }
 
-  _bind() {
-    // Transport
-    this.$("play-btn")?.addEventListener("click", () => {
-      this.seq.togglePlay();
-      this.$("play-btn")?.classList.toggle("active", this.seq.isPlaying);
+  // ---------------------------
+  // SYNTH CONTROLS (UNISON / DETUNE / DRIVE)
+  // ---------------------------
+  bindSynthControls() {
+    // UNISON
+    this.$('unison')?.addEventListener('input', (e) => {
+      const v = parseInt(e.target.value, 10) || 1;
+      this.synth.setUnisonVoices(v);
+      this.setText('unison-val', v);
     });
 
-    this.$("clear-btn")?.addEventListener("click", () => {
-      this.seq.clear();
-      this.seq.loadDefaultPattern(); // garde l'esprit “play = musical”
-      this._syncAll();
+    // DETUNE
+    this.$('detune')?.addEventListener('input', (e) => {
+      const v = Number(e.target.value) || 0;
+      this.synth.setUnisonDetune(v);
+      this.setText('detune-val', Math.round(v));
     });
 
-    // BPM/Swing/Humanize
-    this.$("bpm")?.addEventListener("input", (e) => {
-      const v = parseInt(e.target.value, 10) || 96;
-      this.seq.setBPM(v);
-      this.setText("bpm-display", v);
-      this.setText("bpm-val", v);
+    // DRIVE
+    this.$('drive')?.addEventListener('input', (e) => {
+      const v = Number(e.target.value) || 0;
+      this.synth.setDrive(v);
+      this.setText('drive-val', v.toFixed(1));
+    });
+  }
+
+  // ---------------------------
+  // SEQUENCER CONTROLS (BPM/SWING)
+  // ---------------------------
+  bindSequencerControls() {
+    this.$('bpm')?.addEventListener('input', (e) => {
+      const bpm = parseInt(e.target.value, 10) || 90;
+      this.sequencer?.setBPM?.(bpm);
+      this.setText('bpm-display', bpm);
+      this.setText('bpm-val', bpm);
     });
 
-    this.$("swing")?.addEventListener("input", (e) => {
-      const v = parseInt(e.target.value, 10) || 0;
-      this.seq.setSwing(v);
-      this.setText("swing-display", v);
-      this.setText("swing-val", `${v}%`);
+    this.$('swing')?.addEventListener('input', (e) => {
+      const swing = parseInt(e.target.value, 10) || 0;
+      this.sequencer?.setSwing?.(swing);
+      this.setText('swing-display', swing);
+      this.setText('swing-val', `${swing}%`);
     });
+  }
 
-    this.$("humanize")?.addEventListener("input", (e) => {
-      const v = parseInt(e.target.value, 10) || 0;
-      this.seq.setHumanize(v);
-      this.setText("humanize-val", `${v}%`);
-    });
+  // ---------------------------
+  // PC KEYBOARD PLAYING
+  // ---------------------------
+  bindKeyboard() {
+    document.addEventListener('keydown', (e) => {
+      const key = (e.key || '').toUpperCase();
+      if (this.downKeys.has(key)) return;
 
-    this.$("humanize-time")?.addEventListener("input", (e) => {
-      const v = parseInt(e.target.value, 10) || 0;
-      this.seq.setHumanizeTime(v);
-      this.setText("humanize-time-val", `${v}ms`);
-    });
-
-    // Root/Oct
-    this.$("root")?.addEventListener("change", (e) => {
-      this.seq.setRoot(e.target.value);
-      this.setText("scale-display", `${this.seq.root} MIN`);
-    });
-
-    this.$("oct")?.addEventListener("input", (e) => {
-      const v = parseInt(e.target.value, 10) || 4;
-      this.seq.setOctave(v);
-      this.setText("oct-val", v);
-    });
-
-    // Keyboard play (touch + click)
-    this.$("keyboard")?.addEventListener("pointerdown", (e) => {
-      const key = e.target.closest(".kkey");
-      if (!key) return;
-      e.preventDefault();
-      const n = parseInt(key.dataset.note, 10);
-      key.classList.add("active");
-      this.synth.noteOn(n, 1);
-      if (navigator.vibrate) navigator.vibrate(8);
-    }, { passive: false });
-
-    this.$("keyboard")?.addEventListener("pointerup", (e) => {
-      const key = e.target.closest(".kkey");
-      if (!key) return;
-      const n = parseInt(key.dataset.note, 10);
-      key.classList.remove("active");
-      this.synth.noteOff(n);
-    });
-
-    // Typing keyboard
-    const map = { a:60, s:62, d:64, f:65, g:67, h:69, j:71, k:72 };
-    document.addEventListener("keydown", (e) => {
-      if (e.repeat) return;
-      if (e.code === "Space") {
+      // space -> play toggle (si sequencer)
+      if (e.code === 'Space') {
         e.preventDefault();
-        this.seq.togglePlay();
-        this.$("play-btn")?.classList.toggle("active", this.seq.isPlaying);
+        this.$('play-btn')?.click();
         return;
       }
-      const n = map[(e.key || "").toLowerCase()];
-      if (n != null) this.synth.noteOn(n, 1);
-    });
 
-    document.addEventListener("keyup", (e) => {
-      const n = map[(e.key || "").toLowerCase()];
-      if (n != null) this.synth.noteOff(n);
-    });
+      const note = this.keyMap[key];
+      if (note == null) return;
 
-    // Sequencer edit (mobile friendly)
-    const grid = this.$("sequencer-grid");
-    if (!grid) return;
-
-    grid.addEventListener("pointerdown", (e) => {
-      const el = e.target.closest(".seq-step");
-      if (!el) return;
       e.preventDefault();
+      this.downKeys.add(key);
 
-      const lane = parseInt(el.dataset.lane, 10);
-      const step = parseInt(el.dataset.step, 10);
-
-      this._down = { lane, step, t: performance.now(), el };
-
-      // long press => mute toggle
-      clearTimeout(this._lpTimer);
-      this._lpTimer = setTimeout(() => {
-        const muted = this.seq.toggleMute(lane, step);
-        el.style.opacity = muted ? "0.35" : "";
-        if (navigator.vibrate) navigator.vibrate(12);
-      }, 360);
-    }, { passive: false });
-
-    grid.addEventListener("pointerup", (e) => {
-      clearTimeout(this._lpTimer);
-
-      const el = e.target.closest(".seq-step");
-      if (!el) return;
-
-      const lane = parseInt(el.dataset.lane, 10);
-      const step = parseInt(el.dataset.step, 10);
-
-      // if long press already fired, don't do tap action
-      const dt = performance.now() - this._down.t;
-      if (dt > 340) return;
-
-      // double tap => chord toggle
-      const now = performance.now();
-      const last = this._lastTap;
-      const isDouble = (last.lane === lane && last.step === step && (now - last.t) < 260);
-      this._lastTap = { lane, step, t: now };
-
-      if (isDouble) {
-        this.seq.toggleChord(lane, step);
-        this._syncStep(lane, step);
-        if (navigator.vibrate) navigator.vibrate(10);
-        return;
-      }
-
-      // tap logic:
-      // - if off => on
-      // - if on => cycle degree
-      const ev = this.seq.getEvent(lane, step);
-      if (!ev.on) this.seq.toggleStep(lane, step);
-      else this.seq.cycleDegree(lane, step);
-
-      this._syncStep(lane, step);
-
-      if (navigator.vibrate) navigator.vibrate(8);
+      this.synth.resume?.();
+      this.synth.noteOn?.(note, 1);
     });
-  }
 
-  _syncAll() {
-    // displays
-    this.setText("bpm-display", this.seq.bpm);
-    this.setText("bpm-val", this.seq.bpm);
-    this.setText("swing-display", this.seq.swing);
-    this.setText("swing-val", `${this.seq.swing}%`);
-    this.setText("scale-display", `${this.seq.root} MIN`);
-    this.setText("humanize-val", `${this.seq.humanizePct}%`);
-    this.setText("humanize-time-val", `${this.seq.humanizeTimeMs}ms`);
-    this.setText("oct-val", this.seq.baseOctave);
+    document.addEventListener('keyup', (e) => {
+      const key = (e.key || '').toUpperCase();
+      const note = this.keyMap[key];
+      if (note == null) return;
 
-    for (let lane = 0; lane < this.seq.lanes; lane++) {
-      for (let s = 0; s < this.seq.steps; s++) this._syncStep(lane, s);
-    }
-  }
+      e.preventDefault();
+      this.downKeys.delete(key);
 
-  _syncStep(lane, step) {
-    const el = this.stepEls?.[lane]?.[step];
-    if (!el) return;
-
-    const ev = this.seq.getEvent(lane, step);
-
-    el.classList.toggle("active", !!ev.on);
-    el.classList.toggle("chord", !!(ev.on && ev.chord));
-
-    // show degree 1..7 (more musical than 0..6)
-    const txt = el.querySelector(".txt");
-    if (txt) txt.textContent = ev.on ? String(ev.degree + 1) : "-";
-
-    // muted display
-    el.style.opacity = ev.mute ? "0.35" : "";
-  }
-
-  onStepChange(step) {
-    // clear previous
-    document.querySelectorAll(".seq-step.playing").forEach(n => n.classList.remove("playing"));
-    if (step < 0) return;
-
-    for (let lane = 0; lane < this.seq.lanes; lane++) {
-      const el = this.stepEls?.[lane]?.[step];
-      if (el) el.classList.add("playing");
-    }
-
-    const led = this.$("led");
-    if (led) {
-      led.classList.add("active");
-      setTimeout(() => led.classList.remove("active"), 50);
-    }
+      this.synth.noteOff?.(note);
+    });
   }
 }
