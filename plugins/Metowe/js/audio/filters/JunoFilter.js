@@ -1,62 +1,73 @@
 export class JunoFilter {
 
-  constructor(ctx) {
+  constructor(ctx){
 
-    this.ctx = ctx;
+    this.ctx = ctx
 
-    this.filter = ctx.createBiquadFilter();
+    this.input = ctx.createGain()
+    this.output = ctx.createGain()
 
-    this.filter.type = "lowpass";
+    this.drive = ctx.createWaveShaper()
+    this.drive.curve = this._driveCurve()
 
-    this.filter.frequency.value = 8000;
-    this.filter.Q.value = 0.7;
+    this.stage1 = ctx.createBiquadFilter()
+    this.stage2 = ctx.createBiquadFilter()
+    this.stage3 = ctx.createBiquadFilter()
+    this.stage4 = ctx.createBiquadFilter()
 
-    // envelope
+    ;[this.stage1,this.stage2,this.stage3,this.stage4].forEach(f=>{
+      f.type = "lowpass"
+    })
 
-    this.envAmount = 0.5;
-    this.keyTrack = 0.4;
+    this.feedback = ctx.createGain()
 
+    this.input.connect(this.drive)
+
+    this.drive.connect(this.stage1)
+    this.stage1.connect(this.stage2)
+    this.stage2.connect(this.stage3)
+    this.stage3.connect(this.stage4)
+
+    this.stage4.connect(this.output)
+
+    this.stage4.connect(this.feedback)
+    this.feedback.connect(this.input)
+
+    this.setCutoff(2400)
+    this.setResonance(0.15)
   }
 
-  connect(dest) {
-    this.filter.connect(dest);
+  connect(node){
+    this.output.connect(node)
   }
 
-  get input() {
-    return this.filter;
+  setCutoff(freq){
+
+    const f = Math.max(80, Math.min(12000,freq))
+
+    ;[this.stage1,this.stage2,this.stage3,this.stage4].forEach(s=>{
+      s.frequency.setTargetAtTime(f,this.ctx.currentTime,0.01)
+    })
   }
 
-  setCutoff(freq) {
+  setResonance(res){
 
-    this.filter.frequency.setValueAtTime(
-      freq,
-      this.ctx.currentTime
-    );
+    const r = Math.max(0,Math.min(1,res))
 
+    this.feedback.gain.setTargetAtTime(r*0.8,this.ctx.currentTime,0.01)
   }
 
-  setResonance(value) {
+  _driveCurve(){
 
-    this.filter.Q.setValueAtTime(
-      value,
-      this.ctx.currentTime
-    );
+    const n = 512
+    const curve = new Float32Array(n)
 
-  }
+    for(let i=0;i<n;i++){
+      const x = (i*2/n)-1
+      curve[i] = Math.tanh(x*2)
+    }
 
-  applyEnvelope(baseFreq, env) {
-
-    const now = this.ctx.currentTime;
-
-    this.filter.frequency.cancelScheduledValues(now);
-
-    this.filter.frequency.setValueAtTime(baseFreq, now);
-
-    this.filter.frequency.linearRampToValueAtTime(
-      baseFreq + env * this.envAmount * baseFreq,
-      now + 0.05
-    );
-
+    return curve
   }
 
 }
