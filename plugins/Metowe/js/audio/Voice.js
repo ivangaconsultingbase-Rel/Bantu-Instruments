@@ -1,19 +1,18 @@
 /**
  * Voice.js
- * Juno-style poly voice
+ * Juno-style poly voice (with Eco mode)
  *
- * PATCHES:
- * - JunoFilter integration
+ * - JunoFilter (heavy) OR EcoFilter (light) per voice
  * - Portamento / glide
  * - PWM stable update
  * - Filter envelope using audio timeline (no setTimeout)
- * - Less “drum punch”, more “Juno sustain”
  */
 
 import { JunoFilter } from "./filters/JunoFilter.js";
+import { EcoFilter } from "./filters/EcoFilter.js";
 
 export class Voice {
-  constructor(ctx) {
+  constructor(ctx, opts = {}) {
     this.ctx = ctx;
 
     // -------- params --------
@@ -24,17 +23,11 @@ export class Voice {
 
     this.cutoff = 2400;
     this.resonance = 0.15;
-    this.filterEnvAmt = 0.25; // ✅ calmer par défaut (35% -> 25%)
+    this.filterEnvAmt = 0.25; // calmer par défaut
 
     this.glideTime = 0.04;
 
-    // ADSR (seconds)
-    this.adsr = {
-      a: 0.02, // ✅ 10ms -> 20ms (moins “click”)
-      d: 0.35, // ✅ plus long
-      s: 0.80, // ✅ plus sustain
-      r: 0.60,
-    };
+    this.adsr = { a: 0.02, d: 0.35, s: 0.80, r: 0.60 };
 
     // -------- graph --------
     this.output = ctx.createGain();
@@ -42,7 +35,9 @@ export class Voice {
     this.amp = ctx.createGain();
     this.amp.gain.value = 0.0001;
 
-    this.filter = new JunoFilter(ctx);
+    // ✅ choose filter type
+    this.useEcoFilter = !!opts.useEcoFilter;
+    this.filter = this.useEcoFilter ? new EcoFilter(ctx) : new JunoFilter(ctx);
 
     this.drive = ctx.createWaveShaper();
     this.drive.oversample = "2x";
@@ -77,9 +72,7 @@ export class Voice {
   }
 
   disconnect() {
-    try {
-      this.output.disconnect();
-    } catch {}
+    try { this.output.disconnect(); } catch {}
   }
 
   //////////////////////////////////////////////////////////////
@@ -88,7 +81,7 @@ export class Voice {
 
   setWave(mode) {
     const m = (mode || "").toLowerCase();
-    this.wave = m === "pulse" || m === "mix" || m === "saw" ? m : "saw";
+    this.wave = (m === "pulse" || m === "mix" || m === "saw") ? m : "saw";
     this._applyWaveMix();
   }
 
@@ -110,14 +103,16 @@ export class Voice {
   }
 
   setFilter(cut, res, env) {
+    const now = this.ctx.currentTime;
+
     if (cut != null) {
       this.cutoff = Math.max(80, Math.min(12000, Number(cut) || 2400));
-      this.filter.setCutoff(this.cutoff, this.ctx.currentTime);
+      this.filter.setCutoff?.(this.cutoff, now);
     }
 
     if (res != null) {
       this.resonance = Math.max(0, Math.min(1, Number(res) || 0));
-      this.filter.setResonance(this.resonance, this.ctx.currentTime);
+      this.filter.setResonance?.(this.resonance, now);
     }
 
     if (env != null) {
@@ -173,11 +168,11 @@ export class Voice {
 
     this._applyWaveMix();
 
-    // Filter base params
-    this.filter.setCutoff(this.cutoff, t);
-    this.filter.setResonance(this.resonance, t);
+    // base filter params
+    this.filter.setCutoff?.(this.cutoff, t);
+    this.filter.setResonance?.(this.resonance, t);
 
-    // Envelopes
+    // envelopes
     this._applyAmpEnvAt(t, velocity);
     this._applyFilterEnvAt(t);
 
@@ -206,20 +201,12 @@ export class Voice {
 
     const stopT = t + r + 0.03;
 
-    try {
-      this.saw?.stop(stopT);
-    } catch {}
-    try {
-      this.pulse?.stop(stopT);
-    } catch {}
+    try { this.saw?.stop(stopT); } catch {}
+    try { this.pulse?.stop(stopT); } catch {}
 
     setTimeout(() => {
-      try {
-        this.saw?.disconnect();
-      } catch {}
-      try {
-        this.pulse?.disconnect();
-      } catch {}
+      try { this.saw?.disconnect(); } catch {}
+      try { this.pulse?.disconnect(); } catch {}
       this.saw = null;
       this.pulse = null;
     }, Math.max(0, (stopT - this.ctx.currentTime) * 1000) + 10);
@@ -234,15 +221,8 @@ export class Voice {
 
     let saw = 1;
     let pulse = 0;
-
-    if (this.wave === "pulse") {
-      saw = 0;
-      pulse = 1;
-    }
-    if (this.wave === "mix") {
-      saw = 0.7;
-      pulse = 0.7;
-    }
+    if (this.wave === "pulse") { saw = 0; pulse = 1; }
+    if (this.wave === "mix") { saw = 0.7; pulse = 0.7; }
 
     this.sawGain.gain.setTargetAtTime(saw, t, 0.01);
     this.pulseGain.gain.setTargetAtTime(pulse, t, 0.01);
@@ -251,8 +231,8 @@ export class Voice {
   _applyAmpEnvAt(t, velocity) {
     const { a, d, s } = this.adsr;
 
-    // ✅ moins “punch”: peak plus bas
-    const peak = 0.10 + 0.55 * velocity; // avant: 0.12 + 0.88*vel
+    // less punch
+    const peak = 0.10 + 0.55 * velocity;
     const sustain = Math.max(0.0001, peak * s);
 
     this.amp.gain.cancelScheduledValues(t);
@@ -269,20 +249,14 @@ export class Voice {
     const { a, d, s } = this.adsr;
 
     const base = this.cutoff;
-
-    // ✅ plus “Juno”: ouverture moins extrême
-    const maxExtra = 6500 * this.filterEnvAmt; // avant 9000
+    const maxExtra = 6500 * this.filterEnvAmt;
     const peak = Math.min(12000, base + maxExtra);
     const sustain = Math.min(12000, base + maxExtra * s);
 
-    // base at time
-    this.filter.setCutoff(base, t);
+    this.filter.setCutoff?.(base, t);
 
-    // attack: ramp to peak
-    this.filter.rampCutoff(peak, Math.max(0.001, a), t);
-
-    // decay: ramp to sustain
-    this.filter.rampCutoff(sustain, Math.max(0.001, d), t + Math.max(0.001, a));
+    this.filter.rampCutoff?.(peak, Math.max(0.001, a), t);
+    this.filter.rampCutoff?.(sustain, Math.max(0.001, d), t + Math.max(0.001, a));
   }
 
   _updateDriveCurve() {
