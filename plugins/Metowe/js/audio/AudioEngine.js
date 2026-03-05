@@ -8,7 +8,7 @@
  * - Metronome: playClick()
  */
 
-import { LoFiEffects } from './LoFiEffects.js';
+import { LoFiEffects } from '../LoFiEffects.js';
 
 export class AudioEngine {
   constructor() {
