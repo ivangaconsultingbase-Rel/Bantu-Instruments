@@ -125,23 +125,43 @@ section {
   grid-template-columns: repeat(8, 1fr);
   gap: var(--space-sm);
 }
+
 .kkey {
   height: 56px;
   background: var(--bg-tertiary);
   border: 1px solid var(--border-color);
   border-radius: var(--radius-md);
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
   font-family: 'JetBrains Mono', monospace;
   color: var(--text-secondary);
   user-select: none;
 }
+
+.kkey .kkey-top{
+  width: 100%;
+  display:flex;
+  justify-content: space-between;
+  padding: 0 10px;
+  font-size: .85rem;
+  color: rgba(255,255,255,.75);
+}
+.kkey .kkey-bot{
+  margin-top: 2px;
+  font-size: .65rem;
+  color: var(--text-muted);
+}
+
 .kkey.active {
   border-color: var(--accent-primary);
   box-shadow: 0 0 18px var(--active-glow), inset 0 0 18px var(--active-glow);
   color: var(--text-primary);
 }
+
+/* Compat: si jamais tu utilises .kbd-key dans une autre version */
+.kbd-key { composes: kkey; } /* (no-op en CSS standard, juste pour info) */
 
 /* Sequencer controls */
 .sequencer-controls {
@@ -287,6 +307,23 @@ section {
   box-shadow: 0 0 10px rgba(0, 255, 136, 0.35);
 }
 
+/* ✅ AJOUT: MUTE visuel (long press) */
+.seq-step.muted {
+  opacity: 0.35;
+  filter: grayscale(0.6);
+}
+.seq-step.muted::before{
+  content:"";
+  position:absolute;
+  left:6px; right:6px;
+  top:50%;
+  height:2px;
+  background: rgba(255,255,255,.7);
+  transform: rotate(-20deg);
+  opacity:.75;
+}
+
+/* Footer */
 .sampler-footer {
   text-align: center;
   padding: var(--space-sm);
