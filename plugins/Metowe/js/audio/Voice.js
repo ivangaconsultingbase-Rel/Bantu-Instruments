@@ -6,402 +6,435 @@
  * - JunoFilter integration
  * - Portamento / glide
  * - PWM stable update
+ * - Filter envelope using audio timeline (no setTimeout)
  */
 
 import { JunoFilter } from "./filters/JunoFilter.js";
 
 export class Voice {
 
-  constructor(ctx){
+constructor(ctx){
 
-    this.ctx = ctx;
+this.ctx = ctx
 
-    // -------- params --------
+// -------- params --------
 
-    this.wave = 'saw';
-    this.pwmDuty = 0.5;
+this.wave = "saw"
+this.pwmDuty = .5
 
-    this.driveAmount = 2;
+this.driveAmount = 2
 
-    this.cutoff = 2400;
-    this.resonance = 0.15;
-    this.filterEnvAmt = 0.35;
+this.cutoff = 2400
+this.resonance = .15
+this.filterEnvAmt = .35
 
-    this.glideTime = 0.04;
+this.glideTime = .04
 
-    this.adsr = {
-      a:0.01,
-      d:0.25,
-      s:0.7,
-      r:0.5
-    }
+this.adsr={
+a:.01,
+d:.25,
+s:.7,
+r:.5
+}
 
-    // -------- graph --------
+// -------- graph --------
 
-    this.output = ctx.createGain()
+this.output = ctx.createGain()
 
-    this.amp = ctx.createGain()
-    this.amp.gain.value = 0.0001
+this.amp = ctx.createGain()
+this.amp.gain.value = .0001
 
-    this.filter = new JunoFilter(ctx)
+this.filter = new JunoFilter(ctx)
 
-    this.drive = ctx.createWaveShaper()
-    this.drive.oversample = "2x"
+this.drive = ctx.createWaveShaper()
+this.drive.oversample="2x"
 
-    this._updateDriveCurve()
+this._updateDriveCurve()
 
-    this.sawGain = ctx.createGain()
-    this.pulseGain = ctx.createGain()
+this.sawGain = ctx.createGain()
+this.pulseGain = ctx.createGain()
 
-    this.sawGain.gain.value = 1
-    this.pulseGain.gain.value = 0
+this.sawGain.gain.value = 1
+this.pulseGain.gain.value = 0
 
-    // routing
+// routing
 
-    this.sawGain.connect(this.filter.input)
-    this.pulseGain.connect(this.filter.input)
+this.sawGain.connect(this.filter.input)
+this.pulseGain.connect(this.filter.input)
 
-    this.filter.connect(this.drive)
-    this.drive.connect(this.amp)
-    this.amp.connect(this.output)
+this.filter.connect(this.drive)
+this.drive.connect(this.amp)
+this.amp.connect(this.output)
 
-    // runtime
+// runtime
 
-    this.saw = null
-    this.pulse = null
+this.saw=null
+this.pulse=null
 
-    this.note = null
-    this._isOn = false
+this.note=null
+this._isOn=false
 
-    this._lastFreq = 440
+this._lastFreq=440
 
-  }
+}
 
-  connect(node){
-    this.output.connect(node)
-  }
+connect(node){
+this.output.connect(node)
+}
 
-  disconnect(){
-    try{this.output.disconnect()}catch{}
-  }
+disconnect(){
+try{this.output.disconnect()}catch{}
+}
 
-  // -----------------------
-  // PARAMS
-  // -----------------------
+//////////////////////////////////////////////////////////////////
+// PARAMS
+//////////////////////////////////////////////////////////////////
 
-  setWave(mode){
+setWave(mode){
 
-    const m = (mode || "").toLowerCase()
+const m=(mode||"").toLowerCase()
 
-    this.wave =
-      (m==="pulse"||m==="mix"||m==="saw")
-        ? m
-        : "saw"
+this.wave=
+(m==="pulse"||m==="mix"||m==="saw")
+?m
+:"saw"
 
-    this._applyWaveMix()
+this._applyWaveMix()
 
-  }
+}
 
-  setPWM(pct){
+setPWM(pct){
 
-    let x = Number(pct)
+let x=Number(pct)
 
-    if(x>1)x/=100
+if(x>1)x/=100
 
-    x=Math.max(0,Math.min(1,x))
+x=Math.max(0,Math.min(1,x))
 
-    this.pwmDuty = 0.05 + x*0.9
+this.pwmDuty=.05+x*.9
 
-    if(this.pulse){
-      this.pulse.setPeriodicWave(
-        this._makePulseWave(this.pwmDuty)
-      )
-    }
+if(this.pulse){
 
-  }
+this.pulse.setPeriodicWave(
+this._makePulseWave(this.pwmDuty)
+)
 
-  setDrive(amount){
+}
 
-    this.driveAmount = Math.max(0,Number(amount)||0)
+}
 
-    this._updateDriveCurve()
+setDrive(amount){
 
-  }
+this.driveAmount=Math.max(0,Number(amount)||0)
 
-  setFilter(cut,res,env){
+this._updateDriveCurve()
+
+}
+
+setFilter(cut,res,env){
 
 if(cut!=null){
-this.cutoff = Math.max(80,Math.min(12000,cut))
+
+this.cutoff=Math.max(80,Math.min(12000,cut))
+
 this.filter.setCutoff(this.cutoff)
+
 }
 
 if(res!=null){
-this.resonance = Math.max(0,Math.min(1,res))
+
+this.resonance=Math.max(0,Math.min(1,res))
+
 this.filter.setResonance(this.resonance)
+
 }
 
 if(env!=null){
-this.filterEnvAmt = Math.max(0,Math.min(1,env))
+
+this.filterEnvAmt=Math.max(0,Math.min(1,env))
+
 }
 
-// IMPORTANT
-// update immédiat si note tenue
+// update immediately if note playing
 
 if(this._isOn){
+
 this.filter.setCutoff(this.cutoff)
-}
 
 }
 
-  setADSR(aMs,dMs,sPct,rMs){
+}
 
-    const a = Math.max(0,Math.min(2000,aMs))/1000
-    const d = Math.max(0,Math.min(2000,dMs))/1000
-    const s = Math.max(0,Math.min(100,sPct))/100
-    const r = Math.max(0,Math.min(4000,rMs))/1000
+setADSR(aMs,dMs,sPct,rMs){
 
-    this.adsr={a,d,s,r}
+const a=Math.max(0,Math.min(2000,aMs))/1000
+const d=Math.max(0,Math.min(2000,dMs))/1000
+const s=Math.max(0,Math.min(100,sPct))/100
+const r=Math.max(0,Math.min(4000,rMs))/1000
 
-  }
+this.adsr={a,d,s,r}
 
-  setGlide(sec){
-    this.glideTime = Math.max(0,Math.min(.3,sec))
-  }
+}
 
-  // -----------------------
-  // NOTE ON
-  // -----------------------
+setGlide(sec){
 
-  noteOn(note,vel=1,when=this.ctx.currentTime){
+this.glideTime=Math.max(0,Math.min(.3,sec))
 
-    const t = Math.max(this.ctx.currentTime,when)
+}
 
-    const velocity = Math.max(0,Math.min(1,vel))
+//////////////////////////////////////////////////////////////////
+// NOTE ON
+//////////////////////////////////////////////////////////////////
 
-    this.note = note
-    this._isOn = true
+noteOn(note,vel=1,when=this.ctx.currentTime){
 
-    const freq = this._midiToFreq(note)
+const t=Math.max(this.ctx.currentTime,when)
 
-    // OSC
+const velocity=Math.max(0,Math.min(1,vel))
 
-    this.saw = this.ctx.createOscillator()
-    this.saw.type="sawtooth"
+this.note=note
+this._isOn=true
 
-    this.pulse = this.ctx.createOscillator()
-    this.pulse.setPeriodicWave(
-      this._makePulseWave(this.pwmDuty)
-    )
+const freq=this._midiToFreq(note)
 
-    // PORTAMENTO
+this._lastFreq=freq
 
-    if(this.glideTime>0){
+// OSC
 
-      this.saw.frequency.setTargetAtTime(freq,t,this.glideTime)
-      this.pulse.frequency.setTargetAtTime(freq,t,this.glideTime)
+this.saw=this.ctx.createOscillator()
+this.saw.type="sawtooth"
 
-    }else{
+this.pulse=this.ctx.createOscillator()
 
-      this.saw.frequency.setValueAtTime(freq,t)
-      this.pulse.frequency.setValueAtTime(freq,t)
+this.pulse.setPeriodicWave(
+this._makePulseWave(this.pwmDuty)
+)
 
-    }
+// PORTAMENTO
 
-    this.saw.connect(this.sawGain)
-    this.pulse.connect(this.pulseGain)
+if(this.glideTime>0){
 
-    this._applyWaveMix()
+this.saw.frequency.setTargetAtTime(freq,t,this.glideTime)
 
-    this._applyFilterAt(t)
+this.pulse.frequency.setTargetAtTime(freq,t,this.glideTime)
 
-    this._applyAmpEnvAt(t,velocity)
+}else{
 
-    this._applyFilterEnvAt(t)
+this.saw.frequency.setValueAtTime(freq,t)
 
-    this.saw.start(t)
-    this.pulse.start(t)
+this.pulse.frequency.setValueAtTime(freq,t)
 
-  }
+}
 
-  noteOff(when=this.ctx.currentTime){
+this.saw.connect(this.sawGain)
+this.pulse.connect(this.pulseGain)
 
-    if(!this._isOn)return
+this._applyWaveMix()
 
-    const t = Math.max(this.ctx.currentTime,when)
+this._applyFilterAt(t)
 
-    this._isOn=false
+this._applyAmpEnvAt(t,velocity)
 
-    const r = this.adsr.r
+this._applyFilterEnvAt(t)
 
-    try{
+this.saw.start(t)
+this.pulse.start(t)
 
-      this.amp.gain.cancelScheduledValues(t)
+}
 
-      const current = this.amp.gain.value
+//////////////////////////////////////////////////////////////////
+// NOTE OFF
+//////////////////////////////////////////////////////////////////
 
-      this.amp.gain.setValueAtTime(current,t)
+noteOff(when=this.ctx.currentTime){
 
-      this.amp.gain.exponentialRampToValueAtTime(
-        0.0001,
-        t+Math.max(.01,r)
-      )
+if(!this._isOn)return
 
-    }catch{}
+const t=Math.max(this.ctx.currentTime,when)
 
-    const stopT = t + r + .03
+this._isOn=false
 
-    try{this.saw?.stop(stopT)}catch{}
-    try{this.pulse?.stop(stopT)}catch{}
+const r=this.adsr.r
 
-    setTimeout(()=>{
+try{
 
-      try{this.saw?.disconnect()}catch{}
-      try{this.pulse?.disconnect()}catch{}
+this.amp.gain.cancelScheduledValues(t)
 
-      this.saw=null
-      this.pulse=null
+const current=this.amp.gain.value
 
-    },(stopT-this.ctx.currentTime)*1000+10)
+this.amp.gain.setValueAtTime(current,t)
 
-  }
+this.amp.gain.exponentialRampToValueAtTime(
+.0001,
+t+Math.max(.01,r)
+)
 
-  // -----------------------
-  // INTERNALS
-  // -----------------------
+}catch{}
 
-  _applyWaveMix(){
+const stopT=t+r+.03
 
-    const t=this.ctx.currentTime
+try{this.saw?.stop(stopT)}catch{}
+try{this.pulse?.stop(stopT)}catch{}
 
-    let saw=1
-    let pulse=0
+setTimeout(()=>{
 
-    if(this.wave==="pulse"){saw=0;pulse=1}
-    if(this.wave==="mix"){saw=.7;pulse=.7}
+try{this.saw?.disconnect()}catch{}
+try{this.pulse?.disconnect()}catch{}
 
-    this.sawGain.gain.setTargetAtTime(saw,t,.01)
-    this.pulseGain.gain.setTargetAtTime(pulse,t,.01)
+this.saw=null
+this.pulse=null
 
-  }
+},(stopT-this.ctx.currentTime)*1000+10)
 
-  _applyFilterAt(t){
+}
 
-    this.filter.setCutoff(this.cutoff)
+//////////////////////////////////////////////////////////////////
+// INTERNALS
+//////////////////////////////////////////////////////////////////
 
-    this.filter.setResonance(this.resonance)
+_applyWaveMix(){
 
-  }
+const t=this.ctx.currentTime
 
-  _applyAmpEnvAt(t,velocity){
+let saw=1
+let pulse=0
 
-    const {a,d,s}=this.adsr
+if(this.wave==="pulse"){saw=0;pulse=1}
+if(this.wave==="mix"){saw=.7;pulse=.7}
 
-    const peak=.12+.88*velocity
-    const sustain=Math.max(.0001,peak*s)
+this.sawGain.gain.setTargetAtTime(saw,t,.01)
+this.pulseGain.gain.setTargetAtTime(pulse,t,.01)
 
-    this.amp.gain.cancelScheduledValues(t)
+}
 
-    this.amp.gain.setValueAtTime(.0001,t)
+_applyFilterAt(t){
 
-    const ta=t+Math.max(.001,a)
+this.filter.setCutoff(this.cutoff,t)
 
-    this.amp.gain.exponentialRampToValueAtTime(
-      peak,
-      ta
-    )
+this.filter.setResonance(this.resonance,t)
 
-    const td=ta+Math.max(.001,d)
+}
 
-    this.amp.gain.exponentialRampToValueAtTime(
-      sustain,
-      td
-    )
-
-  }
-
- _applyFilterEnvAt(t){
+_applyAmpEnvAt(t,velocity){
 
 const {a,d,s}=this.adsr
 
-const base = this.cutoff
+const peak=.12+.88*velocity
+const sustain=Math.max(.0001,peak*s)
 
-const maxExtra = 9000 * this.filterEnvAmt
+this.amp.gain.cancelScheduledValues(t)
 
-const peak = Math.min(12000, base + maxExtra)
+this.amp.gain.setValueAtTime(.0001,t)
 
-const sustain = Math.min(12000, base + maxExtra * s)
+const ta=t+Math.max(.001,a)
 
-const ta = t + a
-const td = ta + d
+this.amp.gain.exponentialRampToValueAtTime(
+peak,
+ta
+)
 
-// base
+const td=ta+Math.max(.001,d)
 
-this.filter.setCutoff(base)
-
-// attack
-
-this.filter.rampCutoff(peak, a)
-
-// decay
-
-setTimeout(()=>{
-  this.filter.rampCutoff(sustain, d)
-}, a * 1000)
+this.amp.gain.exponentialRampToValueAtTime(
+sustain,
+td
+)
 
 }
 
-    setTimeout(()=>{
-      this.filter.setCutoff(sustain)
-    },(a+d)*1000)
+//////////////////////////////////////////////////////////////////
+// FILTER ENVELOPE (audio timeline version)
+//////////////////////////////////////////////////////////////////
 
-  }
+_applyFilterEnvAt(t){
 
-  _updateDriveCurve(){
+const {a,d,s}=this.adsr
 
-    const n=1024
+const base=this.cutoff
 
-    const curve=new Float32Array(n)
+const maxExtra=9000*this.filterEnvAmt
 
-    const k=1+this.driveAmount*4
+const peak=Math.min(12000,base+maxExtra)
 
-    for(let i=0;i<n;i++){
+const sustain=Math.min(12000,base+maxExtra*s)
 
-      const x=i*2/(n-1)-1
+// base
 
-      curve[i]=Math.tanh(k*x)/Math.tanh(k)
+this.filter.setCutoff(base,t)
 
-    }
+// attack
 
-    this.drive.curve=curve
+this.filter.rampCutoff(
+peak,
+a,
+t
+)
 
-  }
+// decay
 
-  _makePulseWave(duty){
+this.filter.rampCutoff(
+sustain,
+d,
+t+a
+)
 
-    const N=64
+}
 
-    const real=new Float32Array(N+1)
-    const imag=new Float32Array(N+1)
+//////////////////////////////////////////////////////////////////
+// DRIVE
+//////////////////////////////////////////////////////////////////
 
-    const d=Math.max(.05,Math.min(.95,duty))
+_updateDriveCurve(){
 
-    for(let n=1;n<=N;n++){
+const n=1024
+const curve=new Float32Array(n)
 
-      const an=(2/(n*Math.PI))*Math.sin(n*Math.PI*d)
+const k=1+this.driveAmount*4
 
-      real[n]=0
-      imag[n]=an
+for(let i=0;i<n;i++){
 
-    }
+const x=i*2/(n-1)-1
 
-    return this.ctx.createPeriodicWave(real,imag)
+curve[i]=Math.tanh(k*x)/Math.tanh(k)
 
-  }
+}
 
-  _midiToFreq(note){
+this.drive.curve=curve
 
-    return 440*Math.pow(2,(note-69)/12)
+}
 
-  }
+//////////////////////////////////////////////////////////////////
+// PWM WAVE
+//////////////////////////////////////////////////////////////////
+
+_makePulseWave(duty){
+
+const N=64
+
+const real=new Float32Array(N+1)
+const imag=new Float32Array(N+1)
+
+const d=Math.max(.05,Math.min(.95,duty))
+
+for(let n=1;n<=N;n++){
+
+const an=(2/(n*Math.PI))*Math.sin(n*Math.PI*d)
+
+real[n]=0
+imag[n]=an
+
+}
+
+return this.ctx.createPeriodicWave(real,imag)
+
+}
+
+//////////////////////////////////////////////////////////////////
+
+_midiToFreq(note){
+
+return 440*Math.pow(2,(note-69)/12)
+
+}
 
 }
