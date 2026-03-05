@@ -1,3 +1,5 @@
+import { JunoFilter } from "./filters/JunoFilter.js";
+
 export class Voice {
 
   constructor(ctx) {
@@ -6,57 +8,59 @@ export class Voice {
 
     this.note = null;
 
-    // OSCILLATORS
+    // oscillators
 
     this.saw = ctx.createOscillator();
     this.pulse = ctx.createOscillator();
     this.sub = ctx.createOscillator();
 
-    this.noise = ctx.createBufferSource();
+    this.saw.type = "sawtooth";
+    this.pulse.type = "square";
+    this.sub.type = "square";
 
-    // GAINS
+    // noise
+
+    this.noise = this.createNoise();
+
+    // mixer
 
     this.sawGain = ctx.createGain();
     this.pulseGain = ctx.createGain();
     this.subGain = ctx.createGain();
     this.noiseGain = ctx.createGain();
 
-    this.vca = ctx.createGain();
-
-    // default mix
-
     this.sawGain.gain.value = 0.6;
     this.pulseGain.gain.value = 0.4;
     this.subGain.gain.value = 0.5;
     this.noiseGain.gain.value = 0.1;
 
+    // filter
+
+    this.filter = new JunoFilter(ctx);
+
+    // VCA
+
+    this.vca = ctx.createGain();
     this.vca.gain.value = 0;
-
-    // oscillator types
-
-    this.saw.type = "sawtooth";
-    this.pulse.type = "square";
-    this.sub.type = "square";
 
     // routing
 
     this.saw.connect(this.sawGain);
     this.pulse.connect(this.pulseGain);
     this.sub.connect(this.subGain);
+
     this.noise.connect(this.noiseGain);
 
-    this.sawGain.connect(this.vca);
-    this.pulseGain.connect(this.vca);
-    this.subGain.connect(this.vca);
-    this.noiseGain.connect(this.vca);
+    this.sawGain.connect(this.filter.input);
+    this.pulseGain.connect(this.filter.input);
+    this.subGain.connect(this.filter.input);
+    this.noiseGain.connect(this.filter.input);
 
-    // start oscillators
+    this.filter.connect(this.vca);
 
     this.saw.start();
     this.pulse.start();
     this.sub.start();
-
-    this.initNoise();
 
   }
 
@@ -64,21 +68,27 @@ export class Voice {
     this.vca.connect(dest);
   }
 
-  initNoise() {
+  createNoise() {
 
-    const bufferSize = this.ctx.sampleRate * 2;
-
-    const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+    const buffer = this.ctx.createBuffer(
+      1,
+      this.ctx.sampleRate * 2,
+      this.ctx.sampleRate
+    );
 
     const data = buffer.getChannelData(0);
 
-    for (let i = 0; i < bufferSize; i++) {
+    for (let i = 0; i < data.length; i++) {
       data[i] = Math.random() * 2 - 1;
     }
 
-    this.noise.buffer = buffer;
-    this.noise.loop = true;
-    this.noise.start();
+    const src = this.ctx.createBufferSource();
+    src.buffer = buffer;
+    src.loop = true;
+
+    src.start();
+
+    return src;
 
   }
 
@@ -94,7 +104,11 @@ export class Voice {
     this.pulse.frequency.setValueAtTime(freq, now);
     this.sub.frequency.setValueAtTime(freq / 2, now);
 
-    // envelope
+    // filter envelope
+
+    this.filter.applyEnvelope(1500, 1);
+
+    // VCA envelope
 
     this.vca.gain.cancelScheduledValues(now);
     this.vca.gain.setValueAtTime(0, now);
@@ -114,7 +128,7 @@ export class Voice {
 
     this.vca.gain.linearRampToValueAtTime(
       0,
-      now + 0.25
+      now + 0.3
     );
 
   }
