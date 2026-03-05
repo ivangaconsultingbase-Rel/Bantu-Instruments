@@ -23,13 +23,13 @@ export class EcoFilter {
     this.output.connect(node);
   }
 
-  // “cutoff perceptuel” : on garde l’échelle Hz, mais on smooth et on limite proprement
   setCutoff(freq, time = this.ctx.currentTime) {
     const t = Math.max(this.ctx.currentTime, time);
     const f = Math.max(60, Math.min(16000, Number(freq) || 2400));
     this._cutoff = f;
 
     try {
+      // IMPORTANT: annule les ramps futures, sinon ton cutoff “ne répond plus”
       this.f.frequency.cancelScheduledValues(t);
       this.f.frequency.setTargetAtTime(f, t, 0.015);
     } catch {}
@@ -40,8 +40,8 @@ export class EcoFilter {
     const r = Math.max(0, Math.min(1, Number(res01) || 0));
     this._res = r;
 
-    // stable & light: Q raisonnable
-    const q = 0.7 + r * 10.0;
+    // Q limité pour stabilité CPU
+    const q = 0.7 + r * 8.0;
 
     try {
       this.f.Q.cancelScheduledValues(t);
@@ -49,15 +49,15 @@ export class EcoFilter {
     } catch {}
   }
 
-  // ramp linéaire sur la timeline (utile pour envelope)
+  // ramp “propre” sans annuler toute l’histoire
   rampCutoff(targetFreq, durSec = 0.01, startTime = this.ctx.currentTime) {
     const t0 = Math.max(this.ctx.currentTime, startTime);
     const t1 = t0 + Math.max(0.001, durSec);
     const f = Math.max(60, Math.min(16000, Number(targetFreq) || this._cutoff));
 
     try {
-      // on part de la valeur courante (au mieux)
       this.f.frequency.cancelScheduledValues(t0);
+      // repartir de la valeur courante à t0 (évite les jumps)
       this.f.frequency.setValueAtTime(this.f.frequency.value, t0);
       this.f.frequency.linearRampToValueAtTime(f, t1);
     } catch {}
