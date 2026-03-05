@@ -7,6 +7,7 @@
  * + humanize (vel + timing)
  * + metronome (quarter notes, accent downbeat)
  * + live rec (quantize + overdub)
+ * + DEMO PATTERN: preloaded so PLAY sounds immediately
  */
 
 export class Sequencer {
@@ -24,7 +25,7 @@ export class Sequencer {
     this.isPlaying = false;
     this.intervalId = null;
 
-    // Velocity grid
+    // Velocity grid (0..1)
     this.defaultVelocity = 0.8;
     this.grid = Array.from({ length: this.pads }, () => Array(this.steps).fill(0));
 
@@ -50,6 +51,49 @@ export class Sequencer {
     this.nextStepTime = 0;
     this.scheduleAheadTime = 0.1;
     this.lookahead = 25;
+
+    // ✅ IMPORTANT: preload a demo pattern so PLAY works immediately
+    this.loadDemoPattern();
+  }
+
+  // ---------- Demo pattern ----------
+  loadDemoPattern() {
+    // clear first
+    this.grid = Array.from({ length: this.pads }, () => Array(this.steps).fill(0));
+    this.accentGrid = Array.from({ length: this.pads }, () => Array(this.steps).fill(false));
+
+    // Helper
+    const set = (pad, steps, vel = 0.8, accentSteps = []) => {
+      steps.forEach(s => { this.grid[pad][s] = vel; });
+      accentSteps.forEach(s => { this.accentGrid[pad][s] = true; });
+    };
+
+    // Pads mapping (your defaults):
+    // 0 KICK, 1 SNARE, 2 HIHAT, 3 BASS, 4 CHOP1, 5 CHOP2
+
+    // Kick: boom bap-ish
+    set(0, [0, 7, 8, 11, 15], 0.95, [0, 8]);
+
+    // Snare: backbeats
+    set(1, [4, 12], 0.95, [4, 12]);
+
+    // HiHat: 8ths with a couple skips
+    set(2, [2, 6, 10, 14], 0.55, []);
+    set(2, [0, 4, 8, 12], 0.35, []); // ghost hats
+
+    // Bass: simple minor-ish pulse (works even with a single bass sample)
+    set(3, [0, 3, 6, 9, 12, 14], 0.65, [0]);
+
+    // Chops: arpeggio feel (alternating pads)
+    set(4, [1, 5, 9, 13], 0.75, [9]);
+    set(5, [2, 6, 10, 14], 0.72, [14]);
+
+    // Small variations (human feel)
+    // (keep subtle; real humanize is applied at runtime too)
+    this.grid[2][10] = 0.62;
+    this.grid[2][14] = 0.48;
+    this.grid[0][7] = 0.75;
+    this.grid[0][11] = 0.82;
   }
 
   // ---------- Step state ----------
@@ -96,7 +140,6 @@ export class Sequencer {
   // ---------- Tempo ----------
   setBPM(bpm) { this.bpm = Math.max(60, Math.min(200, bpm)); }
   setSwing(swing) { this.swing = Math.max(0, Math.min(75, swing)); }
-
   getStepDuration() { return (60 / this.bpm) / 4; }
   getSwingOffset() { return this.getStepDuration() * (this.swing / 100) * 0.5; }
 
