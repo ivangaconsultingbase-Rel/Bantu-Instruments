@@ -1,13 +1,12 @@
+// /js/sequencer/Sequencer.js
 /**
- * Sequencer.js — 16 steps, 1 track
- * - degree 0(off) or 1..7 (natural minor degrees)
- * - accent boolean
- * - octave -1/0/+1
- * - chordMode TRIAD / SEVENTH
- * - inversion 0/1/2
- * - holdChord (sustain until next chord)
- * - swing + humanize (vel + timing)
- * - metronome (quarter notes, downbeat accent)
+ * Sequencer.js
+ * 16 steps + swing
+ * + velocity per-step (grid = 0..1)
+ * + accent per-step (accentGrid = boolean)
+ * + humanize (vel + timing)
+ * + metronome (quarter notes, accent downbeat)
+ * + live rec (quantize + overdub)
  */
 
 export class Sequencer {
@@ -16,192 +15,163 @@ export class Sequencer {
     this.onStepChange = onStepChange;
 
     this.steps = 16;
-
-    this.bpm = 96;
+    this.pads = 6;
+    this.bpm = 90;
     this.swing = 0;
 
-    this.isPlaying = false;
     this.currentStep = 0;
     this.lastPlayedStep = -1;
+    this.isPlaying = false;
+    this.intervalId = null;
 
+    // Velocity grid
+    this.defaultVelocity = 0.8;
+    this.grid = Array.from({ length: this.pads }, () => Array(this.steps).fill(0));
+
+    // Accent grid
+    this.accentGrid = Array.from({ length: this.pads }, () => Array(this.steps).fill(false));
+    this.accentBoost = 1.25;
+
+    // Live REC
+    this.isRecording = false;
+    this.quantizeRec = true;
+    this.recOverdub = true;
+    this.recVelocity = 0.9;
+
+    // Humanize
+    this.humanizeVelAmt = 0.06; // 6%
+    this.humanizeTimeMs = 8;    // 8ms
+    this.humanizeEnabled = true;
+
+    // Metronome
+    this.metronomeEnabled = false;
+
+    // Scheduler
     this.nextStepTime = 0;
     this.scheduleAheadTime = 0.1;
     this.lookahead = 25;
-    this.intervalId = null;
-
-    // track state
-    this.degree = Array(this.steps).fill(0);      // 0..7
-    this.accent = Array(this.steps).fill(false); // boolean
-    this.oct = Array(this.steps).fill(0);        // -1/0/+1
-
-    // root (default A minor)
-    this.rootName = 'A';
-    this.rootMidi = 57; // A3
-    this.scale = [0, 2, 3, 5, 7, 8, 10]; // natural minor
-
-    // chord settings
-    this.chordMode = 'TRIAD'; // TRIAD | SEVENTH
-    this.inversion = 0;       // 0..2
-    this.holdChord = false;
-
-    // humanize
-    this.humanizeVelAmt = 0.0; // 0..0.30
-    this.humanizeTimeMs = 0;   // 0..20ms
-
-    // metronome
-    this.metronomeEnabled = false;
   }
 
-  // ---------- root ----------
-  setRoot(name) {
-    const n = (name || 'A').toUpperCase();
-    this.rootName = n;
-
-    const map = { C: 60, D: 62, E: 64, A: 57 };
-    this.rootMidi = map[n] ?? 57;
+  // ---------- Step state ----------
+  toggleStep(padId, step) {
+    const v = this.grid[padId][step] || 0;
+    this.grid[padId][step] = v > 0 ? 0 : this.defaultVelocity;
+    if (this.grid[padId][step] === 0) this.accentGrid[padId][step] = false;
+    return this.grid[padId][step] > 0;
   }
 
-  // ---------- chord settings ----------
-  setChordMode(mode) {
-    const m = (mode || 'TRIAD').toUpperCase();
-    this.chordMode = (m === 'SEVENTH') ? 'SEVENTH' : 'TRIAD';
+  clearStep(padId, step) {
+    this.grid[padId][step] = 0;
+    this.accentGrid[padId][step] = false;
   }
 
-  setInversion(inv) {
-    const i = Math.max(0, Math.min(2, parseInt(inv, 10) || 0));
-    this.inversion = i;
+  isStepActive(padId, step) {
+    return (this.grid[padId][step] || 0) > 0;
   }
 
-  setHold(on) {
-    this.holdChord = !!on;
-    // if turning off, release held chord
-    if (!this.holdChord) {
-      this.audioEngine.releaseHeldChord?.(this.audioEngine.ctx?.currentTime || 0);
+  getStepVelocity(padId, step) {
+    return Math.max(0, Math.min(1, Number(this.grid[padId][step] || 0)));
+  }
+
+  setStepVelocity(padId, step, velocity01) {
+    const v = Math.max(0, Math.min(1, Number(velocity01)));
+    this.grid[padId][step] = v;
+    if (v === 0) this.accentGrid[padId][step] = false;
+    return v;
+  }
+
+  // Accent
+  toggleAccent(padId, step) {
+    if (!this.isStepActive(padId, step)) {
+      this.grid[padId][step] = this.defaultVelocity;
     }
+    this.accentGrid[padId][step] = !this.accentGrid[padId][step];
+    return this.accentGrid[padId][step];
   }
 
-  // ---------- tempo ----------
-  setBPM(bpm) { this.bpm = Math.max(60, Math.min(200, Number(bpm))); }
-  setSwing(swing) { this.swing = Math.max(0, Math.min(75, Number(swing))); }
+  isAccented(padId, step) {
+    return !!this.accentGrid?.[padId]?.[step];
+  }
+
+  // ---------- Tempo ----------
+  setBPM(bpm) { this.bpm = Math.max(60, Math.min(200, bpm)); }
+  setSwing(swing) { this.swing = Math.max(0, Math.min(75, swing)); }
 
   getStepDuration() { return (60 / this.bpm) / 4; }
   getSwingOffset() { return this.getStepDuration() * (this.swing / 100) * 0.5; }
 
-  // ---------- humanize ----------
+  // ---------- Humanize ----------
   setHumanize(amountPct) {
     const a = Math.max(0, Math.min(30, Number(amountPct)));
     this.humanizeVelAmt = a / 100;
   }
+
   setHumanizeTime(ms) {
     this.humanizeTimeMs = Math.max(0, Math.min(20, Number(ms)));
   }
 
-  // ---------- metronome ----------
+  // ---------- Metronome ----------
   setMetronome(on) {
     this.metronomeEnabled = !!on;
     this.audioEngine.setMetronomeEnabled?.(this.metronomeEnabled);
   }
 
-  // ---------- step editing ----------
-  _clampStep(step) {
-    const s = Number(step) || 0;
-    return ((s % this.steps) + this.steps) % this.steps;
-  }
+  // ---------- Live REC ----------
+  setRecording(isOn) { this.isRecording = !!isOn; }
 
-  cycleDegree(step) {
-    const s = this._clampStep(step);
-    const v = this.degree[s] || 0;
-    const next = (v >= 7) ? 0 : (v + 1);
-    this.degree[s] = next;
-    if (next === 0) this.accent[s] = false;
-    return next;
-  }
+  recordHit(padId, velocity = this.recVelocity, time = this.audioEngine.getCurrentTime()) {
+    const v = Math.max(0, Math.min(1, Number(velocity)));
 
-  toggleAccent(step) {
-    const s = this._clampStep(step);
-    if ((this.degree[s] || 0) === 0) this.degree[s] = 1;
-    this.accent[s] = !this.accent[s];
-    return this.accent[s];
-  }
-
-  cycleOctave(step) {
-    const s = this._clampStep(step);
-    const o = this.oct[s] || 0;
-    const next = (o === 0) ? 1 : (o === 1 ? -1 : 0);
-    this.oct[s] = next;
-    return next;
-  }
-
-  clear() {
-    this.degree.fill(0);
-    this.accent.fill(false);
-    this.oct.fill(0);
-    this.audioEngine.releaseHeldChord?.(this.audioEngine.ctx?.currentTime || 0);
-  }
-
-  getStepState(step) {
-    const s = this._clampStep(step);
-    return { degree: this.degree[s] || 0, accent: !!this.accent[s], octave: this.oct[s] || 0 };
-  }
-
-  // ---------- diatonic chord building ----------
-  _degreeToMidi(degree1to7, octaveOffset = 0) {
-    const deg = Math.max(1, Math.min(7, Number(degree1to7)));
-    const semis = this.scale[deg - 1];
-    return this.rootMidi + semis + (octaveOffset * 12);
-  }
-
-  _triadForDegree(deg, octaveOffset = 0) {
-    const d1 = deg;
-    const d3 = ((deg + 1) % 7) + 1;
-    const d5 = ((deg + 3) % 7) + 1;
-
-    const m1 = this._degreeToMidi(d1, octaveOffset);
-    let m3 = this._degreeToMidi(d3, octaveOffset);
-    let m5 = this._degreeToMidi(d5, octaveOffset);
-
-    if (m3 <= m1) m3 += 12;
-    if (m5 <= m3) m5 += 12;
-
-    return [m1, m3, m5];
-  }
-
-  _seventhForDegree(deg, octaveOffset = 0) {
-    const tri = this._triadForDegree(deg, octaveOffset);
-    const d7 = ((deg + 5) % 7) + 1; // +6 degrees => 7th
-    let m7 = this._degreeToMidi(d7, octaveOffset);
-    while (m7 <= tri[2]) m7 += 12;
-    return [...tri, m7];
-  }
-
-  _applyInversion(midiNotes, inv) {
-    const notes = midiNotes.slice().sort((a, b) => a - b);
-    const i = Math.max(0, Math.min(2, inv | 0));
-    for (let k = 0; k < i; k++) {
-      const n = notes.shift();
-      notes.push(n + 12);
+    let target = 0;
+    if (!this.isPlaying) {
+      target = this.currentStep || 0;
+    } else {
+      const base = this.lastPlayedStep >= 0 ? this.lastPlayedStep : this.currentStep;
+      target = this.quantizeRec ? this._nearestAroundBase(time, base) : base;
     }
-    return notes;
+
+    const prev = this.grid[padId][target] || 0;
+    this.grid[padId][target] = this.recOverdub ? Math.max(prev, v) : v;
+    return target;
   }
 
-  getDisplayLabel(step) {
-    const s = this._clampStep(step);
-    const d = this.degree[s] || 0;
-    if (d <= 0) return '';
-    const o = this.oct[s] || 0;
-    const oTxt = (o === 1) ? '↑' : (o === -1 ? '↓' : '');
-    return `${d}${oTxt}`;
+  _nearestAroundBase(time, baseStep) {
+    const stepDur = this.getStepDuration();
+    if (stepDur <= 0) return baseStep;
+
+    const candidates = [];
+    for (let d = -2; d <= 2; d++) candidates.push((baseStep + d + this.steps) % this.steps);
+
+    const now = this.audioEngine.getCurrentTime();
+    const dt = Math.max(-0.5, Math.min(0.5, time - now));
+    const ref = now + dt;
+
+    let best = baseStep;
+    let bestDist = Infinity;
+
+    for (const s of candidates) {
+      let offset = (s - baseStep);
+      if (offset > this.steps / 2) offset -= this.steps;
+      if (offset < -this.steps / 2) offset += this.steps;
+
+      let t = ref + offset * stepDur;
+      if (s % 2 === 1) t += this.getSwingOffset();
+
+      const dist = Math.abs(time - t);
+      if (dist < bestDist) { bestDist = dist; best = s; }
+    }
+    return best;
   }
 
-  // ---------- transport ----------
+  // ---------- Transport ----------
   start() {
     if (this.isPlaying) return;
-    this.audioEngine.resume();
+    this.audioEngine.resume?.();
     this.isPlaying = true;
 
     this.currentStep = 0;
     this.lastPlayedStep = -1;
-    this.nextStepTime = this.audioEngine.ctx.currentTime;
+    this.nextStepTime = this.audioEngine.getCurrentTime();
 
     this.schedule();
   }
@@ -211,73 +181,60 @@ export class Sequencer {
     this.currentStep = 0;
     this.lastPlayedStep = -1;
 
-    if (this.intervalId) {
-      clearTimeout(this.intervalId);
-      this.intervalId = null;
-    }
-
+    if (this.intervalId) { clearTimeout(this.intervalId); this.intervalId = null; }
     this.onStepChange?.(-1);
-
-    // If hold, let it ring, but you can choose to release on stop:
-    // this.audioEngine.releaseHeldChord?.(this.audioEngine.ctx?.currentTime || 0);
   }
 
   schedule() {
     if (!this.isPlaying) return;
 
-    const now = this.audioEngine.ctx.currentTime;
-    while (this.nextStepTime < now + this.scheduleAheadTime) {
+    const currentTime = this.audioEngine.getCurrentTime();
+    while (this.nextStepTime < currentTime + this.scheduleAheadTime) {
       this.playStep(this.currentStep, this.nextStepTime);
       this.advanceStep();
     }
-
     this.intervalId = setTimeout(() => this.schedule(), this.lookahead);
   }
 
   playStep(step, time) {
     this.lastPlayedStep = step;
 
-    let t = time;
-    if (step % 2 === 1) t += this.getSwingOffset();
+    let playTime = time;
+    if (step % 2 === 1) playTime += this.getSwingOffset();
 
-    // MET: quarter notes
+    // Metronome: quarter notes = steps 0,4,8,12
     if (this.metronomeEnabled && step % 4 === 0) {
-      this.audioEngine.playClick?.(t, step === 0);
+      const downbeat = step === 0;
+      this.audioEngine.playClick?.(playTime, downbeat);
     }
 
-    const deg = this.degree[step] || 0;
-    if (deg > 0) {
-      const accent = !!this.accent[step];
-      const octave = this.oct[step] || 0;
+    for (let padId = 0; padId < this.pads; padId++) {
+      let vel = this.getStepVelocity(padId, step);
+      if (vel <= 0) continue;
 
-      let vel = accent ? 1.0 : 0.85;
-
-      // Humanize velocity
-      const a = this.humanizeVelAmt;
-      if (a > 0) {
-        const r = (Math.random() * 2 - 1) * a;
-        vel = Math.max(0.15, Math.min(1, vel * (1 + r)));
+      if (this.isAccented(padId, step)) {
+        vel = Math.min(1, vel * this.accentBoost);
       }
 
-      // Humanize timing
-      const ms = this.humanizeTimeMs;
-      if (ms > 0) {
-        const j = (Math.random() * 2 - 1) * (ms / 1000);
-        t = Math.max(0, t + j);
+      let t = playTime;
+
+      if (this.humanizeEnabled) {
+        const a = this.humanizeVelAmt;
+        if (a > 0) {
+          const r = (Math.random() * 2 - 1) * a;
+          vel = Math.max(0, Math.min(1, vel * (1 + r)));
+        }
+        const ms = this.humanizeTimeMs;
+        if (ms > 0) {
+          const j = (Math.random() * 2 - 1) * (ms / 1000);
+          t = Math.max(0, t + j);
+        }
       }
 
-      // chord notes
-      let chord = (this.chordMode === 'SEVENTH')
-        ? this._seventhForDegree(deg, octave)
-        : this._triadForDegree(deg, octave);
-
-      chord = this._applyInversion(chord, this.inversion);
-
-      // hold: release previous chord at this time inside engine + sustain
-      this.audioEngine.playChord(chord, t, vel, accent, this.holdChord);
+      this.audioEngine.playSample(padId, t, vel);
     }
 
-    const delay = (t - this.audioEngine.ctx.currentTime) * 1000;
+    const delay = (playTime - this.audioEngine.getCurrentTime()) * 1000;
     setTimeout(() => {
       if (this.onStepChange && this.isPlaying) this.onStepChange(step);
     }, Math.max(0, delay));
@@ -286,5 +243,40 @@ export class Sequencer {
   advanceStep() {
     this.nextStepTime += this.getStepDuration();
     this.currentStep = (this.currentStep + 1) % this.steps;
+  }
+
+  clear() {
+    this.grid = Array.from({ length: this.pads }, () => Array(this.steps).fill(0));
+    this.accentGrid = Array.from({ length: this.pads }, () => Array(this.steps).fill(false));
+  }
+
+  exportPattern() {
+    return JSON.stringify({
+      grid: this.grid,
+      accentGrid: this.accentGrid,
+      bpm: this.bpm,
+      swing: this.swing,
+      version: 3
+    });
+  }
+
+  importPattern(json) {
+    try {
+      const data = JSON.parse(json);
+
+      this.grid = data.grid;
+      this.accentGrid = data.accentGrid || Array.from({ length: this.pads }, () => Array(this.steps).fill(false));
+      this.bpm = data.bpm || 90;
+      this.swing = data.swing || 0;
+
+      // migration bool -> vel
+      if (Array.isArray(this.grid) && typeof this.grid?.[0]?.[0] === 'boolean') {
+        this.grid = this.grid.map(row => row.map(on => (on ? this.defaultVelocity : 0)));
+      }
+      return true;
+    } catch (e) {
+      console.error('Erreur import pattern:', e);
+      return false;
+    }
   }
 }
