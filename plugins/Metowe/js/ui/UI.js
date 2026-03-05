@@ -1,11 +1,15 @@
+// /js/ui/UI.js
 /**
  * UI.js
- * - Sequencer steps:
- *   Tap/click => cycle degree OFF->1..7->OFF
- *   Double tap (mobile) / Ctrl+click (desktop) => Accent
- *   Long press => Octave cycle (-1,0,+1)
- * - Keyboard tactile: plays notes
- * - Controls: root, wave, chord mode, inversion, hold, met, bpm, swing, humanize, timing, glide, synth params, FX params
+ * Interface moderne (mobile + desktop)
+ * - Pads: tap/click play, load sample button, long-press (mobile) / Alt+click (desktop) = Pad Edit
+ * - Sequencer: 16 steps
+ *   - Tap/click = toggle on/off
+ *   - Shift+click (desktop) / long-press (mobile) = cycle velocity
+ *   - Ctrl+click (desktop) / double-tap (mobile) = toggle accent
+ * - Live REC: bouton REC (quantize + overdub via Sequencer)
+ * - Metronome: bouton MET (via Sequencer/AudioEngine.playClick)
+ * - Humanize: 2 sliders (HUMAN %, TIMING ms)
  */
 
 export class UI {
@@ -13,490 +17,643 @@ export class UI {
     this.audioEngine = audioEngine;
     this.sequencer = sequencer;
 
+    this.padElements = [];
+    this.stepElements = [];
+
+    this.padKeys = ['Q', 'W', 'E', 'A', 'S', 'D'];
+    this.padColors = ['#e63946', '#ff6b35', '#f7c948', '#2ecc71', '#4ecdc4', '#9b59b6'];
+
     this.isMobile = this.detectMobile();
 
-    this.stepElements = [];
-    this._down = { step: null, el: null };
+    // Pad editor
+    this.selectedPadId = 0;
+
+    // Long-press pad (mobile)
     this._lpTimer = null;
     this._lpTriggered = false;
-    this._lastTap = { step: null, t: 0 };
+    this._pendingPadId = null;
 
-    // keyboard
-    this.kbdKeys = []; // {el, midi, isBlack}
-    this._kbdDown = null;
+    // Steps: robust touch tracking
+    this._downStep = { padId: null, step: null, el: null };
+    this._stepLpTimer = null;
+    this._stepLpTriggered = false;
+
+    // Mobile: double-tap detection for Accent
+    this._lastTap = { padId: null, step: null, t: 0 };
   }
 
-  // helpers
-  $(id){ return document.getElementById(id); }
-  setText(id, v){ const el = this.$(id); if (el) el.textContent = String(v); }
+  // ---------- DOM helpers ----------
+  $(id) { return document.getElementById(id); }
+
+  setText(id, value) {
+    const el = this.$(id);
+    if (el) el.textContent = String(value);
+  }
 
   detectMobile() {
-    return (('ontouchstart' in window) ||
+    return (
+      ('ontouchstart' in window) ||
       (navigator.maxTouchPoints > 0) ||
-      window.matchMedia('(hover: none)').matches);
+      window.matchMedia('(hover: none)').matches
+    );
   }
 
   init() {
+    this.renderPads();
     this.renderSequencer();
-    this.renderKeyboard();
     this.bindEvents();
+    this.bindKeyboard();
     this.initSliderFills();
+    this.updateHints();
 
-    // default UI states
-    this.setText('bpm-display', this.sequencer.bpm);
-    this.setText('bpm-val', this.sequencer.bpm);
-    this.setText('swing-display', this.sequencer.swing);
-    this.setText('swing-val', `${this.sequencer.swing}%`);
+    // Preset FX actif au chargement (si aucun actif -> MPC60 par défaut)
+    const activePreset = document.querySelector('.preset-btn.active')?.dataset?.preset;
+    this.applyPreset(activePreset || 'MPC60');
 
-    this.setText('scale-display', 'MINOR');
-    this.setText('scale-root-val', this.sequencer.rootName);
+    // Pad edit visible + synchro
+    this.selectPad(0);
 
-    this.syncAllUIFromData();
-    this.updateAllSliderFills();
+    // Sync UI step depuis la data
+    this.syncSequencerUIFromData();
 
-    // initial labels
-    this.setText('osc-wave-val', this.audioEngine.waveform);
-    this.setText('glide-val', `${Math.round(this.audioEngine.glideMs)}ms`);
+    // Sync toggles
+    this.syncTransportToggles();
   }
 
-  // ---------------- RENDER ----------------
+  syncTransportToggles() {
+    // REC
+    const recOn = !!this.sequencer.isRecording;
+    this.$('rec-btn')?.classList.toggle('active', recOn);
+    document.body.classList.toggle('recording', recOn);
+
+    // MET
+    const metOn = !!this.sequencer.metronomeEnabled;
+    this.$('met-btn')?.classList.toggle('active', metOn);
+
+    // HUMAN displays
+    const human = this.$('humanize');
+    if (human) {
+      const pct = parseInt(human.value, 10) || 0;
+      this.setText('humanize-val', `${pct}%`);
+    }
+    const ht = this.$('humanize-time');
+    if (ht) {
+      const ms = parseInt(ht.value, 10) || 0;
+      this.setText('humanize-time-val', `${ms}ms`);
+    }
+  }
+
+  updateHints() {
+    const hint = this.$('pad-hint');
+    if (!hint) return;
+
+    hint.textContent = this.isMobile
+      ? 'Tap pour jouer · 📁 pour charger · appui long pour éditer'
+      : 'Clic pour jouer · 📁/clic droit pour charger · Alt+clic pour éditer';
+  }
+
+  // ---------------------------
+  // RENDER
+  // ---------------------------
+
+  renderPads() {
+    const grid = this.$('pads-grid');
+    if (!grid) {
+      console.error('[UI] #pads-grid introuvable');
+      return;
+    }
+
+    grid.innerHTML = '';
+    this.padElements = [];
+
+    for (let i = 0; i < 6; i++) {
+      const info = this.audioEngine.getSampleInfo(i);
+
+      const pad = document.createElement('div');
+      pad.className = 'pad';
+      pad.dataset.padId = i;
+
+      pad.innerHTML = `
+        <div class="pad-header">
+          <span class="pad-number">${i + 1}</span>
+          <span class="pad-key">${this.padKeys[i] || ''}</span>
+        </div>
+
+        <div class="pad-footer">
+          <span class="pad-name">${info?.name || 'EMPTY'}</span>
+        </div>
+
+        <button class="pad-load-btn" data-pad-id="${i}" aria-label="Charger sample" type="button">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="17 8 12 3 7 8"/>
+            <line x1="12" y1="3" x2="12" y2="15"/>
+          </svg>
+        </button>
+
+        <input class="pad-file" type="file"
+          accept="audio/*,.wav,.mp3,.ogg,.aac,.m4a,.flac"
+          id="file-${i}">
+      `;
+
+      grid.appendChild(pad);
+      this.padElements.push(pad);
+    }
+  }
 
   renderSequencer() {
     const header = this.$('seq-header');
     if (header) {
       header.innerHTML = '';
-      for (let i = 0; i < 16; i++) {
-        const s = document.createElement('span');
-        s.textContent = String(i + 1);
-        header.appendChild(s);
+      for (let step = 0; step < 16; step++) {
+        const num = document.createElement('span');
+        num.textContent = step + 1;
+        header.appendChild(num);
       }
     }
 
     const grid = this.$('sequencer-grid');
     if (!grid) {
-      console.error('[UI] #sequencer-grid missing');
+      console.error('[UI] #sequencer-grid introuvable');
       return;
     }
 
     grid.innerHTML = '';
     this.stepElements = [];
 
-    const row = document.createElement('div');
-    row.className = 'seq-row';
+    for (let padId = 0; padId < 6; padId++) {
+      const row = document.createElement('div');
+      row.className = 'seq-row';
 
-    const label = document.createElement('div');
-    label.className = 'seq-row-label';
-    label.textContent = '1';
-    row.appendChild(label);
+      const label = document.createElement('div');
+      label.className = 'seq-row-label';
+      label.textContent = padId + 1;
+      if (this.padColors?.[padId]) label.style.background = this.padColors[padId];
+      row.appendChild(label);
 
-    const stepsContainer = document.createElement('div');
-    stepsContainer.className = 'seq-steps';
+      const stepsContainer = document.createElement('div');
+      stepsContainer.className = 'seq-steps';
 
-    for (let step = 0; step < 16; step++) {
-      const btn = document.createElement('button');
-      btn.type = 'button';
-      btn.className = 'seq-step';
-      btn.dataset.step = String(step);
-      if (step % 4 === 0) btn.classList.add('beat-marker');
+      const rowSteps = [];
+      for (let step = 0; step < 16; step++) {
+        const stepEl = document.createElement('button');
+        stepEl.className = 'seq-step';
+        stepEl.type = 'button';
+        stepEl.dataset.padId = padId;
+        stepEl.dataset.step = step;
+        if (step % 4 === 0) stepEl.classList.add('beat-marker');
 
-      const note = document.createElement('div');
-      note.className = 'step-note';
-      note.textContent = '';
-      btn.appendChild(note);
+        stepsContainer.appendChild(stepEl);
+        rowSteps.push(stepEl);
+      }
 
-      stepsContainer.appendChild(btn);
-      this.stepElements.push(btn);
+      row.appendChild(stepsContainer);
+      grid.appendChild(row);
+      this.stepElements.push(rowSteps);
     }
-
-    row.appendChild(stepsContainer);
-    grid.appendChild(row);
   }
 
-  renderKeyboard() {
-    const kbd = this.$('keyboard');
-    if (!kbd) return;
-
-    kbd.innerHTML = '';
-    this.kbdKeys = [];
-
-    // We'll build C major layout visually, but note mapping anchored to root for scale highlighting
-    // MIDI base around C4
-    const baseMidi = 60; // C4
-    const white = [
-      { name:'C', off:0 }, { name:'D', off:2 }, { name:'E', off:4 },
-      { name:'F', off:5 }, { name:'G', off:7 }, { name:'A', off:9 }, { name:'B', off:11 },
-      { name:'C', off:12 },
-    ];
-    const black = [
-      { name:'C#', off:1, pos:0.65 },
-      { name:'D#', off:3, pos:1.65 },
-      // no E#
-      { name:'F#', off:6, pos:3.65 },
-      { name:'G#', off:8, pos:4.65 },
-      { name:'A#', off:10, pos:5.65 },
-    ];
-
-    // white keys
-    white.forEach((w, i) => {
-      const el = document.createElement('div');
-      el.className = 'key';
-      el.dataset.midi = String(baseMidi + w.off);
-      el.textContent = w.name;
-      kbd.appendChild(el);
-
-      this.kbdKeys.push({ el, midi: baseMidi + w.off, isBlack:false });
-    });
-
-    // black keys overlay
-    black.forEach((b) => {
-      const el = document.createElement('div');
-      el.className = 'key black';
-      el.dataset.midi = String(baseMidi + b.off);
-      el.textContent = b.name;
-
-      // position in % relative to white keys
-      // white keys count = 8, each = 12.5%
-      const leftPct = (b.pos / 8) * 100;
-      el.style.left = `${leftPct}%`;
-
-      kbd.appendChild(el);
-      this.kbdKeys.push({ el, midi: baseMidi + b.off, isBlack:true });
-    });
-
-    this.updateKeyboardScaleHighlight();
-  }
-
-  updateKeyboardScaleHighlight() {
-    // highlight scale tones for current root
-    // compute pitch classes in natural minor
-    const rootMidi = this.sequencer.rootMidi;
-    const rootPC = ((rootMidi % 12) + 12) % 12;
-    const pcs = this.sequencer.scale.map(x => (rootPC + x) % 12);
-
-    this.kbdKeys.forEach(k => {
-      const pc = ((k.midi % 12) + 12) % 12;
-      k.el.classList.toggle('scale', pcs.includes(pc));
-    });
-  }
-
-  // ---------------- EVENTS ----------------
+  // ---------------------------
+  // EVENTS
+  // ---------------------------
 
   bindEvents() {
-    // Transport
+    // === PADS ===
+    const padsGrid = this.$('pads-grid');
+    if (padsGrid) {
+      padsGrid.addEventListener('pointerdown', (e) => {
+        const loadBtn = e.target.closest('.pad-load-btn');
+        if (loadBtn) {
+          e.preventDefault();
+          e.stopPropagation();
+          const padId = parseInt(loadBtn.dataset.padId, 10);
+          this.openFilePicker(padId);
+          return;
+        }
+
+        const pad = e.target.closest('.pad');
+        if (!pad) return;
+
+        const padId = parseInt(pad.dataset.padId, 10);
+
+        // Desktop: Alt+clic => select/edit
+        if (!this.isMobile && e.altKey) {
+          e.preventDefault();
+          this.selectPad(padId);
+          return;
+        }
+
+        // Mobile: long press => select/edit (no play)
+        if (this.isMobile) {
+          this._lpTriggered = false;
+          this._pendingPadId = padId;
+
+          clearTimeout(this._lpTimer);
+          this._lpTimer = setTimeout(() => {
+            this._lpTriggered = true;
+            this.selectPad(padId);
+            if (navigator.vibrate) navigator.vibrate(15);
+          }, 350);
+          return;
+        }
+
+        // Desktop normal: play
+        this.triggerPad(padId);
+      }, { passive: false });
+
+      padsGrid.addEventListener('pointerup', () => {
+        if (!this.isMobile) return;
+        clearTimeout(this._lpTimer);
+
+        if (!this._lpTriggered && this._pendingPadId !== null) {
+          this.triggerPad(this._pendingPadId);
+        }
+        this._pendingPadId = null;
+        this._lpTriggered = false;
+      });
+
+      padsGrid.addEventListener('pointercancel', () => {
+        clearTimeout(this._lpTimer);
+        this._pendingPadId = null;
+        this._lpTriggered = false;
+      });
+
+      padsGrid.addEventListener('contextmenu', (e) => {
+        e.preventDefault();
+        const pad = e.target.closest('.pad');
+        if (!pad) return;
+        const padId = parseInt(pad.dataset.padId, 10);
+        this.openFilePicker(padId);
+      });
+
+      padsGrid.querySelectorAll('input[type="file"]').forEach((input, idx) => {
+        input.addEventListener('change', async (e) => {
+          const file = e.target.files?.[0];
+          if (!file) return;
+          await this.handleFileSelect(idx, file);
+          e.target.value = '';
+          if (idx === this.selectedPadId) this.selectPad(idx);
+        });
+      });
+    }
+
+    // === SEQUENCER (robuste mobile + desktop) ===
+    const seqGrid = this.$('sequencer-grid');
+    if (seqGrid) {
+      seqGrid.addEventListener('pointerdown', (e) => {
+        const stepEl = e.target.closest('.seq-step');
+        if (!stepEl) return;
+
+        e.preventDefault();
+
+        const padId = parseInt(stepEl.dataset.padId, 10);
+        const step = parseInt(stepEl.dataset.step, 10);
+
+        this._downStep = { padId, step, el: stepEl };
+        this._stepLpTriggered = false;
+
+        // Desktop: Ctrl => toggle accent
+        if (!this.isMobile && e.ctrlKey) {
+          const on = this.sequencer.toggleAccent?.(padId, step);
+          stepEl.classList.toggle('accent', !!on);
+          const v = this.sequencer.getStepVelocity?.(padId, step) || 0;
+          this.updateStepAppearance(stepEl, v);
+          this._stepLpTriggered = true;
+          return;
+        }
+
+        // Desktop: Shift => cycle velocity
+        if (!this.isMobile && e.shiftKey) {
+          this.cycleStepVelocity(padId, step);
+          this._stepLpTriggered = true;
+          return;
+        }
+
+        // Mobile: double tap => accent
+        if (this.isMobile) {
+          const now = performance.now();
+          const last = this._lastTap;
+          const isDouble =
+            last.padId === padId &&
+            last.step === step &&
+            (now - last.t) < 260;
+
+          this._lastTap = { padId, step, t: now };
+
+          if (isDouble) {
+            const on = this.sequencer.toggleAccent?.(padId, step);
+            stepEl.classList.toggle('accent', !!on);
+            const v = this.sequencer.getStepVelocity?.(padId, step) || 0;
+            this.updateStepAppearance(stepEl, v);
+            this._stepLpTriggered = true;
+            if (navigator.vibrate) navigator.vibrate(12);
+            return;
+          }
+        }
+
+        // Mobile: long-press => cycle velocity
+        if (this.isMobile) {
+          clearTimeout(this._stepLpTimer);
+          this._stepLpTimer = setTimeout(() => {
+            this._stepLpTriggered = true;
+            this.cycleStepVelocity(padId, step);
+            if (navigator.vibrate) navigator.vibrate(10);
+          }, 320);
+        }
+      }, { passive: false });
+
+      seqGrid.addEventListener('pointerup', () => {
+        clearTimeout(this._stepLpTimer);
+
+        const { padId, step, el } = this._downStep || {};
+        if (padId === null || step === null || !el) return;
+
+        if (this._stepLpTriggered) {
+          this._downStep = { padId: null, step: null, el: null };
+          this._stepLpTriggered = false;
+          return;
+        }
+
+        // Toggle normal
+        const isActive = this.sequencer.toggleStep(padId, step);
+        const v = isActive ? (this.sequencer.getStepVelocity?.(padId, step) || 0) : 0;
+        this.updateStepAppearance(el, v);
+
+        if (this.isMobile && navigator.vibrate) navigator.vibrate(8);
+
+        this._downStep = { padId: null, step: null, el: null };
+      });
+
+      seqGrid.addEventListener('pointercancel', () => {
+        clearTimeout(this._stepLpTimer);
+        this._downStep = { padId: null, step: null, el: null };
+        this._stepLpTriggered = false;
+      });
+    }
+
+    // === TRANSPORT ===
     this.$('play-btn')?.addEventListener('click', () => this.handlePlayToggle());
+    // STOP est optionnel (tu peux le retirer du HTML)
+    this.$('stop-btn')?.addEventListener('click', () => this.handleStop());
     this.$('clear-btn')?.addEventListener('click', () => this.handleClear());
+
+    // REC / MET optionnels selon ton HTML
+    this.$('rec-btn')?.addEventListener('click', () => this.handleRecToggle());
     this.$('met-btn')?.addEventListener('click', () => this.handleMetToggle());
 
-    // HOLD
-    this.$('hold-btn')?.addEventListener('click', () => {
-      const btn = this.$('hold-btn');
-      const on = !btn?.classList.contains('active');
-      btn?.classList.toggle('active', on);
-      this.sequencer.setHold(on);
-    });
-
-    // BPM/SWING
+    // === TEMPO ===
     this.$('bpm')?.addEventListener('input', (e) => {
-      const bpm = parseInt(e.target.value, 10) || 96;
+      const bpm = parseInt(e.target.value, 10);
       this.sequencer.setBPM(bpm);
       this.setText('bpm-display', bpm);
       this.setText('bpm-val', bpm);
     });
 
     this.$('swing')?.addEventListener('input', (e) => {
-      const swing = parseInt(e.target.value, 10) || 0;
+      const swing = parseInt(e.target.value, 10);
       this.sequencer.setSwing(swing);
       this.setText('swing-display', swing);
       this.setText('swing-val', `${swing}%`);
     });
 
-    // Humanize
+    // === HUMANIZE (optionnel) ===
     this.$('humanize')?.addEventListener('input', (e) => {
       const v = parseInt(e.target.value, 10) || 0;
-      this.sequencer.setHumanize(v);
+      this.sequencer.setHumanize?.(v);
       this.setText('humanize-val', `${v}%`);
-      this.updateSliderFillByInputId('humanize');
     });
 
     this.$('humanize-time')?.addEventListener('input', (e) => {
       const ms = parseInt(e.target.value, 10) || 0;
-      this.sequencer.setHumanizeTime(ms);
+      this.sequencer.setHumanizeTime?.(ms);
       this.setText('humanize-time-val', `${ms}ms`);
-      this.updateSliderFillByInputId('humanize-time');
     });
 
-    // Root
-    document.querySelectorAll('.seg-btn[data-root]').forEach(btn => {
+    // === EFFECTS ===
+    this.bindEffectControl('bit-depth', 'bitDepth', 'bit-depth-val', (v) => `${Math.round(v)}`);
+    this.bindEffectControl('sample-rate', 'sampleRate', 'sample-rate-val', (v) => `${Math.round(v / 1000)}k`);
+    this.bindEffectControl('filter-cutoff', 'filter', 'filter-val', (v) => `${(v / 1000).toFixed(1)}k`);
+    this.bindEffectControl('drive', 'drive', 'drive-val', (v) => `${Math.round(v)}`);
+    this.bindEffectControl('vinyl-noise', 'vinylNoise', 'vinyl-val', (v) => `${Math.round(v)}`);
+    this.bindEffectControl('compression', 'compression', 'comp-val', (v) => `${Math.round(v)}`);
+
+    // === PRESETS ===
+    document.querySelectorAll('.preset-btn').forEach((btn) => {
       btn.addEventListener('click', () => {
-        document.querySelectorAll('.seg-btn[data-root]').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.preset-btn').forEach((b) => b.classList.remove('active'));
         btn.classList.add('active');
-        const root = btn.dataset.root || 'A';
-        this.sequencer.setRoot(root);
-        this.setText('scale-root-val', this.sequencer.rootName);
-        this.updateKeyboardScaleHighlight();
+        this.applyPreset(btn.dataset.preset);
       });
     });
 
-    // Wave
-    document.querySelectorAll('.seg-btn[data-wave]').forEach(btn => {
-      btn.addEventListener('click', () => {
-        document.querySelectorAll('.seg-btn[data-wave]').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        const w = btn.dataset.wave || 'SAW';
-        this.audioEngine.setWaveform(w);
-      });
+    // === PAD EDITOR ===
+    this.$('pad-pitch')?.addEventListener('input', (e) => {
+      const st = parseInt(e.target.value, 10) || 0;
+      this.audioEngine.setPadPitch?.(this.selectedPadId, st);
+      this.updatePadPitchDisplay();
+      this.updateSliderFillByInputId('pad-pitch');
     });
 
-    // Chord mode
-    document.querySelectorAll('.seg-btn[data-chordmode]').forEach(btn => {
-      btn.addEventListener('click', () => {
-        document.querySelectorAll('.seg-btn[data-chordmode]').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        const mode = btn.dataset.chordmode || 'TRIAD';
-        this.sequencer.setChordMode(mode);
-      });
-    });
-
-    // Inversion
-    document.querySelectorAll('.seg-btn[data-inv]').forEach(btn => {
-      btn.addEventListener('click', () => {
-        document.querySelectorAll('.seg-btn[data-inv]').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        const inv = btn.dataset.inv || '0';
-        this.sequencer.setInversion(inv);
-      });
-    });
-
-    // Synth sliders
-    this.bindSlider('cutoff', (v) => {
-      this.audioEngine.setCutoff(v);
-      this.setText('cutoff-val', v >= 1000 ? `${(v/1000).toFixed(1)}k` : `${Math.round(v)}`);
-    });
-    this.bindSlider('res', (v) => {
-      this.audioEngine.setResonance(v);
-      this.setText('res-val', Number(v).toFixed(2));
-    });
-    this.bindSlider('envAmt', (v) => {
-      this.audioEngine.setEnvAmt(v);
-      this.setText('envAmt-val', v >= 1000 ? `${(v/1000).toFixed(1)}k` : `${Math.round(v)}`);
-    });
-    this.bindSlider('attack', (v) => {
-      this.audioEngine.setEnvAttack(v);
-      this.setText('attack-val', v < 0.2 ? `${Math.round(v*1000)}ms` : `${v.toFixed(2)}s`);
-    });
-    this.bindSlider('decay', (v) => {
-      this.audioEngine.setEnvDecay(v);
-      this.setText('decay-val', v < 0.2 ? `${Math.round(v*1000)}ms` : `${v.toFixed(2)}s`);
-    });
-    this.bindSlider('sustain', (v) => {
-      this.audioEngine.setEnvSustain(v);
-      this.setText('sustain-val', Number(v).toFixed(2));
-    });
-    this.bindSlider('release', (v) => {
-      this.audioEngine.setEnvRelease(v);
-      this.setText('release-val', v < 0.2 ? `${Math.round(v*1000)}ms` : `${v.toFixed(2)}s`);
-    });
-    this.bindSlider('glide', (v) => {
-      this.audioEngine.setGlide(v);
-      this.setText('glide-val', `${Math.round(v)}ms`);
-    });
-    this.bindSlider('master', (v) => {
-      this.audioEngine.setMaster(v / 100);
-      this.setText('master-val', `${Math.round(v)}%`);
-    });
-
-    // FX sliders
-    this.bindSlider('chorusMix', (v) => {
-      this.audioEngine.setChorusMix(v / 100);
-      this.setText('chorusMix-val', `${Math.round(v)}%`);
-    });
-    this.bindSlider('drive', (v) => {
-      this.audioEngine.setDrive(v / 100);
-      this.setText('drive-val', `${Math.round(v)}`);
-    });
-    this.bindSlider('crush', (v) => {
-      this.audioEngine.setCrush(v / 100);
-      this.setText('crush-val', `${Math.round(v)}`);
-    });
-    this.bindSlider('reverb', (v) => {
-      this.audioEngine.setReverb(v / 100);
-      this.setText('reverb-val', `${Math.round(v)}%`);
-    });
-    this.bindSlider('comp', (v) => {
-      this.audioEngine.setComp(v / 100);
-      this.setText('comp-val', `${Math.round(v)}`);
-    });
-    this.bindSlider('mix', (v) => {
-      this.audioEngine.setFxMix(v / 100);
-      this.setText('mix-val', `${Math.round(v)}%`);
-    });
-
-    // Steps
-    const seq = this.$('sequencer-grid');
-    if (seq) {
-      seq.addEventListener('pointerdown', (e) => {
-        const el = e.target.closest('.seq-step');
-        if (!el) return;
-        e.preventDefault();
-
-        const step = parseInt(el.dataset.step, 10);
-
-        this._down = { step, el };
-        this._lpTriggered = false;
-
-        // Desktop accent
-        if (!this.isMobile && e.ctrlKey) {
-          const on = this.sequencer.toggleAccent(step);
-          el.classList.toggle('accent', on);
-          this._lpTriggered = true;
-          return;
-        }
-
-        // Mobile double tap accent
-        if (this.isMobile) {
-          const now = performance.now();
-          const last = this._lastTap;
-          const isDouble = last.step === step && (now - last.t) < 260;
-          this._lastTap = { step, t: now };
-
-          if (isDouble) {
-            const on = this.sequencer.toggleAccent(step);
-            el.classList.toggle('accent', on);
-            this._lpTriggered = true;
-            if (navigator.vibrate) navigator.vibrate(10);
-            return;
-          }
-        }
-
-        // Long press octave
-        clearTimeout(this._lpTimer);
-        this._lpTimer = setTimeout(() => {
-          this._lpTriggered = true;
-          this.sequencer.cycleOctave(step);
-          this.syncStepUI(step);
-          if (navigator.vibrate) navigator.vibrate(12);
-        }, 330);
-      }, { passive:false });
-
-      seq.addEventListener('pointerup', () => {
-        clearTimeout(this._lpTimer);
-
-        const { step, el } = this._down;
-        if (step == null || !el) return;
-
-        if (this._lpTriggered) {
-          this._down = { step:null, el:null };
-          this._lpTriggered = false;
-          return;
-        }
-
-        this.sequencer.cycleDegree(step);
-        this.syncStepUI(step);
-        if (this.isMobile && navigator.vibrate) navigator.vibrate(6);
-
-        this._down = { step:null, el:null };
-      });
-
-      seq.addEventListener('pointercancel', () => {
-        clearTimeout(this._lpTimer);
-        this._down = { step:null, el:null };
-        this._lpTriggered = false;
-      });
-    }
-
-    // Keyboard playing
-    const kbd = this.$('keyboard');
-    if (kbd) {
-      kbd.addEventListener('pointerdown', (e) => {
-        const key = e.target.closest('.key');
-        if (!key) return;
-        e.preventDefault();
-
-        const midi = parseInt(key.dataset.midi, 10);
-        if (!Number.isFinite(midi)) return;
-
-        this.audioEngine.resume();
-        key.classList.add('active');
-        this._kbdDown = key;
-
-        // Simple: play single note (preview)
-        this.audioEngine.playNote(midi, 0, 0.9);
-      }, { passive:false });
-
-      kbd.addEventListener('pointerup', () => {
-        if (this._kbdDown) this._kbdDown.classList.remove('active');
-        this._kbdDown = null;
-      });
-
-      kbd.addEventListener('pointercancel', () => {
-        if (this._kbdDown) this._kbdDown.classList.remove('active');
-        this._kbdDown = null;
-      });
-    }
-
-    // Space = play/pause
-    document.addEventListener('keydown', (e) => {
-      if (e.code === 'Space') {
-        e.preventDefault();
-        this.handlePlayToggle();
-      }
+    this.$('pad-vol')?.addEventListener('input', (e) => {
+      const pct = parseInt(e.target.value, 10) || 0;
+      const vol01 = Math.max(0, Math.min(1, pct / 100));
+      this.audioEngine.setPadVolume?.(this.selectedPadId, vol01);
+      this.updatePadVolDisplay();
+      this.updateSliderFillByInputId('pad-vol');
     });
   }
 
-  bindSlider(id, onValue) {
-    const input = this.$(id);
+  bindEffectControl(inputId, effectParam, displayId, formatFn = (v) => v) {
+    const input = this.$(inputId);
     if (!input) return;
 
+    const display = this.$(displayId);
+
     const apply = () => {
-      const v = Number(input.value);
-      onValue(v);
-      this.updateSliderFillByInputId(id);
+      const raw = Number(input.value);
+      this.audioEngine.setEffect(effectParam, raw);
+      if (display) display.textContent = formatFn(raw);
+      this.updateSliderFillByInputId(inputId);
     };
 
     input.addEventListener('input', apply);
     apply();
   }
 
-  // ---------------- TRANSPORT ----------------
+  bindKeyboard() {
+    document.addEventListener('keydown', (e) => {
+      const key = (e.key || '').toUpperCase();
+      const padIndex = this.padKeys.indexOf(key);
 
-  handlePlayToggle() {
-    const btn = this.$('play-btn');
-    if (this.sequencer.isPlaying) {
-      this.sequencer.stop();
-      btn?.classList.remove('active');
-      this.clearPlayingIndicators();
-    } else {
-      this.audioEngine.resume();
-      this.sequencer.start();
-      btn?.classList.add('active');
-    }
+      if (padIndex !== -1) {
+        e.preventDefault();
+        this.triggerPad(padIndex);
+      }
+
+      if (e.code === 'Space') {
+        e.preventDefault();
+        this.handlePlayToggle();
+      }
+    });
+
+    document.addEventListener('keyup', (e) => {
+      const key = (e.key || '').toUpperCase();
+      const padIndex = this.padKeys.indexOf(key);
+      if (padIndex !== -1 && this.padElements[padIndex]) {
+        this.padElements[padIndex].classList.remove('active');
+      }
+    });
   }
 
-  handleClear() {
-    this.sequencer.clear();
-    this.syncAllUIFromData();
-    this.clearPlayingIndicators();
+  // ---------------------------
+  // LIVE REC / MET
+  // ---------------------------
+
+  handleRecToggle() {
+    const btn = this.$('rec-btn');
+    const isOn = !this.sequencer.isRecording;
+
+    this.sequencer.setRecording?.(isOn);
+
+    if (btn) btn.classList.toggle('active', isOn);
+    document.body.classList.toggle('recording', isOn);
   }
 
   handleMetToggle() {
     const btn = this.$('met-btn');
-    const on = !this.sequencer.metronomeEnabled;
-    this.sequencer.setMetronome(on);
-    btn?.classList.toggle('active', on);
+    const isOn = !this.sequencer.metronomeEnabled;
+
+    this.sequencer.setMetronome?.(isOn);
+
+    if (btn) btn.classList.toggle('active', isOn);
   }
 
-  // ---------------- SLIDER FILLS ----------------
+  // ---------------------------
+  // VELOCITY / ACCENT UI
+  // ---------------------------
+
+  cycleStepVelocity(padId, step) {
+    const vel = this.sequencer.getStepVelocity?.(padId, step) || 0;
+
+    // cycle: OFF -> 0.5 -> 0.8 -> 1.0 -> OFF
+    let next = 0;
+    if (vel <= 0) next = 0.5;
+    else if (vel < 0.65) next = 0.8;
+    else if (vel < 0.95) next = 1.0;
+    else next = 0;
+
+    const stepEl = this.stepElements?.[padId]?.[step];
+    if (!stepEl) return;
+
+    if (next === 0) {
+      this.sequencer.clearStep?.(padId, step);
+      this.updateStepAppearance(stepEl, 0);
+    } else {
+      this.sequencer.setStepVelocity?.(padId, step, next);
+      this.updateStepAppearance(stepEl, next);
+    }
+
+    stepEl.classList.toggle('accent', !!this.sequencer.isAccented?.(padId, step));
+  }
+
+  updateStepAppearance(stepEl, velocity01) {
+    const v = Math.max(0, Math.min(1, Number(velocity01)));
+    const on = v > 0;
+
+    stepEl.classList.toggle('active', on);
+
+    if (on) {
+      const opacity = 0.35 + 0.65 * v;
+      stepEl.style.opacity = String(opacity);
+    } else {
+      stepEl.style.opacity = '';
+    }
+
+    const padId = parseInt(stepEl.dataset.padId, 10);
+    const step = parseInt(stepEl.dataset.step, 10);
+    stepEl.classList.toggle('accent', !!this.sequencer.isAccented?.(padId, step));
+  }
+
+  syncSequencerUIFromData() {
+    for (let padId = 0; padId < 6; padId++) {
+      for (let step = 0; step < 16; step++) {
+        const el = this.stepElements?.[padId]?.[step];
+        if (!el) continue;
+        const v = this.sequencer.getStepVelocity?.(padId, step) || 0;
+        this.updateStepAppearance(el, v);
+      }
+    }
+  }
+
+  // ---------------------------
+  // FILE LOADING
+  // ---------------------------
+
+  openFilePicker(padId) {
+    const pad = this.padElements[padId];
+    if (!pad) return;
+
+    const input = pad.querySelector('input[type="file"]');
+    if (!input) return;
+
+    try {
+      if (typeof input.showPicker === 'function') input.showPicker();
+      else input.click();
+    } catch {
+      try { input.click(); } catch {}
+    }
+  }
+
+  async handleFileSelect(padId, file) {
+    try {
+      await this.audioEngine.loadSampleFromFile(padId, file);
+      this.updatePadDisplay(padId);
+      if (this.isMobile && navigator.vibrate) navigator.vibrate([10, 30, 10]);
+    } catch (error) {
+      console.error('Erreur chargement sample:', error);
+      alert('Format audio non supporté (ou fichier illisible).');
+    }
+  }
+
+  // ---------------------------
+  // TRANSPORT
+  // ---------------------------
+
+  handlePlayToggle() {
+    const playBtn = this.$('play-btn');
+
+    if (this.sequencer.isPlaying) {
+      this.sequencer.stop();
+      playBtn?.classList.remove('active');
+      this.clearPlayingIndicators();
+    } else {
+      this.sequencer.start();
+      playBtn?.classList.add('active');
+    }
+  }
+
+  handleStop() {
+    const playBtn = this.$('play-btn');
+    this.sequencer.stop();
+    playBtn?.classList.remove('active');
+    this.clearPlayingIndicators();
+  }
+
+  handleClear() {
+    this.sequencer.clear();
+    this.clearAllSteps();
+    this.syncSequencerUIFromData();
+  }
+
+  // ---------------------------
+  // SLIDER FILLS
+  // ---------------------------
 
   initSliderFills() {
-    this.updateAllSliderFills();
-  }
-
-  updateAllSliderFills() {
     [
-      'cutoff','res','envAmt','attack','decay','sustain','release','glide','master',
-      'humanize','humanize-time',
-      'chorusMix','drive','crush','reverb','comp','mix'
-    ].forEach(id => this.updateSliderFillByInputId(id));
+      'bit-depth','sample-rate','filter-cutoff','drive','vinyl-noise','compression',
+      'pad-pitch','pad-vol',
+    ].forEach((id) => this.updateSliderFillByInputId(id));
   }
 
   updateSliderFillByInputId(inputId) {
@@ -504,23 +661,14 @@ export class UI {
     if (!input) return;
 
     const fillMap = {
-      cutoff:'cutoff-fill',
-      res:'res-fill',
-      envAmt:'envAmt-fill',
-      attack:'attack-fill',
-      decay:'decay-fill',
-      sustain:'sustain-fill',
-      release:'release-fill',
-      glide:'glide-fill',
-      master:'master-fill',
-      humanize:'humanize-fill',
-      'humanize-time':'humanize-time-fill',
-      chorusMix:'chorusMix-fill',
-      drive:'drive-fill',
-      crush:'crush-fill',
-      reverb:'reverb-fill',
-      comp:'comp-fill',
-      mix:'mix-fill',
+      'bit-depth': 'bit-depth-fill',
+      'sample-rate': 'sample-rate-fill',
+      'filter-cutoff': 'filter-fill',
+      'drive': 'drive-fill',
+      'vinyl-noise': 'vinyl-fill',
+      'compression': 'comp-fill',
+      'pad-pitch': 'pad-pitch-fill',
+      'pad-vol': 'pad-vol-fill',
     };
 
     const fillId = fillMap[inputId];
@@ -532,42 +680,158 @@ export class UI {
     const min = Number(input.min ?? 0);
     const max = Number(input.max ?? 100);
     const val = Number(input.value ?? 0);
-    const pct = (max === min) ? 0 : ((val - min) / (max - min)) * 100;
+    const pct = max === min ? 0 : ((val - min) / (max - min)) * 100;
+
     fill.style.width = `${pct}%`;
   }
 
-  // ---------------- SEQ UI ----------------
+  // ---------------------------
+  // PRESETS
+  // ---------------------------
 
-  syncAllUIFromData() {
-    for (let i = 0; i < 16; i++) this.syncStepUI(i);
+  applyPreset(presetName) {
+    const presets = {
+      SP1200: { bitDepth: 12, sampleRate: 26040, filter: 5500, drive: 25, vinylNoise: 15, compression: 50 },
+      MPC60: { bitDepth: 12, sampleRate: 32000, filter: 9000, drive: 15, vinylNoise: 8,  compression: 35 },
+      Dirty:  { bitDepth: 8,  sampleRate: 12000, filter: 4500, drive: 45, vinylNoise: 35, compression: 55 },
+      Clean:  { bitDepth: 16, sampleRate: 44100, filter: 12000,drive: 5,  vinylNoise: 0,  compression: 20 },
+    };
+
+    const p = presets[presetName] || presets.MPC60;
+
+    const mapToInputId = {
+      bitDepth: 'bit-depth',
+      sampleRate: 'sample-rate',
+      filter: 'filter-cutoff',
+      drive: 'drive',
+      vinylNoise: 'vinyl-noise',
+      compression: 'compression',
+    };
+
+    Object.entries(p).forEach(([param, value]) => {
+      try { this.audioEngine.setEffect(param, value); } catch {}
+
+      const inputId = mapToInputId[param];
+      const input = inputId ? this.$(inputId) : null;
+      if (input) {
+        input.value = value;
+        input.dispatchEvent(new Event('input', { bubbles: true }));
+      }
+    });
+
+    // Sync active button if present
+    document.querySelectorAll('.preset-btn').forEach((b) => {
+      b.classList.toggle('active', b.dataset.preset === presetName);
+    });
   }
 
-  syncStepUI(step) {
-    const el = this.stepElements[step];
-    if (!el) return;
+  // ---------------------------
+  // PAD EDITOR
+  // ---------------------------
 
-    const s = this.sequencer.getStepState(step);
-    const label = el.querySelector('.step-note');
+  selectPad(padId) {
+    this.selectedPadId = padId;
 
-    el.classList.toggle('active', s.degree > 0);
-    el.classList.toggle('accent', !!s.accent);
+    this.padElements.forEach((p, i) => p.classList.toggle('selected', i === padId));
 
-    if (label) label.textContent = (s.degree > 0) ? this.sequencer.getDisplayLabel(step) : '';
+    const editor = this.$('pad-editor');
+    if (editor) editor.hidden = false;
 
-    if (s.degree > 0) {
-      const op = 0.55 + (s.degree / 7) * 0.45;
-      el.style.opacity = String(op);
-    } else {
-      el.style.opacity = '';
+    const info = this.audioEngine.getSampleInfo(padId);
+    this.setText('pad-edit-id', padId + 1);
+    this.setText('pad-edit-name', info?.name || 'EMPTY');
+
+    const params = this.audioEngine.getPadParams?.(padId) || { pitch: 0, volume: 0.8 };
+
+    const pitchInput = this.$('pad-pitch');
+    const volInput = this.$('pad-vol');
+
+    if (pitchInput) {
+      pitchInput.value = String(params.pitch ?? 0);
+      this.updatePadPitchDisplay();
+      this.updateSliderFillByInputId('pad-pitch');
+    }
+
+    if (volInput) {
+      volInput.value = String(Math.round((params.volume ?? 0.8) * 100));
+      this.updatePadVolDisplay();
+      this.updateSliderFillByInputId('pad-vol');
     }
   }
+
+  updatePadPitchDisplay() {
+    const pitchInput = this.$('pad-pitch');
+    const valEl = this.$('pad-pitch-val');
+    if (!pitchInput || !valEl) return;
+    const st = parseInt(pitchInput.value, 10) || 0;
+    valEl.textContent = `${st} st`;
+  }
+
+  updatePadVolDisplay() {
+    const volInput = this.$('pad-vol');
+    const valEl = this.$('pad-vol-val');
+    if (!volInput || !valEl) return;
+    const pct = parseInt(volInput.value, 10) || 0;
+    valEl.textContent = `${pct}%`;
+  }
+
+  // ---------------------------
+  // PAD TRIGGER + LIVE REC
+  // ---------------------------
+
+  triggerPad(padId) {
+    const pad = this.padElements[padId];
+    if (!pad) return;
+
+    pad.classList.add('active');
+    setTimeout(() => pad.classList.remove('active'), 100);
+
+    const led = this.$('led');
+    if (led) {
+      led.classList.add('active');
+      setTimeout(() => led.classList.remove('active'), 100);
+    }
+
+    // Live REC (quantized, overdub) si actif
+    if (this.sequencer.isRecording) {
+      const t = this.audioEngine.getCurrentTime();
+      const targetStep = this.sequencer.recordHit?.(padId, this.sequencer.recVelocity ?? 0.9, t);
+
+      const stepEl = this.stepElements?.[padId]?.[targetStep];
+      if (stepEl) {
+        const v = this.sequencer.getStepVelocity?.(padId, targetStep) || 0;
+        this.updateStepAppearance(stepEl, v);
+
+        stepEl.classList.add('playing');
+        setTimeout(() => stepEl.classList.remove('playing'), 80);
+      }
+    }
+
+    // Audio "live" (velocity 1.0)
+    this.audioEngine.playSample(padId, 0, 1);
+  }
+
+  updatePadDisplay(padId) {
+    const info = this.audioEngine.getSampleInfo(padId);
+    const pad = this.padElements[padId];
+    if (!pad) return;
+
+    const nameEl = pad.querySelector('.pad-name');
+    if (nameEl) nameEl.textContent = info?.name || 'EMPTY';
+  }
+
+  // ---------------------------
+  // SEQUENCER CALLBACK
+  // ---------------------------
 
   onStepChange(step) {
     this.clearPlayingIndicators();
     if (step < 0) return;
 
-    const el = this.stepElements[step];
-    if (el) el.classList.add('playing');
+    for (let padId = 0; padId < 6; padId++) {
+      const el = this.stepElements?.[padId]?.[step];
+      if (el) el.classList.add('playing');
+    }
 
     const led = this.$('led');
     if (led) {
@@ -577,6 +841,12 @@ export class UI {
   }
 
   clearPlayingIndicators() {
-    document.querySelectorAll('.seq-step.playing').forEach(el => el.classList.remove('playing'));
+    document.querySelectorAll('.seq-step.playing').forEach((el) => el.classList.remove('playing'));
+  }
+
+  clearAllSteps() {
+    document.querySelectorAll('.seq-step.active').forEach((el) => el.classList.remove('active'));
+    document.querySelectorAll('.seq-step.accent').forEach((el) => el.classList.remove('accent'));
+    document.querySelectorAll('.seq-step').forEach((el) => { el.style.opacity = ''; });
   }
 }
