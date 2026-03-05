@@ -1,3 +1,4 @@
+// js/audio/filters/EcoFilter.js
 export class EcoFilter {
   constructor(ctx) {
     this.ctx = ctx;
@@ -5,73 +6,60 @@ export class EcoFilter {
     this.input = ctx.createGain();
     this.output = ctx.createGain();
 
-    this.lp = ctx.createBiquadFilter();
-    this.lp.type = "lowpass";
-    this.lp.Q.value = 0.707;
+    this.f = ctx.createBiquadFilter();
+    this.f.type = "lowpass";
 
-    // Optional gentle drive (very cheap)
-    this.drive = ctx.createWaveShaper();
-    this.drive.curve = this._driveCurve(1.3);
+    this.input.connect(this.f);
+    this.f.connect(this.output);
 
-    // routing: input -> drive -> lp -> output
-    this.input.connect(this.drive);
-    this.drive.connect(this.lp);
-    this.lp.connect(this.output);
+    this._cutoff = 2400;
+    this._res = 0.15;
 
-    this.setCutoff(2400, ctx.currentTime);
-    this.setResonance(0.15, ctx.currentTime);
+    this.setCutoff(this._cutoff, ctx.currentTime);
+    this.setResonance(this._res, ctx.currentTime);
   }
 
   connect(node) {
     this.output.connect(node);
   }
 
-  // Keep same API shape as JunoFilter where possible
-  setCutoff(freq, t = this.ctx.currentTime) {
-    const f = Math.max(80, Math.min(12000, Number(freq) || 2400));
-    const tc = 0.02;
+  // “cutoff perceptuel” : on garde l’échelle Hz, mais on smooth et on limite proprement
+  setCutoff(freq, time = this.ctx.currentTime) {
+    const t = Math.max(this.ctx.currentTime, time);
+    const f = Math.max(60, Math.min(16000, Number(freq) || 2400));
+    this._cutoff = f;
+
     try {
-      this.lp.frequency.cancelScheduledValues(t);
-      this.lp.frequency.setTargetAtTime(f, t, tc);
-    } catch {
-      this.lp.frequency.value = f;
-    }
+      this.f.frequency.cancelScheduledValues(t);
+      this.f.frequency.setTargetAtTime(f, t, 0.015);
+    } catch {}
   }
 
-  rampCutoff(freq, dur = 0.05, t0 = this.ctx.currentTime) {
-    const f = Math.max(80, Math.min(12000, Number(freq) || 2400));
-    const d = Math.max(0.001, Number(dur) || 0.05);
+  setResonance(res01, time = this.ctx.currentTime) {
+    const t = Math.max(this.ctx.currentTime, time);
+    const r = Math.max(0, Math.min(1, Number(res01) || 0));
+    this._res = r;
+
+    // stable & light: Q raisonnable
+    const q = 0.7 + r * 10.0;
+
     try {
-      const ap = this.lp.frequency;
-      ap.cancelScheduledValues(t0);
-      const cur = Math.max(80, ap.value || 2400);
-      ap.setValueAtTime(cur, t0);
-      ap.exponentialRampToValueAtTime(Math.max(80, f), t0 + d);
-    } catch {
-      this.lp.frequency.value = f;
-    }
+      this.f.Q.cancelScheduledValues(t);
+      this.f.Q.setTargetAtTime(q, t, 0.02);
+    } catch {}
   }
 
-  setResonance(res, t = this.ctx.currentTime) {
-    const r = Math.max(0, Math.min(1, Number(res) || 0));
-    const q = 0.6 + r * 12.0; // 0.6 .. 12.6
-    const tc = 0.03;
-    try {
-      this.lp.Q.cancelScheduledValues(t);
-      this.lp.Q.setTargetAtTime(q, t, tc);
-    } catch {
-      this.lp.Q.value = q;
-    }
-  }
+  // ramp linéaire sur la timeline (utile pour envelope)
+  rampCutoff(targetFreq, durSec = 0.01, startTime = this.ctx.currentTime) {
+    const t0 = Math.max(this.ctx.currentTime, startTime);
+    const t1 = t0 + Math.max(0.001, durSec);
+    const f = Math.max(60, Math.min(16000, Number(targetFreq) || this._cutoff));
 
-  _driveCurve(amount = 1.3) {
-    const n = 512;
-    const curve = new Float32Array(n);
-    const k = Math.max(0.01, amount);
-    for (let i = 0; i < n; i++) {
-      const x = (i * 2) / (n - 1) - 1;
-      curve[i] = Math.tanh(k * x);
-    }
-    return curve;
+    try {
+      // on part de la valeur courante (au mieux)
+      this.f.frequency.cancelScheduledValues(t0);
+      this.f.frequency.setValueAtTime(this.f.frequency.value, t0);
+      this.f.frequency.linearRampToValueAtTime(f, t1);
+    } catch {}
   }
 }
