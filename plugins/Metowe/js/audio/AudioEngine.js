@@ -17,7 +17,6 @@ export class AudioEngine {
     this.samples = new Map();
     this.isInitialized = false;
 
-    // Samples par défaut (URLs ou chemins locaux)
     this.defaultSamples = [
       { id: 0, name: 'KICK',  url: 'samples/kick.wav',  key: 'Q' },
       { id: 1, name: 'SNARE', url: 'samples/snare.wav', key: 'W' },
@@ -27,11 +26,9 @@ export class AudioEngine {
       { id: 5, name: 'CHOP 2',url: 'samples/chop2.wav', key: 'D' }
     ];
 
-    // Paramètres par pad
-    this.padPitch = Array(6).fill(0);     // -24..+24 semitones
+    this.padPitch = Array(6).fill(0);     // -24..+24
     this.padVolume = Array(6).fill(0.8);  // 0..1
 
-    // Metronome
     this.metronomeEnabled = false;
     this.metronomeLevel = 0.25; // 0..1
   }
@@ -44,8 +41,7 @@ export class AudioEngine {
     this.effects = new LoFiEffects(this.ctx);
     this.effects.connect(this.ctx.destination);
 
-    // Si tu veux un preset FX par défaut côté engine, tu peux le mettre ici.
-    // L’UI pourra ensuite appliquer un preset et synchroniser les sliders.
+    // Default FX preset (UI pourra override)
     this.effects.applyPreset('SP1200');
 
     await this.loadDefaultSamples();
@@ -106,10 +102,9 @@ export class AudioEngine {
   }
 
   /**
-   * Lecture d'un sample
    * @param {number} padId
-   * @param {number} time temps audio (seconds) ou 0 = now
-   * @param {number} velocity 0..1 (par step du séquenceur)
+   * @param {number} time seconds (audio time) or 0 = now
+   * @param {number} velocity 0..1
    */
   playSample(padId, time = 0, velocity = 1) {
     const sample = this.samples.get(padId);
@@ -118,11 +113,9 @@ export class AudioEngine {
     const source = this.ctx.createBufferSource();
     source.buffer = sample.buffer;
 
-    // Pitch (semitones -> cents)
     const st = this.padPitch[padId] ?? 0;
     source.detune.value = st * 100;
 
-    // Gain = base * padVolume * velocity
     const vel = Math.max(0, Math.min(1, Number(velocity)));
     const padVol = this.padVolume[padId] ?? 0.8;
 
@@ -142,7 +135,6 @@ export class AudioEngine {
     return this.samples.get(padId);
   }
 
-  // ---- Pad Editor API ----
   getPadParams(padId) {
     return {
       pitch: this.padPitch[padId] ?? 0,
@@ -160,7 +152,6 @@ export class AudioEngine {
     this.padVolume[padId] = v;
   }
 
-  // ---- Metronome ----
   setMetronomeEnabled(on) {
     this.metronomeEnabled = !!on;
   }
@@ -169,11 +160,6 @@ export class AudioEngine {
     this.metronomeLevel = Math.max(0, Math.min(1, Number(level01)));
   }
 
-  /**
-   * Click simple (osc + enveloppe)
-   * @param {number} time temps audio
-   * @param {boolean} accent true = downbeat plus aigu/fort
-   */
   playClick(time, accent = false) {
     if (!this.ctx) return;
     if (!this.metronomeEnabled) return;
@@ -199,29 +185,16 @@ export class AudioEngine {
     osc.stop(t + 0.06);
   }
 
-  // ---- FX API ----
   setEffect(param, value) {
     if (!this.effects) return;
 
     switch (param) {
-      case 'bitDepth':
-        this.effects.setBitDepth(value);
-        break;
-      case 'sampleRate':
-        this.effects.setSampleRate(value);
-        break;
-      case 'filter':
-        this.effects.setFilterCutoff(value);
-        break;
-      case 'drive':
-        this.effects.setDrive(value);
-        break;
-      case 'vinylNoise':
-        this.effects.setVinylNoise(value);
-        break;
-      case 'compression':
-        this.effects.setCompression(value);
-        break;
+      case 'bitDepth': this.effects.setBitDepth(value); break;
+      case 'sampleRate': this.effects.setSampleRate(value); break;
+      case 'filter': this.effects.setFilterCutoff(value); break;
+      case 'drive': this.effects.setDrive(value); break;
+      case 'vinylNoise': this.effects.setVinylNoise(value); break;
+      case 'compression': this.effects.setCompression(value); break;
     }
   }
 
