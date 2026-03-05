@@ -20,13 +20,12 @@ export class Sequencer {
     this.humanizePct = 6;
     this.humanizeTimeMs = 8;
 
-    // ✅ More robust scheduling (especially on iOS when scrolling)
     this.nextStepTime = 0;
 
-    // if eco/mobile: schedule further ahead
+    // ✅ bigger buffer for iOS scroll / UI jank
     const mobileish = !!this.synth?.isMobile;
-    this.scheduleAheadTime = mobileish ? 0.35 : 0.20; // was 0.1
-    this.lookahead = mobileish ? 30 : 25;            // ms
+    this.scheduleAheadTime = mobileish ? 0.55 : 0.25; // increased
+    this.lookahead = mobileish ? 30 : 25;
 
     this.grid = Array.from({ length: this.lanes }, () =>
       Array.from({ length: this.steps }, () => this._emptyEvent())
@@ -179,7 +178,7 @@ export class Sequencer {
     let t = time;
     if (step % 2 === 1) t += this.getSwingOffset();
 
-    // Visual callback (best effort)
+    // UI highlight best effort
     const delay = (t - this.synth.getCurrentTime()) * 1000;
     setTimeout(() => {
       if (this.isPlaying) this.onStepChange?.(step);
