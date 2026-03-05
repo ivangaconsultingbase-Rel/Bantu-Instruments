@@ -1,19 +1,27 @@
 import { SynthEngine } from "./audio/SynthEngine.js";
-import { Sequencer } from "./sequencer/Sequencer.js";
-import { UI } from "./ui/UI.js";
 
 const synth = new SynthEngine();
-let ui = null;
 
-const seq = new Sequencer(synth, (step) => {
-  ui?.onStep(step);
+await synth.init();
+
+window.addEventListener("pointerdown", () => synth.resume());
+
+document.addEventListener("keydown", e => {
+
+  const noteMap = {
+    a:60,
+    s:62,
+    d:64,
+    f:65,
+    g:67,
+    h:69,
+    j:71,
+    k:72
+  };
+
+  const note = noteMap[e.key];
+
+  if(note)
+    synth.noteOn(note);
+
 });
-
-ui = new UI(synth, seq);
-
-async function boot(){
-  await synth.init();
-  ui.init();
-}
-
-boot();
