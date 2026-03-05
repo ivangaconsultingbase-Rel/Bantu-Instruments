@@ -4,7 +4,8 @@
  *
  * PATCH:
  * - EcoFilter mode (auto on mobile)
- * - Less CPU pressure (mobile-friendly defaults)
+ * - Scheduling en "audio time" (NO setTimeout for note timing)
+ * - Cleanup automatique des voix après release
  * - Chorus mix live
  */
 
@@ -15,18 +16,17 @@ export class SynthEngine {
   constructor() {
     this.ctx = null;
 
-    // Auto detect mobile-ish (good enough for Safari iOS)
-    this.isMobile = (("ontouchstart" in window) ||
+    this.isMobile =
+      ("ontouchstart" in window) ||
       (navigator.maxTouchPoints > 0) ||
-      window.matchMedia?.("(hover: none)")?.matches);
+      (window.matchMedia?.("(hover: none)")?.matches ?? false);
 
-    // ✅ Eco ON by default on mobile
+    // Eco ON by default on mobile
     this.ecoMode = !!this.isMobile;
 
-    // Polyphony (reduce on mobile to avoid crackles)
+    // Polyphony (reduce on mobile)
     this.polyphony = this.ecoMode ? 6 : 8;
-
-    this.activeVoices = [];
+    this.activeVoices = []; // { voice, note, startedAt }
 
     this.master = null;
     this.chorus = null;
@@ -59,7 +59,7 @@ export class SynthEngine {
       reverbMix: 0,
     };
 
-    // coalesce apply flags
+    // coalescing flags (UI slider spam)
     this._pendingFilterApply = false;
     this._pendingOscApply = false;
     this._pendingEnvApply = false;
@@ -88,21 +88,18 @@ export class SynthEngine {
     return this.ctx?.currentTime || 0;
   }
 
-  // ✅ allow manual toggle
+  // ---------------------------------------------------------
+  // ECO MODE
+  // ---------------------------------------------------------
   setEcoMode(on) {
     this.ecoMode = !!on;
-
-    // adjust polyphony immediately (don’t kill current voices)
     this.polyphony = this.ecoMode ? 6 : 8;
-
-    // Optional: cap unison in eco
     if (this.ecoMode && this.unisonVoices > 3) this.unisonVoices = 3;
   }
 
-  //////////////////////////////////////////////////////////////
+  // ---------------------------------------------------------
   // UNISON
-  //////////////////////////////////////////////////////////////
-
+  // ---------------------------------------------------------
   setUnisonVoices(n) {
     const wanted = Math.max(1, Math.min(6, parseInt(n) || 1));
     this.unisonVoices = this.ecoMode ? Math.min(3, wanted) : wanted;
@@ -112,31 +109,28 @@ export class SynthEngine {
     this.unisonDetune = Math.max(0, Math.min(50, Number(c) || 0));
   }
 
-  //////////////////////////////////////////////////////////////
+  // ---------------------------------------------------------
   // GLIDE
-  //////////////////////////////////////////////////////////////
-
+  // ---------------------------------------------------------
   setGlide(sec) {
     this.glideTime = Math.max(0, Math.min(0.3, Number(sec) || 0));
     this._applyToActiveVoices((v) => v.setGlide?.(this.glideTime));
   }
 
-  //////////////////////////////////////////////////////////////
+  // ---------------------------------------------------------
   // DRIVE
-  //////////////////////////////////////////////////////////////
-
+  // ---------------------------------------------------------
   setDrive(amount) {
     this.driveAmount = Math.max(0, Number(amount) || 0);
     this._applyToActiveVoices((v) => v.setDrive?.(this.driveAmount));
   }
 
-  //////////////////////////////////////////////////////////////
-  // OSC
-  //////////////////////////////////////////////////////////////
-
+  // ---------------------------------------------------------
+  // OSC (coalesced)
+  // ---------------------------------------------------------
   setOscWave(mode) {
     const m = String(mode || "").toLowerCase();
-    this.oscWave = (m === "saw" || m === "pulse" || m === "mix") ? m : "saw";
+    this.oscWave = m === "saw" || m === "pulse" || m === "mix" ? m : "saw";
     this._deferOscApply();
   }
 
@@ -151,7 +145,6 @@ export class SynthEngine {
   _deferOscApply() {
     if (this._pendingOscApply) return;
     this._pendingOscApply = true;
-
     requestAnimationFrame(() => {
       this._pendingOscApply = false;
       this._applyToActiveVoices((v) => {
@@ -161,10 +154,9 @@ export class SynthEngine {
     });
   }
 
-  //////////////////////////////////////////////////////////////
+  // ---------------------------------------------------------
   // FILTER (coalesced)
-  //////////////////////////////////////////////////////////////
-
+  // ---------------------------------------------------------
   setCutoff(hz) {
     this.cutoff = Math.max(80, Math.min(12000, Number(hz) || 2400));
     this._deferFilterApply();
@@ -183,7 +175,6 @@ export class SynthEngine {
   _deferFilterApply() {
     if (this._pendingFilterApply) return;
     this._pendingFilterApply = true;
-
     requestAnimationFrame(() => {
       this._pendingFilterApply = false;
       this._applyToActiveVoices((v) => {
@@ -192,10 +183,9 @@ export class SynthEngine {
     });
   }
 
-  //////////////////////////////////////////////////////////////
+  // ---------------------------------------------------------
   // ADSR (coalesced)
-  //////////////////////////////////////////////////////////////
-
+  // ---------------------------------------------------------
   setADSR(a, d, s, r) {
     const A = Math.max(0, Math.min(2000, a || 0));
     const D = Math.max(0, Math.min(2000, d || 0));
@@ -209,7 +199,6 @@ export class SynthEngine {
   _deferEnvApply() {
     if (this._pendingEnvApply) return;
     this._pendingEnvApply = true;
-
     requestAnimationFrame(() => {
       this._pendingEnvApply = false;
       this._applyToActiveVoices((v) => {
@@ -218,24 +207,21 @@ export class SynthEngine {
     });
   }
 
-  //////////////////////////////////////////////////////////////
+  // ---------------------------------------------------------
   // FX
-  //////////////////////////////////////////////////////////////
-
+  // ---------------------------------------------------------
   setChorusMix(v) {
     this.fx.chorusMix = this._clamp01(v);
-    if (this.chorus?.setMix) this.chorus.setMix(this.fx.chorusMix);
+    this.chorus?.setMix?.(this.fx.chorusMix);
   }
-
   setCrushAmt(v) { this.fx.crushAmt = this._clamp01(v); }
   setDriveMix(v) { this.fx.driveMix = this._clamp01(v); }
   setCompAmt(v) { this.fx.compAmt = this._clamp01(v); }
   setReverbMix(v) { this.fx.reverbMix = this._clamp01(v); }
 
-  //////////////////////////////////////////////////////////////
+  // ---------------------------------------------------------
   // VOICE MANAGEMENT
-  //////////////////////////////////////////////////////////////
-
+  // ---------------------------------------------------------
   _stealOneVoice() {
     if (this.activeVoices.length === 0) return null;
 
@@ -250,7 +236,7 @@ export class SynthEngine {
     }
 
     const stolen = this.activeVoices.splice(idx, 1)[0];
-    try { stolen.voice.noteOff(); } catch {}
+    try { stolen.voice.noteOff(this.getCurrentTime()); } catch {}
     return stolen;
   }
 
@@ -266,15 +252,12 @@ export class SynthEngine {
   _allocateVoice(note) {
     while (this.activeVoices.length >= this.polyphony) this._stealOneVoice();
 
-    // ✅ pass eco mode to Voice
     const v = new Voice(this.ctx, { useEcoFilter: this.ecoMode });
     this._configureNewVoice(v);
-
     v.connect(this.master);
 
     const entry = { voice: v, note, startedAt: this.getCurrentTime() };
     this.activeVoices.push(entry);
-
     return entry;
   }
 
@@ -288,39 +271,56 @@ export class SynthEngine {
     return Math.max(0, Math.min(1, Number(x) || 0));
   }
 
-  //////////////////////////////////////////////////////////////
-  // NOTE API
-  //////////////////////////////////////////////////////////////
+  _scheduleCleanup(entry, endTimeSec) {
+    // only manages JS arrays (audio already scheduled)
+    const now = this.getCurrentTime();
+    const delayMs = Math.max(0, (endTimeSec - now) * 1000);
 
+    setTimeout(() => {
+      const idx = this.activeVoices.indexOf(entry);
+      if (idx !== -1) this.activeVoices.splice(idx, 1);
+    }, delayMs + 30);
+  }
+
+  // ---------------------------------------------------------
+  // NOTE API (immediate)
+  // ---------------------------------------------------------
   noteOn(note, vel = 1) {
+    return this.noteOnAt(note, this.getCurrentTime(), vel);
+  }
+
+  // ✅ new: schedule noteOn at an audio time
+  noteOnAt(note, time, vel = 1) {
     this.resume();
 
+    const t = Math.max(this.getCurrentTime(), Number(time) || this.getCurrentTime());
     const velocity = this._clamp01(vel);
 
     const u = this.unisonVoices;
     const center = (u - 1) / 2;
 
-    const created = [];
+    const createdEntries = [];
 
     for (let i = 0; i < u; i++) {
       const entry = this._allocateVoice(note);
       const spread = (i - center) * this.unisonDetune;
 
-      try { entry.voice.saw?.detune?.setValueAtTime(spread, this.getCurrentTime()); } catch {}
-      try { entry.voice.pulse?.detune?.setValueAtTime(spread, this.getCurrentTime()); } catch {}
+      // detune scheduled at t (not now)
+      try { entry.voice.saw?.detune?.setValueAtTime(spread, t); } catch {}
+      try { entry.voice.pulse?.detune?.setValueAtTime(spread, t); } catch {}
 
-      entry.voice.noteOn(note, velocity);
-      created.push(entry.voice);
+      entry.voice.noteOn(note, velocity, t);
+      createdEntries.push(entry);
     }
 
-    return created;
+    return createdEntries;
   }
 
   noteOff(note) {
     const remaining = [];
     for (const e of this.activeVoices) {
       if (e.note === note) {
-        try { e.voice.noteOff(); } catch {}
+        try { e.voice.noteOff(this.getCurrentTime()); } catch {}
       } else {
         remaining.push(e);
       }
@@ -328,20 +328,23 @@ export class SynthEngine {
     this.activeVoices = remaining;
   }
 
-  //////////////////////////////////////////////////////////////
-  // SEQUENCER SCHEDULING
-  //////////////////////////////////////////////////////////////
-
+  // ---------------------------------------------------------
+  // SEQUENCER SCHEDULING (audio-time)
+  // ---------------------------------------------------------
   playNoteAt(note, time, vel = 1, duration = 0.2) {
-    const t = Math.max(this.getCurrentTime(), time);
-    const delay = (t - this.getCurrentTime()) * 1000;
+    const t0 = Math.max(this.getCurrentTime(), Number(time) || this.getCurrentTime());
+    const dur = Math.max(0.01, Number(duration) || 0.2);
 
-    setTimeout(() => {
-      const voices = this.noteOn(note, vel);
-      setTimeout(() => {
-        voices.forEach((v) => { try { v.noteOff(); } catch {} });
-      }, duration * 1000);
-    }, Math.max(0, delay));
+    const entries = this.noteOnAt(note, t0, vel);
+
+    // schedule noteOff at audio time (no timeout)
+    const tOff = t0 + dur;
+    for (const e of entries) {
+      try { e.voice.noteOff(tOff); } catch {}
+      // cleanup after release (adsr.r is seconds)
+      const rel = Math.max(0.05, Number(e.voice?.adsr?.r) || 0.3);
+      this._scheduleCleanup(e, tOff + rel + 0.08);
+    }
   }
 
   playChordAt(notes, time, vel = 1, duration = 0.3) {
