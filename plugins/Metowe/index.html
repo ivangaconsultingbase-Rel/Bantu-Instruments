@@ -1,81 +1,285 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+  <meta name="theme-color" content="#0a0a0a">
+  <title>JUNO GROOVEBOX — Web</title>
 
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
 
-<title>Juno Groovebox</title>
-
-<link rel="stylesheet" href="css/style.css">
-
+  <link rel="stylesheet" href="css/style.css">
 </head>
-
 <body>
 
-<div class="app">
+  <div class="box">
 
-<header>
+    <header class="header">
+      <div class="lcd">
+        <div class="lcd-title">METOW8</div>
+        <div class="lcd-sub">
+          BPM <span id="bpm-display">90</span> · SWING <span id="swing-display">0</span>% · HUMAN <span id="human-display">0</span>%
+        </div>
+      </div>
+      <div class="hdr-right">
+        <div class="led" id="led"></div>
+      </div>
+    </header>
 
-<h1>JUNO GROOVEBOX</h1>
+    <section class="section">
+      <div class="section-header">
+        <h2>Transport</h2>
+        <span class="hint" id="hint">Tap Play, puis touche le clavier</span>
+      </div>
 
-<div class="transport">
+      <div class="section-content">
+        <div class="transport-row">
+          <button id="play-btn" class="btn">
+            <svg viewBox="0 0 24 24"><polygon points="5,3 19,12 5,21"></polygon></svg>
+            PLAY
+          </button>
 
-<button id="play">PLAY</button>
-<button id="stop">STOP</button>
+          <div class="ctrl">
+            <label>BPM</label>
+            <input type="range" id="bpm" min="60" max="160" value="90">
+            <div class="mono" id="bpm-val">90</div>
+          </div>
 
-</div>
+          <div class="ctrl">
+            <label>SWING</label>
+            <input type="range" id="swing" min="0" max="75" value="0">
+            <div class="mono" id="swing-val">0%</div>
+          </div>
 
-</header>
+          <div class="ctrl">
+            <label>HUMAN</label>
+            <input type="range" id="human" min="0" max="30" value="0">
+            <div class="mono" id="human-val">0%</div>
+          </div>
+        </div>
 
+        <div class="transport-row">
+          <div class="ctrl">
+            <label>Scale</label>
+            <select id="scale">
+              <option value="aeolian" selected>Minor (Aeolian)</option>
+              <option value="dorian">Dorian</option>
+              <option value="phrygian">Phrygian</option>
+              <option value="harmonicMinor">Harmonic Minor</option>
+              <option value="melodicMinor">Melodic Minor</option>
+              <option value="minorPent">Minor Pent</option>
+            </select>
+          </div>
 
-<section class="sequencer">
+          <div class="ctrl">
+            <label>Root</label>
+            <select id="root">
+              <option value="36">C2</option>
+              <option value="38">D2</option>
+              <option value="40">E2</option>
+              <option value="41">F2</option>
+              <option value="43">G2</option>
+              <option value="45">A2</option>
+              <option value="47">B2</option>
+              <option value="48" selected>C3</option>
+              <option value="50">D3</option>
+              <option value="52">E3</option>
+              <option value="53">F3</option>
+              <option value="55">G3</option>
+              <option value="57">A3</option>
+            </select>
+          </div>
 
-<div id="seq-grid"></div>
+          <div class="ctrl">
+            <label>Mode</label>
+            <select id="mode">
+              <option value="arp" selected>ARP</option>
+              <option value="chords">CHORDS</option>
+              <option value="mono">MONO</option>
+            </select>
+          </div>
 
-</section>
+          <button id="rand-btn" class="btn btn-ghost" title="Génère un pattern">
+            RAND
+          </button>
 
+          <button id="clear-btn" class="btn btn-ghost" title="Efface le pattern">
+            CLEAR
+          </button>
+        </div>
+      </div>
+    </section>
 
-<section class="synth">
+    <section class="section">
+      <div class="section-header">
+        <h2>Keyboard</h2>
+        <span class="hint">Tap / Touch (poly)</span>
+      </div>
+      <div class="section-content">
+        <div class="kbd" id="keyboard"></div>
+      </div>
+    </section>
 
-<label>Cutoff
-<input id="cutoff" type="range" min="200" max="12000" value="8000">
-</label>
+    <section class="section">
+      <div class="section-header">
+        <h2>Sequencer</h2>
+        <span class="hint">Tap = cycle degree · Long-press = rest</span>
+      </div>
+      <div class="section-content">
+        <div class="seq" id="seq"></div>
+      </div>
+    </section>
 
-<label>Res
-<input id="res" type="range" min="0" max="1" step="0.01" value="0.3">
-</label>
+    <section class="section">
+      <div class="section-header">
+        <h2>Synth</h2>
+        <span class="hint">Juno-ish (2 osc + sub + noise + ADSR)</span>
+      </div>
+      <div class="section-content">
+        <div class="grid">
 
-<label>Wave
-<select id="wave">
-<option value="sawtooth">SAW</option>
-<option value="square">SQUARE</option>
-<option value="triangle">TRI</option>
-</select>
-</label>
+          <div class="block">
+            <div class="row">
+              <div class="lbl">OSC1</div>
+              <select id="osc1">
+                <option value="sawtooth" selected>SAW</option>
+                <option value="square">SQR</option>
+                <option value="triangle">TRI</option>
+              </select>
+            </div>
+            <div class="row">
+              <div class="lbl">OSC2</div>
+              <select id="osc2">
+                <option value="sawtooth">SAW</option>
+                <option value="square" selected>SQR</option>
+                <option value="triangle">TRI</option>
+              </select>
+            </div>
+            <div class="row">
+              <div class="lbl">DETUNE</div>
+              <input id="detune" type="range" min="0" max="20" value="7">
+              <div class="mono" id="detune-val">7</div>
+            </div>
+          </div>
 
-</section>
+          <div class="block">
+            <div class="row">
+              <div class="lbl">SUB</div>
+              <input id="sub" type="range" min="0" max="100" value="30">
+              <div class="mono" id="sub-val">30%</div>
+            </div>
+            <div class="row">
+              <div class="lbl">NOISE</div>
+              <input id="noise" type="range" min="0" max="100" value="10">
+              <div class="mono" id="noise-val">10%</div>
+            </div>
+            <div class="row">
+              <div class="lbl">MASTER</div>
+              <input id="master" type="range" min="0" max="100" value="80">
+              <div class="mono" id="master-val">80%</div>
+            </div>
+          </div>
 
+          <div class="block">
+            <div class="row">
+              <div class="lbl">CUTOFF</div>
+              <input id="cutoff" type="range" min="200" max="12000" value="8000">
+              <div class="mono" id="cutoff-val">8.0k</div>
+            </div>
+            <div class="row">
+              <div class="lbl">RES</div>
+              <input id="res" type="range" min="0" max="100" value="25">
+              <div class="mono" id="res-val">25%</div>
+            </div>
+            <div class="row">
+              <div class="lbl">ENV→VCF</div>
+              <input id="envamt" type="range" min="0" max="100" value="40">
+              <div class="mono" id="envamt-val">40%</div>
+            </div>
+          </div>
 
-<section class="fx">
+          <div class="block">
+            <div class="row">
+              <div class="lbl">A</div>
+              <input id="a" type="range" min="0" max="2000" value="10">
+              <div class="mono" id="a-val">10ms</div>
+            </div>
+            <div class="row">
+              <div class="lbl">D</div>
+              <input id="d" type="range" min="0" max="2000" value="250">
+              <div class="mono" id="d-val">250ms</div>
+            </div>
+            <div class="row">
+              <div class="lbl">S</div>
+              <input id="s" type="range" min="0" max="100" value="65">
+              <div class="mono" id="s-val">65%</div>
+            </div>
+            <div class="row">
+              <div class="lbl">R</div>
+              <input id="r" type="range" min="0" max="3000" value="350">
+              <div class="mono" id="r-val">350ms</div>
+            </div>
+          </div>
 
-<label>Chorus
-<input id="chorus" type="range" min="0" max="1" step="0.01" value="0.2">
-</label>
+        </div>
+      </div>
+    </section>
 
-<label>Drive
-<input id="drive" type="range" min="0" max="1" step="0.01" value="0.1">
-</label>
+    <section class="section">
+      <div class="section-header">
+        <h2>FX</h2>
+        <span class="hint">Placeholders → remplaçables par DSP GPL (AudioWorklet/WASM)</span>
+      </div>
+      <div class="section-content">
+        <div class="grid">
 
-<label>Reverb
-<input id="reverb" type="range" min="0" max="1" step="0.01" value="0.2">
-</label>
+          <div class="block">
+            <div class="row">
+              <div class="lbl">CHORUS</div>
+              <input id="chorus" type="range" min="0" max="100" value="25">
+              <div class="mono" id="chorus-val">25%</div>
+            </div>
+            <div class="row">
+              <div class="lbl">DRIVE</div>
+              <input id="drive" type="range" min="0" max="100" value="12">
+              <div class="mono" id="drive-val">12%</div>
+            </div>
+          </div>
 
-</section>
+          <div class="block">
+            <div class="row">
+              <div class="lbl">CRUSH</div>
+              <input id="crush" type="range" min="0" max="100" value="0">
+              <div class="mono" id="crush-val">0%</div>
+            </div>
+            <div class="row">
+              <div class="lbl">COMP</div>
+              <input id="comp" type="range" min="0" max="100" value="25">
+              <div class="mono" id="comp-val">25%</div>
+            </div>
+          </div>
 
-</div>
+          <div class="block">
+            <div class="row">
+              <div class="lbl">REVERB</div>
+              <input id="reverb" type="range" min="0" max="100" value="18">
+              <div class="mono" id="reverb-val">18%</div>
+            </div>
+          </div>
 
-<script type="module" src="js/main.js"></script>
+        </div>
+      </div>
+    </section>
 
+    <footer class="footer">
+      <div class="mono">
+        Tips: Tap steps to cycle notes. Play = toggle. Touch keyboard for live poly.
+      </div>
+    </footer>
+
+  </div>
+
+  <script type="module" src="js/main.js"></script>
 </body>
 </html>
