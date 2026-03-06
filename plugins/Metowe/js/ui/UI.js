@@ -1,582 +1,408 @@
-/**
- * UI.js
- * - Sequencer steps:
- *   Tap/click => cycle degree OFF->1..7->OFF
- *   Double tap (mobile) / Ctrl+click (desktop) => Accent
- *   Long press => Octave cycle (-1,0,+1)
- * - Keyboard tactile: plays notes
- * - Controls: root, wave, chord mode, inversion, hold, met, bpm, swing, humanize, timing, glide, synth params, FX params
- */
-
+// js/ui/UI.js
 export class UI {
   constructor(audioEngine, sequencer) {
     this.audioEngine = audioEngine;
     this.sequencer = sequencer;
 
-    this.isMobile = this.detectMobile();
-
-    this.stepElements = [];
-    this._down = { step: null, el: null };
-    this._lpTimer = null;
-    this._lpTriggered = false;
-    this._lastTap = { step: null, t: 0 };
-
-    // keyboard
-    this.kbdKeys = []; // {el, midi, isBlack}
-    this._kbdDown = null;
-  }
-
-  // helpers
-  $(id){ return document.getElementById(id); }
-  setText(id, v){ const el = this.$(id); if (el) el.textContent = String(v); }
-
-  detectMobile() {
-    return (('ontouchstart' in window) ||
+    this.isMobile = (('ontouchstart' in window) ||
       (navigator.maxTouchPoints > 0) ||
       window.matchMedia('(hover: none)').matches);
+
+    this.stepElements = [];
+    this._lastTap = { step: -1, t: 0 };
+    this._lpTimer = null;
+    this._lpTriggered = false;
+    this._downStepEl = null;
   }
+
+  $(id) { return document.getElementById(id); }
 
   init() {
     this.renderSequencer();
-    this.renderKeyboard();
-    this.bindEvents();
-    this.initSliderFills();
-
-    // default UI states
-    this.setText('bpm-display', this.sequencer.bpm);
-    this.setText('bpm-val', this.sequencer.bpm);
-    this.setText('swing-display', this.sequencer.swing);
-    this.setText('swing-val', `${this.sequencer.swing}%`);
-
-    this.setText('scale-display', 'MINOR');
-    this.setText('scale-root-val', this.sequencer.rootName);
-
-    this.syncAllUIFromData();
-    this.updateAllSliderFills();
-
-    // initial labels
-    this.setText('osc-wave-val', this.audioEngine.waveform);
-    this.setText('glide-val', `${Math.round(this.audioEngine.glideMs)}ms`);
+    this.bindTransport();
+    this.bindTempoHumanize();
+    this.bindSynthParams();
+    this.bindChorusControls();
+    this.bindSynthPresets();
+    this.syncAllFills();
+    this.syncSequencerUI();
   }
 
-  // ---------------- RENDER ----------------
-
+  // ---------------- SEQUENCER UI ----------------
   renderSequencer() {
-    const header = this.$('seq-header');
+    const header = this.$("seq-header");
     if (header) {
-      header.innerHTML = '';
+      header.innerHTML = "";
       for (let i = 0; i < 16; i++) {
-        const s = document.createElement('span');
+        const s = document.createElement("span");
         s.textContent = String(i + 1);
         header.appendChild(s);
       }
     }
 
-    const grid = this.$('sequencer-grid');
-    if (!grid) {
-      console.error('[UI] #sequencer-grid missing');
-      return;
-    }
+    const grid = this.$("sequencer-grid");
+    if (!grid) return;
 
-    grid.innerHTML = '';
+    grid.innerHTML = "";
     this.stepElements = [];
 
-    const row = document.createElement('div');
-    row.className = 'seq-row';
+    // single row note sequencer (like Elektron trig row)
+    const row = document.createElement("div");
+    row.className = "seq-row";
 
-    const label = document.createElement('div');
-    label.className = 'seq-row-label';
-    label.textContent = '1';
+    const label = document.createElement("div");
+    label.className = "seq-row-label";
+    label.textContent = "N";
     row.appendChild(label);
 
-    const stepsContainer = document.createElement('div');
-    stepsContainer.className = 'seq-steps';
+    const steps = document.createElement("div");
+    steps.className = "seq-steps";
 
     for (let step = 0; step < 16; step++) {
-      const btn = document.createElement('button');
-      btn.type = 'button';
-      btn.className = 'seq-step';
-      btn.dataset.step = String(step);
-      if (step % 4 === 0) btn.classList.add('beat-marker');
-
-      const note = document.createElement('div');
-      note.className = 'step-note';
-      note.textContent = '';
-      btn.appendChild(note);
-
-      stepsContainer.appendChild(btn);
-      this.stepElements.push(btn);
+      const b = document.createElement("button");
+      b.className = "seq-step";
+      b.type = "button";
+      b.dataset.step = String(step);
+      b.title = "Tap: note · Double: accent · Long: octave";
+      b.innerHTML = `<span class="step-note" style="font-size:10px; font-family: JetBrains Mono, monospace;"></span>`;
+      steps.appendChild(b);
+      this.stepElements.push(b);
     }
 
-    row.appendChild(stepsContainer);
+    row.appendChild(steps);
     grid.appendChild(row);
-  }
 
-  renderKeyboard() {
-    const kbd = this.$('keyboard');
-    if (!kbd) return;
+    // events
+    grid.addEventListener("pointerdown", (e) => {
+      const el = e.target.closest(".seq-step");
+      if (!el) return;
+      e.preventDefault();
 
-    kbd.innerHTML = '';
-    this.kbdKeys = [];
+      this._downStepEl = el;
+      this._lpTriggered = false;
 
-    // We'll build C major layout visually, but note mapping anchored to root for scale highlighting
-    // MIDI base around C4
-    const baseMidi = 60; // C4
-    const white = [
-      { name:'C', off:0 }, { name:'D', off:2 }, { name:'E', off:4 },
-      { name:'F', off:5 }, { name:'G', off:7 }, { name:'A', off:9 }, { name:'B', off:11 },
-      { name:'C', off:12 },
-    ];
-    const black = [
-      { name:'C#', off:1, pos:0.65 },
-      { name:'D#', off:3, pos:1.65 },
-      // no E#
-      { name:'F#', off:6, pos:3.65 },
-      { name:'G#', off:8, pos:4.65 },
-      { name:'A#', off:10, pos:5.65 },
-    ];
+      const step = parseInt(el.dataset.step, 10);
 
-    // white keys
-    white.forEach((w, i) => {
-      const el = document.createElement('div');
-      el.className = 'key';
-      el.dataset.midi = String(baseMidi + w.off);
-      el.textContent = w.name;
-      kbd.appendChild(el);
-
-      this.kbdKeys.push({ el, midi: baseMidi + w.off, isBlack:false });
-    });
-
-    // black keys overlay
-    black.forEach((b) => {
-      const el = document.createElement('div');
-      el.className = 'key black';
-      el.dataset.midi = String(baseMidi + b.off);
-      el.textContent = b.name;
-
-      // position in % relative to white keys
-      // white keys count = 8, each = 12.5%
-      const leftPct = (b.pos / 8) * 100;
-      el.style.left = `${leftPct}%`;
-
-      kbd.appendChild(el);
-      this.kbdKeys.push({ el, midi: baseMidi + b.off, isBlack:true });
-    });
-
-    this.updateKeyboardScaleHighlight();
-  }
-
-  updateKeyboardScaleHighlight() {
-    // highlight scale tones for current root
-    // compute pitch classes in natural minor
-    const rootMidi = this.sequencer.rootMidi;
-    const rootPC = ((rootMidi % 12) + 12) % 12;
-    const pcs = this.sequencer.scale.map(x => (rootPC + x) % 12);
-
-    this.kbdKeys.forEach(k => {
-      const pc = ((k.midi % 12) + 12) % 12;
-      k.el.classList.toggle('scale', pcs.includes(pc));
-    });
-  }
-
-  // ---------------- EVENTS ----------------
-
-  bindEvents() {
-    // Transport
-    this.$('play-btn')?.addEventListener('click', () => this.handlePlayToggle());
-    this.$('clear-btn')?.addEventListener('click', () => this.handleClear());
-    this.$('met-btn')?.addEventListener('click', () => this.handleMetToggle());
-
-    // HOLD
-    this.$('hold-btn')?.addEventListener('click', () => {
-      const btn = this.$('hold-btn');
-      const on = !btn?.classList.contains('active');
-      btn?.classList.toggle('active', on);
-      this.sequencer.setHold(on);
-    });
-
-    // BPM/SWING
-    this.$('bpm')?.addEventListener('input', (e) => {
-      const bpm = parseInt(e.target.value, 10) || 96;
-      this.sequencer.setBPM(bpm);
-      this.setText('bpm-display', bpm);
-      this.setText('bpm-val', bpm);
-    });
-
-    this.$('swing')?.addEventListener('input', (e) => {
-      const swing = parseInt(e.target.value, 10) || 0;
-      this.sequencer.setSwing(swing);
-      this.setText('swing-display', swing);
-      this.setText('swing-val', `${swing}%`);
-    });
-
-    // Humanize
-    this.$('humanize')?.addEventListener('input', (e) => {
-      const v = parseInt(e.target.value, 10) || 0;
-      this.sequencer.setHumanize(v);
-      this.setText('humanize-val', `${v}%`);
-      this.updateSliderFillByInputId('humanize');
-    });
-
-    this.$('humanize-time')?.addEventListener('input', (e) => {
-      const ms = parseInt(e.target.value, 10) || 0;
-      this.sequencer.setHumanizeTime(ms);
-      this.setText('humanize-time-val', `${ms}ms`);
-      this.updateSliderFillByInputId('humanize-time');
-    });
-
-    // Root
-    document.querySelectorAll('.seg-btn[data-root]').forEach(btn => {
-      btn.addEventListener('click', () => {
-        document.querySelectorAll('.seg-btn[data-root]').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        const root = btn.dataset.root || 'A';
-        this.sequencer.setRoot(root);
-        this.setText('scale-root-val', this.sequencer.rootName);
-        this.updateKeyboardScaleHighlight();
-      });
-    });
-
-    // Wave
-    document.querySelectorAll('.seg-btn[data-wave]').forEach(btn => {
-      btn.addEventListener('click', () => {
-        document.querySelectorAll('.seg-btn[data-wave]').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        const w = btn.dataset.wave || 'SAW';
-        this.audioEngine.setWaveform(w);
-      });
-    });
-
-    // Chord mode
-    document.querySelectorAll('.seg-btn[data-chordmode]').forEach(btn => {
-      btn.addEventListener('click', () => {
-        document.querySelectorAll('.seg-btn[data-chordmode]').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        const mode = btn.dataset.chordmode || 'TRIAD';
-        this.sequencer.setChordMode(mode);
-      });
-    });
-
-    // Inversion
-    document.querySelectorAll('.seg-btn[data-inv]').forEach(btn => {
-      btn.addEventListener('click', () => {
-        document.querySelectorAll('.seg-btn[data-inv]').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        const inv = btn.dataset.inv || '0';
-        this.sequencer.setInversion(inv);
-      });
-    });
-
-    // Synth sliders
-    this.bindSlider('cutoff', (v) => {
-      this.audioEngine.setCutoff(v);
-      this.setText('cutoff-val', v >= 1000 ? `${(v/1000).toFixed(1)}k` : `${Math.round(v)}`);
-    });
-    this.bindSlider('res', (v) => {
-      this.audioEngine.setResonance(v);
-      this.setText('res-val', Number(v).toFixed(2));
-    });
-    this.bindSlider('envAmt', (v) => {
-      this.audioEngine.setEnvAmt(v);
-      this.setText('envAmt-val', v >= 1000 ? `${(v/1000).toFixed(1)}k` : `${Math.round(v)}`);
-    });
-    this.bindSlider('attack', (v) => {
-      this.audioEngine.setEnvAttack(v);
-      this.setText('attack-val', v < 0.2 ? `${Math.round(v*1000)}ms` : `${v.toFixed(2)}s`);
-    });
-    this.bindSlider('decay', (v) => {
-      this.audioEngine.setEnvDecay(v);
-      this.setText('decay-val', v < 0.2 ? `${Math.round(v*1000)}ms` : `${v.toFixed(2)}s`);
-    });
-    this.bindSlider('sustain', (v) => {
-      this.audioEngine.setEnvSustain(v);
-      this.setText('sustain-val', Number(v).toFixed(2));
-    });
-    this.bindSlider('release', (v) => {
-      this.audioEngine.setEnvRelease(v);
-      this.setText('release-val', v < 0.2 ? `${Math.round(v*1000)}ms` : `${v.toFixed(2)}s`);
-    });
-    this.bindSlider('glide', (v) => {
-      this.audioEngine.setGlide(v);
-      this.setText('glide-val', `${Math.round(v)}ms`);
-    });
-    this.bindSlider('master', (v) => {
-      this.audioEngine.setMaster(v / 100);
-      this.setText('master-val', `${Math.round(v)}%`);
-    });
-
-    // FX sliders
-    this.bindSlider('chorusMix', (v) => {
-      this.audioEngine.setChorusMix(v / 100);
-      this.setText('chorusMix-val', `${Math.round(v)}%`);
-    });
-    this.bindSlider('drive', (v) => {
-      this.audioEngine.setDrive(v / 100);
-      this.setText('drive-val', `${Math.round(v)}`);
-    });
-    this.bindSlider('crush', (v) => {
-      this.audioEngine.setCrush(v / 100);
-      this.setText('crush-val', `${Math.round(v)}`);
-    });
-    this.bindSlider('reverb', (v) => {
-      this.audioEngine.setReverb(v / 100);
-      this.setText('reverb-val', `${Math.round(v)}%`);
-    });
-    this.bindSlider('comp', (v) => {
-      this.audioEngine.setComp(v / 100);
-      this.setText('comp-val', `${Math.round(v)}`);
-    });
-    this.bindSlider('mix', (v) => {
-      this.audioEngine.setFxMix(v / 100);
-      this.setText('mix-val', `${Math.round(v)}%`);
-    });
-
-    // Steps
-    const seq = this.$('sequencer-grid');
-    if (seq) {
-      seq.addEventListener('pointerdown', (e) => {
-        const el = e.target.closest('.seq-step');
-        if (!el) return;
-        e.preventDefault();
-
-        const step = parseInt(el.dataset.step, 10);
-
-        this._down = { step, el };
-        this._lpTriggered = false;
-
-        // Desktop accent
-        if (!this.isMobile && e.ctrlKey) {
-          const on = this.sequencer.toggleAccent(step);
-          el.classList.toggle('accent', on);
+      // double tap = accent
+      if (this.isMobile) {
+        const now = performance.now();
+        const isDouble = (this._lastTap.step === step && (now - this._lastTap.t) < 260);
+        this._lastTap = { step, t: now };
+        if (isDouble) {
+          this.toggleAccent(step);
           this._lpTriggered = true;
+          if (navigator.vibrate) navigator.vibrate(10);
           return;
         }
-
-        // Mobile double tap accent
-        if (this.isMobile) {
-          const now = performance.now();
-          const last = this._lastTap;
-          const isDouble = last.step === step && (now - last.t) < 260;
-          this._lastTap = { step, t: now };
-
-          if (isDouble) {
-            const on = this.sequencer.toggleAccent(step);
-            el.classList.toggle('accent', on);
-            this._lpTriggered = true;
-            if (navigator.vibrate) navigator.vibrate(10);
-            return;
-          }
-        }
-
-        // Long press octave
-        clearTimeout(this._lpTimer);
-        this._lpTimer = setTimeout(() => {
-          this._lpTriggered = true;
-          this.sequencer.cycleOctave(step);
-          this.syncStepUI(step);
-          if (navigator.vibrate) navigator.vibrate(12);
-        }, 330);
-      }, { passive:false });
-
-      seq.addEventListener('pointerup', () => {
-        clearTimeout(this._lpTimer);
-
-        const { step, el } = this._down;
-        if (step == null || !el) return;
-
-        if (this._lpTriggered) {
-          this._down = { step:null, el:null };
-          this._lpTriggered = false;
-          return;
-        }
-
-        this.sequencer.cycleDegree(step);
-        this.syncStepUI(step);
-        if (this.isMobile && navigator.vibrate) navigator.vibrate(6);
-
-        this._down = { step:null, el:null };
-      });
-
-      seq.addEventListener('pointercancel', () => {
-        clearTimeout(this._lpTimer);
-        this._down = { step:null, el:null };
-        this._lpTriggered = false;
-      });
-    }
-
-    // Keyboard playing
-    const kbd = this.$('keyboard');
-    if (kbd) {
-      kbd.addEventListener('pointerdown', (e) => {
-        const key = e.target.closest('.key');
-        if (!key) return;
-        e.preventDefault();
-
-        const midi = parseInt(key.dataset.midi, 10);
-        if (!Number.isFinite(midi)) return;
-
-        this.audioEngine.resume();
-        key.classList.add('active');
-        this._kbdDown = key;
-
-        // Simple: play single note (preview)
-        this.audioEngine.playNote(midi, 0, 0.9);
-      }, { passive:false });
-
-      kbd.addEventListener('pointerup', () => {
-        if (this._kbdDown) this._kbdDown.classList.remove('active');
-        this._kbdDown = null;
-      });
-
-      kbd.addEventListener('pointercancel', () => {
-        if (this._kbdDown) this._kbdDown.classList.remove('active');
-        this._kbdDown = null;
-      });
-    }
-
-    // Space = play/pause
-    document.addEventListener('keydown', (e) => {
-      if (e.code === 'Space') {
-        e.preventDefault();
-        this.handlePlayToggle();
+      } else if (e.ctrlKey) {
+        this.toggleAccent(step);
+        this._lpTriggered = true;
+        return;
       }
+
+      // long press => octave cycle
+      clearTimeout(this._lpTimer);
+      this._lpTimer = setTimeout(() => {
+        this._lpTriggered = true;
+        this.cycleOctave(step);
+        if (navigator.vibrate) navigator.vibrate(12);
+      }, 320);
+    }, { passive: false });
+
+    grid.addEventListener("pointerup", () => {
+      clearTimeout(this._lpTimer);
+      const el = this._downStepEl;
+      this._downStepEl = null;
+      if (!el) return;
+
+      const step = parseInt(el.dataset.step, 10);
+      if (this._lpTriggered) {
+        this._lpTriggered = false;
+        return;
+      }
+
+      // click/tap => cycle note
+      this.cycleNote(step);
+      if (this.isMobile && navigator.vibrate) navigator.vibrate(8);
+    });
+
+    grid.addEventListener("pointercancel", () => {
+      clearTimeout(this._lpTimer);
+      this._downStepEl = null;
+      this._lpTriggered = false;
     });
   }
 
-  bindSlider(id, onValue) {
-    const input = this.$(id);
-    if (!input) return;
+  cycleNote(step) {
+    const st = this.sequencer.pattern[step];
+    // degree: -1 rest -> 0..6
+    if (st.degree < 0) st.degree = 0;
+    else if (st.degree >= 6) st.degree = -1;
+    else st.degree += 1;
 
-    const apply = () => {
-      const v = Number(input.value);
-      onValue(v);
-      this.updateSliderFillByInputId(id);
-    };
-
-    input.addEventListener('input', apply);
-    apply();
+    this.syncStepUI(step);
   }
 
-  // ---------------- TRANSPORT ----------------
-
-  handlePlayToggle() {
-    const btn = this.$('play-btn');
-    if (this.sequencer.isPlaying) {
-      this.sequencer.stop();
-      btn?.classList.remove('active');
-      this.clearPlayingIndicators();
-    } else {
-      this.audioEngine.resume();
-      this.sequencer.start();
-      btn?.classList.add('active');
-    }
+  cycleOctave(step) {
+    const st = this.sequencer.pattern[step];
+    const o = Number(st.octave || 0);
+    st.octave = (o >= 2) ? -1 : (o + 1);
+    this.syncStepUI(step);
   }
 
-  handleClear() {
-    this.sequencer.clear();
-    this.syncAllUIFromData();
-    this.clearPlayingIndicators();
+  toggleAccent(step) {
+    const st = this.sequencer.pattern[step];
+    st.accent = !st.accent;
+    this.syncStepUI(step);
   }
 
-  handleMetToggle() {
-    const btn = this.$('met-btn');
-    const on = !this.sequencer.metronomeEnabled;
-    this.sequencer.setMetronome(on);
-    btn?.classList.toggle('active', on);
-  }
-
-  // ---------------- SLIDER FILLS ----------------
-
-  initSliderFills() {
-    this.updateAllSliderFills();
-  }
-
-  updateAllSliderFills() {
-    [
-      'cutoff','res','envAmt','attack','decay','sustain','release','glide','master',
-      'humanize','humanize-time',
-      'chorusMix','drive','crush','reverb','comp','mix'
-    ].forEach(id => this.updateSliderFillByInputId(id));
-  }
-
-  updateSliderFillByInputId(inputId) {
-    const input = this.$(inputId);
-    if (!input) return;
-
-    const fillMap = {
-      cutoff:'cutoff-fill',
-      res:'res-fill',
-      envAmt:'envAmt-fill',
-      attack:'attack-fill',
-      decay:'decay-fill',
-      sustain:'sustain-fill',
-      release:'release-fill',
-      glide:'glide-fill',
-      master:'master-fill',
-      humanize:'humanize-fill',
-      'humanize-time':'humanize-time-fill',
-      chorusMix:'chorusMix-fill',
-      drive:'drive-fill',
-      crush:'crush-fill',
-      reverb:'reverb-fill',
-      comp:'comp-fill',
-      mix:'mix-fill',
-    };
-
-    const fillId = fillMap[inputId];
-    if (!fillId) return;
-
-    const fill = this.$(fillId);
-    if (!fill) return;
-
-    const min = Number(input.min ?? 0);
-    const max = Number(input.max ?? 100);
-    const val = Number(input.value ?? 0);
-    const pct = (max === min) ? 0 : ((val - min) / (max - min)) * 100;
-    fill.style.width = `${pct}%`;
-  }
-
-  // ---------------- SEQ UI ----------------
-
-  syncAllUIFromData() {
-    for (let i = 0; i < 16; i++) this.syncStepUI(i);
+  noteLabel(stepObj) {
+    if (!stepObj || stepObj.degree < 0) return "—";
+    const names = ["C","D","Eb","F","G","Ab","Bb"];
+    const d = stepObj.degree % 7;
+    const o = Number(stepObj.octave || 0);
+    return `${names[d]}${3+o}`; // rootMidi=48 => C3
   }
 
   syncStepUI(step) {
     const el = this.stepElements[step];
     if (!el) return;
 
-    const s = this.sequencer.getStepState(step);
-    const label = el.querySelector('.step-note');
+    const st = this.sequencer.pattern[step];
+    const on = st.degree >= 0;
 
-    el.classList.toggle('active', s.degree > 0);
-    el.classList.toggle('accent', !!s.accent);
+    el.classList.toggle("active", on);
+    el.classList.toggle("accent", !!st.accent);
 
-    if (label) label.textContent = (s.degree > 0) ? this.sequencer.getDisplayLabel(step) : '';
+    const note = el.querySelector(".step-note");
+    if (note) note.textContent = this.noteLabel(st);
 
-    if (s.degree > 0) {
-      const op = 0.55 + (s.degree / 7) * 0.45;
-      el.style.opacity = String(op);
-    } else {
-      el.style.opacity = '';
-    }
+    // opacity by velocity
+    const v = Math.max(0, Math.min(1, Number(st.vel ?? 0.85)));
+    el.style.opacity = on ? String(0.35 + 0.65 * v) : "";
+  }
+
+  syncSequencerUI() {
+    for (let i = 0; i < 16; i++) this.syncStepUI(i);
   }
 
   onStepChange(step) {
-    this.clearPlayingIndicators();
+    document.querySelectorAll(".seq-step.playing").forEach(x => x.classList.remove("playing"));
     if (step < 0) return;
 
     const el = this.stepElements[step];
-    if (el) el.classList.add('playing');
-
-    const led = this.$('led');
-    if (led) {
-      led.classList.add('active');
-      setTimeout(() => led.classList.remove('active'), 50);
-    }
+    if (el) el.classList.add("playing");
   }
 
-  clearPlayingIndicators() {
-    document.querySelectorAll('.seq-step.playing').forEach(el => el.classList.remove('playing'));
+  // ---------------- TRANSPORT / TEMPO ----------------
+  bindTransport() {
+    const playBtn = this.$("play-btn");
+    playBtn?.addEventListener("click", async () => {
+      await this.audioEngine.resume();
+      if (this.sequencer.isPlaying) {
+        this.sequencer.stop();
+        playBtn.classList.remove("active");
+        this.onStepChange(-1);
+      } else {
+        this.sequencer.start();
+        playBtn.classList.add("active");
+      }
+    });
+
+    // si tu as clear
+    this.$("clear-btn")?.addEventListener("click", () => {
+      // reset pattern
+      this.sequencer.pattern.forEach((s, i) => {
+        s.degree = -1;
+        s.accent = false;
+        s.vel = 0.85;
+        s.octave = 0;
+      });
+      this.syncSequencerUI();
+    });
+  }
+
+  bindTempoHumanize() {
+    this.$("bpm")?.addEventListener("input", (e) => {
+      const bpm = parseInt(e.target.value, 10) || 90;
+      this.sequencer.setBPM(bpm);
+      this.$("bpm-display") && (this.$("bpm-display").textContent = bpm);
+      this.$("bpm-val") && (this.$("bpm-val").textContent = bpm);
+    });
+
+    this.$("swing")?.addEventListener("input", (e) => {
+      const s = parseInt(e.target.value, 10) || 0;
+      this.sequencer.setSwing(s);
+      this.$("swing-display") && (this.$("swing-display").textContent = s);
+      this.$("swing-val") && (this.$("swing-val").textContent = `${s}%`);
+    });
+
+    this.$("humanize")?.addEventListener("input", (e) => {
+      const v = parseInt(e.target.value, 10) || 0;
+      this.sequencer.setHumanize(v);
+      this.$("humanize-val") && (this.$("humanize-val").textContent = `${v}%`);
+    });
+
+    this.$("humanize-time")?.addEventListener("input", (e) => {
+      const ms = parseInt(e.target.value, 10) || 0;
+      this.sequencer.setHumanizeTime(ms);
+      this.$("humanize-time-val") && (this.$("humanize-time-val").textContent = `${ms}ms`);
+    });
+  }
+
+  // ---------------- SYNTH PARAMS ----------------
+  bindSynthParams() {
+    const bind = (id, name, fmt, fillId) => {
+      const input = this.$(id);
+      const valEl = this.$(`${id}-val`) || this.$(`${name}-val`);
+      const fill = this.$(fillId || `${id}-fill`);
+
+      if (!input) return;
+
+      const apply = async () => {
+        await this.audioEngine.resume();
+        const v = Number(input.value);
+        this.audioEngine.setParam(name, v);
+        if (valEl) valEl.textContent = fmt ? fmt(v) : String(v);
+        this._fillFromInput(input, fill);
+      };
+
+      input.addEventListener("input", apply, { passive: true });
+      apply();
+    };
+
+    bind("cutoff", "cutoff", (v) => `${(v/1000).toFixed(1)}k`, "cutoff-fill");
+    bind("envAmt", "envAmt", (v) => `${(v/1000).toFixed(1)}k`, "envAmt-fill");
+    bind("res", "res", (v) => `${v.toFixed(2)}`, "res-fill");
+
+    bind("attack", "attack", (v) => `${Math.round(v*1000)}ms`, "attack-fill");
+    bind("decay", "decay", (v) => `${Math.round(v*1000)}ms`, "decay-fill");
+    bind("release", "release", (v) => `${Math.round(v*1000)}ms`, "release-fill");
+
+    bind("waveMix", "waveMix", (v) => `${v.toFixed(2)}`, "waveMix-fill");
+    bind("sub", "sub", (v) => `${v.toFixed(2)}`, "sub-fill");
+    bind("noise", "noise", (v) => `${v.toFixed(3)}`, "noise-fill");
+  }
+
+  // ---------------- CHORUS ----------------
+  bindChorusControls() {
+    const bind = (id, name, fmt, fillId) => {
+      const input = this.$(id);
+      const valEl = this.$(`${id}-val`);
+      const fill = this.$(fillId);
+
+      if (!input) return;
+
+      const apply = async () => {
+        await this.audioEngine.resume();
+        let v = Number(input.value);
+
+        if (name === "chorusMix") v = Math.max(0, Math.min(100, v)) / 100;
+        this.audioEngine.setParam(name, v);
+
+        if (valEl) {
+          if (id === "chorusMix") valEl.textContent = `${Math.round(Number(input.value))}%`;
+          else valEl.textContent = fmt ? fmt(Number(input.value)) : String(Number(input.value));
+        }
+
+        this._fillFromInput(input, fill);
+      };
+
+      input.addEventListener("input", apply, { passive: true });
+      apply();
+    };
+
+    bind("chorusRate", "chorusRate", (v) => `${Number(v).toFixed(2)}Hz`, "chorusRate-fill");
+    bind("chorusDepth", "chorusDepth", (v) => `${Number(v).toFixed(1)}ms`, "chorusDepth-fill");
+    bind("chorusMix", "chorusMix", null, "chorusMix-fill");
+
+    // mode buttons
+    document.querySelectorAll("[data-chorus-mode]").forEach((btn) => {
+      btn.addEventListener("click", async () => {
+        await this.audioEngine.resume();
+        document.querySelectorAll("[data-chorus-mode]").forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+
+        const mode = btn.dataset.chorusMode;
+        if (mode === "OFF") {
+          this.audioEngine.setParam("chorusOn", 0);
+          return;
+        }
+
+        this.audioEngine.setParam("chorusOn", 1);
+
+        // Juno-ish presets
+        if (mode === "I") {
+          this._setRange("chorusRate", 0.55);
+          this._setRange("chorusDepth", 8.5);
+          this._setRange("chorusMix", 40);
+        } else if (mode === "II") {
+          this._setRange("chorusRate", 1.20);
+          this._setRange("chorusDepth", 14.0);
+          this._setRange("chorusMix", 55);
+        }
+      });
+    });
+  }
+
+  bindSynthPresets() {
+    document.querySelectorAll("[data-synth-preset]").forEach((btn) => {
+      btn.addEventListener("click", async () => {
+        await this.audioEngine.resume();
+        document.querySelectorAll("[data-synth-preset]").forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+
+        const p = btn.dataset.synthPreset;
+        const set = (id, val) => this._setRange(id, val);
+
+        if (p === "JUNO") {
+          set("cutoff", 2200); set("envAmt", 1200); set("res", 0.12);
+          set("attack", 0.008); set("decay", 0.14); set("release", 0.12);
+          set("waveMix", 0.65); set("sub", 0.25); set("noise", 0.03);
+        } else if (p === "SOFT") {
+          set("cutoff", 3200); set("envAmt", 800); set("res", 0.08);
+          set("attack", 0.02); set("decay", 0.20); set("release", 0.25);
+          set("waveMix", 0.55); set("sub", 0.18); set("noise", 0.02);
+        } else if (p === "BASS") {
+          set("cutoff", 800); set("envAmt", 900); set("res", 0.18);
+          set("attack", 0.005); set("decay", 0.18); set("release", 0.10);
+          set("waveMix", 0.78); set("sub", 0.55); set("noise", 0.00);
+        } else if (p === "PLUCK") {
+          set("cutoff", 4200); set("envAmt", 2800); set("res", 0.10);
+          set("attack", 0.002); set("decay", 0.10); set("release", 0.06);
+          set("waveMix", 0.35); set("sub", 0.12); set("noise", 0.02);
+        }
+      });
+    });
+  }
+
+  // ---------------- helpers ----------------
+  _setRange(id, value) {
+    const el = this.$(id);
+    if (!el) return;
+    el.value = String(value);
+    el.dispatchEvent(new Event("input", { bubbles: true }));
+  }
+
+  _fillFromInput(input, fillEl) {
+    if (!input || !fillEl) return;
+    const min = Number(input.min ?? 0);
+    const max = Number(input.max ?? 100);
+    const val = Number(input.value ?? 0);
+    const pct = max === min ? 0 : ((val - min) / (max - min)) * 100;
+    fillEl.style.width = `${pct}%`;
+  }
+
+  syncAllFills() {
+    // call once to ensure fills are correct on load
+    const ids = [
+      "cutoff","envAmt","res","attack","decay","release","waveMix","sub","noise",
+      "chorusRate","chorusDepth","chorusMix",
+    ];
+    ids.forEach((id) => {
+      const input = this.$(id);
+      const fill = this.$(`${id}-fill`) || this.$(`${id}Fill`);
+      if (input && fill) this._fillFromInput(input, fill);
+    });
   }
 }
