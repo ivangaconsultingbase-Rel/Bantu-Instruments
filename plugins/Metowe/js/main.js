@@ -1,6 +1,6 @@
-import { AudioEngine } from './AudioEngine.js';
-import { Sequencer } from './Sequencer.js';
-import { UI } from './UI.js';
+import { AudioEngine } from './audio/AudioEngine.js';
+import { Sequencer } from './sequencer/Sequencer.js';
+import { UI } from './ui/UI.js';
 
 const audio = new AudioEngine();
 const sequencer = new Sequencer(audio, (step) => ui.onStepChange(step));
