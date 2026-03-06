@@ -259,6 +259,9 @@ body{
 @media (max-width: 900px){
   .grid{grid-template-columns:1fr}
   .ctrl input[type="range"]{width:140px}
+  input[type="range"]{
+  accent-color: var(--acc);
+  }
   .kbd{grid-template-columns:repeat(6, 1fr)}
   .seq{grid-template-columns:repeat(8, 1fr)}
 }
