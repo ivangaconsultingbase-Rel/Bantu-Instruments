@@ -260,7 +260,7 @@ body{
   .grid{grid-template-columns:1fr}
   .ctrl input[type="range"]{width:140px}
   input[type="range"]{
-  accent-color: var(--bd);
+  accent-color: #d0d0d0;
   }
   .kbd{grid-template-columns:repeat(6, 1fr)}
   .seq{grid-template-columns:repeat(8, 1fr)}
