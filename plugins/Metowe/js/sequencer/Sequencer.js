@@ -1,4 +1,18 @@
-// js/sequencer/Sequencer.js
+/**
+ * Sequencer.js (AKOMGA)
+ * - 16 steps, 6 lanes
+ * - Events: on/off, degree, oct, chord, vel, mute
+ *
+ * PATCHES:
+ * - ChordMemory: quand tu actives un accord, il réutilise le dernier degré d’accord joué (mémoire)
+ * - Arp: si Arp actif + step chord => joue un arp au lieu du bloc d’accord
+ * - Arp modes: off | up | down | updown | random
+ * - Arp density: 1..6 notes par step (par défaut 3 = triade)
+ *
+ * NOTE: UI actuel n’a pas (encore) de contrôles Arp, donc on expose des setters:
+ *   setArpMode(mode), setArpNotesPerStep(n), setArpGate(g)
+ */
+
 export class Sequencer {
   constructor(synthEngine, onStepChange) {
     this.synth = synthEngine;
@@ -15,20 +29,41 @@ export class Sequencer {
     this.isPlaying = false;
     this.timer = null;
 
-    this.root = "A";
-    this.baseOctave = 4;
+    // scale
+    this.root = "A";     // A minor default
+    this.baseOctave = 4; // octave for degree mapping
 
-    this.humanizePct = 6;
-    this.humanizeTimeMs = 8;
+    // humanize
+    this.humanizePct = 6;      // 0..30 (%)
+    this.humanizeTimeMs = 8;   // 0..20 ms
 
+    // scheduling
     this.nextStepTime = 0;
-    this.scheduleAheadTime = 0.12;
+    this.scheduleAheadTime = 0.1;
     this.lookahead = 25;
 
+    // grid[lane][step] = event
     this.grid = Array.from({ length: this.lanes }, () =>
       Array.from({ length: this.steps }, () => this._emptyEvent())
     );
 
+    // -------------------------
+    // PATCH: ChordMemory
+    // -------------------------
+    this.chordMemoryEnabled = true;
+    this._lastChordDegree = 0;   // mémorise le dernier degré d’accord “musical”
+    this._lastChordOct = 0;
+
+    // -------------------------
+    // PATCH: ARP (global)
+    // -------------------------
+    this.arp = {
+      mode: "off",       // off | up | down | updown | random
+      notesPerStep: 3,   // 1..6
+      gate: 0.88         // 0.1..1 (durée relative)
+    };
+
+    // Default pattern
     this.loadDefaultPattern();
   }
 
@@ -36,24 +71,42 @@ export class Sequencer {
     return { on: false, degree: 0, oct: 0, chord: false, vel: 0.85, mute: false };
   }
 
+  // ---------- tempo ----------
   setBPM(bpm) { this.bpm = Math.max(60, Math.min(200, Number(bpm) || 96)); }
   setSwing(swing) { this.swing = Math.max(0, Math.min(75, Number(swing) || 0)); }
 
-  getStepDuration() { return (60 / this.bpm) / 4; }
+  getStepDuration() { return (60 / this.bpm) / 4; } // 16th
   getSwingOffset() { return this.getStepDuration() * (this.swing / 100) * 0.5; }
 
+  // ---------- humanize ----------
   setHumanize(pct) { this.humanizePct = Math.max(0, Math.min(30, Number(pct) || 0)); }
   setHumanizeTime(ms) { this.humanizeTimeMs = Math.max(0, Math.min(20, Number(ms) || 0)); }
 
+  // ---------- scale ----------
   setRoot(letter) {
     const ok = ["A","B","C","D","E","F","G"];
     this.root = ok.includes(letter) ? letter : "A";
   }
-
   setOctave(oct) {
     this.baseOctave = Math.max(2, Math.min(6, Number(oct) || 4));
   }
 
+  // ---------- PATCH: Arp setters ----------
+  setArpMode(mode) {
+    const m = String(mode || "off").toLowerCase();
+    const ok = ["off","up","down","updown","random"];
+    this.arp.mode = ok.includes(m) ? m : "off";
+  }
+  setArpNotesPerStep(n) {
+    const v = Math.max(1, Math.min(6, parseInt(n, 10) || 3));
+    this.arp.notesPerStep = v;
+  }
+  setArpGate(g) {
+    const v = Math.max(0.1, Math.min(1, Number(g) || 0.88));
+    this.arp.gate = v;
+  }
+
+  // ---------- editing ----------
   getEvent(lane, step) {
     return this.grid?.[lane]?.[step] || this._emptyEvent();
   }
@@ -78,13 +131,29 @@ export class Sequencer {
     if (!ev.on) ev.on = true;
     ev.degree = (ev.degree + 1) % 7;
     this.grid[lane][step] = ev;
+
+    // si c’est un step d’accord, on met à jour la mémoire
+    if (ev.chord && this.chordMemoryEnabled) {
+      this._lastChordDegree = ev.degree;
+      this._lastChordOct = ev.oct || 0;
+    }
     return ev.degree;
   }
 
   toggleChord(lane, step) {
     const ev = this.getEvent(lane, step);
     if (!ev.on) ev.on = true;
+
     ev.chord = !ev.chord;
+
+    // PATCH: ChordMemory
+    // Quand on active chord, on “rappelle” le dernier degré d’accord mémorisé
+    if (ev.chord && this.chordMemoryEnabled) {
+      ev.degree = this._lastChordDegree;
+      // on ne force pas l’octave, mais on peut “rappeler” si tu veux:
+      // ev.oct = this._lastChordOct;
+    }
+
     this.grid[lane][step] = ev;
     return ev.chord;
   }
@@ -95,6 +164,7 @@ export class Sequencer {
     );
   }
 
+  // ---------- MIDI helpers ----------
   _rootMidi() {
     const map = { C: 60, D: 62, E: 64, F: 65, G: 67, A: 69, B: 71 };
     const base = map[this.root] ?? 69;
@@ -125,6 +195,7 @@ export class Sequencer {
     return [n1, n3, n5];
   }
 
+  // ---------- transport ----------
   start() {
     if (this.isPlaying) return;
     this.synth.resume();
@@ -174,12 +245,13 @@ export class Sequencer {
     let t = time;
     if (step % 2 === 1) t += this.getSwingOffset();
 
-    // Visual (timer ok)
+    // Visual callback synced to audio time
     const delay = (t - this.synth.getCurrentTime()) * 1000;
     setTimeout(() => {
       if (this.isPlaying) this.onStepChange?.(step);
     }, Math.max(0, delay));
 
+    // Play events
     for (let lane = 0; lane < this.lanes; lane++) {
       const ev = this.grid[lane][step];
       if (!ev?.on || ev.mute) continue;
@@ -187,22 +259,69 @@ export class Sequencer {
       // humanize timing
       let tt = t;
       const jMs = this.humanizeTimeMs;
-      if (jMs > 0) tt += (Math.random() * 2 - 1) * (jMs / 1000);
+      if (jMs > 0) {
+        tt += (Math.random() * 2 - 1) * (jMs / 1000);
+      }
 
       // humanize vel
       let vel = Math.max(0, Math.min(1, Number(ev.vel ?? 0.85)));
       const h = this.humanizePct / 100;
-      if (h > 0) vel = Math.max(0, Math.min(1, vel * (1 + (Math.random() * 2 - 1) * h)));
+      if (h > 0) {
+        vel = Math.max(0, Math.min(1, vel * (1 + (Math.random() * 2 - 1) * h)));
+      }
 
+      // lane influences register
       const laneOct = lane <= 1 ? 0 : lane <= 3 ? 1 : -1;
 
+      // duration base
+      const stepDur = this.getStepDuration();
+      const baseDurNote = 0.18;
+      const baseDurChord = 0.22;
+
       if (ev.chord) {
-        const notes = this._triadForDegree(ev.degree, ev.oct + laneOct);
-        this.synth.playChordAt(notes, tt, vel, 0.22);
+        // PATCH: ChordMemory update on playback
+        if (this.chordMemoryEnabled) {
+          this._lastChordDegree = ev.degree;
+          this._lastChordOct = ev.oct || 0;
+        }
+
+        const notes = this._triadForDegree(ev.degree, (ev.oct || 0) + laneOct);
+
+        // PATCH: ARP
+        if (this.arp.mode !== "off") {
+          this._playArp(notes, tt, vel, stepDur);
+        } else {
+          this.synth.playChordAt(notes, tt, vel, baseDurChord);
+        }
       } else {
-        const note = this._degreeToMidi(ev.degree, ev.oct + laneOct);
-        this.synth.playNoteAt(note, tt, vel, 0.18);
+        const note = this._degreeToMidi(ev.degree, (ev.oct || 0) + laneOct);
+        this.synth.playNoteAt(note, tt, vel, baseDurNote);
       }
+    }
+  }
+
+  _playArp(notes, t, vel, stepDur) {
+    const mode = this.arp.mode;
+    const count = Math.max(1, Math.min(6, this.arp.notesPerStep));
+    const gate = Math.max(0.1, Math.min(1, this.arp.gate));
+
+    let seq = notes.slice();
+
+    if (mode === "down") seq = seq.slice().reverse();
+    else if (mode === "random") {
+      seq = seq.slice().sort(() => Math.random() - 0.5);
+    } else if (mode === "updown") {
+      // ex: [a b c] => [a b c b]
+      const mid = seq.slice(1, -1).reverse();
+      seq = seq.concat(mid);
+    } // "up" = default
+
+    const dt = stepDur / count;
+    const dur = Math.max(0.03, dt * gate);
+
+    for (let i = 0; i < count; i++) {
+      const n = seq[i % seq.length];
+      this.synth.playNoteAt(n, t + i * dt, vel, dur);
     }
   }
 
@@ -211,6 +330,7 @@ export class Sequencer {
     this.currentStep = (this.currentStep + 1) % this.steps;
   }
 
+  // ---------- default pattern ----------
   loadDefaultPattern() {
     this.clear();
 
@@ -219,7 +339,7 @@ export class Sequencer {
       this.grid[0][s] = { on: true, degree: arp[s], oct: 0, chord: false, vel: 0.9, mute: false };
     }
 
-    const chordDegrees = [0, 5, 3, 4];
+    const chordDegrees = [0, 5, 3, 4]; // i, VI, iv, v
     [0, 4, 8, 12].forEach((s, i) => {
       this.grid[2][s] = { on: true, degree: chordDegrees[i], oct: -1, chord: true, vel: 0.8, mute: false };
     });
@@ -227,5 +347,9 @@ export class Sequencer {
     [3, 7, 11, 15].forEach((s) => {
       this.grid[4][s] = { on: true, degree: 4, oct: 0, chord: false, vel: 0.55, mute: false };
     });
+
+    // init chord memory from the first chord
+    this._lastChordDegree = chordDegrees[0];
+    this._lastChordOct = -1;
   }
 }
