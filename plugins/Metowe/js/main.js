@@ -19,6 +19,6 @@ window.addEventListener("pointerdown", () => synth.resume(), { once: true });
 ui.init();
 
 // (optionnel) Exemple: activer l’arp global par défaut
-// seq.setArpMode("up");        // off | up | down | updown | random
-// seq.setArpNotesPerStep(4);   // 1..6
-// seq.setArpGate(0.85);        // 0.1..1
+seq.setArpMode("up");        // off | up | down | updown | random
+seq.setArpNotesPerStep(4);   // 1..6
+seq.setArpGate(0.85);        // 0.1..1
