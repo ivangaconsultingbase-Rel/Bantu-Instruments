@@ -1,5 +1,3 @@
-Main
-
 import { AudioEngine } from './AudioEngine.js';
 import { Sequencer } from './Sequencer.js';
 import { UI } from './UI.js';
