@@ -1,24 +1,26 @@
-import { SynthEngine } from "./audio/SynthEngine.js";
-import { Sequencer } from "./sequencer/Sequencer.js";
-import { UI } from "./ui/UI.js";
+Main
 
-const synth = new SynthEngine();
-await synth.init();
+import { AudioEngine } from './AudioEngine.js';
+import { Sequencer } from './Sequencer.js';
+import { UI } from './UI.js';
 
-let ui = null;
+const audio = new AudioEngine();
+const sequencer = new Sequencer(audio, (step) => ui.onStepChange(step));
+const ui = new UI(audio, sequencer);
 
-const seq = new Sequencer(synth, (step) => {
-  if (ui) ui.onStepChange(step);
-});
+(async function boot() {
+  await audio.init();
+  ui.init();
 
-ui = new UI(synth, seq);
+  // Unlock audio on first gesture (iOS safe)
+  const unlock = async () => {
+    await audio.resume();
+    window.removeEventListener('pointerdown', unlock, { capture: true });
+    window.removeEventListener('touchstart', unlock, { capture: true });
+    window.removeEventListener('click', unlock, { capture: true });
+  };
 
-// iOS/Safari: unlock audio au premier geste
-window.addEventListener("pointerdown", () => synth.resume(), { once: true });
-
-ui.init();
-
-// (optionnel) Exemple: activer l’arp global par défaut
-seq.setArpMode("up");        // off | up | down | updown | random
-seq.setArpNotesPerStep(4);   // 1..6
-seq.setArpGate(0.85);        // 0.1..1
+  window.addEventListener('pointerdown', unlock, { capture: true, passive: true });
+  window.addEventListener('touchstart', unlock, { capture: true, passive: true });
+  window.addEventListener('click', unlock, { capture: true, passive: true });
+})();
