@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>Spectral Coast 6 — V9 PAD</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="app-shell">
+
+    <header class="topbar card">
+      <div class="brand-wrap">
+        <div class="brand-kicker">MUKUDU LAB / GROOVE SYNTH</div>
+        <h1>Spectral Coast 6 <span>V9 PAD</span></h1>
+        <div class="status-row">
+          <span class="chip chip-live" id="audioStatus">AUDIO OFF</span>
+          <span class="chip">8 VOICES</span>
+          <span class="chip chip-pad">PAD ENGINE</span>
+          <span class="chip">LFO · CHORUS · SHIMMER</span>
+        </div>
+      </div>
+      <div class="master-strip">
+        <button id="audioBtn" class="action primary">START AUDIO</button>
+        <button id="panicBtn" class="action">PANIC</button>
+        <div class="field compact">
+          <label for="presetSelect">PRESET</label>
+          <select id="presetSelect"></select>
+        </div>
+        <div class="field compact narrow">
+          <label for="bpm">BPM</label>
+          <input id="bpm" type="number" min="40" max="200" value="72" />
+        </div>
+        <div class="field compact narrow">
+          <label for="swing">SWING</label>
+          <input id="swing" type="range" min="0" max="0.4" step="0.01" value="0.04" />
+          <div class="readout" id="swingReadout">4%</div>
+        </div>
+        <div class="field compact narrow">
+          <label for="masterVolume">MASTER</label>
+          <input id="masterVolume" type="range" min="0" max="1" step="0.01" value="0.78" />
+          <div class="readout" id="masterReadout">78%</div>
+        </div>
+      </div>
+    </header>
+
+    <!-- SEQUENCER -->
+    <section class="card sequencer-panel" id="sequencerPanel">
+      <div class="section-head sticky-head">
+        <div>
+          <div class="eyebrow">CHORD PAD GROOVEBOX</div>
+          <h2>Séquenceur — triades 3 notes</h2>
+        </div>
+        <div class="head-actions">
+          <button class="action toggle-btn" data-target="sequencerBody">HIDE</button>
+        </div>
+      </div>
+
+      <div class="section-body force-visible" id="sequencerBody">
+        <div class="transport-bar hardware-bar">
+          <div class="hardware-group">
+            <div class="mini-label">TRANSPORT</div>
+            <div class="hardware-row">
+              <button id="playBtn" class="transport square primary">▶ PLAY</button>
+              <button id="stopBtn" class="transport square">■ STOP</button>
+              <button id="previewBtn" class="transport square">⬡ PREV</button>
+            </div>
+          </div>
+          <div class="hardware-group">
+            <div class="mini-label">PAGE</div>
+            <div class="hardware-row">
+              <button id="pageABtn" class="transport square active">A</button>
+              <button id="pageBBtn" class="transport square">B</button>
+              <button id="chainModeBtn" class="transport square wide active">A→B 32</button>
+            </div>
+          </div>
+          <div class="hardware-group">
+            <div class="mini-label">ACTIONS</div>
+            <div class="hardware-row wrap">
+              <button id="fillPageBtn"  class="transport square">FILL</button>
+              <button id="clearPageBtn" class="transport square">CLR</button>
+              <button id="shiftLeftBtn" class="transport square">◀</button>
+              <button id="shiftRightBtn"class="transport square">▶</button>
+              <button id="copyPageBtn"  class="transport square">COPY A→B</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="seq-toolbar grid-5">
+          <div class="field">
+            <label for="seqKey">TONALITÉ</label>
+            <select id="seqKey"></select>
+          </div>
+          <div class="field">
+            <label for="seqScale">GAMME</label>
+            <select id="seqScale"></select>
+          </div>
+          <div class="field compact narrow">
+            <label for="octaveShift">OCTAVE</label>
+            <input id="octaveShift" type="range" min="-2" max="2" step="1" value="0" />
+            <div class="readout" id="octaveReadout">0</div>
+          </div>
+          <div class="field compact narrow">
+            <label for="gateLength">GATE</label>
+            <input id="gateLength" type="range" min="0.08" max="0.98" step="0.01" value="0.82" />
+            <div class="readout" id="gateReadout">82%</div>
+          </div>
+          <div class="field compact narrow">
+            <label for="humanize">HUMANIZE</label>
+            <input id="humanize" type="range" min="0" max="0.04" step="0.001" value="0.012" />
+            <div class="readout" id="humanizeReadout">12 ms</div>
+          </div>
+        </div>
+
+        <div class="seq-toolbar grid-4">
+          <div class="field compact narrow">
+            <label for="patternSlot">MÉMOIRE</label>
+            <select id="patternSlot">
+              <option value="1">SLOT 1</option>
+              <option value="2">SLOT 2</option>
+              <option value="3">SLOT 3</option>
+              <option value="4">SLOT 4</option>
+            </select>
+          </div>
+          <div class="field transport-group">
+            <label>PATTERN</label>
+            <div class="transport-row wrap-row">
+              <button id="savePatternBtn"  class="transport">SAVE</button>
+              <button id="loadPatternBtn"  class="transport">LOAD</button>
+              <button id="randomPatternBtn"class="transport">RAND</button>
+            </div>
+          </div>
+          <div class="field transport-group">
+            <label>STEP TOOLS</label>
+            <div class="transport-row wrap-row">
+              <button id="stepMuteBtn"  class="transport">MUTE</button>
+              <button id="copyStepBtn"  class="transport">COPY</button>
+              <button id="pasteStepBtn" class="transport">PASTE</button>
+            </div>
+          </div>
+          <div class="field transport-group">
+            <label>STATUS</label>
+            <div class="transport-row wrap-row">
+              <span class="chip" id="pageStatusChip">PAGE A</span>
+              <span class="chip" id="modeStatusChip">CHAIN A→B</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="step-grid-wrap">
+          <div class="grid-label-row">
+            <span>STEP GRID — Accords 3 notes</span>
+            <span id="stepSummary">16 steps / A→B 32</span>
+          </div>
+          <div id="stepGrid" class="step-grid"></div>
+        </div>
+
+        <div class="seq-bottom-grid">
+          <div class="card sub-card step-editor">
+            <div class="sub-head">
+              <h3>Éditeur de step</h3>
+              <span id="selectedStepLabel" class="chip chip-red">STEP 1 / PAGE A</span>
+            </div>
+            <div class="editor-grid">
+              <div class="field compact">
+                <label for="stepDegree">DEGRÉ</label>
+                <select id="stepDegree"></select>
+              </div>
+              <div class="field compact">
+                <label for="stepChord">ACCORD</label>
+                <select id="stepChord"></select>
+              </div>
+              <div class="field compact">
+                <label for="stepOctave">OCTAVE</label>
+                <input id="stepOctave" type="range" min="-2" max="2" step="1" value="0" />
+                <div class="readout" id="stepOctaveReadout">0</div>
+              </div>
+              <div class="field compact">
+                <label for="stepVelocity">VELOCITY</label>
+                <input id="stepVelocity" type="range" min="0.1" max="1" step="0.01" value="0.72" />
+                <div class="readout" id="stepVelocityReadout">72%</div>
+              </div>
+              <div class="field compact">
+                <label for="stepProbability">PROB</label>
+                <input id="stepProbability" type="range" min="0" max="1" step="0.01" value="1" />
+                <div class="readout" id="stepProbabilityReadout">100%</div>
+              </div>
+              <div class="field compact">
+                <label for="stepRatchet">RATCHET</label>
+                <input id="stepRatchet" type="range" min="1" max="4" step="1" value="1" />
+                <div class="readout" id="stepRatchetReadout">1x</div>
+              </div>
+              <div class="field compact">
+                <label for="stepMicro">MICRO</label>
+                <input id="stepMicro" type="range" min="-0.05" max="0.05" step="0.001" value="0" />
+                <div class="readout" id="stepMicroReadout">0 ms</div>
+              </div>
+              <div class="field compact">
+                <label for="stepTie">TIE</label>
+                <select id="stepTie">
+                  <option value="0">OFF</option>
+                  <option value="1">ON</option>
+                </select>
+              </div>
+              <div class="field compact">
+                <label for="stepActive">ACTIF</label>
+                <select id="stepActive">
+                  <option value="1">ON</option>
+                  <option value="0">OFF</option>
+                </select>
+              </div>
+              <div class="field compact motion-field">
+                <label for="motionTarget">MOTION TARGET</label>
+                <select id="motionTarget"></select>
+              </div>
+              <div class="field compact">
+                <label for="motionAmount">MOTION AMT</label>
+                <input id="motionAmount" type="range" min="-1" max="1" step="0.01" value="0" />
+                <div class="readout" id="motionAmountReadout">0%</div>
+              </div>
+              <div class="field compact toggles-inline">
+                <label>FLAGS</label>
+                <div class="flag-row">
+                  <button id="stepAccentBtn" class="mini-toggle">ACCENT</button>
+                  <button id="stepToggleBtn" class="mini-toggle">ON/OFF</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card sub-card notes-panel">
+            <div class="sub-head">
+              <h3>Notes de la gamme</h3>
+              <span class="chip">INFO</span>
+            </div>
+            <div id="scaleNotes" class="note-chips"></div>
+            <div class="chord-legend">
+              <div class="chord-legend-title">Accords disponibles</div>
+              <div class="chord-legend-grid">
+                <span class="note-chip">△ triad</span>
+                <span class="note-chip">SU2 sus2</span>
+                <span class="note-chip">SU4 sus4</span>
+                <span class="note-chip">P5 open5</span>
+                <span class="note-chip">4th stack4</span>
+                <span class="note-chip">9 add9</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <main class="main-grid">
+
+      <!-- PAD ENGINE -->
+      <section class="card wide-card pad-section">
+        <div class="section-head">
+          <div><div class="eyebrow">PAD ENGINE</div><h2>LFO · Chorus · Enveloppes</h2></div>
+          <button class="action toggle-btn" data-target="padBody">HIDE</button>
+        </div>
+        <div class="section-body" id="padBody">
+          <div class="control-grid six-col" id="padControls"></div>
+        </div>
+      </section>
+
+      <!-- SOURCE -->
+      <section class="card">
+        <div class="section-head">
+          <div><div class="eyebrow">SYNTH CORE</div><h2>Source / Timbre</h2></div>
+          <button class="action toggle-btn" data-target="sourceBody">HIDE</button>
+        </div>
+        <div class="section-body" id="sourceBody">
+          <div class="control-grid four-col" id="sourceControls"></div>
+        </div>
+      </section>
+
+      <!-- TEXTURE -->
+      <section class="card">
+        <div class="section-head">
+          <div><div class="eyebrow">SPECTRAL / GRAIN</div><h2>Texture</h2></div>
+          <button class="action toggle-btn" data-target="textureBody">HIDE</button>
+        </div>
+        <div class="section-body" id="textureBody">
+          <div class="control-grid four-col" id="textureControls"></div>
+        </div>
+      </section>
+
+      <!-- TONE -->
+      <section class="card">
+        <div class="section-head">
+          <div><div class="eyebrow">FILTRE / TONE</div><h2>Tone</h2></div>
+          <button class="action toggle-btn" data-target="toneBody">HIDE</button>
+        </div>
+        <div class="section-body" id="toneBody">
+          <div class="control-grid four-col" id="toneControls"></div>
+        </div>
+      </section>
+
+      <!-- FX -->
+      <section class="card">
+        <div class="section-head">
+          <div><div class="eyebrow">TAPE · SPACE · DELAY</div><h2>FX</h2></div>
+          <button class="action toggle-btn" data-target="fxBody">HIDE</button>
+        </div>
+        <div class="section-body" id="fxBody">
+          <div class="control-grid four-col" id="fxControls"></div>
+        </div>
+      </section>
+
+      <!-- MACROS -->
+      <section class="card wide-card">
+        <div class="section-head">
+          <div><div class="eyebrow">MACROS + CLAVIER</div><h2>Macros / Keyboard</h2></div>
+          <button class="action toggle-btn" data-target="playBody">HIDE</button>
+        </div>
+        <div class="section-body" id="playBody">
+          <div class="macro-grid" id="macroControls"></div>
+          <div class="keyboard-controls">
+            <div class="field compact narrow">
+              <label for="keyboardOctave">KB OCT</label>
+              <input id="keyboardOctave" type="range" min="2" max="6" step="1" value="4" />
+              <div class="readout" id="keyboardOctaveReadout">4</div>
+            </div>
+            <div class="keyboard-help">A W S E D F T G Y H U J K — ESPACE = play/stop</div>
+          </div>
+          <div id="keyboard" class="keyboard"></div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <script src="presets.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
