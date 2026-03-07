@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>Spectral Coast 6 — V3</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./style.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <div class="app">
+      <header class="hero">
+        <div class="hero-left">
+          <button class="nav-btn" type="button" aria-label="Retour">←</button>
+          <div class="hero-copy">
+            <div class="hero-kicker">BANTU INSTRUMENTS</div>
+            <h1>SPECTRAL COAST 6</h1>
+            <p>6-voice hybrid poly synth · additive · west coast · re-synth · spectral · granular · moogish 4P</p>
+          </div>
+        </div>
+
+        <div class="hero-actions">
+          <button id="audioToggle" class="mode-btn is-on">AUDIO</button>
+          <button class="mode-btn" type="button" aria-disabled="true">V3</button>
+          <label class="control-chip play-chip">
+            <span>PRESET</span>
+            <select id="presetSelect"></select>
+          </label>
+          <button id="panicBtn" class="transport-btn">PANIC</button>
+        </div>
+      </header>
+
+      <section class="master-strip panelish">
+        <div class="master-icon">◉</div>
+        <div class="master-copy">MASTER</div>
+        <div class="master-slider-wrap">
+          <input id="master" data-param="master" type="range" min="0" max="1" step="0.001" />
+        </div>
+        <output class="master-output"></output>
+      </section>
+
+      <section class="status-row">
+        <label class="control-chip small-chip">
+          <span>MODEL</span>
+          <select id="model" data-param="model">
+            <option value="wood">Wood</option>
+            <option value="bell">Bell</option>
+            <option value="reed">Reed</option>
+            <option value="voice">Voice</option>
+            <option value="choir">Choir</option>
+            <option value="glass">Glass</option>
+            <option value="metal">Metal</option>
+            <option value="organ">Organ</option>
+          </select>
+        </label>
+        <label class="control-chip small-chip">
+          <span>OCT</span>
+          <select id="octaveShift">
+            <option value="-1">-1</option>
+            <option value="0" selected>0</option>
+            <option value="1">+1</option>
+            <option value="2">+2</option>
+          </select>
+        </label>
+        <div class="info-pill">6 VOICES</div>
+        <div class="info-pill">MOBILE READY</div>
+      </section>
+
+      <section class="macro-panel panel">
+        <div class="panel-tab"></div>
+        <div class="panel-head">
+          <div>
+            <div class="panel-title">MACROS</div>
+            <div class="panel-sub">organic · complexity · focus · age</div>
+          </div>
+        </div>
+        <div class="control-grid four-up compact-grid">
+          <div class="control-card"><label for="macroOrganic">ORGANIC</label><input id="macroOrganic" data-param="macroOrganic" type="range" min="0" max="1" step="0.001" /><output></output></div>
+          <div class="control-card"><label for="macroComplexity">COMPLEXITY</label><input id="macroComplexity" data-param="macroComplexity" type="range" min="0" max="1" step="0.001" /><output></output></div>
+          <div class="control-card"><label for="macroFocus">FOCUS</label><input id="macroFocus" data-param="macroFocus" type="range" min="0" max="1" step="0.001" /><output></output></div>
+          <div class="control-card"><label for="macroAge">AGE</label><input id="macroAge" data-param="macroAge" type="range" min="0" max="1" step="0.001" /><output></output></div>
+        </div>
+      </section>
+
+      <main class="main-grid">
+        <section class="panel">
+          <div class="panel-tab"></div>
+          <div class="panel-head">
+            <div>
+              <div class="panel-title">SOURCE</div>
+              <div class="panel-sub">harmonic body</div>
+            </div>
+          </div>
+          <div class="control-grid two-up">
+            <div class="control-card"><label for="harmonics">HARMONICS</label><input id="harmonics" data-param="harmonics" type="range" min="0" max="1" step="0.001" /><output></output></div>
+            <div class="control-card"><label for="tilt">TILT</label><input id="tilt" data-param="tilt" type="range" min="0" max="1" step="0.001" /><output></output></div>
+            <div class="control-card"><label for="inharmonic">INHARMONIC</label><input id="inharmonic" data-param="inharmonic" type="range" min="0" max="1" step="0.001" /><output></output></div>
+            <div class="control-card"><label for="drift">DRIFT</label><input id="drift" data-param="drift" type="range" min="0" max="1" step="0.001" /><output></output></div>
+          </div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-tab"></div>
+          <div class="panel-head">
+            <div>
+              <div class="panel-title">TIMBRE</div>
+              <div class="panel-sub">west coast + morph</div>
+            </div>
+          </div>
+          <div class="control-grid two-up">
+            <div class="control-card"><label for="fold">FOLD</label><input id="fold" data-param="fold" type="range" min="0" max="1" step="0.001" /><output></output></div>
+            <div class="control-card"><label for="index">INDEX</label><input id="index" data-param="index" type="range" min="0" max="1" step="0.001" /><output></output></div>
+            <div class="control-card"><label for="morph">MORPH</label><input id="morph" data-param="morph" type="range" min="0" max="1" step="0.001" /><output></output></div>
+            <div class="control-card emphasis-card"><label for="grain">GRAIN</label><input id="grain" data-param="grain" type="range" min="0" max="1" step="0.001" /><output></output></div>
+          </div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-tab"></div>
+          <div class="panel-head">
+            <div>
+              <div class="panel-title">SPECTRA</div>
+              <div class="panel-sub">blur · warp · freeze</div>
+            </div>
+          </div>
+          <div class="control-grid two-up">
+            <div class="control-card"><label for="blur">BLUR</label><input id="blur" data-param="blur" type="range" min="0" max="1" step="0.001" /><output></output></div>
+            <div class="control-card"><label for="warp">WARP</label><input id="warp" data-param="warp" type="range" min="0" max="1" step="0.001" /><output></output></div>
+            <div class="control-card"><label for="freeze">FREEZE</label><input id="freeze" data-param="freeze" type="range" min="0" max="1" step="0.001" /><output></output></div>
+            <div class="control-card"><label for="lfoDepth">LFO DEPTH</label><input id="lfoDepth" data-param="lfoDepth" type="range" min="0" max="1" step="0.001" /><output></output></div>
+          </div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-tab"></div>
+          <div class="panel-head">
+            <div>
+              <div class="panel-title">TONE</div>
+              <div class="panel-sub">moogish 4-pole</div>
+            </div>
+          </div>
+          <div class="control-grid two-up">
+            <div class="control-card"><label for="cutoff">CUTOFF</label><input id="cutoff" data-param="cutoff" type="range" min="0" max="1" step="0.001" /><output></output></div>
+            <div class="control-card"><label for="resonance">RESONANCE</label><input id="resonance" data-param="resonance" type="range" min="0" max="1" step="0.001" /><output></output></div>
+            <div class="control-card"><label for="drive">DRIVE</label><input id="drive" data-param="drive" type="range" min="0" max="1" step="0.001" /><output></output></div>
+            <div class="control-card"><label for="envAmt">ENV</label><input id="envAmt" data-param="envAmt" type="range" min="0" max="1" step="0.001" /><output></output></div>
+          </div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-tab"></div>
+          <div class="panel-head">
+            <div>
+              <div class="panel-title">AGE / SPACE</div>
+              <div class="panel-sub">tape · lofi · echo · reverb</div>
+            </div>
+          </div>
+          <div class="control-grid two-up">
+            <div class="control-card"><label for="tape">TAPE</label><input id="tape" data-param="tape" type="range" min="0" max="1" step="0.001" /><output></output></div>
+            <div class="control-card"><label for="lofi">LOFI</label><input id="lofi" data-param="lofi" type="range" min="0" max="1" step="0.001" /><output></output></div>
+            <div class="control-card"><label for="echo">ECHO</label><input id="echo" data-param="echo" type="range" min="0" max="1" step="0.001" /><output></output></div>
+            <div class="control-card"><label for="space">SPACE</label><input id="space" data-param="space" type="range" min="0" max="1" step="0.001" /><output></output></div>
+          </div>
+        </section>
+      </main>
+
+      <section class="detail-stack">
+        <details class="panel detail-panel" open>
+          <summary>
+            <span>PERFORMANCE / MOD</span>
+            <span class="summary-caret">▲</span>
+          </summary>
+          <div class="control-grid three-up compact-grid">
+            <div class="control-card compact"><label for="attack">ATTACK</label><input id="attack" data-param="attack" type="range" min="0.001" max="2" step="0.001" /><output></output></div>
+            <div class="control-card compact"><label for="decay">DECAY</label><input id="decay" data-param="decay" type="range" min="0.01" max="3" step="0.001" /><output></output></div>
+            <div class="control-card compact"><label for="sustain">SUSTAIN</label><input id="sustain" data-param="sustain" type="range" min="0" max="1" step="0.001" /><output></output></div>
+            <div class="control-card compact"><label for="release">RELEASE</label><input id="release" data-param="release" type="range" min="0.03" max="6" step="0.001" /><output></output></div>
+            <div class="control-card compact"><label for="filterAttack">FLT A</label><input id="filterAttack" data-param="filterAttack" type="range" min="0.001" max="2" step="0.001" /><output></output></div>
+            <div class="control-card compact"><label for="filterDecay">FLT D</label><input id="filterDecay" data-param="filterDecay" type="range" min="0.01" max="3" step="0.001" /><output></output></div>
+            <div class="control-card compact"><label for="lfoRate">LFO RATE</label><input id="lfoRate" data-param="lfoRate" type="range" min="0.01" max="1" step="0.001" /><output></output></div>
+            <div class="control-card compact"><label for="velocityDepth">VELOCITY</label><input id="velocityDepth" data-param="velocityDepth" type="range" min="0" max="1" step="0.001" /><output></output></div>
+            <div class="control-card compact"><label for="glide">GLIDE</label><input id="glide" data-param="glide" type="range" min="0" max="1" step="0.001" /><output></output></div>
+            <div class="control-card compact"><label for="unison">UNISON</label><input id="unison" data-param="unison" type="range" min="0" max="1" step="1" /><output></output></div>
+          </div>
+        </details>
+
+        <details class="panel detail-panel">
+          <summary>
+            <span>GRANULAR DETAIL</span>
+            <span class="summary-caret">▲</span>
+          </summary>
+          <div class="control-grid three-up compact-grid">
+            <div class="control-card compact"><label for="grainSize">GRAIN SIZE</label><input id="grainSize" data-param="grainSize" type="range" min="0" max="1" step="0.001" /><output></output></div>
+            <div class="control-card compact"><label for="grainDensity">DENSITY</label><input id="grainDensity" data-param="grainDensity" type="range" min="0" max="1" step="0.001" /><output></output></div>
+            <div class="control-card compact"><label for="grainSpray">SPRAY</label><input id="grainSpray" data-param="grainSpray" type="range" min="0" max="1" step="0.001" /><output></output></div>
+            <div class="control-card compact"><label for="grainTone">TONE</label><input id="grainTone" data-param="grainTone" type="range" min="0" max="1" step="0.001" /><output></output></div>
+          </div>
+        </details>
+
+        <details class="panel detail-panel">
+          <summary>
+            <span>FX DETAIL</span>
+            <span class="summary-caret">▲</span>
+          </summary>
+          <div class="control-grid three-up compact-grid">
+            <div class="control-card compact"><label for="bitDepth">BIT DEPTH</label><input id="bitDepth" data-param="bitDepth" type="range" min="0" max="1" step="0.001" /><output></output></div>
+            <div class="control-card compact"><label for="sampleRate">SAMPLE RATE</label><input id="sampleRate" data-param="sampleRate" type="range" min="0" max="1" step="0.001" /><output></output></div>
+            <div class="control-card compact"><label for="echoTime">ECHO TIME</label><input id="echoTime" data-param="echoTime" type="range" min="0" max="1" step="0.001" /><output></output></div>
+            <div class="control-card compact"><label for="feedback">FEEDBACK</label><input id="feedback" data-param="feedback" type="range" min="0" max="1" step="0.001" /><output></output></div>
+            <div class="control-card compact"><label for="wowFlutter">WOW / FLUTTER</label><input id="wowFlutter" data-param="wowFlutter" type="range" min="0" max="1" step="0.001" /><output></output></div>
+            <div class="control-card compact"><label for="reverbDecay">REVERB DECAY</label><input id="reverbDecay" data-param="reverbDecay" type="range" min="0" max="1" step="0.001" /><output></output></div>
+          </div>
+        </details>
+      </section>
+
+      <section class="panel keyboard-panel">
+        <div class="panel-tab"></div>
+        <div class="panel-head">
+          <div>
+            <div class="panel-title">KEYBOARD</div>
+            <div class="panel-sub">A W S E D F T G Y H U J K · Z/X octave</div>
+          </div>
+        </div>
+        <div id="keyboard" class="keyboard"></div>
+      </section>
+    </div>
+  </div>
+
+  <script type="module" src="./app.js"></script>
+</body>
+</html>
