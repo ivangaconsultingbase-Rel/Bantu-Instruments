@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-<title>DR-4 V3.3 — Drum Modeling Box</title>
+<title>DR-4 V3.4 — Drum Modeling Box</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Share+Tech+Mono&display=swap');
 
@@ -219,6 +219,7 @@
     flex-direction:column;
     gap:10px;
   }
+
   .trackHead{
     display:flex;
     justify-content:space-between;
@@ -226,6 +227,7 @@
     flex-wrap:wrap;
     align-items:center;
   }
+
   .trackName{
     display:flex;
     align-items:center;
@@ -363,6 +365,41 @@
     padding:2px 0 10px;
   }
 
+  .collapsible{
+    overflow:hidden;
+  }
+
+  .panelHeader{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    margin-bottom:10px;
+  }
+
+  .panelTitle{
+    margin:0;
+    font-size:14px;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+    color:var(--txt);
+  }
+
+  .collapseBtn{
+    min-width:42px;
+    padding:6px 10px;
+    font-family:var(--mono);
+    font-size:12px;
+  }
+
+  .panelBody{
+    display:block;
+  }
+
+  .panelBody.hidden{
+    display:none;
+  }
+
   @media (max-width:1100px){
     .top{grid-template-columns:1fr}
     .tracks{grid-template-columns:1fr}
@@ -383,83 +420,99 @@
   <section class="top">
     <div class="panel brand">
       <div class="title">
-        <h1>DR-4 V3.3</h1>
-        <div class="sub">Drum modeling box · tape sat · crusher · sherman-style filter</div>
+        <h1>DR-4 V3.4</h1>
+        <div class="sub">Drum modeling box · collapsible UI · tape · crusher · filterbank</div>
       </div>
       <div class="ledRow">
         <div class="led"><div class="k">Audio</div><div class="v" id="audioState">OFF</div></div>
         <div class="led"><div class="k">Transport</div><div class="v" id="playState">STOP</div></div>
-        <div class="led"><div class="k">Step</div><div class="v" id="stepDisplay">--</div></div></div>
+        <div class="led"><div class="k">Step</div><div class="v" id="stepDisplay">--</div></div>
       </div>
+    </div>
 
-    <div class="panel">
-      <div class="blockTitle">Transport</div>
-      <div class="row" style="margin-bottom:8px">
-        <button id="audioBtn" class="btnAcc">Audio On</button>
-        <button id="playBtn" class="btnGhost">Play</button>
-        <button id="rndBtn" class="btnGhost">Random</button>
-        <button id="clearBtn" class="btnGhost">Clear</button>
+    <div class="panel collapsible" data-panel="transportPanel">
+      <div class="panelHeader">
+        <div class="panelTitle">Transport</div>
+        <button class="btnGhost btnSmall collapseBtn" data-collapse-target="transportPanel">Hide</button>
       </div>
-      <div class="row">
-        <div class="field">
-          <label>BPM</label>
-          <input id="bpm" type="range" min="50" max="180" step="1" value="122">
+      <div class="panelBody" id="panel-transportPanel">
+        <div class="row" style="margin-bottom:8px">
+          <button id="audioBtn" class="btnAcc">Audio On</button>
+          <button id="playBtn" class="btnGhost">Play</button>
+          <button id="rndBtn" class="btnGhost">Random</button>
+          <button id="clearBtn" class="btnGhost">Clear</button>
         </div>
-        <div class="field">
-          <label>Swing</label>
-          <input id="swing" type="range" min="0" max="0.35" step="0.001" value="0.03">
-        </div>
-        <div class="field">
-          <label>Accent Amt</label>
-          <input id="accentAmt" type="range" min="0" max="1" step="0.001" value="0.32">
-        </div>
-        <div class="field">
-          <label>Master Vol</label>
-          <input id="masterVol" type="range" min="0" max="1.2" step="0.001" value="0.9">
+        <div class="row">
+          <div class="field">
+            <label>BPM</label>
+            <input id="bpm" type="range" min="50" max="180" step="1" value="122">
+          </div>
+          <div class="field">
+            <label>Swing</label>
+            <input id="swing" type="range" min="0" max="0.35" step="0.001" value="0.03">
+          </div>
+          <div class="field">
+            <label>Accent Amt</label>
+            <input id="accentAmt" type="range" min="0" max="1" step="0.001" value="0.32">
+          </div>
+          <div class="field">
+            <label>Master Vol</label>
+            <input id="masterVol" type="range" min="0" max="1.2" step="0.001" value="0.9">
+          </div>
         </div>
       </div>
     </div>
 
-    <div class="panel">
-      <div class="blockTitle">Pattern / Master</div>
-      <div class="row" style="margin-bottom:8px">
-        <button id="patA" class="btnAcc">Pattern A</button>
-        <button id="patB" class="btnGhost">Pattern B</button>
-        <button id="copyAToB" class="btnGhost">Copy A → B</button>
-        <button id="copyBToA" class="btnGhost">Copy B → A</button>
+    <div class="panel collapsible" data-panel="patternPanel">
+      <div class="panelHeader">
+        <div class="panelTitle">Pattern / Master</div>
+        <button class="btnGhost btnSmall collapseBtn" data-collapse-target="patternPanel">Hide</button>
       </div>
-      <div class="paramGrid">
-        <div class="field"><label>Master Tone</label><input id="masterTone" type="range" min="300" max="12000" step="1" value="7600"></div>
-        <div class="field"><label>Master Comp</label><input id="masterComp" type="range" min="0" max="1" step="0.001" value="0.45"></div>
-        <div class="field"><label>Master Sat</label><input id="masterDrive" type="range" min="0" max="1" step="0.001" value="0.18"></div>
-        <div class="field">
-          <label>Master VU</label>
-          <div class="vuWrap" style="margin-top:9px">
-            <div class="vu"><div class="vuBar" id="vu-master"></div></div>
-            <div class="vuTxt" id="vu-master-txt">0%</div>
+      <div class="panelBody" id="panel-patternPanel">
+        <div class="row" style="margin-bottom:8px">
+          <button id="patA" class="btnAcc">Pattern A</button>
+          <button id="patB" class="btnGhost">Pattern B</button>
+          <button id="copyAToB" class="btnGhost">Copy A → B</button>
+          <button id="copyBToA" class="btnGhost">Copy B → A</button>
+        </div>
+        <div class="paramGrid">
+          <div class="field"><label>Master Tone</label><input id="masterTone" type="range" min="300" max="12000" step="1" value="7600"></div>
+          <div class="field"><label>Master Comp</label><input id="masterComp" type="range" min="0" max="1" step="0.001" value="0.45"></div>
+          <div class="field"><label>Master Sat</label><input id="masterDrive" type="range" min="0" max="1" step="0.001" value="0.18"></div>
+          <div class="field">
+            <label>Master VU</label>
+            <div class="vuWrap" style="margin-top:9px">
+              <div class="vu"><div class="vuBar" id="vu-master"></div></div>
+              <div class="vuTxt" id="vu-master-txt">0%</div>
+            </div>
           </div>
         </div>
       </div>
     </div>
   </section>
 
-  <section class="panel">
-    <div class="blockTitle">Master FX</div>
-    <div class="fxGrid">
-      <div class="field"><label>Tape Drive</label><input id="tapeDrive" type="range" min="0" max="1" step="0.001" value="0.18"><div class="smallVal" id="val-tapeDrive">0.18</div></div>
-      <div class="field"><label>Tape Tone</label><input id="tapeTone" type="range" min="1500" max="12000" step="1" value="6200"><div class="smallVal" id="val-tapeTone">6200</div></div>
-      <div class="field"><label>Tape Mix</label><input id="tapeMix" type="range" min="0" max="1" step="0.001" value="0.35"><div class="smallVal" id="val-tapeMix">0.35</div></div>
-      <div class="field"><label>Crusher Mix</label><input id="crusherMix" type="range" min="0" max="1" step="0.001" value="0.15"><div class="smallVal" id="val-crusherMix">0.15</div></div>
+  <section class="panel collapsible" data-panel="masterFx">
+    <div class="panelHeader">
+      <div class="panelTitle">Master FX</div>
+      <button class="btnGhost btnSmall collapseBtn" data-collapse-target="masterFx">Show</button>
+    </div>
+    <div class="panelBody hidden" id="panel-masterFx">
+      <div class="fxGrid">
+        <div class="field"><label>Tape Drive</label><input id="tapeDrive" type="range" min="0" max="1" step="0.001" value="0.18"><div class="smallVal" id="val-tapeDrive">0.18</div></div>
+        <div class="field"><label>Tape Tone</label><input id="tapeTone" type="range" min="1500" max="12000" step="1" value="6200"><div class="smallVal" id="val-tapeTone">6200</div></div>
+        <div class="field"><label>Tape Mix</label><input id="tapeMix" type="range" min="0" max="1" step="0.001" value="0.35"><div class="smallVal" id="val-tapeMix">0.35</div></div>
+        <div class="field"><label>Crusher Mix</label><input id="crusherMix" type="range" min="0" max="1" step="0.001" value="0.15"><div class="smallVal" id="val-crusherMix">0.15</div></div>
 
-      <div class="field"><label>Crusher Bits</label><input id="crusherBits" type="range" min="4" max="16" step="1" value="10"><div class="smallVal" id="val-crusherBits">10</div></div>
-      <div class="field"><label>Rate Reduce</label><input id="crusherRate" type="range" min="0" max="0.9" step="0.001" value="0.18"><div class="smallVal" id="val-crusherRate">0.18</div></div>
-      <div class="field"><label>Filter Drive</label><input id="filterDrive" type="range" min="0" max="1" step="0.001" value="0.12"><div class="smallVal" id="val-filterDrive">0.12</div></div>
-      <div class="field"><label>Filter Mix</label><input id="filterMix" type="range" min="0" max="1" step="0.001" value="1.00"><div class="smallVal" id="val-filterMix">1.00</div></div>
+        <div class="field"><label>Crusher Bits</label><input id="crusherBits" type="range" min="4" max="16" step="1" value="10"><div class="smallVal" id="val-crusherBits">10</div></div>
+        <div class="field"><label>Rate Reduce</label><input id="crusherRate" type="range" min="0" max="0.9" step="0.001" value="0.18"><div class="smallVal" id="val-crusherRate">0.18</div></div>
+        <div class="field"><label>Filter Drive</label><input id="filterDrive" type="range" min="0" max="1" step="0.001" value="0.12"><div class="smallVal" id="val-filterDrive">0.12</div></div>
+        <div class="field"><label>Filter Mix</label><input id="filterMix" type="range" min="0" max="1" step="0.001" value="1.00"><div class="smallVal" id="val-filterMix">1.00</div></div>
 
-      <div class="field"><label>HP Cutoff</label><input id="filterHPFreq" type="range" min="20" max="1500" step="1" value="35"><div class="smallVal" id="val-filterHPFreq">35</div></div>
-      <div class="field"><label>HP Resonance</label><input id="filterHPQ" type="range" min="0.1" max="20" step="0.001" value="0.40"><div class="smallVal" id="val-filterHPQ">0.40</div></div>
-      <div class="field"><label>LP Cutoff</label><input id="filterLPFreq" type="range" min="300" max="16000" step="1" value="9500"><div class="smallVal" id="val-filterLPFreq">9500</div></div>
-      <div class="field"><label>LP Resonance</label><input id="filterLPQ" type="range" min="0.1" max="20" step="0.001" value="0.80"><div class="smallVal" id="val-filterLPQ">0.80</div></div>
+        <div class="field"><label>HP Cutoff</label><input id="filterHPFreq" type="range" min="20" max="1500" step="1" value="35"><div class="smallVal" id="val-filterHPFreq">35</div></div>
+        <div class="field"><label>HP Resonance</label><input id="filterHPQ" type="range" min="0.1" max="20" step="0.001" value="0.40"><div class="smallVal" id="val-filterHPQ">0.40</div></div>
+        <div class="field"><label>LP Cutoff</label><input id="filterLPFreq" type="range" min="300" max="16000" step="1" value="9500"><div class="smallVal" id="val-filterLPFreq">9500</div></div>
+        <div class="field"><label>LP Resonance</label><input id="filterLPQ" type="range" min="0.1" max="20" step="0.001" value="0.80"><div class="smallVal" id="val-filterLPQ">0.80</div></div>
+      </div>
     </div>
   </section>
 
@@ -484,14 +537,19 @@
       <div class="stepGrid" id="stepGrid"></div>
     </div>
 
-    <div class="panel">
-      <div class="blockTitle">Step Editor</div>
-      <div id="stepEditor"></div>
+    <div class="panel collapsible" data-panel="stepEditorWrap">
+      <div class="panelHeader">
+        <div class="panelTitle">Step Editor</div>
+        <button class="btnGhost btnSmall collapseBtn" data-collapse-target="stepEditorWrap">Hide</button>
+      </div>
+      <div class="panelBody" id="panel-stepEditorWrap">
+        <div id="stepEditor"></div>
+      </div>
     </div>
   </section>
 
   <div class="footer">
-    DR-4 V3.3 Web — FX master added: tape saturation, crusher, Sherman-style filter.
+    DR-4 V3.4 Web — collapsible panels, tape saturation, crusher, Sherman-style filter.
   </div>
 </div>
 
@@ -550,6 +608,18 @@
     currentPattern:'A',
     selectedTrack:0,
     selectedStep:0,
+
+    panelOpen:{
+      transportPanel:true,
+      patternPanel:true,
+      masterFx:false,
+      stepEditorWrap:true,
+      'track-0':true,
+      'track-1':true,
+      'track-2':true,
+      'track-3':true
+    },
+
     patterns:{
       A:createPattern(),
       B:createPattern()
@@ -714,8 +784,8 @@
       const hold = clamp(node.normfreq, 0, 0.98);
 
       if(!node._phaser) node._phaser = 0;
-      if(!node._lastL) node._lastL = 0;
-      if(!node._lastR) node._lastR = 0;
+      if(node._lastL === undefined) node._lastL = 0;
+      if(node._lastR === undefined) node._lastR = 0;
 
       for(let i=0;i<inputL.length;i++){
         node._phaser += hold;
@@ -917,6 +987,30 @@
     });
   }
 
+  function setPanelState(panelId, isOpen){
+    state.panelOpen[panelId] = isOpen;
+    const body = document.getElementById('panel-' + panelId);
+    const btn = document.querySelector(`[data-collapse-target="${panelId}"]`);
+    if(body) body.classList.toggle('hidden', !isOpen);
+    if(btn) btn.textContent = isOpen ? 'Hide' : 'Show';
+  }
+
+  function bindCollapseButtons(){
+    document.querySelectorAll('[data-collapse-target]').forEach(btn=>{
+      btn.onclick = () => {
+        const panelId = btn.dataset.collapseTarget;
+        const next = !state.panelOpen[panelId];
+        setPanelState(panelId, next);
+      };
+    });
+  }
+
+  function applyPanelStates(){
+    Object.entries(state.panelOpen).forEach(([panelId,isOpen])=>{
+      setPanelState(panelId, isOpen);
+    });
+  }
+
   function formatValue(param,v){
     switch(param){
       case 'decay': return Number(v).toFixed(3) + ' s';
@@ -943,9 +1037,10 @@
     TRACK_DEFS.forEach((def, ti) => {
       const t = track(ti);
       const panel = document.createElement('section');
-      panel.className = 'panel track';
+      panel.className = 'panel track collapsible';
+      panel.setAttribute('data-panel', `track-${ti}`);
       panel.innerHTML = `
-        <div class="trackHead">
+        <div class="panelHeader">
           <div class="trackName">
             <h2>${def.name}</h2>
             <span class="badge">${def.badge}</span>
@@ -954,43 +1049,50 @@
               <div class="vuTxt" id="vuTxt-${ti}">0%</div>
             </div>
           </div>
-          <div class="field" style="min-width:180px">
-            <label>Model</label>
-            <select data-track="${ti}" data-param="model">
-              ${def.models.map(m => `<option ${m===t.model?'selected':''}>${m}</option>`).join('')}
-            </select>
-          </div>
+          <button class="btnGhost btnSmall collapseBtn" data-collapse-target="track-${ti}">Hide</button>
         </div>
 
-        <div class="mini">
-          <div class="blockTitle">Core XYZT</div>
-          <div class="paramGrid">
-            ${sliderHTML(ti,'x','X',0,1,0.001,t.x)}
-            ${sliderHTML(ti,'y','Y',0,1,0.001,t.y)}
-            ${sliderHTML(ti,'z','Z',0,1,0.001,t.z)}
-            ${sliderHTML(ti,'t','T',0,1,0.001,t.t)}
+        <div class="panelBody" id="panel-track-${ti}">
+          <div class="trackHead" style="margin-bottom:10px">
+            <div></div>
+            <div class="field" style="min-width:180px">
+              <label>Model</label>
+              <select data-track="${ti}" data-param="model">
+                ${def.models.map(m => `<option ${m===t.model?'selected':''}>${m}</option>`).join('')}
+              </select>
+            </div>
           </div>
-        </div>
 
-        <div class="mini">
-          <div class="blockTitle">Pitch / Envelope</div>
-          <div class="paramGrid">
-            ${sliderHTML(ti,'pitch','Pitch',0,1,0.001,t.pitch)}
-            ${sliderHTML(ti,'decay','Decay',0.02,1,0.001,t.decay)}
-            ${sliderHTML(ti,'curve','Curve',0,1,0.001,t.curve)}
-            ${sliderHTML(ti,'tune','Tune',-12,12,0.01,t.tune)}
+          <div class="mini">
+            <div class="blockTitle">Core XYZT</div>
+            <div class="paramGrid">
+              ${sliderHTML(ti,'x','X',0,1,0.001,t.x)}
+              ${sliderHTML(ti,'y','Y',0,1,0.001,t.y)}
+              ${sliderHTML(ti,'z','Z',0,1,0.001,t.z)}
+              ${sliderHTML(ti,'t','T',0,1,0.001,t.t)}
+            </div>
           </div>
-        </div>
 
-        <div class="mini">
-          <div class="blockTitle">Mixer / Actions</div>
-          <div class="paramGrid6">
-            ${sliderHTML(ti,'level','Level',0,1.2,0.001,t.level)}
-            ${sliderHTML(ti,'pan','Pan',-1,1,0.001,t.pan)}
-            <div class="field"><label>Preview</label><button class="btnSmall btnGhost" data-preview="${ti}">Trig</button></div>
-            <div class="field"><label>Randomize</label><button class="btnSmall btnGhost" data-randtrack="${ti}">Rnd</button></div>
-            <div class="field"><label>Fill</label><button class="btnSmall btnGhost" data-filltrack="${ti}">Fill</button></div>
-            <div class="field"><label>Mute</label><button class="btnSmall btnGhost" data-mute="${ti}">${t.mute?'Muted':'On'}</button></div>
+          <div class="mini" style="margin-top:10px">
+            <div class="blockTitle">Pitch / Envelope</div>
+            <div class="paramGrid">
+              ${sliderHTML(ti,'pitch','Pitch',0,1,0.001,t.pitch)}
+              ${sliderHTML(ti,'decay','Decay',0.02,1,0.001,t.decay)}
+              ${sliderHTML(ti,'curve','Curve',0,1,0.001,t.curve)}
+              ${sliderHTML(ti,'tune','Tune',-12,12,0.01,t.tune)}
+            </div>
+          </div>
+
+          <div class="mini" style="margin-top:10px">
+            <div class="blockTitle">Mixer / Actions</div>
+            <div class="paramGrid6">
+              ${sliderHTML(ti,'level','Level',0,1.2,0.001,t.level)}
+              ${sliderHTML(ti,'pan','Pan',-1,1,0.001,t.pan)}
+              <div class="field"><label>Preview</label><button class="btnSmall btnGhost" data-preview="${ti}">Trig</button></div>
+              <div class="field"><label>Randomize</label><button class="btnSmall btnGhost" data-randtrack="${ti}">Rnd</button></div>
+              <div class="field"><label>Fill</label><button class="btnSmall btnGhost" data-filltrack="${ti}">Fill</button></div>
+              <div class="field"><label>Mute</label><button class="btnSmall btnGhost" data-mute="${ti}">${t.mute?'Muted':'On'}</button></div>
+            </div>
           </div>
         </div>
       `;
@@ -1009,6 +1111,8 @@
     });
 
     bindTrackControls();
+    bindCollapseButtons();
+    applyPanelStates();
   }
 
   function bindTrackControls(){
@@ -1314,6 +1418,9 @@
         renderTracks(); renderStepGrid(); renderStepEditor();
       }
     };
+
+    bindCollapseButtons();
+    applyPanelStates();
   }
 
   function switchPattern(which){
@@ -2049,6 +2156,8 @@
   renderStepGrid();
   renderStepEditor();
   updateFXValueDisplays();
+  bindCollapseButtons();
+  applyPanelStates();
 })();
 </script>
 </body>
