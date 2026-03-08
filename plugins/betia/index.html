@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-<title>DR-4 V3.2.1 — Drum Modeling Box</title>
+<title>DR-4 V3.3 — Drum Modeling Box</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Share+Tech+Mono&display=swap');
 
@@ -40,7 +40,7 @@
   }
 
   .app{
-    max-width:1480px;
+    max-width:1520px;
     margin:0 auto;
     padding:14px;
     display:flex;
@@ -58,7 +58,7 @@
 
   .top{
     display:grid;
-    grid-template-columns:1.2fr 1fr 1fr;
+    grid-template-columns:1.15fr 1fr 1fr;
     gap:12px;
   }
 
@@ -200,6 +200,12 @@
   .paramGrid6{
     display:grid;
     grid-template-columns:repeat(6,1fr);
+    gap:8px;
+  }
+
+  .fxGrid{
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
     gap:8px;
   }
 
@@ -361,10 +367,11 @@
     .top{grid-template-columns:1fr}
     .tracks{grid-template-columns:1fr}
     .sequencer{grid-template-columns:1fr}
+    .fxGrid{grid-template-columns:repeat(2,1fr)}
   }
   @media (max-width:760px){
     .app{padding:10px}
-    .paramGrid,.paramGrid6,.editorGrid{grid-template-columns:repeat(2,1fr)}
+    .paramGrid,.paramGrid6,.editorGrid,.fxGrid{grid-template-columns:repeat(2,1fr)}
     .stepGrid{grid-template-columns:repeat(8,1fr)}
     .title h1{font-size:22px}
   }
@@ -376,15 +383,14 @@
   <section class="top">
     <div class="panel brand">
       <div class="title">
-        <h1>DR-4 V3.2.1</h1>
-        <div class="sub">Drum modeling box · safari-safe pitch envelopes</div>
+        <h1>DR-4 V3.3</h1>
+        <div class="sub">Drum modeling box · tape sat · crusher · sherman-style filter</div>
       </div>
       <div class="ledRow">
         <div class="led"><div class="k">Audio</div><div class="v" id="audioState">OFF</div></div>
         <div class="led"><div class="k">Transport</div><div class="v" id="playState">STOP</div></div>
-        <div class="led"><div class="k">Step</div><div class="v" id="stepDisplay">--</div></div>
+        <div class="led"><div class="k">Step</div><div class="v" id="stepDisplay">--</div></div></div>
       </div>
-    </div>
 
     <div class="panel">
       <div class="blockTitle">Transport</div>
@@ -423,9 +429,9 @@
         <button id="copyBToA" class="btnGhost">Copy B → A</button>
       </div>
       <div class="paramGrid">
-        <div class="field"><label>Saturation</label><input id="masterDrive" type="range" min="0" max="1" step="0.001" value="0.18"></div>
-        <div class="field"><label>Tone</label><input id="masterTone" type="range" min="300" max="12000" step="1" value="7600"></div>
-        <div class="field"><label>Comp</label><input id="masterComp" type="range" min="0" max="1" step="0.001" value="0.45"></div>
+        <div class="field"><label>Master Tone</label><input id="masterTone" type="range" min="300" max="12000" step="1" value="7600"></div>
+        <div class="field"><label>Master Comp</label><input id="masterComp" type="range" min="0" max="1" step="0.001" value="0.45"></div>
+        <div class="field"><label>Master Sat</label><input id="masterDrive" type="range" min="0" max="1" step="0.001" value="0.18"></div>
         <div class="field">
           <label>Master VU</label>
           <div class="vuWrap" style="margin-top:9px">
@@ -434,6 +440,26 @@
           </div>
         </div>
       </div>
+    </div>
+  </section>
+
+  <section class="panel">
+    <div class="blockTitle">Master FX</div>
+    <div class="fxGrid">
+      <div class="field"><label>Tape Drive</label><input id="tapeDrive" type="range" min="0" max="1" step="0.001" value="0.18"><div class="smallVal" id="val-tapeDrive">0.18</div></div>
+      <div class="field"><label>Tape Tone</label><input id="tapeTone" type="range" min="1500" max="12000" step="1" value="6200"><div class="smallVal" id="val-tapeTone">6200</div></div>
+      <div class="field"><label>Tape Mix</label><input id="tapeMix" type="range" min="0" max="1" step="0.001" value="0.35"><div class="smallVal" id="val-tapeMix">0.35</div></div>
+      <div class="field"><label>Crusher Mix</label><input id="crusherMix" type="range" min="0" max="1" step="0.001" value="0.15"><div class="smallVal" id="val-crusherMix">0.15</div></div>
+
+      <div class="field"><label>Crusher Bits</label><input id="crusherBits" type="range" min="4" max="16" step="1" value="10"><div class="smallVal" id="val-crusherBits">10</div></div>
+      <div class="field"><label>Rate Reduce</label><input id="crusherRate" type="range" min="0" max="0.9" step="0.001" value="0.18"><div class="smallVal" id="val-crusherRate">0.18</div></div>
+      <div class="field"><label>Filter Drive</label><input id="filterDrive" type="range" min="0" max="1" step="0.001" value="0.12"><div class="smallVal" id="val-filterDrive">0.12</div></div>
+      <div class="field"><label>Filter Mix</label><input id="filterMix" type="range" min="0" max="1" step="0.001" value="1.00"><div class="smallVal" id="val-filterMix">1.00</div></div>
+
+      <div class="field"><label>HP Cutoff</label><input id="filterHPFreq" type="range" min="20" max="1500" step="1" value="35"><div class="smallVal" id="val-filterHPFreq">35</div></div>
+      <div class="field"><label>HP Resonance</label><input id="filterHPQ" type="range" min="0.1" max="20" step="0.001" value="0.40"><div class="smallVal" id="val-filterHPQ">0.40</div></div>
+      <div class="field"><label>LP Cutoff</label><input id="filterLPFreq" type="range" min="300" max="16000" step="1" value="9500"><div class="smallVal" id="val-filterLPFreq">9500</div></div>
+      <div class="field"><label>LP Resonance</label><input id="filterLPQ" type="range" min="0.1" max="20" step="0.001" value="0.80"><div class="smallVal" id="val-filterLPQ">0.80</div></div>
     </div>
   </section>
 
@@ -465,7 +491,7 @@
   </section>
 
   <div class="footer">
-    DR-4 V3.2.1 Web — Safari-safe pitch env for kick / tonal snare / clave.
+    DR-4 V3.3 Web — FX master added: tape saturation, crusher, Sherman-style filter.
   </div>
 </div>
 
@@ -505,6 +531,22 @@
     masterDrive:0.18,
     masterTone:7600,
     masterComp:0.45,
+
+    tapeDrive:0.18,
+    tapeTone:6200,
+    tapeMix:0.35,
+
+    crusherBits:10,
+    crusherRate:0.18,
+    crusherMix:0.15,
+
+    filterDrive:0.12,
+    filterHPFreq:35,
+    filterHPQ:0.40,
+    filterLPFreq:9500,
+    filterLPQ:0.80,
+    filterMix:1.0,
+
     currentPattern:'A',
     selectedTrack:0,
     selectedStep:0,
@@ -546,9 +588,15 @@
 
   let ctx = null;
   let noiseBuffer = null;
-  let masterIn, masterDrive, masterTone, comp, limiter, masterGain, masterAnalyser;
+  let masterGain, masterAnalyser;
+  let masterIn;
   let trackChains = [];
   let lastOpenHatVca = null;
+
+  let masterTone, comp, limiter, masterDrive;
+  let tapePre, tapeShaper, tapePost, tapeDry, tapeWet, tapeOut;
+  let crusherNode, crusherDry, crusherWet, crusherOut;
+  let filterPreDrive, filterShaper, filterHP, filterLP, filterDry, filterWet, filterOut;
 
   let isPlaying = false;
   let currentStep = 0;
@@ -620,12 +668,67 @@
     return curve;
   }
 
+  function tapeCurve(amount=0.2){
+    const n = 4096;
+    const curve = new Float32Array(n);
+    const drive = 1 + amount * 10;
+    for(let i=0;i<n;i++){
+      const x = i * 2 / n - 1;
+      const y = Math.tanh((x * drive) + (0.18 * x * x));
+      curve[i] = y / Math.tanh(drive);
+    }
+    return curve;
+  }
+
+  function shermanCurve(amount=0.2){
+    const n = 2048;
+    const curve = new Float32Array(n);
+    const k = 1 + amount * 18;
+    for(let i=0;i<n;i++){
+      const x = i * 2 / n - 1;
+      curve[i] = Math.tanh(x * k) / Math.tanh(k);
+    }
+    return curve;
+  }
+
   function createNoiseBuffer(context){
     const len = context.sampleRate * 2;
     const buf = context.createBuffer(1, len, context.sampleRate);
     const d = buf.getChannelData(0);
     for(let i=0;i<len;i++) d[i] = Math.random()*2 - 1;
     return buf;
+  }
+
+  function createCrusherNode(){
+    const node = ctx.createScriptProcessor(1024, 2, 2);
+    node.bits = state.crusherBits;
+    node.normfreq = state.crusherRate;
+    node.onaudioprocess = (e) => {
+      const inputL = e.inputBuffer.getChannelData(0);
+      const inputR = e.inputBuffer.numberOfChannels > 1 ? e.inputBuffer.getChannelData(1) : inputL;
+      const outputL = e.outputBuffer.getChannelData(0);
+      const outputR = e.outputBuffer.getChannelData(1);
+
+      const bits = Math.max(2, Math.round(node.bits));
+      const step = Math.pow(0.5, bits - 1);
+      const hold = clamp(node.normfreq, 0, 0.98);
+
+      if(!node._phaser) node._phaser = 0;
+      if(!node._lastL) node._lastL = 0;
+      if(!node._lastR) node._lastR = 0;
+
+      for(let i=0;i<inputL.length;i++){
+        node._phaser += hold;
+        if(node._phaser >= 1.0 || hold <= 0.001){
+          node._phaser -= 1.0;
+          node._lastL = step * Math.round(inputL[i] / step);
+          node._lastR = step * Math.round(inputR[i] / step);
+        }
+        outputL[i] = node._lastL;
+        outputR[i] = node._lastR;
+      }
+    };
+    return node;
   }
 
   function buildTrackChains(){
@@ -649,6 +752,107 @@
     });
   }
 
+  function buildMasterFXChain(){
+    tapeDry = ctx.createGain();
+    tapeWet = ctx.createGain();
+    tapeOut = ctx.createGain();
+
+    tapePre = ctx.createBiquadFilter();
+    tapePre.type = 'highshelf';
+    tapePre.frequency.value = 2500;
+    tapePre.gain.value = 2.5;
+
+    tapeShaper = ctx.createWaveShaper();
+    tapeShaper.curve = tapeCurve(state.tapeDrive);
+    tapeShaper.oversample = '4x';
+
+    tapePost = ctx.createBiquadFilter();
+    tapePost.type = 'lowpass';
+    tapePost.frequency.value = state.tapeTone;
+    tapePost.Q.value = 0.2;
+
+    masterIn.connect(tapeDry);
+    masterIn.connect(tapePre);
+    tapePre.connect(tapeShaper);
+    tapeShaper.connect(tapePost);
+    tapePost.connect(tapeWet);
+    tapeDry.connect(tapeOut);
+    tapeWet.connect(tapeOut);
+
+    crusherDry = ctx.createGain();
+    crusherWet = ctx.createGain();
+    crusherOut = ctx.createGain();
+
+    crusherNode = createCrusherNode();
+
+    tapeOut.connect(crusherDry);
+    tapeOut.connect(crusherNode);
+    crusherNode.connect(crusherWet);
+    crusherDry.connect(crusherOut);
+    crusherWet.connect(crusherOut);
+
+    filterDry = ctx.createGain();
+    filterWet = ctx.createGain();
+    filterOut = ctx.createGain();
+
+    filterPreDrive = ctx.createGain();
+    filterShaper = ctx.createWaveShaper();
+    filterShaper.curve = shermanCurve(state.filterDrive);
+    filterShaper.oversample = '4x';
+
+    filterHP = ctx.createBiquadFilter();
+    filterHP.type = 'highpass';
+    filterLP = ctx.createBiquadFilter();
+    filterLP.type = 'lowpass';
+
+    crusherOut.connect(filterDry);
+    crusherOut.connect(filterPreDrive);
+    filterPreDrive.connect(filterShaper);
+    filterShaper.connect(filterHP);
+    filterHP.connect(filterLP);
+    filterLP.connect(filterWet);
+
+    filterDry.connect(filterOut);
+    filterWet.connect(filterOut);
+
+    masterDrive = ctx.createWaveShaper();
+    masterDrive.curve = softClipCurve(state.masterDrive);
+    masterDrive.oversample = '4x';
+
+    masterTone = ctx.createBiquadFilter();
+    masterTone.type = 'lowpass';
+    masterTone.frequency.value = state.masterTone;
+    masterTone.Q.value = 0.2;
+
+    comp = ctx.createDynamicsCompressor();
+    comp.threshold.value = -24;
+    comp.knee.value = 18;
+    comp.ratio.value = 8;
+    comp.attack.value = 0.002;
+    comp.release.value = 0.14;
+
+    limiter = ctx.createDynamicsCompressor();
+    limiter.threshold.value = -3;
+    limiter.knee.value = 0;
+    limiter.ratio.value = 20;
+    limiter.attack.value = 0.001;
+    limiter.release.value = 0.09;
+
+    masterAnalyser = ctx.createAnalyser();
+    masterAnalyser.fftSize = 256;
+
+    masterGain = ctx.createGain();
+    masterGain.gain.value = state.masterVol;
+
+    filterOut.connect(masterDrive);
+    masterDrive.connect(masterTone);
+    masterTone.connect(comp);
+    comp.connect(limiter);
+    limiter.connect(masterAnalyser);
+    masterAnalyser.connect(masterGain);
+    masterGain.connect(ctx.destination);
+  }
+
   async function ensureAudio(){
     if(!ctx){
       ctx = new (window.AudioContext || window.webkitAudioContext)({latencyHint:'interactive'});
@@ -656,44 +860,8 @@
 
       masterIn = ctx.createGain();
 
-      masterDrive = ctx.createWaveShaper();
-      masterDrive.curve = softClipCurve(state.masterDrive);
-      masterDrive.oversample = '4x';
-
-      masterTone = ctx.createBiquadFilter();
-      masterTone.type = 'lowpass';
-      masterTone.frequency.value = state.masterTone;
-      masterTone.Q.value = 0.2;
-
-      comp = ctx.createDynamicsCompressor();
-      comp.threshold.value = -24;
-      comp.knee.value = 18;
-      comp.ratio.value = 8;
-      comp.attack.value = 0.002;
-      comp.release.value = 0.14;
-
-      limiter = ctx.createDynamicsCompressor();
-      limiter.threshold.value = -3;
-      limiter.knee.value = 0;
-      limiter.ratio.value = 20;
-      limiter.attack.value = 0.001;
-      limiter.release.value = 0.09;
-
-      masterAnalyser = ctx.createAnalyser();
-      masterAnalyser.fftSize = 256;
-
-      masterGain = ctx.createGain();
-      masterGain.gain.value = state.masterVol;
-
+      buildMasterFXChain();
       buildTrackChains();
-
-      masterIn.connect(masterDrive);
-      masterDrive.connect(masterTone);
-      masterTone.connect(comp);
-      comp.connect(limiter);
-      limiter.connect(masterAnalyser);
-      masterAnalyser.connect(masterGain);
-      masterGain.connect(ctx.destination);
 
       updateMasterFX();
       startMeters();
@@ -705,6 +873,7 @@
 
   function updateMasterFX(){
     if(!ctx) return;
+
     masterDrive.curve = softClipCurve(state.masterDrive);
     masterTone.frequency.setTargetAtTime(state.masterTone, ctx.currentTime, 0.01);
 
@@ -713,6 +882,39 @@
     comp.ratio.setTargetAtTime(lerp(2,12,c), ctx.currentTime, 0.01);
     comp.knee.setTargetAtTime(lerp(6,24,c), ctx.currentTime, 0.01);
     masterGain.gain.setTargetAtTime(state.masterVol, ctx.currentTime, 0.01);
+
+    tapeShaper.curve = tapeCurve(state.tapeDrive);
+    tapePost.frequency.setTargetAtTime(state.tapeTone, ctx.currentTime, 0.01);
+    tapeDry.gain.setTargetAtTime(1 - state.tapeMix, ctx.currentTime, 0.01);
+    tapeWet.gain.setTargetAtTime(state.tapeMix, ctx.currentTime, 0.01);
+
+    crusherNode.bits = state.crusherBits;
+    crusherNode.normfreq = state.crusherRate;
+    crusherDry.gain.setTargetAtTime(1 - state.crusherMix, ctx.currentTime, 0.01);
+    crusherWet.gain.setTargetAtTime(state.crusherMix, ctx.currentTime, 0.01);
+
+    filterPreDrive.gain.setTargetAtTime(1 + state.filterDrive * 6, ctx.currentTime, 0.01);
+    filterShaper.curve = shermanCurve(state.filterDrive);
+    filterHP.frequency.setTargetAtTime(state.filterHPFreq, ctx.currentTime, 0.01);
+    filterHP.Q.setTargetAtTime(state.filterHPQ, ctx.currentTime, 0.01);
+    filterLP.frequency.setTargetAtTime(state.filterLPFreq, ctx.currentTime, 0.01);
+    filterLP.Q.setTargetAtTime(state.filterLPQ, ctx.currentTime, 0.01);
+    filterDry.gain.setTargetAtTime(1 - state.filterMix, ctx.currentTime, 0.01);
+    filterWet.gain.setTargetAtTime(state.filterMix, ctx.currentTime, 0.01);
+
+    updateFXValueDisplays();
+  }
+
+  function updateFXValueDisplays(){
+    const ids = [
+      'tapeDrive','tapeTone','tapeMix',
+      'crusherBits','crusherRate','crusherMix',
+      'filterDrive','filterHPFreq','filterHPQ','filterLPFreq','filterLPQ','filterMix'
+    ];
+    ids.forEach(id=>{
+      const el = document.getElementById('val-'+id);
+      if(el) el.textContent = String(state[id]);
+    });
   }
 
   function formatValue(param,v){
@@ -1074,16 +1276,25 @@
       masterVol:'masterVol',
       masterDrive:'masterDrive',
       masterTone:'masterTone',
-      masterComp:'masterComp'
+      masterComp:'masterComp',
+      tapeDrive:'tapeDrive',
+      tapeTone:'tapeTone',
+      tapeMix:'tapeMix',
+      crusherBits:'crusherBits',
+      crusherRate:'crusherRate',
+      crusherMix:'crusherMix',
+      filterDrive:'filterDrive',
+      filterHPFreq:'filterHPFreq',
+      filterHPQ:'filterHPQ',
+      filterLPFreq:'filterLPFreq',
+      filterLPQ:'filterLPQ',
+      filterMix:'filterMix'
     };
 
     Object.entries(map).forEach(([id,key]) => {
       document.getElementById(id).oninput = e => {
         state[key] = +e.target.value;
-        if(key.startsWith('master')) updateMasterFX();
-        if(key === 'masterVol' && masterGain && ctx){
-          masterGain.gain.setTargetAtTime(state.masterVol, ctx.currentTime, 0.01);
-        }
+        updateMasterFX();
       };
     });
 
@@ -1837,6 +2048,7 @@
   renderTracks();
   renderStepGrid();
   renderStepEditor();
+  updateFXValueDisplays();
 })();
 </script>
 </body>
