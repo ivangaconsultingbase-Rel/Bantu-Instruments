@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-<title>DR-4 V3.1 — Drum Modeling Box</title>
+<title>DR-4 V3.2 — Drum Modeling Box</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Share+Tech+Mono&display=swap');
 
@@ -376,8 +376,8 @@
   <section class="top">
     <div class="panel brand">
       <div class="title">
-        <h1>DR-4 V3.1</h1>
-        <div class="sub">Drum modeling box · corrected pitch envelopes · stabilized</div>
+        <h1>DR-4 V3.2</h1>
+        <div class="sub">Drum modeling box · recalibrated levels and character</div>
       </div>
       <div class="ledRow">
         <div class="led"><div class="k">Audio</div><div class="v" id="audioState">OFF</div></div>
@@ -465,7 +465,7 @@
   </section>
 
   <div class="footer">
-    DR-4 V3.1 Web — corrected kick/snare tonal pitch envelopes.
+    DR-4 V3.2 Web — recalibrated kicks, snares, hats and metallic percussion.
   </div>
 </div>
 
@@ -1008,20 +1008,20 @@
     t.steps.forEach((s,i) => {
       if(ti===0){
         s.on = (i%4===0 || i===10);
-        s.vel = i%4===0 ? 1.0 : 0.74;
-        s.accent = i%8===0 ? 0.8 : 0.15;
+        s.vel = i%4===0 ? 1.0 : 0.76;
+        s.accent = i%8===0 ? 0.8 : 0.18;
       }else if(ti===1){
         s.on = (i===4 || i===12);
-        s.vel = 0.9;
-        s.accent = 0.4;
+        s.vel = 0.92;
+        s.accent = 0.45;
       }else if(ti===2){
         s.on = (i%2===1);
-        s.vel = 0.65 + ((i%4===3) ? 0.14 : 0);
-        s.accent = i%4===3 ? 0.35 : 0.08;
+        s.vel = 0.66 + ((i%4===3) ? 0.16 : 0);
+        s.accent = i%4===3 ? 0.38 : 0.10;
       }else{
         s.on = (i===3 || i===11);
-        s.vel = 0.8;
-        s.accent = 0.2;
+        s.vel = 0.82;
+        s.accent = 0.24;
       }
       s.prob = 1;
       s.micro = 0;
@@ -1212,14 +1212,15 @@
 
   function triggerKick(ti, t, s, time, vel){
     const p = resolvedParams(t,s);
-    const out = createTrackOut(ti, t.level * vel, t.pan);
+    const model = t.model;
+    const out = createTrackOut(ti, t.level * vel * (model === 'Punch BD' ? 1.10 : model === 'Sub BD' ? 1.05 : 1.0), t.pan);
 
-    const basePitch = expMap01(clamp(t.pitch,0,1), 38, 88) * Math.pow(2, t.tune/12);
-    const ampDecay = clamp(safeTrackDecay(t,0.04), 0.04, 1);
-    const pitchDecay = clamp(0.02 + ampDecay * lerp(0.22,0.9,p.y), 0.02, 0.8);
+    const basePitch = expMap01(clamp(t.pitch,0,1), 40, 92) * Math.pow(2, t.tune/12);
+    const ampDecay = clamp(safeTrackDecay(t,0.05), 0.05, 1);
+    const pitchDecay = clamp(0.02 + ampDecay * lerp(0.25,0.95,p.y), 0.02, 0.85);
     const curve = t.curve;
 
-    if(t.model === 'Drive BD'){
+    if(model === 'Drive BD'){
       const osc = ctx.createOscillator();
       osc.type = 'sine';
 
@@ -1228,36 +1229,28 @@
       const sum = ctx.createGain();
 
       const dist1 = ctx.createWaveShaper();
-      dist1.curve = distortionCurve(0.25 + p.z * 0.95);
+      dist1.curve = distortionCurve(0.35 + p.z * 1.10);
       dist1.oversample = '4x';
 
       const bp = ctx.createBiquadFilter();
       bp.type = 'bandpass';
-      bp.frequency.value = expMap01(p.x, 90, 2800);
-      bp.Q.value = lerp(0.5, 14, p.y);
+      bp.frequency.value = expMap01(p.x, 120, 2400);
+      bp.Q.value = lerp(0.4, 9.0, p.y);
 
       const dist2 = ctx.createWaveShaper();
-      dist2.curve = softClipCurve(0.08 + p.z * 0.55);
+      dist2.curve = softClipCurve(0.16 + p.z * 0.58);
 
       const amp = ctx.createGain();
       amp.gain.value = floorGain;
 
       const kickStart = basePitch;
-      const kickEnvAmt = basePitch * (2.6 * lerp(0.35,1,t.pitch));
+      const kickEnvAmt = basePitch * (3.2 * lerp(0.40,1,t.pitch));
 
-      scheduleAutomationCurve(
-        osc.frequency,
-        time,
-        pitchDecay,
-        kickStart,
-        kickEnvAmt,
-        curve,
-        18
-      );
-      osc.frequency.setTargetAtTime(kickStart, time + pitchDecay * 0.65, 0.02);
+      scheduleAutomationCurve(osc.frequency, time, pitchDecay, kickStart, kickEnvAmt, curve, 20);
+      osc.frequency.setTargetAtTime(kickStart, time + pitchDecay * 0.68, 0.02);
 
-      cleanGain.gain.value = 1 - p.t;
-      dirtySend.gain.value = p.t * 1.15;
+      cleanGain.gain.value = 1 - (p.t * 0.82);
+      dirtySend.gain.value = 0.28 + p.t * 1.05;
 
       osc.connect(cleanGain);
       osc.connect(dirtySend);
@@ -1269,12 +1262,13 @@
       sum.connect(amp);
       amp.connect(out.input);
 
-      applyAmpEnv(amp.gain, time, ampDecay, curve, 0.95);
+      applyAmpEnv(amp.gain, time, 0.08 + ampDecay * 0.92, curve, 1.10);
+
       osc.start(time);
-      osc.stop(time + Math.max(0.15, ampDecay + 0.2));
+      osc.stop(time + Math.max(0.18, ampDecay + 0.25));
     }
 
-    else if(t.model === 'Punch BD'){
+    else if(model === 'Punch BD'){
       const osc1 = ctx.createOscillator();
       const osc2 = ctx.createOscillator();
       osc1.type='sine';
@@ -1282,49 +1276,33 @@
 
       const mix = ctx.createGain();
       const shaper = ctx.createWaveShaper();
-      shaper.curve = softClipCurve(0.16 + p.z * 0.5);
+      shaper.curve = softClipCurve(0.22 + p.z * 0.60);
 
       const lp = ctx.createBiquadFilter();
       lp.type='lowpass';
-      lp.frequency.value = expMap01(p.x, 350, 6000);
-      lp.Q.value = lerp(0.1,1.2,p.y);
+      lp.frequency.value = expMap01(p.x, 450, 7000);
+      lp.Q.value = lerp(0.15,1.4,p.y);
 
       const amp = ctx.createGain();
       amp.gain.value = floorGain;
 
-      const clickNoise = noiseSource(time,0.03);
+      const clickNoise = noiseSource(time,0.028);
       const clickHP = ctx.createBiquadFilter();
       clickHP.type='highpass';
-      clickHP.frequency.value = expMap01(p.t,1200,7000);
+      clickHP.frequency.value = expMap01(p.t,1400,7800);
       const clickGain = ctx.createGain();
-      clickGain.gain.value = 0.03 + p.t*0.15;
+      clickGain.gain.value = 0.04 + p.t*0.20;
 
-      const f1 = basePitch*1.1;
-      const f2 = basePitch*2.0;
+      const f1 = basePitch*1.05;
+      const f2 = basePitch*1.95;
 
-      scheduleAutomationCurve(
-        osc1.frequency,
-        time,
-        0.03 + ampDecay*0.35,
-        f1,
-        f1*1.8,
-        curve,
-        18
-      );
-
-      scheduleAutomationCurve(
-        osc2.frequency,
-        time,
-        0.02 + ampDecay*0.20,
-        f2*0.45,
-        f2*0.9,
-        curve,
-        18
-      );
+      scheduleAutomationCurve(osc1.frequency, time, 0.03 + ampDecay*0.36, f1, f1*2.2, curve, 18);
+      scheduleAutomationCurve(osc2.frequency, time, 0.02 + ampDecay*0.20, f2*0.50, f2*1.05, curve, 18);
 
       osc1.frequency.setTargetAtTime(f1, time+0.03, 0.02);
-      osc2.frequency.setTargetAtTime(f2*0.45, time+0.02, 0.02);
+      osc2.frequency.setTargetAtTime(f2*0.50, time+0.02, 0.02);
 
+      mix.gain.value = 0.75;
       osc1.connect(mix);
       osc2.connect(mix);
       mix.connect(shaper);
@@ -1336,10 +1314,12 @@
       clickHP.connect(clickGain);
       clickGain.connect(out.input);
 
-      applyAmpEnv(amp.gain,time,0.05+ampDecay*0.8,curve,1.0);
+      applyAmpEnv(amp.gain,time,0.06+ampDecay*0.78,curve,1.08);
 
-      osc1.start(time); osc2.start(time);
-      osc1.stop(time+1); osc2.stop(time+1);
+      osc1.start(time);
+      osc2.start(time);
+      osc1.stop(time+1.0);
+      osc2.stop(time+1.0);
     }
 
     else{
@@ -1351,82 +1331,166 @@
       const mix = ctx.createGain();
       const lp = ctx.createBiquadFilter();
       lp.type='lowpass';
-      lp.frequency.value = expMap01(p.x, 220, 1800);
+      lp.frequency.value = expMap01(p.x, 260, 1500);
+
+      const bodyShaper = ctx.createWaveShaper();
+      bodyShaper.curve = softClipCurve(0.08 + p.z * 0.24);
 
       const amp = ctx.createGain();
       amp.gain.value = floorGain;
 
-      const f = expMap01(t.pitch, 28, 58) * Math.pow(2,t.tune/12);
+      const f = expMap01(t.pitch, 30, 60) * Math.pow(2,t.tune/12);
 
-      osc.frequency.setValueAtTime(f*1.6, time);
-      sub.frequency.setValueAtTime(f*0.5, time);
+      osc.frequency.setValueAtTime(f*1.4, time);
+      sub.frequency.setValueAtTime(f*0.50, time);
 
-      scheduleAutomationCurve(
-        osc.frequency,
-        time,
-        0.03 + ampDecay*0.5,
-        f,
-        f*0.8,
-        curve,
-        18
-      );
+      scheduleAutomationCurve(osc.frequency, time, 0.04 + ampDecay*0.52, f, f*0.95, curve, 18);
+      osc.frequency.setTargetAtTime(f, time+0.05, 0.03);
 
-      osc.frequency.setTargetAtTime(f,time+0.04,0.025);
-
+      mix.gain.value = 1.0;
       osc.connect(mix);
       sub.connect(mix);
       mix.connect(lp);
-      lp.connect(amp);
+      lp.connect(bodyShaper);
+      bodyShaper.connect(amp);
       amp.connect(out.input);
 
-      applyAmpEnv(amp.gain,time,0.10+ampDecay*0.95,curve,1.0);
+      applyAmpEnv(amp.gain,time,0.16+ampDecay*1.02,curve,1.05);
 
-      osc.start(time); sub.start(time);
-      osc.stop(time+1.4); sub.stop(time+1.4);
+      osc.start(time);
+      sub.start(time);
+      osc.stop(time+1.5);
+      sub.stop(time+1.5);
     }
   }
 
   function triggerSnare(ti, t, s, time, vel){
     const p = resolvedParams(t,s);
-    const out = createTrackOut(ti, t.level * vel, t.pan);
+    const model = t.model;
+    const out = createTrackOut(ti, t.level * vel * (model === 'Snap' ? 1.08 : 1.0), t.pan);
     const curve = t.curve;
-    const ampDecay = clamp(safeTrackDecay(t,0.04),0.04,1);
+    const ampDecay = clamp(safeTrackDecay(t,0.05),0.05,1);
 
-    if(t.model === 'Tone+Noise'){
+    if(model === 'Tone+Noise'){
       const osc = ctx.createOscillator();
       osc.type='triangle';
 
       const toneGain = ctx.createGain();
       const toneBP = ctx.createBiquadFilter();
       toneBP.type='bandpass';
-      toneBP.frequency.value = expMap01(p.x, 160, 900);
-      toneBP.Q.value = lerp(0.2, 3, p.y);
+      toneBP.frequency.value = expMap01(p.x, 190, 1100);
+      toneBP.Q.value = lerp(0.3, 2.8, p.y);
 
-      const noise = noiseSource(time, ampDecay + 0.15);
+      const noise = noiseSource(time, ampDecay + 0.18);
       const hp = ctx.createBiquadFilter();
       hp.type='highpass';
-      hp.frequency.value = expMap01(p.y, 1000, 7000);
+      hp.frequency.value = expMap01(p.y, 1200, 7600);
+
+      const noiseLP = ctx.createBiquadFilter();
+      noiseLP.type = 'lowpass';
+      noiseLP.frequency.value = expMap01(p.x, 2500, 9000);
+
       const noiseGain = ctx.createGain();
+      const amp = ctx.createGain();
+      amp.gain.value = floorGain;
+
+      const f = expMap01(t.pitch, 150, 430) * Math.pow(2,t.tune/12);
+
+      scheduleAutomationCurve(osc.frequency, time, 0.02 + ampDecay*0.24, f, f*0.48, curve, 50);
+      osc.frequency.setTargetAtTime(f,time+0.03,0.012);
+
+      toneGain.gain.value = 0.42 + (1-p.z)*0.62;
+      noiseGain.gain.value = 0.28 + p.z*1.35;
+
+      osc.connect(toneBP);
+      toneBP.connect(toneGain);
+      toneGain.connect(amp);
+
+      noise.connect(hp);
+      hp.connect(noiseLP);
+      noiseLP.connect(noiseGain);
+      noiseGain.connect(amp);
+
+      amp.connect(out.input);
+      applyAmpEnv(amp.gain,time,0.08+ampDecay*0.68,curve,1.0);
+
+      osc.start(time);
+      osc.stop(time+0.9);
+    }
+
+    else if(model === 'Clap'){
+      const noise = noiseSource(time, 0.65);
+      const bp = ctx.createBiquadFilter();
+      bp.type='bandpass';
+      bp.frequency.value = expMap01(p.x, 1200, 3800);
+      bp.Q.value = lerp(0.25, 4.0, p.y);
+
+      const shaper = ctx.createWaveShaper();
+      shaper.curve = softClipCurve(0.08 + p.z*0.40);
+
+      const hp = ctx.createBiquadFilter();
+      hp.type = 'highpass';
+      hp.frequency.value = 700;
 
       const amp = ctx.createGain();
       amp.gain.value = floorGain;
 
-      const f = expMap01(t.pitch, 140, 420) * Math.pow(2,t.tune/12);
+      noise.connect(bp);
+      bp.connect(shaper);
+      shaper.connect(hp);
+      hp.connect(amp);
+      amp.connect(out.input);
 
-      scheduleAutomationCurve(
-        osc.frequency,
-        time,
-        0.02 + ampDecay*0.22,
-        f,
-        f*0.35,
-        curve,
-        40
-      );
+      const bursts = [
+        {d:0.000, a:1.00},
+        {d:0.016, a:0.88},
+        {d:0.032, a:0.76},
+        {d:0.055, a:0.62}
+      ];
 
-      osc.frequency.setTargetAtTime(f,time+0.03,0.01);
+      amp.gain.setValueAtTime(floorGain, time);
+      bursts.forEach(b => {
+        amp.gain.linearRampToValueAtTime(b.a, time+b.d+0.001);
+        amp.gain.exponentialRampToValueAtTime(floorGain, time+b.d+0.014+p.t*0.028);
+      });
 
-      toneGain.gain.value = lerp(0.25, 1.0, 1-p.z);
-      noiseGain.gain.value = Math.max(0.14, lerp(0.2, 1.3, p.z));
+      const tailT = time + 0.080;
+      const tailDur = 0.09 + ampDecay*0.75;
+      const vals = new Float32Array(48);
+      for(let i=0;i<48;i++){
+        vals[i] = Math.max(floorGain, 0.62 * curveBlend(curve,i/47));
+      }
+      amp.gain.setValueAtTime(0.62, tailT);
+      amp.gain.setValueCurveAtTime(vals, tailT, tailDur);
+      amp.gain.setValueAtTime(floorGain, tailT + tailDur + 0.01);
+    }
+
+    else{
+      const osc = ctx.createOscillator();
+      osc.type='square';
+
+      const noise = noiseSource(time, 0.22);
+      const hp = ctx.createBiquadFilter();
+      hp.type='highpass';
+      hp.frequency.value = expMap01(p.y, 1800, 9600);
+
+      const toneGain = ctx.createGain();
+      const noiseGain = ctx.createGain();
+      const toneBP = ctx.createBiquadFilter();
+      toneBP.type = 'bandpass';
+      toneBP.frequency.value = expMap01(p.x, 500, 2400);
+      toneBP.Q.value = lerp(0.6, 4.0, p.y);
+
+      const amp = ctx.createGain();
+      amp.gain.value = floorGain;
+
+      const f = expMap01(t.pitch, 190, 720) * Math.pow(2,t.tune/12);
+
+      scheduleAutomationCurve(osc.frequency, time, 0.010 + ampDecay*0.16, f, f*0.28, curve, 70);
+      osc.frequency.setTargetAtTime(f,time+0.012,0.01);
+
+      toneGain.gain.value = 0.28 + (1-p.z)*0.55;
+      noiseGain.gain.value = 0.20 + p.z*0.95;
 
       osc.connect(toneBP);
       toneBP.connect(toneGain);
@@ -1437,97 +1501,10 @@
       noiseGain.connect(amp);
 
       amp.connect(out.input);
-      applyAmpEnv(amp.gain,time,0.05+ampDecay*0.75,curve,0.92);
+      applyAmpEnv(amp.gain,time,0.03+ampDecay*0.22,curve,0.98);
 
       osc.start(time);
-      osc.stop(time+0.9);
-    }
-
-    else if(t.model === 'Clap'){
-      const noise = noiseSource(time, 0.6);
-      const bp = ctx.createBiquadFilter();
-      bp.type='bandpass';
-      bp.frequency.value = expMap01(p.x, 1000, 3500);
-      bp.Q.value = lerp(0.3, 4.5, p.y);
-
-      const shaper = ctx.createWaveShaper();
-      shaper.curve = softClipCurve(0.05 + p.z*0.35);
-
-      const amp = ctx.createGain();
-      amp.gain.value = floorGain;
-
-      noise.connect(bp);
-      bp.connect(shaper);
-      shaper.connect(amp);
-      amp.connect(out.input);
-
-      const bursts = [
-        {d:0.000, a:1.00},
-        {d:0.018, a:0.85},
-        {d:0.036, a:0.72},
-        {d:0.060, a:0.58}
-      ];
-
-      amp.gain.setValueAtTime(floorGain, time);
-      bursts.forEach(b => {
-        amp.gain.linearRampToValueAtTime(b.a, time+b.d+0.001);
-        amp.gain.exponentialRampToValueAtTime(floorGain, time+b.d+0.012+p.t*0.025);
-      });
-
-      const tailT = time + 0.085;
-      const tailDur = 0.07 + ampDecay*0.7;
-      const vals = new Float32Array(48);
-      for(let i=0;i<48;i++){
-        vals[i] = Math.max(floorGain, 0.55 * curveBlend(curve,i/47));
-      }
-      amp.gain.setValueAtTime(0.55, tailT);
-      amp.gain.setValueCurveAtTime(vals, tailT, tailDur);
-      amp.gain.setValueAtTime(floorGain, tailT + tailDur + 0.01);
-    }
-
-    else{
-      const osc = ctx.createOscillator();
-      osc.type='square';
-
-      const noise = noiseSource(time, 0.35);
-      const hp = ctx.createBiquadFilter();
-      hp.type='highpass';
-      hp.frequency.value = expMap01(p.y, 1500, 9000);
-
-      const toneGain = ctx.createGain();
-      const noiseGain = ctx.createGain();
-      const amp = ctx.createGain();
-      amp.gain.value = floorGain;
-
-      const f = expMap01(t.pitch, 180, 640) * Math.pow(2,t.tune/12);
-
-      scheduleAutomationCurve(
-        osc.frequency,
-        time,
-        0.012 + ampDecay*0.2,
-        f,
-        f*0.2,
-        curve,
-        60
-      );
-
-      osc.frequency.setTargetAtTime(f,time+0.01,0.01);
-
-      toneGain.gain.value = 0.15 + (1-p.z)*0.6;
-      noiseGain.gain.value = 0.28 + p.z*1.2;
-
-      osc.connect(toneGain);
-      toneGain.connect(amp);
-
-      noise.connect(hp);
-      hp.connect(noiseGain);
-      noiseGain.connect(amp);
-
-      amp.connect(out.input);
-      applyAmpEnv(amp.gain,time,0.03+ampDecay*0.4,curve,0.85);
-
-      osc.start(time);
-      osc.stop(time+0.35);
+      osc.stop(time+0.28);
     }
   }
 
@@ -1538,29 +1515,37 @@
     const isRide = t.model === 'Ride';
     const isOpen = t.model === 'Open Hat';
 
-    const out = createTrackOut(ti, t.level * vel, t.pan);
+    const levelMul = isRide ? 0.95 : isOpen ? 0.88 : 0.78;
+    const out = createTrackOut(ti, t.level * vel * levelMul, t.pan);
 
-    const base = expMap01(t.pitch, 210, 560);
-    const spread = lerp(0.92, 1.22, p.z);
+    const base = isRide
+      ? expMap01(t.pitch, 250, 520)
+      : isOpen
+        ? expMap01(t.pitch, 220, 520)
+        : expMap01(t.pitch, 260, 620);
+
+    const spread = isRide ? lerp(0.96,1.28,p.z) : lerp(0.92,1.18,p.z);
     const ratios = [1,1.31,1.78,2.21,2.93,3.72,4.15,5.09].map((r,i)=>r * lerp(1,spread,i/7));
     const bank = makeMetallicOscBank(8, base, ratios, 'square');
 
     const preBP = ctx.createBiquadFilter();
     preBP.type = 'bandpass';
-    preBP.frequency.value = expMap01(t.pitch, 3200, 9000);
-    preBP.Q.value = 0.8;
+    preBP.frequency.value = isRide ? expMap01(t.pitch, 2600, 7800) : expMap01(t.pitch, 3600, 9800);
+    preBP.Q.value = isRide ? 0.55 : 0.85;
 
     const metalBP = ctx.createBiquadFilter();
     metalBP.type = 'bandpass';
-    metalBP.frequency.value = Math.max(2800, expMap01(p.x, 3000, 11000));
-    metalBP.Q.value = lerp(0.5, 8.0, p.y);
+    metalBP.frequency.value = isRide
+      ? Math.max(2200, expMap01(p.x, 2600, 9500))
+      : Math.max(3200, expMap01(p.x, 3400, 12000));
+    metalBP.Q.value = isRide ? lerp(0.3, 3.0, p.y) : lerp(0.6, 8.0, p.y);
 
     const hpTing = ctx.createBiquadFilter();
     hpTing.type = 'highpass';
-    hpTing.frequency.value = expMap01(p.t, 4500, 12000);
+    hpTing.frequency.value = isRide ? expMap01(p.t, 2600, 9200) : expMap01(p.t, 4800, 12000);
 
     const nonlinear = ctx.createWaveShaper();
-    nonlinear.curve = softClipCurve(0.05 + p.z * 0.22);
+    nonlinear.curve = softClipCurve(isRide ? 0.03 + p.z * 0.15 : 0.06 + p.z * 0.22);
 
     const metalGain = ctx.createGain();
     const tingGain = ctx.createGain();
@@ -1583,19 +1568,19 @@
     tingAmp.connect(out.input);
 
     const mainDecay = isClosed
-      ? lerp(0.035, 0.14, Math.max(0.06, t.decay))
+      ? lerp(0.025, 0.11, Math.max(0.06, t.decay))
       : isRide
-        ? lerp(0.35, 1.1, Math.max(0.12, t.decay))
-        : lerp(0.16, 0.65, Math.max(0.10, t.decay));
+        ? lerp(0.38, 1.25, Math.max(0.16, t.decay))
+        : lerp(0.14, 0.56, Math.max(0.10, t.decay));
 
     const tingDecay = isClosed
-      ? 0.015 + p.t * 0.025
+      ? 0.010 + p.t * 0.020
       : isRide
-        ? 0.05 + p.t * 0.15
-        : 0.03 + p.t * 0.07;
+        ? 0.06 + p.t * 0.20
+        : 0.028 + p.t * 0.07;
 
-    metalGain.gain.value = isRide ? 0.95 : 0.82;
-    tingGain.gain.value = isRide ? 0.22 + p.t * 0.45 : 0.14 + p.t * 0.55;
+    metalGain.gain.value = isRide ? 1.00 : isOpen ? 0.84 : 0.74;
+    tingGain.gain.value = isRide ? 0.30 + p.t * 0.38 : isOpen ? 0.18 + p.t * 0.46 : 0.10 + p.t * 0.32;
 
     if(isClosed && lastOpenHatVca){
       try{
@@ -1610,92 +1595,88 @@
       lastOpenHatVca = metalAmp;
     }
 
-    applyAmpEnv(metalAmp.gain, time, mainDecay, curve, isRide ? 0.72 : 0.95);
-    applyAmpEnv(tingAmp.gain, time, tingDecay, 0.2 + curve*0.3, isRide ? 0.42 : 0.62);
+    applyAmpEnv(metalAmp.gain, time, mainDecay, curve, isRide ? 0.78 : isOpen ? 0.92 : 1.0);
+    applyAmpEnv(tingAmp.gain, time, tingDecay, 0.18 + curve*0.25, isRide ? 0.48 : isOpen ? 0.42 : 0.34);
 
     bank.oscs.forEach(o => o.start(time));
-    const stopT = time + Math.max(0.22, mainDecay + 0.22);
+    const stopT = time + Math.max(0.18, mainDecay + 0.22);
     bank.oscs.forEach(o => o.stop(stopT));
   }
 
   function triggerPerc(ti, t, s, time, vel){
     const p = resolvedParams(t,s);
-    const out = createTrackOut(ti, t.level * vel, t.pan);
+    const model = t.model;
+    const out = createTrackOut(ti, t.level * vel * (model === 'Cowbell' ? 1.06 : model === 'Metal Perc' ? 0.92 : 1.0), t.pan);
     const curve = t.curve;
 
-    if(t.model === 'Cowbell'){
-      const base = expMap01(t.pitch, 300, 700) * Math.pow(2, t.tune/12);
-      const character = lerp(0.96, 1.10, p.z);
+    if(model === 'Cowbell'){
+      const base = expMap01(t.pitch, 340, 760) * Math.pow(2, t.tune/12);
+      const character = lerp(0.98, 1.08, p.z);
       const rawRatios = [1,1.41,1.73,2.18,2.72,3.19,3.88,4.34,4.97,5.61,6.24,6.88,7.57,8.06,8.79,9.41,10.08,10.91];
       const ratios = rawRatios.map((r,i)=>r * lerp(1, character, i/rawRatios.length));
       const bank = makeMetallicOscBank(18, base, ratios, 'sine');
 
       const hp = ctx.createBiquadFilter();
       hp.type = 'highpass';
-      hp.frequency.value = 280;
+      hp.frequency.value = 320;
 
       const lp = ctx.createBiquadFilter();
       lp.type = 'lowpass';
-      lp.frequency.value = Math.max(1500, expMap01(p.x, 1800, 10000));
-      lp.Q.value = 0.25;
+      lp.frequency.value = Math.max(2000, expMap01(p.x, 2200, 11000));
+      lp.Q.value = 0.22;
+
+      const bodyShaper = ctx.createWaveShaper();
+      bodyShaper.curve = softClipCurve(0.04 + p.z * 0.12);
 
       const amp = ctx.createGain();
       amp.gain.value = floorGain;
 
-      const noise = noiseSource(time, 0.025 + p.t * 0.06);
+      const noise = noiseSource(time, 0.018 + p.t * 0.05);
       const noiseHP = ctx.createBiquadFilter();
       noiseHP.type = 'highpass';
-      noiseHP.frequency.value = 2200;
+      noiseHP.frequency.value = 2500;
       const noiseGain = ctx.createGain();
-      noiseGain.gain.value = 0.015 + p.t * 0.09;
+      noiseGain.gain.value = 0.010 + p.t * 0.06;
 
       bank.sum.connect(hp);
       hp.connect(lp);
-      lp.connect(amp);
+      lp.connect(bodyShaper);
+      bodyShaper.connect(amp);
       amp.connect(out.input);
 
       noise.connect(noiseHP);
       noiseHP.connect(noiseGain);
       noiseGain.connect(out.input);
 
-      const baseCut = Math.max(1500, expMap01(p.x, 1800, 7000));
-      const envCut = baseCut + lerp(0, 2200, p.y);
+      const baseCut = Math.max(2000, expMap01(p.x, 2200, 7600));
+      const envCut = baseCut + lerp(0, 1600, p.y);
       lp.frequency.setValueAtTime(envCut, time);
-      lp.frequency.exponentialRampToValueAtTime(baseCut, time + 0.035 + p.y * 0.04);
+      lp.frequency.exponentialRampToValueAtTime(baseCut, time + 0.03 + p.y * 0.03);
 
-      applyAmpEnv(amp.gain, time, 0.08 + Math.max(0.06, t.decay) * 0.42, curve, 0.95);
+      applyAmpEnv(amp.gain, time, 0.07 + Math.max(0.06, t.decay) * 0.34, curve, 1.02);
 
       bank.oscs.forEach(o => o.start(time));
-      bank.oscs.forEach(o => o.stop(time + 0.8));
+      bank.oscs.forEach(o => o.stop(time + 0.65));
     }
 
-    else if(t.model === 'Clave'){
+    else if(model === 'Clave'){
       const osc = ctx.createOscillator();
       osc.type = 'triangle';
 
       const bp = ctx.createBiquadFilter();
       bp.type = 'bandpass';
-      bp.frequency.value = expMap01(p.x, 1400, 4200);
-      bp.Q.value = lerp(1.2, 7, p.y);
+      bp.frequency.value = expMap01(p.x, 1600, 4600);
+      bp.Q.value = lerp(1.6, 8.5, p.y);
 
       const shaper = ctx.createWaveShaper();
-      shaper.curve = softClipCurve(0.08 + p.z * 0.28);
+      shaper.curve = softClipCurve(0.10 + p.z * 0.32);
 
       const amp = ctx.createGain();
       amp.gain.value = floorGain;
 
-      const f = expMap01(t.pitch, 900, 2100) * Math.pow(2, t.tune/12);
+      const f = expMap01(t.pitch, 1000, 2400) * Math.pow(2, t.tune/12);
 
-      scheduleAutomationCurve(
-        osc.frequency,
-        time,
-        0.008 + t.decay * 0.08,
-        f,
-        f * 0.08,
-        curve,
-        120
-      );
-
+      scheduleAutomationCurve(osc.frequency, time, 0.006 + t.decay * 0.06, f, f * 0.10, curve, 150);
       osc.frequency.setTargetAtTime(f, time + 0.01, 0.008);
 
       osc.connect(bp);
@@ -1703,28 +1684,28 @@
       shaper.connect(amp);
       amp.connect(out.input);
 
-      applyAmpEnv(amp.gain, time, 0.015 + t.decay * 0.10, curve, 1.0);
+      applyAmpEnv(amp.gain, time, 0.012 + t.decay * 0.08, curve, 1.05);
 
       osc.start(time);
-      osc.stop(time + 0.20);
+      osc.stop(time + 0.18);
     }
 
     else{
-      const base = expMap01(t.pitch, 260, 720);
+      const base = expMap01(t.pitch, 280, 760);
       const ratios = [1,1.47,2.03,2.62,3.11,4.07];
-      const bank = makeMetallicOscBank(6, base, ratios.map(r => r * lerp(0.97, 1.08, p.z)), 'square');
+      const bank = makeMetallicOscBank(6, base, ratios.map(r => r * lerp(0.98, 1.07, p.z)), 'square');
 
       const hp = ctx.createBiquadFilter();
       hp.type = 'highpass';
-      hp.frequency.value = 500;
+      hp.frequency.value = 700;
 
       const bp = ctx.createBiquadFilter();
       bp.type = 'bandpass';
-      bp.frequency.value = Math.max(1600, expMap01(p.x, 1800, 8500));
-      bp.Q.value = lerp(0.8, 6.5, p.y);
+      bp.frequency.value = Math.max(2200, expMap01(p.x, 2400, 9000));
+      bp.Q.value = lerp(0.5, 4.8, p.y);
 
       const shaper = ctx.createWaveShaper();
-      shaper.curve = softClipCurve(0.04 + p.z * 0.2);
+      shaper.curve = softClipCurve(0.03 + p.z * 0.14);
 
       const amp = ctx.createGain();
       amp.gain.value = floorGain;
@@ -1735,10 +1716,10 @@
       shaper.connect(amp);
       amp.connect(out.input);
 
-      applyAmpEnv(amp.gain, time, 0.05 + Math.max(0.05, t.decay) * 0.24, curve, 0.9);
+      applyAmpEnv(amp.gain, time, 0.035 + Math.max(0.05, t.decay) * 0.14, curve, 0.88);
 
       bank.oscs.forEach(o => o.start(time));
-      bank.oscs.forEach(o => o.stop(time + 0.45));
+      bank.oscs.forEach(o => o.stop(time + 0.34));
     }
   }
 
