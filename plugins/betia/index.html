@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-<title>DR-4 V3.2 — Drum Modeling Box</title>
+<title>DR-4 V3.2.1 — Drum Modeling Box</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Share+Tech+Mono&display=swap');
 
@@ -376,8 +376,8 @@
   <section class="top">
     <div class="panel brand">
       <div class="title">
-        <h1>DR-4 V3.2</h1>
-        <div class="sub">Drum modeling box · recalibrated levels and character</div>
+        <h1>DR-4 V3.2.1</h1>
+        <div class="sub">Drum modeling box · safari-safe pitch envelopes</div>
       </div>
       <div class="ledRow">
         <div class="led"><div class="k">Audio</div><div class="v" id="audioState">OFF</div></div>
@@ -465,7 +465,7 @@
   </section>
 
   <div class="footer">
-    DR-4 V3.2 Web — recalibrated kicks, snares, hats and metallic percussion.
+    DR-4 V3.2.1 Web — Safari-safe pitch env for kick / tonal snare / clave.
   </div>
 </div>
 
@@ -1127,18 +1127,18 @@
     return {input:gain};
   }
 
-  function scheduleAutomationCurve(param, startTime, duration, baseValue, amount, curve, minValue=10){
-    const points = 48;
-    const arr = new Float32Array(points);
-
-    for(let i=0;i<points;i++){
-      const env = curveBlend(curve, i/(points-1));
-      arr[i] = Math.max(minValue, baseValue + amount * env);
-    }
+  function schedulePitchEnv(param, startTime, duration, baseValue, amount, curve, minValue=10){
+    const dur = Math.max(0.006, duration);
+    const points = 18;
 
     param.cancelScheduledValues(startTime);
-    param.setValueAtTime(arr[0], startTime);
-    param.setValueCurveAtTime(arr, startTime, Math.max(duration, 0.002));
+
+    for(let i=0;i<points;i++){
+      const x = i/(points-1);
+      const env = curveBlend(curve, x);
+      const v = Math.max(minValue, baseValue + amount * env);
+      param.setValueAtTime(v, startTime + x * dur);
+    }
   }
 
   function applyAmpEnv(gainParam, time, decay, curve, peak=1){
@@ -1246,7 +1246,8 @@
       const kickStart = basePitch;
       const kickEnvAmt = basePitch * (3.2 * lerp(0.40,1,t.pitch));
 
-      scheduleAutomationCurve(osc.frequency, time, pitchDecay, kickStart, kickEnvAmt, curve, 20);
+      osc.frequency.setValueAtTime(Math.max(20, kickStart), time);
+      schedulePitchEnv(osc.frequency, time, pitchDecay, kickStart, kickEnvAmt, curve, 20);
       osc.frequency.setTargetAtTime(kickStart, time + pitchDecay * 0.68, 0.02);
 
       cleanGain.gain.value = 1 - (p.t * 0.82);
@@ -1296,8 +1297,11 @@
       const f1 = basePitch*1.05;
       const f2 = basePitch*1.95;
 
-      scheduleAutomationCurve(osc1.frequency, time, 0.03 + ampDecay*0.36, f1, f1*2.2, curve, 18);
-      scheduleAutomationCurve(osc2.frequency, time, 0.02 + ampDecay*0.20, f2*0.50, f2*1.05, curve, 18);
+      osc1.frequency.setValueAtTime(Math.max(20, f1), time);
+      osc2.frequency.setValueAtTime(Math.max(20, f2*0.5), time);
+
+      schedulePitchEnv(osc1.frequency, time, 0.03 + ampDecay*0.36, f1, f1*2.2, curve, 18);
+      schedulePitchEnv(osc2.frequency, time, 0.02 + ampDecay*0.20, f2*0.50, f2*1.05, curve, 18);
 
       osc1.frequency.setTargetAtTime(f1, time+0.03, 0.02);
       osc2.frequency.setTargetAtTime(f2*0.50, time+0.02, 0.02);
@@ -1341,11 +1345,11 @@
 
       const f = expMap01(t.pitch, 30, 60) * Math.pow(2,t.tune/12);
 
-      osc.frequency.setValueAtTime(f*1.4, time);
-      sub.frequency.setValueAtTime(f*0.50, time);
+      osc.frequency.setValueAtTime(Math.max(20, f), time);
+      sub.frequency.setValueAtTime(Math.max(20, f*0.5), time);
 
-      scheduleAutomationCurve(osc.frequency, time, 0.04 + ampDecay*0.52, f, f*0.95, curve, 18);
-      osc.frequency.setTargetAtTime(f, time+0.05, 0.03);
+      schedulePitchEnv(osc.frequency, time, 0.04 + ampDecay*0.52, f, f*0.95, curve, 18);
+      osc.frequency.setTargetAtTime(f,time+0.05,0.03);
 
       mix.gain.value = 1.0;
       osc.connect(mix);
@@ -1396,7 +1400,8 @@
 
       const f = expMap01(t.pitch, 150, 430) * Math.pow(2,t.tune/12);
 
-      scheduleAutomationCurve(osc.frequency, time, 0.02 + ampDecay*0.24, f, f*0.48, curve, 50);
+      osc.frequency.setValueAtTime(Math.max(60, f), time);
+      schedulePitchEnv(osc.frequency, time, 0.02 + ampDecay*0.24, f, f*0.48, curve, 50);
       osc.frequency.setTargetAtTime(f,time+0.03,0.012);
 
       toneGain.gain.value = 0.42 + (1-p.z)*0.62;
@@ -1486,7 +1491,8 @@
 
       const f = expMap01(t.pitch, 190, 720) * Math.pow(2,t.tune/12);
 
-      scheduleAutomationCurve(osc.frequency, time, 0.010 + ampDecay*0.16, f, f*0.28, curve, 70);
+      osc.frequency.setValueAtTime(Math.max(80, f), time);
+      schedulePitchEnv(osc.frequency, time, 0.010 + ampDecay*0.16, f, f*0.28, curve, 70);
       osc.frequency.setTargetAtTime(f,time+0.012,0.01);
 
       toneGain.gain.value = 0.28 + (1-p.z)*0.55;
@@ -1676,7 +1682,8 @@
 
       const f = expMap01(t.pitch, 1000, 2400) * Math.pow(2, t.tune/12);
 
-      scheduleAutomationCurve(osc.frequency, time, 0.006 + t.decay * 0.06, f, f * 0.10, curve, 150);
+      osc.frequency.setValueAtTime(Math.max(150, f), time);
+      schedulePitchEnv(osc.frequency, time, 0.006 + t.decay * 0.06, f, f * 0.10, curve, 150);
       osc.frequency.setTargetAtTime(f, time + 0.01, 0.008);
 
       osc.connect(bp);
