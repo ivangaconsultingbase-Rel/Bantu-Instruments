@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>Spectral Electromech 6 — V10</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar card">
+      <div class="brand-wrap">
+        <div class="brand-kicker">MUKUDU LAB / ELECTROMECH GROOVEBOX</div>
+        <h1>Spectral Electromech 6 <span>V10</span></h1>
+        <div class="status-row">
+          <span class="chip chip-live" id="audioStatus">AUDIO OFF</span>
+          <span class="chip">6 VOICES</span>
+          <span class="chip">STRING / EP / CLAV</span>
+          <span class="chip">SEQ + FX</span>
+        </div>
+      </div>
+      <div class="master-strip">
+        <button id="audioBtn" class="action primary">START AUDIO</button>
+        <button id="panicBtn" class="action">PANIC</button>
+        <div class="field compact">
+          <label for="presetSelect">PRESET</label>
+          <select id="presetSelect"></select>
+        </div>
+        <div class="field compact">
+          <label for="sourceModel">MODEL</label>
+          <select id="sourceModel">
+            <option value="string">STRING</option>
+            <option value="epiano">E.PIANO</option>
+            <option value="clav">CLAVINET</option>
+          </select>
+        </div>
+        <div class="field compact narrow">
+          <label for="bpm">BPM</label>
+          <input id="bpm" type="number" min="40" max="220" value="108" />
+        </div>
+        <div class="field compact narrow">
+          <label for="masterVolume">MASTER</label>
+          <input id="masterVolume" type="range" min="0" max="1" step="0.01" value="0.82" />
+          <div class="readout" id="masterReadout">82%</div>
+        </div>
+      </div>
+    </header>
+
+    <section class="card sequencer-panel">
+      <div class="section-head">
+        <div>
+          <div class="eyebrow">VISIBLE BY DEFAULT</div>
+          <h2>Chord Scale Groovebox</h2>
+        </div>
+        <button class="action toggle-btn" data-target="sequencerBody">HIDE</button>
+      </div>
+      <div class="section-body force-visible" id="sequencerBody">
+        <div class="hardware-bar">
+          <div class="hardware-group">
+            <div class="mini-label">TRANSPORT</div>
+            <div class="hardware-row">
+              <button id="playBtn" class="transport square primary">PLAY</button>
+              <button id="stopBtn" class="transport square">STOP</button>
+              <button id="previewBtn" class="transport square">PREVIEW</button>
+            </div>
+          </div>
+          <div class="hardware-group">
+            <div class="mini-label">PAGE</div>
+            <div class="hardware-row">
+              <button id="pageABtn" class="transport square active">A</button>
+              <button id="pageBBtn" class="transport square">B</button>
+              <button id="chainModeBtn" class="transport square wide active">A→B 32</button>
+            </div>
+          </div>
+          <div class="hardware-group">
+            <div class="mini-label">UTILS</div>
+            <div class="hardware-row wrap">
+              <button id="fillPageBtn" class="transport square">FILL</button>
+              <button id="clearPageBtn" class="transport square">CLR</button>
+              <button id="shiftLeftBtn" class="transport square">◀</button>
+              <button id="shiftRightBtn" class="transport square">▶</button>
+              <button id="copyPageBtn" class="transport square">A→B</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="seq-toolbar grid-5">
+          <div class="field">
+            <label for="seqKey">KEY</label>
+            <select id="seqKey"></select>
+          </div>
+          <div class="field">
+            <label for="seqScale">SCALE</label>
+            <select id="seqScale"></select>
+          </div>
+          <div class="field compact narrow">
+            <label for="octaveShift">OCT</label>
+            <input id="octaveShift" type="range" min="-2" max="2" step="1" value="0" />
+            <div class="readout" id="octaveReadout">0</div>
+          </div>
+          <div class="field compact narrow">
+            <label for="gateLength">GATE</label>
+            <input id="gateLength" type="range" min="0.08" max="0.95" step="0.01" value="0.58" />
+            <div class="readout" id="gateReadout">58%</div>
+          </div>
+          <div class="field compact narrow">
+            <label for="humanize">HUMANIZE</label>
+            <input id="humanize" type="range" min="0" max="0.04" step="0.001" value="0.008" />
+            <div class="readout" id="humanizeReadout">8 ms</div>
+          </div>
+        </div>
+
+        <div class="step-grid-wrap">
+          <div class="grid-label-row">
+            <span>STEP GRID</span>
+            <span id="stepSummary">16 steps visible / 32 step pattern</span>
+          </div>
+          <div id="stepGrid" class="step-grid"></div>
+        </div>
+
+        <div class="seq-bottom-grid">
+          <div class="card sub-card step-editor">
+            <div class="sub-head">
+              <h3>Step Editor</h3>
+              <span id="selectedStepLabel" class="chip chip-red">STEP 1 / PAGE A</span>
+            </div>
+            <div class="editor-grid">
+              <div class="field compact">
+                <label for="stepDegree">DEGREE</label>
+                <select id="stepDegree"></select>
+              </div>
+              <div class="field compact">
+                <label for="stepChord">CHORD</label>
+                <select id="stepChord"></select>
+              </div>
+              <div class="field compact">
+                <label for="stepOctave">STEP OCT</label>
+                <input id="stepOctave" type="range" min="-2" max="2" step="1" value="0" />
+                <div class="readout" id="stepOctaveReadout">0</div>
+              </div>
+              <div class="field compact">
+                <label for="stepVelocity">VEL</label>
+                <input id="stepVelocity" type="range" min="0.1" max="1" step="0.01" value="0.84" />
+                <div class="readout" id="stepVelocityReadout">84%</div>
+              </div>
+              <div class="field compact">
+                <label for="stepProbability">PROB</label>
+                <input id="stepProbability" type="range" min="0" max="1" step="0.01" value="1" />
+                <div class="readout" id="stepProbabilityReadout">100%</div>
+              </div>
+              <div class="field compact">
+                <label for="stepRatchet">RATCHET</label>
+                <input id="stepRatchet" type="range" min="1" max="4" step="1" value="1" />
+                <div class="readout" id="stepRatchetReadout">1x</div>
+              </div>
+              <div class="field compact">
+                <label for="stepMicro">MICRO</label>
+                <input id="stepMicro" type="range" min="-0.05" max="0.05" step="0.001" value="0" />
+                <div class="readout" id="stepMicroReadout">0 ms</div>
+              </div>
+              <div class="field compact">
+                <label for="stepTie">TIE</label>
+                <select id="stepTie">
+                  <option value="0">OFF</option>
+                  <option value="1">ON</option>
+                </select>
+              </div>
+              <div class="field compact">
+                <label for="stepActive">ACTIVE</label>
+                <select id="stepActive">
+                  <option value="1">ON</option>
+                  <option value="0">OFF</option>
+                </select>
+              </div>
+              <div class="field compact">
+                <label for="stepAccentBtn">FLAGS</label>
+                <div class="flag-row">
+                  <button id="stepAccentBtn" class="mini-toggle">ACCENT</button>
+                  <button id="copyStepBtn" class="mini-toggle">COPY</button>
+                  <button id="pasteStepBtn" class="mini-toggle">PASTE</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card sub-card notes-panel">
+            <div class="sub-head">
+              <h3>Scale Notes</h3>
+              <span class="chip">INFO ONLY</span>
+            </div>
+            <div id="scaleNotes" class="note-chips"></div>
+            <p class="small-note">Ces notes sont informatives et ne sont pas cliquables.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <main class="main-grid">
+      <section class="card">
+        <div class="section-head">
+          <div><div class="eyebrow">MODELED SOURCE</div><h2>String / EP / Clav</h2></div>
+          <button class="action toggle-btn" data-target="sourceBody">HIDE</button>
+        </div>
+        <div class="section-body" id="sourceBody">
+          <div class="control-grid four-col" id="sourceControls"></div>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="section-head">
+          <div><div class="eyebrow">TIMBRE LAYERS</div><h2>Resynth / Spectral</h2></div>
+          <button class="action toggle-btn" data-target="textureBody">HIDE</button>
+        </div>
+        <div class="section-body" id="textureBody">
+          <div class="control-grid four-col" id="textureControls"></div>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="section-head">
+          <div><div class="eyebrow">MOOG STYLE</div><h2>Tone</h2></div>
+          <button class="action toggle-btn" data-target="toneBody">HIDE</button>
+        </div>
+        <div class="section-body" id="toneBody">
+          <div class="control-grid four-col" id="toneControls"></div>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="section-head">
+          <div><div class="eyebrow">AGE / SPACE</div><h2>FX</h2></div>
+          <button class="action toggle-btn" data-target="fxBody">HIDE</button>
+        </div>
+        <div class="section-body" id="fxBody">
+          <div class="control-grid four-col" id="fxControls"></div>
+        </div>
+      </section>
+
+      <section class="card wide-card">
+        <div class="section-head">
+          <div><div class="eyebrow">PLAYABLE PANEL</div><h2>Macros / Keyboard</h2></div>
+          <button class="action toggle-btn" data-target="playBody">HIDE</button>
+        </div>
+        <div class="section-body" id="playBody">
+          <div class="macro-grid" id="macroControls"></div>
+          <div class="keyboard-controls">
+            <div class="field compact narrow">
+              <label for="keyboardOctave">KB OCT</label>
+              <input id="keyboardOctave" type="range" min="2" max="6" step="1" value="4" />
+              <div class="readout" id="keyboardOctaveReadout">4</div>
+            </div>
+            <div class="keyboard-help">Clavier ordinateur : A W S E D F T G Y H U J K</div>
+          </div>
+          <div id="keyboard" class="keyboard"></div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script src="presets.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
