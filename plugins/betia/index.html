@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-<title>DR-4 V3.4 — Drum Modeling Box</title>
+<title>DR-4 V3.5 — Drum Modeling Box</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Share+Tech+Mono&display=swap');
 
@@ -64,6 +64,12 @@
 
   .brand{
     display:flex;
+    flex-direction:column;
+    gap:12px;
+  }
+
+  .brandTop{
+    display:flex;
     justify-content:space-between;
     gap:12px;
     align-items:center;
@@ -109,6 +115,12 @@
   }
   .v.on{color:var(--ok)}
   .v.warn{color:var(--warn)}
+
+  .utilityRow{
+    display:flex;
+    gap:8px;
+    flex-wrap:wrap;
+  }
 
   .row{
     display:flex;
@@ -400,6 +412,46 @@
     display:none;
   }
 
+  body.compact .app{
+    max-width:980px;
+    padding:10px;
+    gap:10px;
+  }
+
+  body.compact .top,
+  body.compact .tracks,
+  body.compact .sequencer{
+    grid-template-columns:1fr;
+  }
+
+  body.compact .panel{
+    padding:10px;
+  }
+
+  body.compact .trackName h2{
+    font-size:18px;
+  }
+
+  body.compact .stepGrid{
+    grid-template-columns:repeat(8,1fr);
+  }
+
+  body.compact .paramGrid,
+  body.compact .paramGrid6,
+  body.compact .fxGrid,
+  body.compact .editorGrid{
+    grid-template-columns:repeat(2,1fr);
+  }
+
+  body.compact .utilityRow{
+    gap:6px;
+  }
+
+  body.compact .btnSmall{
+    min-height:34px;
+    padding:6px 9px;
+  }
+
   @media (max-width:1100px){
     .top{grid-template-columns:1fr}
     .tracks{grid-template-columns:1fr}
@@ -411,6 +463,8 @@
     .paramGrid,.paramGrid6,.editorGrid,.fxGrid{grid-template-columns:repeat(2,1fr)}
     .stepGrid{grid-template-columns:repeat(8,1fr)}
     .title h1{font-size:22px}
+    .brandTop{flex-direction:column; align-items:flex-start}
+    .ledRow{justify-content:flex-start}
   }
 </style>
 </head>
@@ -419,14 +473,23 @@
 
   <section class="top">
     <div class="panel brand">
-      <div class="title">
-        <h1>DR-4 V3.4</h1>
-        <div class="sub">Drum modeling box · collapsible UI · tape · crusher · filterbank</div>
+      <div class="brandTop">
+        <div class="title">
+          <h1>DR-4 V3.5</h1>
+          <div class="sub">Drum modeling box · compact ui · collapse all · fx toggle</div>
+        </div>
+        <div class="ledRow">
+          <div class="led"><div class="k">Audio</div><div class="v" id="audioState">OFF</div></div>
+          <div class="led"><div class="k">Transport</div><div class="v" id="playState">STOP</div></div>
+          <div class="led"><div class="k">Step</div><div class="v" id="stepDisplay">--</div></div>
+        </div>
       </div>
-      <div class="ledRow">
-        <div class="led"><div class="k">Audio</div><div class="v" id="audioState">OFF</div></div>
-        <div class="led"><div class="k">Transport</div><div class="v" id="playState">STOP</div></div>
-        <div class="led"><div class="k">Step</div><div class="v" id="stepDisplay">--</div></div>
+
+      <div class="utilityRow">
+        <button id="collapseAllBtn" class="btnGhost btnSmall">Collapse All</button>
+        <button id="expandAllBtn" class="btnGhost btnSmall">Expand All</button>
+        <button id="toggleFxBtn" class="btnGhost btnSmall">FX</button>
+        <button id="compactBtn" class="btnGhost btnSmall">Compact Off</button>
       </div>
     </div>
 
@@ -549,7 +612,7 @@
   </section>
 
   <div class="footer">
-    DR-4 V3.4 Web — collapsible panels, tape saturation, crusher, Sherman-style filter.
+    DR-4 V3.5 Web — compact mode, collapse all, FX toggle, collapsible panels.
   </div>
 </div>
 
@@ -608,6 +671,9 @@
     currentPattern:'A',
     selectedTrack:0,
     selectedStep:0,
+
+    compactMode:false,
+    singleTrackMode:false,
 
     panelOpen:{
       transportPanel:true,
@@ -987,12 +1053,28 @@
     });
   }
 
-  function setPanelState(panelId, isOpen){
+  function setPanelState(panelId, isOpen, options={}){
+    const {silent=false} = options;
     state.panelOpen[panelId] = isOpen;
+
+    if(state.singleTrackMode && isOpen && panelId.startsWith('track-')){
+      Object.keys(state.panelOpen).forEach(id=>{
+        if(id.startsWith('track-') && id !== panelId){
+          state.panelOpen[id] = false;
+          const otherBody = document.getElementById('panel-' + id);
+          const otherBtn = document.querySelector(`[data-collapse-target="${id}"]`);
+          if(otherBody) otherBody.classList.add('hidden');
+          if(otherBtn) otherBtn.textContent = 'Show';
+        }
+      });
+    }
+
     const body = document.getElementById('panel-' + panelId);
     const btn = document.querySelector(`[data-collapse-target="${panelId}"]`);
     if(body) body.classList.toggle('hidden', !isOpen);
     if(btn) btn.textContent = isOpen ? 'Hide' : 'Show';
+
+    if(!silent) updateCompactButton();
   }
 
   function bindCollapseButtons(){
@@ -1007,8 +1089,57 @@
 
   function applyPanelStates(){
     Object.entries(state.panelOpen).forEach(([panelId,isOpen])=>{
-      setPanelState(panelId, isOpen);
+      setPanelState(panelId, isOpen, {silent:true});
     });
+    updateCompactButton();
+  }
+
+  function collapseAll(){
+    Object.keys(state.panelOpen).forEach(id=>{
+      state.panelOpen[id] = false;
+    });
+    state.panelOpen.masterFx = false;
+    applyPanelStates();
+  }
+
+  function expandAll(){
+    Object.keys(state.panelOpen).forEach(id=>{
+      state.panelOpen[id] = true;
+    });
+    applyPanelStates();
+  }
+
+  function toggleFxPanel(){
+    setPanelState('masterFx', !state.panelOpen.masterFx);
+  }
+
+  function updateCompactButton(){
+    const btn = document.getElementById('compactBtn');
+    if(btn) btn.textContent = state.compactMode ? 'Compact On' : 'Compact Off';
+  }
+
+  function setCompactMode(on){
+    state.compactMode = !!on;
+    state.singleTrackMode = !!on;
+    document.body.classList.toggle('compact', state.compactMode);
+
+    if(state.compactMode){
+      const selectedId = `track-${state.selectedTrack}`;
+      Object.keys(state.panelOpen).forEach(id=>{
+        if(id.startsWith('track-')) state.panelOpen[id] = false;
+      });
+      state.panelOpen[selectedId] = true;
+      state.panelOpen.masterFx = false;
+    }
+
+    applyPanelStates();
+    renderTracks();
+  }
+
+  function autoCompactFromViewport(){
+    if(window.innerWidth <= 760 && !state.compactMode){
+      setCompactMode(true);
+    }
   }
 
   function formatValue(param,v){
@@ -1103,6 +1234,9 @@
       tab.textContent = def.name;
       tab.onclick = () => {
         state.selectedTrack = ti;
+        if(state.singleTrackMode){
+          setPanelState(`track-${ti}`, true);
+        }
         renderTracks();
         renderStepGrid();
         renderStepEditor();
@@ -1373,6 +1507,11 @@
 
     document.getElementById('clearBtn').onclick = clearCurrentPattern;
 
+    document.getElementById('collapseAllBtn').onclick = collapseAll;
+    document.getElementById('expandAllBtn').onclick = expandAll;
+    document.getElementById('toggleFxBtn').onclick = toggleFxPanel;
+    document.getElementById('compactBtn').onclick = () => setCompactMode(!state.compactMode);
+
     const map = {
       bpm:'bpm',
       swing:'swing',
@@ -1421,6 +1560,12 @@
 
     bindCollapseButtons();
     applyPanelStates();
+
+    window.addEventListener('resize', () => {
+      if(window.innerWidth <= 760 && !state.compactMode){
+        setCompactMode(true);
+      }
+    });
   }
 
   function switchPattern(which){
@@ -2151,6 +2296,7 @@
 
   initPatterns();
   bindGlobal();
+  autoCompactFromViewport();
   switchPattern('A');
   renderTracks();
   renderStepGrid();
@@ -2158,6 +2304,7 @@
   updateFXValueDisplays();
   bindCollapseButtons();
   applyPanelStates();
+  updateCompactButton();
 })();
 </script>
 </body>
