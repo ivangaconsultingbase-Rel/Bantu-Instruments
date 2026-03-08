@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-<title>BETIA-4 — Drum Modeling Box</title>
+<title>DR-4 V2 — Drum Modeling Box</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Share+Tech+Mono&display=swap');
 
@@ -17,14 +17,14 @@
     --txt:#f2f2f2;
     --mut:#9b9b9b;
     --acc:#d93636;
-    --acc2:#ff5b5b;
-    --acc3:#a91919;
+    --acc2:#ff6767;
+    --acc3:#8d1c1c;
     --ok:#79d98a;
-    --warn:#f0c266;
+    --warn:#f2c46d;
     --radius:14px;
     --mono:'Share Tech Mono', ui-monospace, monospace;
     --ui:'Rajdhani', system-ui, sans-serif;
-    --shadow:0 10px 30px rgba(0,0,0,.35);
+    --shadow:0 12px 30px rgba(0,0,0,.35);
   }
 
   *{box-sizing:border-box}
@@ -40,17 +40,11 @@
   }
 
   .app{
-    max-width:1400px;
+    max-width:1440px;
     margin:0 auto;
     padding:14px;
     display:flex;
     flex-direction:column;
-    gap:12px;
-  }
-
-  .topbar{
-    display:grid;
-    grid-template-columns:1.3fr 1fr 1fr;
     gap:12px;
   }
 
@@ -62,16 +56,17 @@
     padding:12px;
   }
 
+  .top{
+    display:grid;
+    grid-template-columns:1.2fr 1fr 1fr;
+    gap:12px;
+  }
+
   .brand{
     display:flex;
-    align-items:center;
     justify-content:space-between;
     gap:10px;
-  }
-  .title{
-    display:flex;
-    flex-direction:column;
-    gap:4px;
+    align-items:center;
   }
   .title h1{
     margin:0;
@@ -82,11 +77,12 @@
   .title .sub{
     color:var(--mut);
     font-size:13px;
-    letter-spacing:.12em;
     text-transform:uppercase;
+    letter-spacing:.12em;
+    margin-top:5px;
   }
 
-  .ledrow{
+  .ledRow{
     display:flex;
     gap:10px;
     flex-wrap:wrap;
@@ -94,14 +90,14 @@
   }
   .led{
     min-width:96px;
+    background:linear-gradient(180deg,#121212,#0d0d0d);
     border:1px solid var(--line2);
     border-radius:10px;
     padding:8px 10px;
-    background:linear-gradient(180deg,#121212,#0d0d0d);
   }
   .led .k{
-    color:var(--mut);
     font-size:11px;
+    color:var(--mut);
     text-transform:uppercase;
     letter-spacing:.1em;
   }
@@ -118,29 +114,25 @@
     flex-direction:column;
     gap:10px;
   }
-  .transportRow{
+  .row{
     display:flex;
     gap:8px;
-    align-items:center;
     flex-wrap:wrap;
+    align-items:center;
   }
 
-  button, select, input[type="number"]{
+  button, select{
     font:inherit;
     color:var(--txt);
     background:linear-gradient(180deg,#222,#171717);
     border:1px solid var(--line2);
     border-radius:10px;
     padding:10px 12px;
-    outline:none;
-  }
-  button{
     cursor:pointer;
-    font-weight:700;
-    letter-spacing:.04em;
   }
-  button:hover{border-color:#5b5b5b}
+  button:hover, select:hover{border-color:#5c5c5c}
   button:active{transform:translateY(1px)}
+
   .btnAcc{
     background:linear-gradient(180deg,var(--acc2),var(--acc3));
     border-color:#8d1d1d;
@@ -149,9 +141,9 @@
     background:linear-gradient(180deg,#1e1e1e,#151515);
   }
   .btnSmall{
+    min-height:36px;
     padding:7px 10px;
     font-size:13px;
-    min-height:36px;
   }
 
   .field{
@@ -166,12 +158,10 @@
     text-transform:uppercase;
     letter-spacing:.08em;
   }
-  .field input[type="range"], .field select{
-    width:100%;
-  }
 
   input[type="range"]{
     appearance:none;
+    width:100%;
     height:34px;
     background:transparent;
     margin:0;
@@ -184,18 +174,27 @@
   }
   input[type="range"]::-webkit-slider-thumb{
     appearance:none;
-    width:18px; height:18px;
+    width:18px;height:18px;
     margin-top:-6px;
     border-radius:50%;
     background:linear-gradient(180deg,var(--acc2),var(--acc3));
     border:1px solid #871616;
-    box-shadow:0 0 0 2px rgba(0,0,0,.25);
   }
 
-  .masterGrid{
-    display:grid;
-    grid-template-columns:repeat(4,1fr);
-    gap:10px;
+  .smallVal{
+    font-family:var(--mono);
+    color:#ffbcbc;
+    font-size:12px;
+    min-height:14px;
+    text-align:right;
+  }
+
+  .blockTitle{
+    font-size:11px;
+    color:var(--mut);
+    text-transform:uppercase;
+    letter-spacing:.12em;
+    margin-bottom:7px;
   }
 
   .tracks{
@@ -203,24 +202,22 @@
     grid-template-columns:repeat(2,1fr);
     gap:12px;
   }
-
   .track{
     display:flex;
     flex-direction:column;
     gap:10px;
-    min-width:0;
   }
   .trackHead{
     display:flex;
-    align-items:center;
     justify-content:space-between;
-    gap:8px;
+    gap:10px;
     flex-wrap:wrap;
+    align-items:center;
   }
   .trackName{
     display:flex;
-    align-items:center;
     gap:8px;
+    align-items:center;
   }
   .trackName h2{
     margin:0;
@@ -238,18 +235,12 @@
     background:rgba(217,54,54,.12);
   }
 
-  .trackTop{
-    display:grid;
-    grid-template-columns: 1.1fr .9fr;
-    gap:10px;
-  }
-
-  .blockTitle{
-    font-size:11px;
-    color:var(--mut);
-    text-transform:uppercase;
-    letter-spacing:.12em;
-    margin-bottom:7px;
+  .mini{
+    background:linear-gradient(180deg,var(--panel3),#1a1a1a);
+    border:1px solid var(--line);
+    border-radius:12px;
+    padding:10px;
+    min-width:0;
   }
 
   .paramGrid{
@@ -263,45 +254,25 @@
     gap:8px;
   }
 
-  .mini{
-    background:linear-gradient(180deg,var(--panel3),#1a1a1a);
-    border:1px solid var(--line);
-    border-radius:12px;
-    padding:10px;
-    min-width:0;
-  }
-
-  .smallVal{
-    font-family:var(--mono);
-    color:#ffb5b5;
-    font-size:12px;
-    text-align:right;
-    min-height:14px;
-  }
-
-  .seqPanel{
-    display:flex;
-    flex-direction:column;
-    gap:10px;
+  .sequencer{
+    display:grid;
+    grid-template-columns:1.25fr .75fr;
+    gap:12px;
   }
 
   .seqHeader{
     display:flex;
-    align-items:center;
     justify-content:space-between;
     gap:10px;
     flex-wrap:wrap;
+    align-items:center;
+    margin-bottom:10px;
   }
 
-  .trackTabs{
+  .tabs{
     display:flex;
     gap:8px;
     flex-wrap:wrap;
-  }
-
-  .tab.active{
-    background:linear-gradient(180deg,var(--acc2),var(--acc3));
-    border-color:#8d1d1d;
   }
 
   .stepGrid{
@@ -309,7 +280,6 @@
     grid-template-columns:repeat(16,1fr);
     gap:6px;
   }
-
   .step{
     border:1px solid var(--line2);
     background:linear-gradient(180deg,#1d1d1d,#121212);
@@ -319,83 +289,59 @@
     flex-direction:column;
     gap:5px;
     min-width:0;
-    position:relative;
-    overflow:hidden;
+  }
+  .step.on{
+    background:linear-gradient(180deg,rgba(217,54,54,.22),rgba(90,18,18,.18)), linear-gradient(180deg,#231313,#121212);
   }
   .step.playing{
     border-color:#ffd9a3;
     box-shadow:0 0 0 1px rgba(240,194,102,.55) inset, 0 0 14px rgba(240,194,102,.22);
   }
-  .step.on{
-    background:linear-gradient(180deg,rgba(217,54,54,.25),rgba(100,18,18,.18)), linear-gradient(180deg,#231313,#121212);
+  .step.selected{
+    outline:2px solid rgba(255,103,103,.75);
   }
   .step .n{
-    font-size:10px;
-    color:var(--mut);
     text-align:center;
+    color:var(--mut);
+    font-size:10px;
     font-family:var(--mono);
   }
-  .step button.toggle{
-    padding:8px 0;
-    min-height:34px;
-    border-radius:8px;
-    font-size:12px;
-    font-weight:700;
-  }
-  .step.on button.toggle{
-    background:linear-gradient(180deg,var(--acc2),var(--acc3));
-    border-color:#8d1d1d;
-  }
-  .step input[type="range"]{
-    height:20px;
-  }
-  .step input[type="range"]::-webkit-slider-runnable-track{
-    height:5px;
-  }
-  .step input[type="range"]::-webkit-slider-thumb{
-    width:14px;height:14px;margin-top:-5px;
-  }
-  .stepMeta{
-    display:grid;
-    grid-template-columns:1fr;
-    gap:4px;
-  }
-  .tiny{
+  .tinyCenter{
+    text-align:center;
     font-size:10px;
-    color:var(--mut);
-    display:flex;
-    justify-content:space-between;
-    gap:4px;
-    line-height:1;
+    color:#ffb8b8;
+    font-family:var(--mono);
   }
 
   .legend{
     display:flex;
-    gap:10px;
+    gap:12px;
     flex-wrap:wrap;
     font-size:12px;
     color:var(--mut);
   }
-  .legend span b{
-    color:var(--txt);
+
+  .editorGrid{
+    display:grid;
+    grid-template-columns:repeat(2,1fr);
+    gap:8px;
   }
 
   .footer{
     color:var(--mut);
-    font-size:12px;
     text-align:center;
+    font-size:12px;
     padding:2px 0 10px;
   }
 
-  @media (max-width: 1100px){
-    .topbar{grid-template-columns:1fr}
+  @media (max-width:1100px){
+    .top{grid-template-columns:1fr}
     .tracks{grid-template-columns:1fr}
-    .trackTop{grid-template-columns:1fr}
-    .masterGrid{grid-template-columns:repeat(2,1fr)}
+    .sequencer{grid-template-columns:1fr}
   }
-  @media (max-width: 760px){
+  @media (max-width:760px){
     .app{padding:10px}
-    .masterGrid,.paramGrid,.paramGrid6{grid-template-columns:repeat(2,1fr)}
+    .paramGrid,.paramGrid6,.editorGrid{grid-template-columns:repeat(2,1fr)}
     .stepGrid{grid-template-columns:repeat(8,1fr)}
     .title h1{font-size:22px}
   }
@@ -404,36 +350,27 @@
 <body>
 <div class="app">
 
-  <section class="topbar">
+  <section class="top">
     <div class="panel brand">
       <div class="title">
-        <h1>DR-4</h1>
-        <div class="sub">Drum Modeling Box — 4 tracks · algorithmic drum synthesis</div>
+        <h1>DR-4 V2</h1>
+        <div class="sub">Algorithmic Drum Modeling Box · 4 tracks · patterns A/B</div>
       </div>
-      <div class="ledrow">
-        <div class="led">
-          <div class="k">Audio</div>
-          <div class="v" id="audioState">OFF</div>
-        </div>
-        <div class="led">
-          <div class="k">Transport</div>
-          <div class="v" id="playState">STOP</div>
-        </div>
-        <div class="led">
-          <div class="k">Step</div>
-          <div class="v" id="stepDisplay">--</div>
-        </div>
+      <div class="ledRow">
+        <div class="led"><div class="k">Audio</div><div class="v" id="audioState">OFF</div></div>
+        <div class="led"><div class="k">Transport</div><div class="v" id="playState">STOP</div></div>
+        <div class="led"><div class="k">Step</div><div class="v" id="stepDisplay">--</div></div>
       </div>
     </div>
 
     <div class="panel transport">
-      <div class="transportRow">
+      <div class="row">
         <button id="audioBtn" class="btnAcc">Audio On</button>
         <button id="playBtn" class="btnGhost">Play</button>
-        <button id="randomBtn" class="btnGhost">Random Pattern</button>
+        <button id="rndBtn" class="btnGhost">Random</button>
         <button id="clearBtn" class="btnGhost">Clear</button>
       </div>
-      <div class="transportRow">
+      <div class="row">
         <div class="field">
           <label>BPM</label>
           <input id="bpm" type="range" min="50" max="180" step="1" value="122">
@@ -443,61 +380,62 @@
           <input id="swing" type="range" min="0" max="0.35" step="0.001" value="0.03">
         </div>
         <div class="field">
-          <label>Pattern Len</label>
-          <select id="patternLength">
-            <option value="16" selected>16</option>
-          </select>
+          <label>Accent Amt</label>
+          <input id="accentAmt" type="range" min="0" max="1" step="0.001" value="0.32">
         </div>
         <div class="field">
-          <label>Master Volume</label>
+          <label>Master</label>
           <input id="masterVol" type="range" min="0" max="1.2" step="0.001" value="0.9">
         </div>
       </div>
     </div>
 
     <div class="panel">
-      <div class="blockTitle">Master FX</div>
-      <div class="masterGrid">
-        <div class="field">
-          <label>Saturation</label>
-          <input id="masterDrive" type="range" min="0" max="1" step="0.001" value="0.18">
-        </div>
-        <div class="field">
-          <label>Tone</label>
-          <input id="masterTone" type="range" min="200" max="12000" step="1" value="7500">
-        </div>
-        <div class="field">
-          <label>Compressor</label>
-          <input id="masterComp" type="range" min="0" max="1" step="0.001" value="0.45">
-        </div>
-        <div class="field">
-          <label>Limiter Makeup</label>
-          <input id="masterMakeup" type="range" min="0.7" max="1.5" step="0.001" value="1.0">
-        </div>
+      <div class="blockTitle">Pattern / Master FX</div>
+      <div class="row" style="margin-bottom:8px">
+        <button id="patA" class="btnAcc">Pattern A</button>
+        <button id="patB" class="btnGhost">Pattern B</button>
+        <button id="copyAToB" class="btnGhost">Copy A → B</button>
+        <button id="copyBToA" class="btnGhost">Copy B → A</button>
+      </div>
+      <div class="paramGrid">
+        <div class="field"><label>Saturation</label><input id="masterDrive" type="range" min="0" max="1" step="0.001" value="0.18"></div>
+        <div class="field"><label>Tone</label><input id="masterTone" type="range" min="300" max="12000" step="1" value="7600"></div>
+        <div class="field"><label>Comp</label><input id="masterComp" type="range" min="0" max="1" step="0.001" value="0.45"></div>
+        <div class="field"><label>Makeup</label><input id="masterMakeup" type="range" min="0.7" max="1.5" step="0.001" value="1"></div>
       </div>
     </div>
   </section>
 
   <section class="tracks" id="tracks"></section>
 
-  <section class="panel seqPanel">
-    <div class="seqHeader">
-      <div>
-        <div class="blockTitle">Sequencer</div>
-        <div class="legend">
-          <span><b>Trig</b> on/off</span>
-          <span><b>Vel</b> velocity</span>
-          <span><b>Prob</b> probability</span>
-          <span><b>µT</b> microtiming</span>
+  <section class="sequencer">
+    <div class="panel">
+      <div class="seqHeader">
+        <div>
+          <div class="blockTitle">Sequencer</div>
+          <div class="legend">
+            <span>Trig</span>
+            <span>Vel</span>
+            <span>Prob</span>
+            <span>µT</span>
+            <span>Accent</span>
+            <span>Locks XYZT</span>
+          </div>
         </div>
+        <div class="tabs" id="trackTabs"></div>
       </div>
-      <div class="trackTabs" id="trackTabs"></div>
+      <div class="stepGrid" id="stepGrid"></div>
     </div>
-    <div class="stepGrid" id="stepGrid"></div>
+
+    <div class="panel">
+      <div class="blockTitle">Step Editor</div>
+      <div id="stepEditor"></div>
+    </div>
   </section>
 
   <div class="footer">
-    DR-4 Web — inspiration “algorithmic drum synth” · optimisé pour desktop/mobile récent.
+    DR-4 V2 Web — inspiration Modor-style drum algorithms · choke hats · accents · parameter locks.
   </div>
 </div>
 
@@ -505,136 +443,137 @@
 (() => {
   const TRACK_DEFS = [
     {
-      id:'kick',
-      name:'Kick',
-      badge:'BD',
+      id:'kick', name:'Kick', badge:'BD',
       models:['Drive BD','Punch BD','Sub BD'],
-      defaults:{
-        model:'Drive BD', x:0.38, y:0.30, z:0.42, t:0.52,
-        pitch:0.34, decay:0.30, curve:0.53,
-        level:0.95, pan:0.00, tune:0.00, aux:0.00
-      }
+      defaults:{model:'Drive BD',x:0.38,y:0.30,z:0.42,t:0.52,pitch:0.34,decay:0.30,curve:0.53,level:0.95,pan:0,tune:0}
     },
     {
-      id:'snare',
-      name:'Snare',
-      badge:'SD',
+      id:'snare', name:'Snare', badge:'SD',
       models:['Tone+Noise','Clap','Snap'],
-      defaults:{
-        model:'Tone+Noise', x:0.43, y:0.56, z:0.55, t:0.36,
-        pitch:0.46, decay:0.26, curve:0.48,
-        level:0.78, pan:-0.05, tune:0.00, aux:0.00
-      }
+      defaults:{model:'Tone+Noise',x:0.43,y:0.56,z:0.55,t:0.36,pitch:0.46,decay:0.26,curve:0.48,level:0.78,pan:-0.05,tune:0}
     },
     {
-      id:'hat',
-      name:'Hat / Cym',
-      badge:'HH',
+      id:'hat', name:'Hat / Cym', badge:'HH',
       models:['Closed Hat','Open Hat','Ride'],
-      defaults:{
-        model:'Closed Hat', x:0.66, y:0.42, z:0.48, t:0.32,
-        pitch:0.58, decay:0.14, curve:0.62,
-        level:0.62, pan:0.08, tune:0.00, aux:0.00
-      }
+      defaults:{model:'Closed Hat',x:0.66,y:0.42,z:0.48,t:0.32,pitch:0.58,decay:0.14,curve:0.62,level:0.62,pan:0.08,tune:0}
     },
     {
-      id:'perc',
-      name:'Perc / Bell',
-      badge:'PR',
+      id:'perc', name:'Perc / Bell', badge:'PR',
       models:['Cowbell','Clave','Metal Perc'],
-      defaults:{
-        model:'Cowbell', x:0.52, y:0.35, z:0.44, t:0.22,
-        pitch:0.50, decay:0.28, curve:0.56,
-        level:0.70, pan:0.12, tune:0.00, aux:0.00
-      }
+      defaults:{model:'Cowbell',x:0.52,y:0.35,z:0.44,t:0.22,pitch:0.50,decay:0.28,curve:0.56,level:0.70,pan:0.12,tune:0}
     }
   ];
 
   const STEPS = 16;
-  const stepGrid = document.getElementById('stepGrid');
-  const trackTabs = document.getElementById('trackTabs');
-  const tracksWrap = document.getElementById('tracks');
-
-  let ctx = null;
-  let masterIn, masterDrive, masterTone, comp, limiter, masterGain;
-  let noiseBuffer = null;
-
-  let isPlaying = false;
-  let currentStep = 0;
-  let nextNoteTime = 0;
-  let schedulerId = null;
-  let lookaheadMs = 25;
-  let scheduleAheadTime = 0.10;
-  let selectedTrack = 0;
-  let lastStepEls = [];
 
   const state = {
     bpm:122,
     swing:0.03,
+    accentAmt:0.32,
     masterVol:0.9,
     masterDrive:0.18,
-    masterTone:7500,
+    masterTone:7600,
     masterComp:0.45,
     masterMakeup:1.0,
-    tracks: TRACK_DEFS.map(def => ({
-      ...structuredClone(def.defaults),
-      steps:Array.from({length:STEPS}, (_,i)=>({
-        on:false,
-        vel:(i%4===0?1:0.78),
-        prob:1.0,
-        micro:0
-      }))
-    }))
+    currentPattern:'A',
+    selectedTrack:0,
+    selectedStep:0,
+    patterns:{
+      A:createPattern(),
+      B:createPattern()
+    }
   };
 
-  function clamp(v,a,b){ return Math.max(a,Math.min(b,v)); }
-  function lerp(a,b,t){ return a+(b-a)*t; }
-  function expMap01(v, min, max){
-    return min * Math.pow(max/min, v);
+  function createStep(i){
+    return {
+      on:false,
+      vel:(i%4===0?1:0.78),
+      prob:1,
+      micro:0,
+      accent:0,
+      lockOn:false,
+      lockX:0.5,
+      lockY:0.5,
+      lockZ:0.5,
+      lockT:0.5
+    };
   }
 
-  function curveBlend(curve, x){
+  function createPattern(){
+    return {
+      tracks: TRACK_DEFS.map(def => ({
+        ...structuredClone(def.defaults),
+        mute:false,
+        steps:Array.from({length:STEPS}, (_,i)=>createStep(i))
+      }))
+    };
+  }
+
+  function pattern(){ return state.patterns[state.currentPattern]; }
+  function tracks(){ return pattern().tracks; }
+  function track(ti){ return tracks()[ti]; }
+  function step(ti,si){ return track(ti).steps[si]; }
+
+  let ctx=null, noiseBuffer=null;
+  let masterIn, masterDrive, masterTone, comp, limiter, masterGain;
+  let hatChokeGain=null;
+
+  let isPlaying=false, currentStep=0, nextNoteTime=0, schedulerId=null;
+  const scheduleAheadTime=0.10, lookaheadMs=25;
+
+  const tracksWrap = document.getElementById('tracks');
+  const trackTabs = document.getElementById('trackTabs');
+  const stepGrid = document.getElementById('stepGrid');
+  const stepEditor = document.getElementById('stepEditor');
+
+  function clamp(v,a,b){ return Math.max(a, Math.min(b, v)); }
+  function lerp(a,b,t){ return a + (b-a)*t; }
+  function expMap01(v,min,max){ return min * Math.pow(max/min, v); }
+
+  function setLed(id,text,cls=''){
+    const el = document.getElementById(id);
+    el.textContent = text;
+    el.className = 'v ' + cls;
+  }
+
+  function curveBlend(curve,x){
     x = clamp(x,0,1);
     const types = [
-      (x)=>1-x,
-      (x)=>Math.pow(1-x,2),
-      (x)=>Math.exp(-5*x),
-      (x)=>Math.pow(1/(1+5*x),2),
-      (x)=>1/(1+5*x)
+      x => 1-x,
+      x => Math.pow(1-x,2),
+      x => Math.exp(-5*x),
+      x => Math.pow(1/(1+5*x),2),
+      x => 1/(1+5*x)
     ];
     const pos = clamp(curve,0,1)*4;
     const i = Math.floor(pos);
     const f = pos - i;
-    if(i>=4) return types[4](x);
+    if(i >= 4) return types[4](x);
     return lerp(types[i](x), types[i+1](x), f);
   }
 
   function curveName(v){
-    if(v < 0.125) return 'Linear';
-    if(v < 0.375) return 'Sq Linear';
-    if(v < 0.625) return 'Exp';
-    if(v < 0.875) return 'Sq Reciprocal';
+    if(v < .125) return 'Linear';
+    if(v < .375) return 'Sq Linear';
+    if(v < .625) return 'Exp';
+    if(v < .875) return 'Sq Reciprocal';
     return 'Reciprocal';
   }
 
   function distortionCurve(amount=50){
-    const n = 2048;
-    const curve = new Float32Array(n);
-    const k = amount * 70 + 1;
+    const n=2048, curve=new Float32Array(n), k=amount*70+1;
     for(let i=0;i<n;i++){
-      const x = i*2/n - 1;
-      curve[i] = ((1 + k) * x) / (1 + k * Math.abs(x));
+      const x=i*2/n-1;
+      curve[i]=((1+k)*x)/(1+k*Math.abs(x));
     }
     return curve;
   }
 
   function softClipCurve(amount=0.5){
-    const n = 2048;
-    const curve = new Float32Array(n);
-    const a = 1 + amount*8;
+    const n=2048, curve=new Float32Array(n), a=1+amount*8;
     for(let i=0;i<n;i++){
-      const x = i*2/n - 1;
-      curve[i] = Math.tanh(a*x)/Math.tanh(a);
+      const x=i*2/n-1;
+      curve[i]=Math.tanh(a*x)/Math.tanh(a);
     }
     return curve;
   }
@@ -642,8 +581,8 @@
   function createNoiseBuffer(context){
     const len = context.sampleRate * 2;
     const buf = context.createBuffer(1, len, context.sampleRate);
-    const data = buf.getChannelData(0);
-    for(let i=0;i<len;i++) data[i] = Math.random()*2 - 1;
+    const d = buf.getChannelData(0);
+    for(let i=0;i<len;i++) d[i] = Math.random()*2 - 1;
     return buf;
   }
 
@@ -687,25 +626,52 @@
       limiter.connect(masterGain);
       masterGain.connect(ctx.destination);
 
+      hatChokeGain = ctx.createGain();
+      hatChokeGain.gain.value = 1;
+      hatChokeGain.connect(masterIn);
+
       updateMasterFX();
     }
     if(ctx.state !== 'running') await ctx.resume();
-    setText('audioState', 'ON', 'on');
+    setLed('audioState','ON','on');
   }
 
-  function setText(id, text, cls=''){
-    const el = document.getElementById(id);
-    el.textContent = text;
-    el.className = 'v ' + cls;
+  function updateMasterFX(){
+    if(!ctx) return;
+    masterDrive.curve = softClipCurve(state.masterDrive);
+    masterTone.frequency.setTargetAtTime(state.masterTone, ctx.currentTime, 0.01);
+    const c = state.masterComp;
+    comp.threshold.setTargetAtTime(lerp(-8,-30,c), ctx.currentTime, 0.01);
+    comp.ratio.setTargetAtTime(lerp(2,12,c), ctx.currentTime, 0.01);
+    comp.knee.setTargetAtTime(lerp(6,24,c), ctx.currentTime, 0.01);
+    masterGain.gain.setTargetAtTime(state.masterVol*state.masterMakeup, ctx.currentTime, 0.01);
   }
 
-  function makeTrackUI(){
+  function formatValue(param,v){
+    switch(param){
+      case 'decay': return Number(v).toFixed(3)+' s';
+      case 'tune': return Number(v).toFixed(1)+' st';
+      case 'curve': return curveName(v);
+      default: return Number(v).toFixed(2);
+    }
+  }
+
+  function sliderHTML(ti, param, label, min, max, step, value){
+    return `
+      <div class="field">
+        <label>${label}</label>
+        <input data-track="${ti}" data-param="${param}" type="range" min="${min}" max="${max}" step="${step}" value="${value}">
+        <div class="smallVal" id="val-${ti}-${param}">${formatValue(param,value)}</div>
+      </div>
+    `;
+  }
+
+  function renderTracks(){
     tracksWrap.innerHTML = '';
     trackTabs.innerHTML = '';
 
     TRACK_DEFS.forEach((def, ti) => {
-      const t = state.tracks[ti];
-
+      const t = track(ti);
       const panel = document.createElement('section');
       panel.className = 'panel track';
       panel.innerHTML = `
@@ -717,101 +683,58 @@
           <div class="field" style="min-width:180px">
             <label>Model</label>
             <select data-track="${ti}" data-param="model">
-              ${def.models.map(m => `<option ${m===t.model?'selected':''}>${m}</option>`).join('')}
+              ${def.models.map(m=>`<option ${m===t.model?'selected':''}>${m}</option>`).join('')}
             </select>
           </div>
         </div>
 
-        <div class="trackTop">
-          <div class="mini">
-            <div class="blockTitle">Core params</div>
-            <div class="paramGrid">
-              ${sliderHTML(ti,'x','X',0,1,0.001,t.x)}
-              ${sliderHTML(ti,'y','Y',0,1,0.001,t.y)}
-              ${sliderHTML(ti,'z','Z',0,1,0.001,t.z)}
-              ${sliderHTML(ti,'t','T',0,1,0.001,t.t)}
-            </div>
-          </div>
-
-          <div class="mini">
-            <div class="blockTitle">Envelope / tone</div>
-            <div class="paramGrid">
-              ${sliderHTML(ti,'pitch','Pitch',0,1,0.001,t.pitch)}
-              ${sliderHTML(ti,'decay','Decay',0.02,1,0.001,t.decay)}
-              ${sliderHTML(ti,'curve','Curve',0,1,0.001,t.curve, curveName(t.curve))}
-              ${sliderHTML(ti,'tune','Tune',-12,12,0.01,t.tune)}
-            </div>
+        <div class="mini">
+          <div class="blockTitle">Core XYZT</div>
+          <div class="paramGrid">
+            ${sliderHTML(ti,'x','X',0,1,0.001,t.x)}
+            ${sliderHTML(ti,'y','Y',0,1,0.001,t.y)}
+            ${sliderHTML(ti,'z','Z',0,1,0.001,t.z)}
+            ${sliderHTML(ti,'t','T',0,1,0.001,t.t)}
           </div>
         </div>
 
         <div class="mini">
-          <div class="blockTitle">Mixer</div>
+          <div class="blockTitle">Pitch / Envelope</div>
+          <div class="paramGrid">
+            ${sliderHTML(ti,'pitch','Pitch',0,1,0.001,t.pitch)}
+            ${sliderHTML(ti,'decay','Decay',0.02,1,0.001,t.decay)}
+            ${sliderHTML(ti,'curve','Curve',0,1,0.001,t.curve)}
+            ${sliderHTML(ti,'tune','Tune',-12,12,0.01,t.tune)}
+          </div>
+        </div>
+
+        <div class="mini">
+          <div class="blockTitle">Mixer / Actions</div>
           <div class="paramGrid6">
             ${sliderHTML(ti,'level','Level',0,1.2,0.001,t.level)}
             ${sliderHTML(ti,'pan','Pan',-1,1,0.001,t.pan)}
-            <div class="field">
-              <label>Preview</label>
-              <button class="btnSmall btnGhost" data-preview="${ti}">Trig</button>
-            </div>
-            <div class="field">
-              <label>Randomize</label>
-              <button class="btnSmall btnGhost" data-randtrack="${ti}">Rnd</button>
-            </div>
-            <div class="field">
-              <label>Fill</label>
-              <button class="btnSmall btnGhost" data-filltrack="${ti}">Fill</button>
-            </div>
-            <div class="field">
-              <label>Mute</label>
-              <button class="btnSmall btnGhost" data-mute="${ti}">${t.mute?'Muted':'On'}</button>
-            </div>
+            <div class="field"><label>Preview</label><button class="btnSmall btnGhost" data-preview="${ti}">Trig</button></div>
+            <div class="field"><label>Randomize</label><button class="btnSmall btnGhost" data-randtrack="${ti}">Rnd</button></div>
+            <div class="field"><label>Fill</label><button class="btnSmall btnGhost" data-filltrack="${ti}">Fill</button></div>
+            <div class="field"><label>Mute</label><button class="btnSmall btnGhost" data-mute="${ti}">${t.mute?'Muted':'On'}</button></div>
           </div>
         </div>
       `;
       tracksWrap.appendChild(panel);
 
       const tab = document.createElement('button');
-      tab.className = 'btnSmall btnGhost tab' + (ti===selectedTrack?' active':'');
+      tab.className = 'btnSmall ' + (ti===state.selectedTrack ? 'btnAcc':'btnGhost');
       tab.textContent = def.name;
       tab.onclick = () => {
-        selectedTrack = ti;
-        renderTabs();
+        state.selectedTrack = ti;
+        renderTracks();
         renderStepGrid();
+        renderStepEditor();
       };
       trackTabs.appendChild(tab);
     });
 
     bindTrackControls();
-    renderTabs();
-  }
-
-  function sliderHTML(ti, param, label, min, max, step, value, display=''){
-    const shown = display || formatValue(param, value);
-    return `
-      <div class="field">
-        <label>${label}</label>
-        <input data-track="${ti}" data-param="${param}" type="range" min="${min}" max="${max}" step="${step}" value="${value}">
-        <div class="smallVal" id="val-${ti}-${param}">${shown}</div>
-      </div>
-    `;
-  }
-
-  function formatValue(param, v){
-    switch(param){
-      case 'x': case 'y': case 'z': case 't':
-      case 'level': case 'curve':
-        return Number(v).toFixed(2);
-      case 'pan':
-        return Number(v).toFixed(2);
-      case 'pitch':
-        return Number(v).toFixed(2);
-      case 'decay':
-        return Number(v).toFixed(3)+' s';
-      case 'tune':
-        return Number(v).toFixed(1)+' st';
-      default:
-        return String(v);
-    }
   }
 
   function bindTrackControls(){
@@ -819,12 +742,11 @@
       const ti = +el.dataset.track;
       const param = el.dataset.param;
       const isSelect = el.tagName === 'SELECT';
-
       const handler = () => {
         const val = isSelect ? el.value : +el.value;
-        state.tracks[ti][param] = val;
+        track(ti)[param] = val;
         const vEl = document.getElementById(`val-${ti}-${param}`);
-        if(vEl) vEl.textContent = param==='curve' ? curveName(val) : formatValue(param,val);
+        if(vEl) vEl.textContent = formatValue(param,val);
       };
       el.addEventListener('input', handler);
       el.addEventListener('change', handler);
@@ -833,100 +755,136 @@
     document.querySelectorAll('[data-preview]').forEach(btn=>{
       btn.onclick = async () => {
         await ensureAudio();
-        const ti = +btn.dataset.preview;
-        triggerTrack(ti, ctx.currentTime, 1.0);
+        triggerTrack(+btn.dataset.preview, ctx.currentTime, 1, null);
       };
     });
-
     document.querySelectorAll('[data-randtrack]').forEach(btn=>{
       btn.onclick = () => {
-        const ti = +btn.dataset.randtrack;
-        randomizeTrack(ti);
-        makeTrackUI();
+        randomizeTrack(+btn.dataset.randtrack);
+        renderTracks();
         renderStepGrid();
+        renderStepEditor();
       };
     });
-
     document.querySelectorAll('[data-filltrack]').forEach(btn=>{
       btn.onclick = () => {
-        const ti = +btn.dataset.filltrack;
-        fillTrack(ti);
+        fillTrack(+btn.dataset.filltrack);
         renderStepGrid();
+        renderStepEditor();
       };
     });
-
     document.querySelectorAll('[data-mute]').forEach(btn=>{
       btn.onclick = () => {
-        const ti = +btn.dataset.mute;
-        state.tracks[ti].mute = !state.tracks[ti].mute;
-        btn.textContent = state.tracks[ti].mute ? 'Muted' : 'On';
+        const t = track(+btn.dataset.mute);
+        t.mute = !t.mute;
+        btn.textContent = t.mute ? 'Muted' : 'On';
       };
-    });
-  }
-
-  function renderTabs(){
-    [...trackTabs.children].forEach((tab,i)=>{
-      tab.className = 'btnSmall ' + (i===selectedTrack ? 'btnAcc active tab' : 'btnGhost tab');
     });
   }
 
   function renderStepGrid(){
     stepGrid.innerHTML = '';
-    lastStepEls = [];
-    const track = state.tracks[selectedTrack];
+    const ti = state.selectedTrack;
 
     for(let i=0;i<STEPS;i++){
-      const s = track.steps[i];
-      const wrap = document.createElement('div');
-      wrap.className = 'step' + (s.on?' on':'');
-      wrap.innerHTML = `
+      const s = step(ti,i);
+      const el = document.createElement('div');
+      el.className = 'step'
+        + (s.on?' on':'')
+        + (i===state.selectedStep?' selected':'')
+        + (i===currentStep && isPlaying ? ' playing':'');
+      el.innerHTML = `
         <div class="n">${String(i+1).padStart(2,'0')}</div>
-        <button class="toggle ${s.on?'btnAcc':'btnGhost'} btnSmall">${s.on?'ON':'--'}</button>
-        <div class="stepMeta">
-          <div class="tiny"><span>Vel</span><span>${s.vel.toFixed(2)}</span></div>
-          <input class="vel" type="range" min="0.1" max="1.2" step="0.001" value="${s.vel}">
-          <div class="tiny"><span>Prob</span><span>${Math.round(s.prob*100)}%</span></div>
-          <input class="prob" type="range" min="0" max="1" step="0.001" value="${s.prob}">
-          <div class="tiny"><span>µT</span><span>${s.micro.toFixed(3)}</span></div>
-          <input class="micro" type="range" min="-0.04" max="0.04" step="0.001" value="${s.micro}">
-        </div>
+        <button class="${s.on?'btnAcc':'btnGhost'} btnSmall">Trig</button>
+        <div class="tinyCenter">A:${s.accent.toFixed(2)}</div>
+        <div class="tinyCenter">${s.lockOn?'LOCK':'--'}</div>
       `;
-      const toggle = wrap.querySelector('.toggle');
-      const vel = wrap.querySelector('.vel');
-      const prob = wrap.querySelector('.prob');
-      const micro = wrap.querySelector('.micro');
-
-      toggle.onclick = () => {
+      el.querySelector('button').onclick = (ev) => {
+        ev.stopPropagation();
         s.on = !s.on;
         renderStepGrid();
       };
-      vel.oninput = () => {
-        s.vel = +vel.value;
-        wrap.querySelectorAll('.tiny span:last-child')[0].textContent = s.vel.toFixed(2);
+      el.onclick = () => {
+        state.selectedStep = i;
+        renderStepGrid();
+        renderStepEditor();
       };
-      prob.oninput = () => {
-        s.prob = +prob.value;
-        wrap.querySelectorAll('.tiny span:last-child')[1].textContent = Math.round(s.prob*100)+'%';
-      };
-      micro.oninput = () => {
-        s.micro = +micro.value;
-        wrap.querySelectorAll('.tiny span:last-child')[2].textContent = s.micro.toFixed(3);
-      };
-
-      stepGrid.appendChild(wrap);
-      lastStepEls.push(wrap);
+      stepGrid.appendChild(el);
     }
-    updatePlayingStepUI(currentStep);
   }
 
-  function updatePlayingStepUI(step){
-    lastStepEls.forEach((el,i)=>{
-      el.classList.toggle('playing', i===step);
+  function renderStepEditor(){
+    const ti = state.selectedTrack;
+    const si = state.selectedStep;
+    const s = step(ti,si);
+
+    stepEditor.innerHTML = `
+      <div class="mini">
+        <div class="blockTitle">Track: ${TRACK_DEFS[ti].name} · Step ${si+1}</div>
+        <div class="row" style="margin-bottom:8px">
+          <button id="stepToggle" class="${s.on?'btnAcc':'btnGhost'} btnSmall">${s.on?'Trig On':'Trig Off'}</button>
+          <button id="stepLockToggle" class="${s.lockOn?'btnAcc':'btnGhost'} btnSmall">${s.lockOn?'Locks On':'Locks Off'}</button>
+          <button id="copyPrevStep" class="btnGhost btnSmall">Copy Prev</button>
+          <button id="clearStep" class="btnGhost btnSmall">Clear Step</button>
+        </div>
+        <div class="editorGrid">
+          ${stepSlider('vel','Velocity',0.1,1.2,0.001,s.vel)}
+          ${stepSlider('prob','Probability',0,1,0.001,s.prob)}
+          ${stepSlider('micro','Microtiming',-0.04,0.04,0.001,s.micro)}
+          ${stepSlider('accent','Accent',0,1,0.001,s.accent)}
+          ${stepSlider('lockX','Lock X',0,1,0.001,s.lockX)}
+          ${stepSlider('lockY','Lock Y',0,1,0.001,s.lockY)}
+          ${stepSlider('lockZ','Lock Z',0,1,0.001,s.lockZ)}
+          ${stepSlider('lockT','Lock T',0,1,0.001,s.lockT)}
+        </div>
+      </div>
+    `;
+
+    document.getElementById('stepToggle').onclick = () => {
+      s.on = !s.on;
+      renderStepGrid();
+      renderStepEditor();
+    };
+    document.getElementById('stepLockToggle').onclick = () => {
+      s.lockOn = !s.lockOn;
+      renderStepGrid();
+      renderStepEditor();
+    };
+    document.getElementById('copyPrevStep').onclick = () => {
+      const prev = step(ti, (si+STEPS-1)%STEPS);
+      Object.assign(s, structuredClone(prev));
+      renderStepGrid();
+      renderStepEditor();
+    };
+    document.getElementById('clearStep').onclick = () => {
+      Object.assign(s, createStep(si));
+      renderStepGrid();
+      renderStepEditor();
+    };
+
+    stepEditor.querySelectorAll('[data-step-param]').forEach(el=>{
+      const param = el.dataset.stepParam;
+      el.oninput = () => {
+        s[param] = +el.value;
+        const out = document.getElementById('sv-'+param);
+        if(out) out.textContent = Number(s[param]).toFixed(3);
+        renderStepGrid();
+      };
     });
   }
 
+  function stepSlider(param,label,min,max,stepVal,value){
+    return `
+      <div class="field">
+        <label>${label}</label>
+        <input data-step-param="${param}" type="range" min="${min}" max="${max}" step="${stepVal}" value="${value}">
+        <div class="smallVal" id="sv-${param}">${Number(value).toFixed(3)}</div>
+      </div>
+    `;
+  }
+
   function randomizeTrack(ti){
-    const t = state.tracks[ti];
+    const t = track(ti);
     const defs = TRACK_DEFS[ti];
     t.model = defs.models[(Math.random()*defs.models.length)|0];
     t.x = Math.random();
@@ -943,426 +901,143 @@
                  : ti===1 ? ((i===4||i===12) ? 0.90 : (i===15?0.35:0.08))
                  : ti===2 ? (i%2===1 ? 0.72 : 0.22)
                  : ((i===3||i===11)?0.6:0.18);
-
       s.on = Math.random() < base;
-      s.vel = clamp(0.5 + Math.random()*0.55,0.1,1.2);
-      s.prob = clamp(0.55 + Math.random()*0.45,0,1);
-      s.micro = clamp((Math.random()*0.04 - 0.02), -0.04, 0.04);
+      s.vel = clamp(0.5 + Math.random()*0.55, 0.1, 1.2);
+      s.prob = clamp(0.55 + Math.random()*0.45, 0, 1);
+      s.micro = clamp(Math.random()*0.04 - 0.02, -0.04, 0.04);
+      s.accent = Math.random() < 0.25 ? Math.random() : 0;
+      s.lockOn = Math.random() < 0.18;
+      if(s.lockOn){
+        s.lockX = Math.random();
+        s.lockY = Math.random();
+        s.lockZ = Math.random();
+        s.lockT = Math.random();
+      }
     });
   }
 
   function fillTrack(ti){
-    const t = state.tracks[ti];
+    const t = track(ti);
     t.steps.forEach((s,i)=>{
       if(ti===0){
         s.on = (i%4===0 || i===10);
-        s.vel = i%4===0 ? 1.0 : 0.72;
-      }else if(ti===1){
+        s.vel = i%4===0 ? 1.0 : 0.74;
+        s.accent = i%8===0 ? 0.8 : 0.15;
+      } else if(ti===1){
         s.on = (i===4 || i===12);
         s.vel = 0.9;
-      }else if(ti===2){
+        s.accent = 0.4;
+      } else if(ti===2){
         s.on = (i%2===1);
-        s.vel = 0.62 + ((i%4===3)?0.14:0);
-      }else{
+        s.vel = 0.65 + ((i%4===3)?0.14:0);
+        s.accent = i%4===3 ? 0.35 : 0.08;
+      } else {
         s.on = (i===3 || i===11);
         s.vel = 0.8;
+        s.accent = 0.2;
       }
-      s.prob = 1.0;
+      s.prob = 1;
       s.micro = 0;
+      s.lockOn = false;
     });
   }
 
-  function clearAll(){
-    state.tracks.forEach(t => t.steps.forEach(s=>{
-      s.on = false; s.vel = 0.8; s.prob = 1.0; s.micro = 0;
-    }));
+  function initPatterns(){
+    ['A','B'].forEach(p => {
+      state.currentPattern = p;
+      fillTrack(0); fillTrack(1); fillTrack(2); fillTrack(3);
+    });
+    state.currentPattern = 'A';
+  }
+
+  function clearCurrentPattern(){
+    tracks().forEach(t => t.steps.forEach((s,i)=>Object.assign(s, createStep(i))));
     renderStepGrid();
+    renderStepEditor();
   }
 
-  function initPattern(){
-    fillTrack(0);
-    fillTrack(1);
-    fillTrack(2);
-    fillTrack(3);
-    state.tracks[3].steps[11].on = true;
-    state.tracks[3].steps[3].on = true;
-  }
-
-  function setupGlobalControls(){
-    const bpm = document.getElementById('bpm');
-    const swing = document.getElementById('swing');
-    const masterVol = document.getElementById('masterVol');
-    const patternLength = document.getElementById('patternLength');
-    const masterDriveEl = document.getElementById('masterDrive');
-    const masterToneEl = document.getElementById('masterTone');
-    const masterCompEl = document.getElementById('masterComp');
-    const masterMakeupEl = document.getElementById('masterMakeup');
-
-    bpm.oninput = () => state.bpm = +bpm.value;
-    swing.oninput = () => state.swing = +swing.value;
-    masterVol.oninput = () => {
-      state.masterVol = +masterVol.value;
-      if(masterGain) masterGain.gain.setTargetAtTime(state.masterVol, ctx.currentTime, 0.01);
-    };
-    patternLength.onchange = () => {};
-
-    masterDriveEl.oninput = () => {
-      state.masterDrive = +masterDriveEl.value;
-      updateMasterFX();
-    };
-    masterToneEl.oninput = () => {
-      state.masterTone = +masterToneEl.value;
-      updateMasterFX();
-    };
-    masterCompEl.oninput = () => {
-      state.masterComp = +masterCompEl.value;
-      updateMasterFX();
-    };
-    masterMakeupEl.oninput = () => {
-      state.masterMakeup = +masterMakeupEl.value;
-      updateMasterFX();
-    };
-
+  function bindGlobal(){
     document.getElementById('audioBtn').onclick = ensureAudio;
     document.getElementById('playBtn').onclick = async () => {
       await ensureAudio();
       togglePlay();
     };
-    document.getElementById('randomBtn').onclick = () => {
-      state.tracks.forEach((_,i)=>randomizeTrack(i));
-      makeTrackUI();
+    document.getElementById('rndBtn').onclick = () => {
+      tracks().forEach((_,i)=>randomizeTrack(i));
+      renderTracks();
       renderStepGrid();
+      renderStepEditor();
     };
-    document.getElementById('clearBtn').onclick = clearAll;
+    document.getElementById('clearBtn').onclick = clearCurrentPattern;
+
+    const map = {
+      bpm:'bpm', swing:'swing', accentAmt:'accentAmt', masterVol:'masterVol',
+      masterDrive:'masterDrive', masterTone:'masterTone', masterComp:'masterComp', masterMakeup:'masterMakeup'
+    };
+    Object.entries(map).forEach(([id,key])=>{
+      document.getElementById(id).oninput = e => {
+        state[key] = +e.target.value;
+        if(key.startsWith('master')) updateMasterFX();
+        if(key === 'masterVol' && masterGain && ctx){
+          masterGain.gain.setTargetAtTime(state.masterVol*state.masterMakeup, ctx.currentTime, 0.01);
+        }
+      };
+    });
+
+    document.getElementById('patA').onclick = () => switchPattern('A');
+    document.getElementById('patB').onclick = () => switchPattern('B');
+    document.getElementById('copyAToB').onclick = () => {
+      state.patterns.B = structuredClone(state.patterns.A);
+      if(state.currentPattern === 'B'){ renderTracks(); renderStepGrid(); renderStepEditor(); }
+    };
+    document.getElementById('copyBToA').onclick = () => {
+      state.patterns.A = structuredClone(state.patterns.B);
+      if(state.currentPattern === 'A'){ renderTracks(); renderStepGrid(); renderStepEditor(); }
+    };
   }
 
-  function updateMasterFX(){
-    if(!ctx) return;
-    masterDrive.curve = softClipCurve(state.masterDrive);
-    masterTone.frequency.setTargetAtTime(state.masterTone, ctx.currentTime, 0.01);
-
-    const c = state.masterComp;
-    comp.threshold.setTargetAtTime(lerp(-8,-30,c), ctx.currentTime, 0.01);
-    comp.ratio.setTargetAtTime(lerp(2,12,c), ctx.currentTime, 0.01);
-    comp.knee.setTargetAtTime(lerp(6,24,c), ctx.currentTime, 0.01);
-    masterGain.gain.setTargetAtTime(state.masterVol * state.masterMakeup, ctx.currentTime, 0.01);
+  function switchPattern(which){
+    state.currentPattern = which;
+    document.getElementById('patA').className = which==='A' ? 'btnAcc' : 'btnGhost';
+    document.getElementById('patB').className = which==='B' ? 'btnAcc' : 'btnGhost';
+    renderTracks();
+    renderStepGrid();
+    renderStepEditor();
   }
 
-  function createTrackOut(level=0.8, pan=0){
+  function createTrackOut(level=0.8, pan=0, routeToHatBus=false){
     const gain = ctx.createGain();
     gain.gain.value = level;
     const panner = ctx.createStereoPanner();
     panner.pan.value = pan;
     gain.connect(panner);
-    panner.connect(masterIn);
+    panner.connect(routeToHatBus ? hatChokeGain : masterIn);
     return {input:gain};
   }
 
-  function scheduleAutomationCurve(param, startTime, duration, amount, curve){
-    const points = 48;
-    const arr = new Float32Array(points);
-    for(let i=0;i<points;i++){
-      const x = i/(points-1);
-      arr[i] = amount * curveBlend(curve, x);
-    }
+  function scheduleAutomationCurve(param,startTime,duration,amount,curve){
+    const points=48, arr=new Float32Array(points);
+    for(let i=0;i<points;i++) arr[i]=amount * curveBlend(curve, i/(points-1));
     param.cancelScheduledValues(startTime);
     param.setValueAtTime(arr[0], startTime);
-    param.setValueCurveAtTime(arr, startTime, Math.max(duration, 0.002));
+    param.setValueCurveAtTime(arr, startTime, Math.max(duration,0.002));
   }
 
-  function applyAmpEnv(gainParam, time, decay, curve, peak=1){
-    const dur = Math.max(0.005, decay);
-    const pts = 64;
-    const vals = new Float32Array(pts);
-    for(let i=0;i<pts;i++){
-      vals[i] = peak * curveBlend(curve, i/(pts-1));
-    }
+  function applyAmpEnv(gainParam,time,decay,curve,peak=1){
+    const dur=Math.max(0.005,decay), pts=64, vals=new Float32Array(pts);
+    for(let i=0;i<pts;i++) vals[i]=peak*curveBlend(curve, i/(pts-1));
     gainParam.cancelScheduledValues(time);
     gainParam.setValueAtTime(Math.max(0.0001, vals[0]), time);
     gainParam.setValueCurveAtTime(vals, time, dur);
-    gainParam.setValueAtTime(0.0001, time + dur + 0.002);
+    gainParam.setValueAtTime(0.0001, time+dur+0.002);
   }
 
-  function noiseSource(time, duration=0.2){
+  function noiseSource(time,duration=0.2){
     const src = ctx.createBufferSource();
     src.buffer = noiseBuffer;
     src.start(time);
     src.stop(time + duration + 0.05);
     return src;
-  }
-
-  function triggerTrack(ti, time, velocity=1){
-    const t = state.tracks[ti];
-    if(t.mute) return;
-    switch(TRACK_DEFS[ti].id){
-      case 'kick': triggerKick(t, time, velocity); break;
-      case 'snare': triggerSnare(t, time, velocity); break;
-      case 'hat': triggerHat(t, time, velocity); break;
-      case 'perc': triggerPerc(t, time, velocity); break;
-    }
-  }
-
-  function triggerKick(t, time, vel){
-    const out = createTrackOut(t.level * vel, t.pan);
-
-    const basePitch = expMap01(clamp(t.pitch,0,1), 38, 88) * Math.pow(2, t.tune/12);
-    const ampDecay = clamp(t.decay,0.02,1);
-    const pitchDecay = clamp(0.02 + t.decay * lerp(0.22,0.9,t.y), 0.02, 0.8);
-    const curve = t.curve;
-
-    if(t.model === 'Drive BD'){
-      const osc = ctx.createOscillator();
-      osc.type = 'sine';
-
-      const cleanGain = ctx.createGain();
-      const dirtySend = ctx.createGain();
-      const sum = ctx.createGain();
-
-      const dist1 = ctx.createWaveShaper();
-      dist1.curve = distortionCurve(0.25 + t.z * 0.95);
-      dist1.oversample = '4x';
-
-      const bp = ctx.createBiquadFilter();
-      bp.type = 'bandpass';
-      bp.frequency.value = expMap01(t.x, 90, 2800);
-      bp.Q.value = lerp(0.5, 18, t.y);
-
-      const dist2 = ctx.createWaveShaper();
-      dist2.curve = softClipCurve(0.08 + t.z * 0.55);
-
-      const amp = ctx.createGain();
-      amp.gain.value = 0.0001;
-
-      osc.frequency.setValueAtTime(basePitch * (1 + 2.9 * lerp(0.2,1,t.pitch)), time);
-      scheduleAutomationCurve(osc.frequency, time, pitchDecay, basePitch * (2.6 * lerp(0.35,1,t.pitch)), curve);
-      osc.frequency.setTargetAtTime(basePitch, time + pitchDecay * 0.65, 0.02);
-
-      cleanGain.gain.value = 1 - t.t;
-      dirtySend.gain.value = t.t * 1.15;
-
-      osc.connect(cleanGain);
-      osc.connect(dirtySend);
-
-      dirtySend.connect(dist1);
-      dist1.connect(bp);
-      bp.connect(dist2);
-
-      cleanGain.connect(sum);
-      dist2.connect(sum);
-      sum.connect(amp);
-      amp.connect(out.input);
-
-      applyAmpEnv(amp.gain, time, ampDecay, curve, 0.95);
-
-      osc.start(time);
-      osc.stop(time + Math.max(0.15, ampDecay + 0.2));
-    }
-    else if(t.model === 'Punch BD'){
-      const osc1 = ctx.createOscillator();
-      const osc2 = ctx.createOscillator();
-      osc1.type = 'sine';
-      osc2.type = 'triangle';
-
-      const mix = ctx.createGain();
-      const shaper = ctx.createWaveShaper();
-      shaper.curve = softClipCurve(0.16 + t.z * 0.5);
-
-      const lp = ctx.createBiquadFilter();
-      lp.type = 'lowpass';
-      lp.frequency.value = expMap01(t.x, 250, 6000);
-      lp.Q.value = lerp(0.1, 1.2, t.y);
-
-      const amp = ctx.createGain();
-      amp.gain.value = 0.0001;
-
-      const clickNoise = noiseSource(time, 0.03);
-      const clickHP = ctx.createBiquadFilter();
-      clickHP.type = 'highpass';
-      clickHP.frequency.value = expMap01(t.t, 1200, 7000);
-      const clickGain = ctx.createGain();
-      clickGain.gain.value = 0.03 + t.t*0.15;
-
-      const f1 = basePitch * 1.1;
-      const f2 = basePitch * 2.0;
-
-      osc1.frequency.setValueAtTime(f1 * 2.5, time);
-      osc2.frequency.setValueAtTime(f2 * 1.7, time);
-      scheduleAutomationCurve(osc1.frequency, time, 0.03 + t.decay*0.35, f1*1.8, curve);
-      scheduleAutomationCurve(osc2.frequency, time, 0.02 + t.decay*0.20, f2*0.9, curve);
-      osc1.frequency.setTargetAtTime(f1, time + 0.03, 0.02);
-      osc2.frequency.setTargetAtTime(f2*0.45, time + 0.02, 0.02);
-
-      osc1.connect(mix);
-      osc2.connect(mix);
-      mix.connect(shaper);
-      shaper.connect(lp);
-      lp.connect(amp);
-      amp.connect(out.input);
-
-      clickNoise.connect(clickHP);
-      clickHP.connect(clickGain);
-      clickGain.connect(out.input);
-
-      applyAmpEnv(amp.gain, time, 0.05 + ampDecay*0.8, curve, 1.0);
-
-      osc1.start(time);
-      osc2.start(time);
-      osc1.stop(time + 1.0);
-      osc2.stop(time + 1.0);
-    }
-    else{
-      const osc = ctx.createOscillator();
-      osc.type = 'sine';
-      const sub = ctx.createOscillator();
-      sub.type = 'sine';
-
-      const mix = ctx.createGain();
-      const lp = ctx.createBiquadFilter();
-      lp.type = 'lowpass';
-      lp.frequency.value = expMap01(t.x, 180, 1800);
-
-      const amp = ctx.createGain();
-      amp.gain.value = 0.0001;
-
-      const f = expMap01(t.pitch, 28, 58) * Math.pow(2,t.tune/12);
-      osc.frequency.setValueAtTime(f * 1.6, time);
-      sub.frequency.setValueAtTime(f * 0.5, time);
-      scheduleAutomationCurve(osc.frequency, time, 0.03 + t.decay*0.5, f*0.8, curve);
-      osc.frequency.setTargetAtTime(f, time + 0.04, 0.025);
-
-      mix.gain.value = 1;
-      osc.connect(mix);
-      sub.connect(mix);
-      mix.connect(lp);
-      lp.connect(amp);
-      amp.connect(out.input);
-
-      applyAmpEnv(amp.gain, time, 0.10 + ampDecay*0.95, curve, 1.0);
-
-      osc.start(time);
-      sub.start(time);
-      osc.stop(time + 1.4);
-      sub.stop(time + 1.4);
-    }
-  }
-
-  function triggerSnare(t, time, vel){
-    const out = createTrackOut(t.level * vel, t.pan);
-    const curve = t.curve;
-    const ampDecay = clamp(t.decay,0.02,1);
-
-    if(t.model === 'Tone+Noise'){
-      const osc = ctx.createOscillator();
-      osc.type = 'triangle';
-      const toneGain = ctx.createGain();
-      const toneBP = ctx.createBiquadFilter();
-      toneBP.type = 'bandpass';
-      toneBP.frequency.value = expMap01(t.x, 120, 700);
-      toneBP.Q.value = lerp(0.2, 3, t.y);
-
-      const noise = noiseSource(time, ampDecay + 0.15);
-      const hp = ctx.createBiquadFilter();
-      hp.type = 'highpass';
-      hp.frequency.value = expMap01(t.y, 900, 7000);
-      const noiseGain = ctx.createGain();
-
-      const amp = ctx.createGain();
-      amp.gain.value = 0.0001;
-
-      const f = expMap01(t.pitch, 140, 420) * Math.pow(2, t.tune/12);
-      osc.frequency.setValueAtTime(f * 1.3, time);
-      scheduleAutomationCurve(osc.frequency, time, 0.02 + ampDecay*0.22, f*0.35, curve);
-      osc.frequency.setTargetAtTime(f, time + 0.03, 0.01);
-
-      toneGain.gain.value = lerp(0.25, 1.0, 1 - t.z);
-      noiseGain.gain.value = lerp(0.2, 1.3, t.z);
-
-      osc.connect(toneBP);
-      toneBP.connect(toneGain);
-      toneGain.connect(amp);
-
-      noise.connect(hp);
-      hp.connect(noiseGain);
-      noiseGain.connect(amp);
-
-      amp.connect(out.input);
-      applyAmpEnv(amp.gain, time, 0.05 + ampDecay*0.75, curve, 0.92);
-
-      osc.start(time);
-      osc.stop(time + 0.9);
-    }
-    else if(t.model === 'Clap'){
-      const noise = noiseSource(time, 0.6);
-      const bp = ctx.createBiquadFilter();
-      bp.type = 'bandpass';
-      bp.frequency.value = expMap01(t.x, 800, 3500);
-      bp.Q.value = lerp(0.3, 5.0, t.y);
-
-      const shaper = ctx.createWaveShaper();
-      shaper.curve = softClipCurve(0.05 + t.z*0.35);
-
-      const amp = ctx.createGain();
-      amp.gain.value = 0.0001;
-
-      noise.connect(bp);
-      bp.connect(shaper);
-      shaper.connect(amp);
-      amp.connect(out.input);
-
-      const bursts = [
-        {d:0.000, a:1.0},
-        {d:0.018, a:0.85},
-        {d:0.036, a:0.72},
-        {d:0.060, a:0.58},
-      ];
-      amp.gain.setValueAtTime(0.0001, time);
-      bursts.forEach(b=>{
-        amp.gain.linearRampToValueAtTime(b.a, time + b.d + 0.001);
-        amp.gain.exponentialRampToValueAtTime(0.0001, time + b.d + 0.012 + t.t*0.025);
-      });
-
-      const tailT = time + 0.085;
-      const tailDur = 0.07 + ampDecay*0.7;
-      const vals = new Float32Array(48);
-      for(let i=0;i<48;i++) vals[i] = 0.55 * curveBlend(curve, i/47);
-      amp.gain.setValueAtTime(0.55, tailT);
-      amp.gain.setValueCurveAtTime(vals, tailT, tailDur);
-      amp.gain.setValueAtTime(0.0001, tailT + tailDur + 0.01);
-    }
-    else{
-      const osc = ctx.createOscillator();
-      osc.type = 'square';
-      const noise = noiseSource(time, 0.35);
-      const hp = ctx.createBiquadFilter();
-      hp.type = 'highpass';
-      hp.frequency.value = expMap01(t.y, 1300, 9000);
-
-      const toneGain = ctx.createGain();
-      const noiseGain = ctx.createGain();
-      const amp = ctx.createGain();
-      amp.gain.value = 0.0001;
-
-      const f = expMap01(t.pitch, 180, 640) * Math.pow(2,t.tune/12);
-      osc.frequency.setValueAtTime(f*1.1, time);
-      scheduleAutomationCurve(osc.frequency, time, 0.012 + ampDecay*0.2, f*0.2, curve);
-      osc.frequency.setTargetAtTime(f, time + 0.01, 0.01);
-
-      toneGain.gain.value = 0.15 + (1-t.z)*0.6;
-      noiseGain.gain.value = 0.25 + t.z*1.2;
-
-      osc.connect(toneGain);
-      toneGain.connect(amp);
-
-      noise.connect(hp);
-      hp.connect(noiseGain);
-      noiseGain.connect(amp);
-
-      amp.connect(out.input);
-      applyAmpEnv(amp.gain, time, 0.03 + ampDecay*0.4, curve, 0.85);
-
-      osc.start(time);
-      osc.stop(time + 0.35);
-    }
   }
 
   function makeMetallicOscBank(count, baseFreq, ratios, type='square'){
@@ -1379,182 +1054,298 @@
     return {sum, oscs};
   }
 
-  function triggerHat(t, time, vel){
-    const out = createTrackOut(t.level * vel, t.pan);
-    const curve = t.curve;
+  function resolvedParams(t, s){
+    return {
+      x: s?.lockOn ? s.lockX : t.x,
+      y: s?.lockOn ? s.lockY : t.y,
+      z: s?.lockOn ? s.lockZ : t.z,
+      t: s?.lockOn ? s.lockT : t.t
+    };
+  }
 
-    if(t.model === 'Closed Hat' || t.model === 'Open Hat' || t.model === 'Ride'){
-      const base = expMap01(t.pitch, 210, 560);
-      const spread = lerp(0.88,1.32,t.z);
-      const ratios = [1,1.31,1.78,2.21,2.93,3.72,4.15,5.09].map((r,i)=>r * lerp(1, spread, i/7));
-      const bank = makeMetallicOscBank(8, base, ratios, 'square');
+  function velocityWithAccent(vel, accent){
+    return vel * (1 + state.accentAmt * accent);
+  }
 
-      const preBP = ctx.createBiquadFilter();
-      preBP.type = 'bandpass';
-      preBP.frequency.value = expMap01(t.pitch, 3000, 9000);
-      preBP.Q.value = 0.7;
-
-      const metalBP = ctx.createBiquadFilter();
-      metalBP.type = 'bandpass';
-      metalBP.frequency.value = expMap01(t.x, 2400, 12000);
-      metalBP.Q.value = lerp(0.4, 18, t.y);
-
-      const hpTing = ctx.createBiquadFilter();
-      hpTing.type = 'highpass';
-      hpTing.frequency.value = expMap01(t.t, 3500, 12000);
-
-      const nonlinear = ctx.createWaveShaper();
-      nonlinear.curve = softClipCurve(0.04 + t.z*0.28);
-
-      const metalGain = ctx.createGain();
-      const tingGain = ctx.createGain();
-      const metalAmp = ctx.createGain();
-      const tingAmp = ctx.createGain();
-
-      metalAmp.gain.value = 0.0001;
-      tingAmp.gain.value = 0.0001;
-
-      bank.sum.connect(preBP);
-      preBP.connect(metalBP);
-      metalBP.connect(nonlinear);
-      nonlinear.connect(metalGain);
-      metalGain.connect(metalAmp);
-      metalAmp.connect(out.input);
-
-      preBP.connect(hpTing);
-      hpTing.connect(tingGain);
-      tingGain.connect(tingAmp);
-      tingAmp.connect(out.input);
-
-      const closed = t.model === 'Closed Hat';
-      const ride = t.model === 'Ride';
-      const mainDecay = closed ? lerp(0.03,0.16,t.decay) : ride ? lerp(0.24,1.0,t.decay) : lerp(0.10,0.52,t.decay);
-      const tingDecay = closed ? 0.018 + t.t*0.03 : ride ? 0.05 + t.t*0.18 : 0.03 + t.t*0.08;
-
-      metalGain.gain.value = ride ? 1.0 : 0.82;
-      tingGain.gain.value = 0.15 + t.t*0.85;
-
-      applyAmpEnv(metalAmp.gain, time, mainDecay, curve, ride ? 0.72 : 0.95);
-      applyAmpEnv(tingAmp.gain, time, tingDecay, 0.2 + curve*0.3, ride ? 0.55 : 0.75);
-
-      bank.oscs.forEach(o=>o.start(time));
-      const stopT = time + Math.max(0.25, mainDecay + 0.22);
-      bank.oscs.forEach(o=>o.stop(stopT));
+  function triggerTrack(ti, time, velocity=1, stepObj=null){
+    const t = track(ti);
+    if(t.mute) return;
+    switch(TRACK_DEFS[ti].id){
+      case 'kick': triggerKick(t, stepObj, time, velocity); break;
+      case 'snare': triggerSnare(t, stepObj, time, velocity); break;
+      case 'hat': triggerHat(t, stepObj, time, velocity); break;
+      case 'perc': triggerPerc(t, stepObj, time, velocity); break;
     }
   }
 
-  function triggerPerc(t, time, vel){
+  function triggerKick(t, s, time, vel){
+    const p = resolvedParams(t,s);
+    const out = createTrackOut(t.level * vel, t.pan);
+
+    const basePitch = expMap01(clamp(t.pitch,0,1), 38, 88) * Math.pow(2, t.tune/12);
+    const ampDecay = clamp(t.decay,0.02,1);
+    const pitchDecay = clamp(0.02 + t.decay * lerp(0.22,0.9,p.y), 0.02, 0.8);
+    const curve = t.curve;
+
+    if(t.model === 'Drive BD'){
+      const osc = ctx.createOscillator();
+      osc.type = 'sine';
+      const cleanGain = ctx.createGain();
+      const dirtySend = ctx.createGain();
+      const sum = ctx.createGain();
+      const dist1 = ctx.createWaveShaper();
+      dist1.curve = distortionCurve(0.25 + p.z * 0.95);
+      dist1.oversample = '4x';
+      const bp = ctx.createBiquadFilter();
+      bp.type = 'bandpass';
+      bp.frequency.value = expMap01(p.x, 90, 2800);
+      bp.Q.value = lerp(0.5, 18, p.y);
+      const dist2 = ctx.createWaveShaper();
+      dist2.curve = softClipCurve(0.08 + p.z * 0.55);
+      const amp = ctx.createGain();
+      amp.gain.value = 0.0001;
+
+      osc.frequency.setValueAtTime(basePitch * (1 + 2.9 * lerp(0.2,1,t.pitch)), time);
+      scheduleAutomationCurve(osc.frequency, time, pitchDecay, basePitch * (2.6 * lerp(0.35,1,t.pitch)), curve);
+      osc.frequency.setTargetAtTime(basePitch, time + pitchDecay * 0.65, 0.02);
+
+      cleanGain.gain.value = 1 - p.t;
+      dirtySend.gain.value = p.t * 1.15;
+
+      osc.connect(cleanGain); osc.connect(dirtySend);
+      dirtySend.connect(dist1); dist1.connect(bp); bp.connect(dist2);
+      cleanGain.connect(sum); dist2.connect(sum); sum.connect(amp); amp.connect(out.input);
+
+      applyAmpEnv(amp.gain, time, ampDecay, curve, 0.95);
+
+      osc.start(time); osc.stop(time + Math.max(0.15, ampDecay + 0.2));
+    }
+    else if(t.model === 'Punch BD'){
+      const osc1 = ctx.createOscillator(), osc2 = ctx.createOscillator();
+      osc1.type='sine'; osc2.type='triangle';
+      const mix = ctx.createGain();
+      const shaper = ctx.createWaveShaper(); shaper.curve = softClipCurve(0.16 + p.z * 0.5);
+      const lp = ctx.createBiquadFilter(); lp.type='lowpass'; lp.frequency.value = expMap01(p.x, 250, 6000); lp.Q.value = lerp(0.1,1.2,p.y);
+      const amp = ctx.createGain(); amp.gain.value = 0.0001;
+      const clickNoise = noiseSource(time,0.03);
+      const clickHP = ctx.createBiquadFilter(); clickHP.type='highpass'; clickHP.frequency.value = expMap01(p.t,1200,7000);
+      const clickGain = ctx.createGain(); clickGain.gain.value = 0.03 + p.t*0.15;
+      const f1 = basePitch*1.1, f2 = basePitch*2.0;
+
+      osc1.frequency.setValueAtTime(f1*2.5,time);
+      osc2.frequency.setValueAtTime(f2*1.7,time);
+      scheduleAutomationCurve(osc1.frequency,time,0.03+t.decay*0.35,f1*1.8,curve);
+      scheduleAutomationCurve(osc2.frequency,time,0.02+t.decay*0.20,f2*0.9,curve);
+      osc1.frequency.setTargetAtTime(f1,time+0.03,0.02);
+      osc2.frequency.setTargetAtTime(f2*0.45,time+0.02,0.02);
+
+      osc1.connect(mix); osc2.connect(mix); mix.connect(shaper); shaper.connect(lp); lp.connect(amp); amp.connect(out.input);
+      clickNoise.connect(clickHP); clickHP.connect(clickGain); clickGain.connect(out.input);
+      applyAmpEnv(amp.gain,time,0.05+ampDecay*0.8,curve,1);
+      osc1.start(time); osc2.start(time); osc1.stop(time+1); osc2.stop(time+1);
+    }
+    else{
+      const osc = ctx.createOscillator(), sub = ctx.createOscillator();
+      osc.type='sine'; sub.type='sine';
+      const mix=ctx.createGain(); const lp=ctx.createBiquadFilter(); lp.type='lowpass'; lp.frequency.value=expMap01(p.x,180,1800);
+      const amp=ctx.createGain(); amp.gain.value=0.0001;
+      const f = expMap01(t.pitch,28,58) * Math.pow(2,t.tune/12);
+
+      osc.frequency.setValueAtTime(f*1.6,time);
+      sub.frequency.setValueAtTime(f*0.5,time);
+      scheduleAutomationCurve(osc.frequency,time,0.03+t.decay*0.5,f*0.8,curve);
+      osc.frequency.setTargetAtTime(f,time+0.04,0.025);
+
+      osc.connect(mix); sub.connect(mix); mix.connect(lp); lp.connect(amp); amp.connect(out.input);
+      applyAmpEnv(amp.gain,time,0.10+ampDecay*0.95,curve,1);
+
+      osc.start(time); sub.start(time); osc.stop(time+1.4); sub.stop(time+1.4);
+    }
+  }
+
+  function triggerSnare(t, s, time, vel){
+    const p = resolvedParams(t,s);
+    const out = createTrackOut(t.level * vel, t.pan);
+    const curve = t.curve;
+    const ampDecay = clamp(t.decay,0.02,1);
+
+    if(t.model === 'Tone+Noise'){
+      const osc=ctx.createOscillator(); osc.type='triangle';
+      const toneGain=ctx.createGain();
+      const toneBP=ctx.createBiquadFilter(); toneBP.type='bandpass'; toneBP.frequency.value=expMap01(p.x,120,700); toneBP.Q.value=lerp(0.2,3,p.y);
+      const noise=noiseSource(time, ampDecay+0.15);
+      const hp=ctx.createBiquadFilter(); hp.type='highpass'; hp.frequency.value=expMap01(p.y,900,7000);
+      const noiseGain=ctx.createGain();
+      const amp=ctx.createGain(); amp.gain.value=0.0001;
+      const f = expMap01(t.pitch,140,420) * Math.pow(2,t.tune/12);
+
+      osc.frequency.setValueAtTime(f*1.3,time);
+      scheduleAutomationCurve(osc.frequency,time,0.02+ampDecay*0.22,f*0.35,curve);
+      osc.frequency.setTargetAtTime(f,time+0.03,0.01);
+
+      toneGain.gain.value = lerp(0.25,1,1-p.z);
+      noiseGain.gain.value = lerp(0.2,1.3,p.z);
+
+      osc.connect(toneBP); toneBP.connect(toneGain); toneGain.connect(amp);
+      noise.connect(hp); hp.connect(noiseGain); noiseGain.connect(amp);
+      amp.connect(out.input); applyAmpEnv(amp.gain,time,0.05+ampDecay*0.75,curve,0.92);
+
+      osc.start(time); osc.stop(time+0.9);
+    }
+    else if(t.model === 'Clap'){
+      const noise=noiseSource(time,0.6);
+      const bp=ctx.createBiquadFilter(); bp.type='bandpass'; bp.frequency.value=expMap01(p.x,800,3500); bp.Q.value=lerp(0.3,5,p.y);
+      const shaper=ctx.createWaveShaper(); shaper.curve=softClipCurve(0.05+p.z*0.35);
+      const amp=ctx.createGain(); amp.gain.value=0.0001;
+      noise.connect(bp); bp.connect(shaper); shaper.connect(amp); amp.connect(out.input);
+
+      const bursts=[{d:0,a:1},{d:0.018,a:0.85},{d:0.036,a:0.72},{d:0.060,a:0.58}];
+      amp.gain.setValueAtTime(0.0001,time);
+      bursts.forEach(b=>{
+        amp.gain.linearRampToValueAtTime(b.a,time+b.d+0.001);
+        amp.gain.exponentialRampToValueAtTime(0.0001,time+b.d+0.012+p.t*0.025);
+      });
+
+      const tailT=time+0.085, tailDur=0.07+ampDecay*0.7, vals=new Float32Array(48);
+      for(let i=0;i<48;i++) vals[i]=0.55 * curveBlend(curve,i/47);
+      amp.gain.setValueAtTime(0.55,tailT);
+      amp.gain.setValueCurveAtTime(vals,tailT,tailDur);
+      amp.gain.setValueAtTime(0.0001,tailT+tailDur+0.01);
+    }
+    else{
+      const osc=ctx.createOscillator(); osc.type='square';
+      const noise=noiseSource(time,0.35);
+      const hp=ctx.createBiquadFilter(); hp.type='highpass'; hp.frequency.value=expMap01(p.y,1300,9000);
+      const toneGain=ctx.createGain(), noiseGain=ctx.createGain(), amp=ctx.createGain();
+      amp.gain.value=0.0001;
+      const f=expMap01(t.pitch,180,640) * Math.pow(2,t.tune/12);
+
+      osc.frequency.setValueAtTime(f*1.1,time);
+      scheduleAutomationCurve(osc.frequency,time,0.012+ampDecay*0.2,f*0.2,curve);
+      osc.frequency.setTargetAtTime(f,time+0.01,0.01);
+
+      toneGain.gain.value = 0.15 + (1-p.z)*0.6;
+      noiseGain.gain.value = 0.25 + p.z*1.2;
+
+      osc.connect(toneGain); toneGain.connect(amp);
+      noise.connect(hp); hp.connect(noiseGain); noiseGain.connect(amp);
+      amp.connect(out.input); applyAmpEnv(amp.gain,time,0.03+ampDecay*0.4,curve,0.85);
+
+      osc.start(time); osc.stop(time+0.35);
+    }
+  }
+
+  function triggerHat(t, s, time, vel){
+    const p = resolvedParams(t,s);
+    const out = createTrackOut(t.level * vel, t.pan, true);
+    const curve = t.curve;
+
+    const base = expMap01(t.pitch, 210, 560);
+    const spread = lerp(0.88,1.32,p.z);
+    const ratios = [1,1.31,1.78,2.21,2.93,3.72,4.15,5.09].map((r,i)=>r * lerp(1,spread,i/7));
+    const bank = makeMetallicOscBank(8, base, ratios, 'square');
+
+    const preBP = ctx.createBiquadFilter(); preBP.type='bandpass'; preBP.frequency.value=expMap01(t.pitch,3000,9000); preBP.Q.value=0.7;
+    const metalBP = ctx.createBiquadFilter(); metalBP.type='bandpass'; metalBP.frequency.value=expMap01(p.x,2400,12000); metalBP.Q.value=lerp(0.4,18,p.y);
+    const hpTing = ctx.createBiquadFilter(); hpTing.type='highpass'; hpTing.frequency.value=expMap01(p.t,3500,12000);
+    const nonlinear = ctx.createWaveShaper(); nonlinear.curve=softClipCurve(0.04+p.z*0.28);
+
+    const metalGain=ctx.createGain(), tingGain=ctx.createGain(), metalAmp=ctx.createGain(), tingAmp=ctx.createGain();
+    metalAmp.gain.value=0.0001; tingAmp.gain.value=0.0001;
+
+    bank.sum.connect(preBP);
+    preBP.connect(metalBP); metalBP.connect(nonlinear); nonlinear.connect(metalGain); metalGain.connect(metalAmp); metalAmp.connect(out.input);
+    preBP.connect(hpTing); hpTing.connect(tingGain); tingGain.connect(tingAmp); tingAmp.connect(out.input);
+
+    const closed = t.model === 'Closed Hat';
+    const ride = t.model === 'Ride';
+    const mainDecay = closed ? lerp(0.03,0.16,t.decay) : ride ? lerp(0.24,1.0,t.decay) : lerp(0.10,0.52,t.decay);
+    const tingDecay = closed ? 0.018 + p.t*0.03 : ride ? 0.05 + p.t*0.18 : 0.03 + p.t*0.08;
+
+    metalGain.gain.value = ride ? 1.0 : 0.82;
+    tingGain.gain.value = 0.15 + p.t*0.85;
+
+    if(closed && hatChokeGain){
+      hatChokeGain.gain.cancelScheduledValues(time);
+      hatChokeGain.gain.setValueAtTime(hatChokeGain.gain.value, time);
+      hatChokeGain.gain.linearRampToValueAtTime(0.0001, time + 0.008);
+      hatChokeGain.gain.linearRampToValueAtTime(1, time + 0.025);
+    }
+
+    applyAmpEnv(metalAmp.gain,time,mainDecay,curve,ride?0.72:0.95);
+    applyAmpEnv(tingAmp.gain,time,tingDecay,0.2+curve*0.3,ride?0.55:0.75);
+
+    bank.oscs.forEach(o=>o.start(time));
+    const stopT = time + Math.max(0.25,mainDecay+0.22);
+    bank.oscs.forEach(o=>o.stop(stopT));
+  }
+
+  function triggerPerc(t, s, time, vel){
+    const p = resolvedParams(t,s);
     const out = createTrackOut(t.level * vel, t.pan);
     const curve = t.curve;
 
     if(t.model === 'Cowbell'){
-      const base = expMap01(t.pitch, 260, 620) * Math.pow(2,t.tune/12);
-      const character = lerp(0.92,1.16,t.z);
+      const base = expMap01(t.pitch,260,620) * Math.pow(2,t.tune/12);
+      const character = lerp(0.92,1.16,p.z);
       const rawRatios = [1,1.41,1.73,2.18,2.72,3.19,3.88,4.34,4.97,5.61,6.24,6.88,7.57,8.06,8.79,9.41,10.08,10.91];
-      const ratios = rawRatios.map((r,i)=>r * lerp(1, character, i/rawRatios.length));
-      const bank = makeMetallicOscBank(18, base, ratios, 'sine');
+      const ratios = rawRatios.map((r,i)=>r * lerp(1,character,i/rawRatios.length));
+      const bank = makeMetallicOscBank(18,base,ratios,'sine');
+      const lp = ctx.createBiquadFilter(); lp.type='lowpass'; lp.frequency.value=expMap01(p.x,900,12000); lp.Q.value=0.2;
+      const amp = ctx.createGain(); amp.gain.value=0.0001;
+      const noise = noiseSource(time,0.08+p.t*0.08);
+      const noiseHP = ctx.createBiquadFilter(); noiseHP.type='highpass'; noiseHP.frequency.value=1800;
+      const noiseGain = ctx.createGain(); noiseGain.gain.value=0.02+p.t*0.14;
 
-      const lp = ctx.createBiquadFilter();
-      lp.type = 'lowpass';
-      lp.frequency.value = expMap01(t.x, 900, 12000);
-      lp.Q.value = 0.2;
+      bank.sum.connect(lp); lp.connect(amp); amp.connect(out.input);
+      noise.connect(noiseHP); noiseHP.connect(noiseGain); noiseGain.connect(out.input);
 
-      const amp = ctx.createGain();
-      amp.gain.value = 0.0001;
+      const envAmt = lerp(0,2800,p.y);
+      lp.frequency.setValueAtTime(expMap01(p.x,900,8000)+envAmt,time);
+      lp.frequency.exponentialRampToValueAtTime(expMap01(p.x,900,8000), time+0.04+p.y*0.06);
 
-      const noise = noiseSource(time, 0.08 + t.t*0.08);
-      const noiseHP = ctx.createBiquadFilter();
-      noiseHP.type = 'highpass';
-      noiseHP.frequency.value = 1800;
-      const noiseGain = ctx.createGain();
-      noiseGain.gain.value = 0.02 + t.t*0.14;
-
-      bank.sum.connect(lp);
-      lp.connect(amp);
-      amp.connect(out.input);
-
-      noise.connect(noiseHP);
-      noiseHP.connect(noiseGain);
-      noiseGain.connect(out.input);
-
-      const envAmt = lerp(0, 2800, t.y);
-      lp.frequency.setValueAtTime(expMap01(t.x, 900, 8000) + envAmt, time);
-      lp.frequency.exponentialRampToValueAtTime(expMap01(t.x, 900, 8000), time + 0.04 + t.y*0.06);
-
-      applyAmpEnv(amp.gain, time, 0.06 + t.decay*0.55, curve, 0.82);
-
+      applyAmpEnv(amp.gain,time,0.06+t.decay*0.55,curve,0.82);
       bank.oscs.forEach(o=>o.start(time));
-      bank.oscs.forEach(o=>o.stop(time + 1.0));
+      bank.oscs.forEach(o=>o.stop(time+1));
     }
     else if(t.model === 'Clave'){
-      const osc = ctx.createOscillator();
-      osc.type = 'triangle';
-      const bp = ctx.createBiquadFilter();
-      bp.type = 'bandpass';
-      bp.frequency.value = expMap01(t.x, 1200, 5200);
-      bp.Q.value = lerp(0.6, 12, t.y);
+      const osc=ctx.createOscillator(); osc.type='triangle';
+      const bp=ctx.createBiquadFilter(); bp.type='bandpass'; bp.frequency.value=expMap01(p.x,1200,5200); bp.Q.value=lerp(0.6,12,p.y);
+      const shaper=ctx.createWaveShaper(); shaper.curve=softClipCurve(0.08+p.z*0.35);
+      const amp=ctx.createGain(); amp.gain.value=0.0001;
+      const f=expMap01(t.pitch,750,2200) * Math.pow(2,t.tune/12);
 
-      const shaper = ctx.createWaveShaper();
-      shaper.curve = softClipCurve(0.08 + t.z*0.35);
+      osc.frequency.setValueAtTime(f*1.12,time);
+      scheduleAutomationCurve(osc.frequency,time,0.01+t.decay*0.12,f*0.1,curve);
+      osc.frequency.setTargetAtTime(f,time+0.01,0.008);
 
-      const amp = ctx.createGain();
-      amp.gain.value = 0.0001;
-
-      const f = expMap01(t.pitch, 750, 2200) * Math.pow(2,t.tune/12);
-      osc.frequency.setValueAtTime(f * 1.12, time);
-      scheduleAutomationCurve(osc.frequency, time, 0.01 + t.decay*0.12, f*0.1, curve);
-      osc.frequency.setTargetAtTime(f, time + 0.01, 0.008);
-
-      osc.connect(bp);
-      bp.connect(shaper);
-      shaper.connect(amp);
-      amp.connect(out.input);
-
-      applyAmpEnv(amp.gain, time, 0.012 + t.decay*0.14, curve, 0.92);
-
-      osc.start(time);
-      osc.stop(time + 0.25);
+      osc.connect(bp); bp.connect(shaper); shaper.connect(amp); amp.connect(out.input);
+      applyAmpEnv(amp.gain,time,0.012+t.decay*0.14,curve,0.92);
+      osc.start(time); osc.stop(time+0.25);
     }
     else{
-      const base = expMap01(t.pitch, 220, 760);
-      const ratios = [1,1.47,2.03,2.62,3.11,4.07];
-      const bank = makeMetallicOscBank(6, base, ratios.map(r=>r*lerp(0.95,1.12,t.z)), 'square');
-
-      const bp = ctx.createBiquadFilter();
-      bp.type = 'bandpass';
-      bp.frequency.value = expMap01(t.x, 1000, 9000);
-      bp.Q.value = lerp(0.4, 10, t.y);
-
-      const amp = ctx.createGain();
-      amp.gain.value = 0.0001;
-
-      bank.sum.connect(bp);
-      bp.connect(amp);
-      amp.connect(out.input);
-
-      applyAmpEnv(amp.gain, time, 0.03 + t.decay*0.35, curve, 0.8);
-
+      const base=expMap01(t.pitch,220,760);
+      const ratios=[1,1.47,2.03,2.62,3.11,4.07];
+      const bank=makeMetallicOscBank(6,base,ratios.map(r=>r*lerp(0.95,1.12,p.z)),'square');
+      const bp=ctx.createBiquadFilter(); bp.type='bandpass'; bp.frequency.value=expMap01(p.x,1000,9000); bp.Q.value=lerp(0.4,10,p.y);
+      const amp=ctx.createGain(); amp.gain.value=0.0001;
+      bank.sum.connect(bp); bp.connect(amp); amp.connect(out.input);
+      applyAmpEnv(amp.gain,time,0.03+t.decay*0.35,curve,0.8);
       bank.oscs.forEach(o=>o.start(time));
-      bank.oscs.forEach(o=>o.stop(time + 0.6));
+      bank.oscs.forEach(o=>o.stop(time+0.6));
     }
   }
 
-  function secondsPerStep(){
-    return 60 / state.bpm / 4;
-  }
+  function secondsPerStep(){ return 60 / state.bpm / 4; }
 
-  function advanceStep(){
-    currentStep++;
-    if(currentStep >= +document.getElementById('patternLength').value) currentStep = 0;
-  }
-
-  function scheduleStep(step, time){
-    state.tracks.forEach((t, ti)=>{
-      const s = t.steps[step];
+  function scheduleStep(stepIndex, time){
+    tracks().forEach((t, ti)=>{
+      const s = t.steps[stepIndex];
       if(!s.on) return;
       if(Math.random() > s.prob) return;
       const microTime = time + s.micro;
-      triggerTrack(ti, microTime, s.vel);
+      const vel = velocityWithAccent(s.vel, s.accent);
+      triggerTrack(ti, microTime, vel, s);
     });
   }
 
@@ -1566,40 +1357,40 @@
 
       scheduleStep(currentStep, scheduledTime);
 
-      const stepToShow = currentStep;
+      const uiStep = currentStep;
       setTimeout(()=>{
-        setText('stepDisplay', String(stepToShow+1).padStart(2,'0'), 'warn');
-        updatePlayingStepUI(stepToShow);
-      }, Math.max(0, (scheduledTime - ctx.currentTime) * 1000));
+        setLed('stepDisplay', String(uiStep+1).padStart(2,'0'), 'warn');
+        if(state.selectedTrack >= 0) renderStepGrid();
+      }, Math.max(0,(scheduledTime - ctx.currentTime)*1000));
 
       nextNoteTime += stepDur;
-      advanceStep();
+      currentStep = (currentStep + 1) % STEPS;
     }
   }
 
   function togglePlay(){
-    if(!ctx) return;
     isPlaying = !isPlaying;
-
     if(isPlaying){
       currentStep = 0;
       nextNoteTime = ctx.currentTime + 0.03;
       schedulerId = setInterval(scheduler, lookaheadMs);
-      setText('playState', 'PLAY', 'on');
+      setLed('playState','PLAY','on');
       document.getElementById('playBtn').textContent = 'Stop';
-    }else{
+    } else {
       clearInterval(schedulerId);
       schedulerId = null;
-      setText('playState', 'STOP', '');
+      setLed('playState','STOP','');
       document.getElementById('playBtn').textContent = 'Play';
-      updatePlayingStepUI(-1);
+      renderStepGrid();
     }
   }
 
-  makeTrackUI();
+  initPatterns();
+  bindGlobal();
+  switchPattern('A');
+  renderTracks();
   renderStepGrid();
-  setupGlobalControls();
-  initPattern();
+  renderStepEditor();
 })();
 </script>
 </body>
