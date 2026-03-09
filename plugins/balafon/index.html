@@ -1,9 +1,19 @@
+Voici la V5.2 complète, prête à copier-coller dans ton index.html.
+
+Nouveautés de cette version :
+	•	bouton ▶ Play Phrase bien visible,
+	•	sections Ensemble et Duo repliables,
+	•	bouton Random Phrase Variant,
+	•	génération de petites variations idiomatiques autour de la phrase choisie,
+	•	possibilité de revenir à la phrase d’origine avec Reset Variant,
+	•	sliders visuellement synchronisés.
+
 <!DOCTYPE html>
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>BALAFON — Elektron Dark Red + Ensemble Duo V5</title>
+<title>BALAFON — Elektron Dark Red + Ensemble Duo V5.2</title>
 
 <style>
   :root{
@@ -559,6 +569,36 @@
     box-shadow:0 0 0 3px rgba(255,42,60,.08);
   }
 
+  .seq-btn.play-main{
+    background: linear-gradient(180deg, rgba(255,42,60,.28), rgba(255,42,60,.16));
+    border: 1px solid rgba(255,42,60,.72);
+    color: #fff;
+    font-weight: 800;
+    box-shadow:
+      0 0 0 3px rgba(255,42,60,.10),
+      0 10px 24px rgba(255,42,60,.18);
+  }
+  .seq-btn.play-main:hover{
+    background: linear-gradient(180deg, rgba(255,42,60,.36), rgba(255,42,60,.18));
+  }
+  .seq-btn.play-main.active{
+    background: linear-gradient(180deg, rgba(255,42,60,.92), rgba(255,42,60,.68));
+    border-color: rgba(255,42,60,.95);
+    color:#fff;
+    box-shadow:
+      0 0 0 3px rgba(255,42,60,.14),
+      0 0 18px rgba(255,42,60,.26);
+  }
+
+  .seq-btn.ghost-accent{
+    background:rgba(255,42,60,.07);
+    border:1px solid rgba(255,42,60,.35);
+    color:var(--ink);
+  }
+  .seq-btn.ghost-accent:hover{
+    background:rgba(255,42,60,.11);
+  }
+
   .phrase-meta{
     margin-top:10px;
     font-size:11px;
@@ -584,6 +624,50 @@
     padding:10px 10px 12px;
   }
   .mini-card .control-label{ margin-bottom:8px; }
+
+  .fold-toggle{
+    width:100%;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    min-height:44px;
+    padding:10px 12px;
+    margin-top:10px;
+    border-radius:var(--r-sm);
+    border:1px solid rgba(255,255,255,.10);
+    background:rgba(255,255,255,.03);
+    color:var(--ink);
+    font-family:inherit;
+    font-size:11px;
+    letter-spacing:1.6px;
+    text-transform:uppercase;
+    cursor:pointer;
+  }
+  .fold-toggle .fold-arrow{
+    transition:transform .18s ease;
+    color:var(--ink-dim);
+  }
+  .fold-toggle.open{
+    border-color:rgba(255,42,60,.40);
+    background:rgba(255,42,60,.08);
+  }
+  .fold-toggle.open .fold-arrow{
+    transform:rotate(90deg);
+    color:var(--red2);
+  }
+
+  .fold-panel{
+    overflow:hidden;
+    max-height:0;
+    opacity:0;
+    transition:max-height .25s ease, opacity .18s ease, margin-top .18s ease;
+  }
+  .fold-panel.open{
+    max-height:1200px;
+    opacity:1;
+    margin-top:10px;
+  }
 
   .hand-legend{
     display:flex;
@@ -780,8 +864,13 @@
       </div>
 
       <div class="seq-actions">
-        <button id="seqPlay" class="seq-btn">Play Phrase</button>
+        <button id="seqPlay" class="seq-btn play-main">▶ Play Phrase</button>
         <button id="seqStop" class="seq-btn">Stop</button>
+      </div>
+
+      <div class="seq-actions">
+        <button id="variantBtn" class="seq-btn ghost-accent">Random Phrase Variant</button>
+        <button id="resetVariantBtn" class="seq-btn">Reset Variant</button>
       </div>
 
       <div class="phrase-meta" id="phraseMeta">
@@ -822,63 +911,77 @@
         </div>
       </div>
 
-      <div class="mini-grid">
-        <div class="mini-card">
-          <span class="control-label">Ensemble</span>
-          <button id="ensembleToggle" class="toggle-chip active">On</button>
+      <button id="ensembleFoldBtn" class="fold-toggle open">
+        <span>Ensemble Settings</span>
+        <span class="fold-arrow">▶</span>
+      </button>
+
+      <div id="ensembleFoldPanel" class="fold-panel open">
+        <div class="mini-grid">
+          <div class="mini-card">
+            <span class="control-label">Ensemble</span>
+            <button id="ensembleToggle" class="toggle-chip active">On</button>
+          </div>
+
+          <div class="mini-card">
+            <span class="control-label">Ensemble Mix</span>
+            <div class="slider-container">
+              <input type="range" id="ensembleMix" min="0" max="100" value="42">
+              <span class="value-display" id="ensembleMix-val">42</span>
+            </div>
+          </div>
         </div>
 
-        <div class="mini-card">
-          <span class="control-label">Ensemble Mix</span>
-          <div class="slider-container">
-            <input type="range" id="ensembleMix" min="0" max="100" value="42">
-            <span class="value-display" id="ensembleMix-val">42</span>
+        <div class="mini-grid">
+          <div class="mini-card">
+            <span class="control-label">Detune</span>
+            <div class="slider-container">
+              <input type="range" id="ensembleDetune" min="0" max="100" value="26">
+              <span class="value-display" id="ensembleDetune-val">26</span>
+            </div>
+          </div>
+
+          <div class="mini-card">
+            <span class="control-label">Stereo Width</span>
+            <div class="slider-container">
+              <input type="range" id="stereoWidth" min="0" max="100" value="62">
+              <span class="value-display" id="stereoWidth-val">62</span>
+            </div>
           </div>
         </div>
       </div>
 
-      <div class="mini-grid">
-        <div class="mini-card">
-          <span class="control-label">Detune</span>
-          <div class="slider-container">
-            <input type="range" id="ensembleDetune" min="0" max="100" value="26">
-            <span class="value-display" id="ensembleDetune-val">26</span>
+      <button id="duoFoldBtn" class="fold-toggle">
+        <span>Duo Settings</span>
+        <span class="fold-arrow">▶</span>
+      </button>
+
+      <div id="duoFoldPanel" class="fold-panel">
+        <div class="mini-grid">
+          <div class="mini-card">
+            <span class="control-label">Duo Mode</span>
+            <button id="duoModeToggle" class="toggle-chip">Off</button>
+          </div>
+
+          <div class="mini-card">
+            <span class="control-label">Duo Activity</span>
+            <div class="slider-container">
+              <input type="range" id="duoActivity" min="0" max="100" value="58">
+              <span class="value-display" id="duoActivity-val">58</span>
+            </div>
           </div>
         </div>
 
-        <div class="mini-card">
-          <span class="control-label">Stereo Width</span>
-          <div class="slider-container">
-            <input type="range" id="stereoWidth" min="0" max="100" value="62">
-            <span class="value-display" id="stereoWidth-val">62</span>
+        <div class="mini-grid">
+          <div class="mini-card" style="grid-column:1 / -1;">
+            <span class="control-label">Duo Style</span>
+            <select id="duoStyle" class="select-ui">
+              <option value="support">Support</option>
+              <option value="response">Response</option>
+              <option value="counter">Counter</option>
+              <option value="mixed">Mixed</option>
+            </select>
           </div>
-        </div>
-      </div>
-
-      <div class="mini-grid">
-        <div class="mini-card">
-          <span class="control-label">Duo Mode</span>
-          <button id="duoModeToggle" class="toggle-chip">Off</button>
-        </div>
-
-        <div class="mini-card">
-          <span class="control-label">Duo Activity</span>
-          <div class="slider-container">
-            <input type="range" id="duoActivity" min="0" max="100" value="58">
-            <span class="value-display" id="duoActivity-val">58</span>
-          </div>
-        </div>
-      </div>
-
-      <div class="mini-grid">
-        <div class="mini-card" style="grid-column:1 / -1;">
-          <span class="control-label">Duo Style</span>
-          <select id="duoStyle" class="select-ui">
-            <option value="support">Support</option>
-            <option value="response">Response</option>
-            <option value="counter">Counter</option>
-            <option value="mixed">Mixed</option>
-          </select>
         </div>
       </div>
 
@@ -1205,6 +1308,10 @@ let seqStep = 0;
 let seqPlaying = false;
 let altHandState = 0;
 let ensembleDrift = 0;
+
+let currentPhraseEvents = [];
+let currentPhraseSteps = 16;
+let currentVariantLabel = 'Original';
 
 const seqState = {
   key:'C',
@@ -1545,6 +1652,149 @@ function rebuildKeyboard(){
   });
 }
 
+function getBasePhrase(){
+  return PHRASES[seqState.phrase];
+}
+
+function getActivePhrase(){
+  return {
+    ...getBasePhrase(),
+    steps: currentPhraseSteps,
+    events: currentPhraseEvents
+  };
+}
+
+function resetPhraseVariant(){
+  const base = getBasePhrase();
+  currentPhraseEvents = base.events.map(ev => ({...ev}));
+  currentPhraseSteps = base.steps;
+  currentVariantLabel = 'Original';
+  renderStepStrip();
+  updateSeqMeta();
+}
+
+function randomChoice(arr){
+  return arr[Math.floor(Math.random() * arr.length)];
+}
+
+function maybe(prob){
+  return Math.random() < prob;
+}
+
+function clampEventIndex(i){
+  return clamp(i, 0, activeNotes.length - 1);
+}
+
+function generatePhraseVariant(){
+  const base = getBasePhrase();
+  const events = base.events.map(ev => ({...ev}));
+
+  const operations = [];
+
+  if(maybe(0.85)) operations.push('velocity');
+  if(maybe(0.75)) operations.push('neighbor');
+  if(maybe(0.65)) operations.push('anticipation');
+  if(maybe(0.55)) operations.push('echo');
+  if(maybe(0.50)) operations.push('rest');
+  if(maybe(0.40)) operations.push('double');
+  if(operations.length === 0) operations.push('velocity', 'neighbor');
+
+  let out = events.map(ev => ({...ev}));
+
+  if(operations.includes('velocity')){
+    out = out.map(ev => {
+      let v = ev.v ?? 0.8;
+      const accent = (ev.s % 4 === 0) ? 0.08 : 0;
+      v += (Math.random() - 0.5) * 0.14 + accent;
+      return { ...ev, v: clamp(v, 0.48, 1.00) };
+    });
+  }
+
+  if(operations.includes('neighbor')){
+    out = out.map(ev => {
+      if(maybe(0.32)){
+        const offset = randomChoice([-1, 1, 1, -1, 2, -2]);
+        return { ...ev, i: clampEventIndex(ev.i + offset) };
+      }
+      return ev;
+    });
+  }
+
+  if(operations.includes('anticipation')){
+    const additions = [];
+    out.forEach(ev => {
+      if(maybe(0.18) && ev.s > 0){
+        additions.push({
+          s: ev.s - 1,
+          i: clampEventIndex(ev.i + randomChoice([-1, 0, 1])),
+          v: clamp((ev.v ?? 0.8) * 0.62, 0.42, 0.82),
+          hand: ev.hand
+        });
+      }
+    });
+    out = out.concat(additions);
+  }
+
+  if(operations.includes('echo')){
+    const additions = [];
+    out.forEach(ev => {
+      if(maybe(0.22) && ev.s < base.steps - 1){
+        additions.push({
+          s: ev.s + 1,
+          i: clampEventIndex(ev.i + randomChoice([0, 1, -1])),
+          v: clamp((ev.v ?? 0.8) * 0.58, 0.38, 0.72),
+          hand: ev.hand
+        });
+      }
+    });
+    out = out.concat(additions);
+  }
+
+  if(operations.includes('rest')){
+    const strongSteps = new Set([0,4,8,12]);
+    out = out.filter(ev => {
+      if(strongSteps.has(ev.s)) return true;
+      return !maybe(0.12);
+    });
+  }
+
+  if(operations.includes('double')){
+    const additions = [];
+    out.forEach(ev => {
+      if(maybe(0.16)){
+        additions.push({
+          s: ev.s,
+          i: clampEventIndex(ev.i + randomChoice([2, -2, 3, -3])),
+          v: clamp((ev.v ?? 0.8) * 0.66, 0.40, 0.80),
+          hand: ev.hand
+        });
+      }
+    });
+    out = out.concat(additions);
+  }
+
+  out.sort((a,b) => (a.s - b.s) || (a.i - b.i) || ((b.v ?? 0) - (a.v ?? 0)));
+
+  const groupedCount = {};
+  out = out.filter(ev => {
+    const key = ev.s + ':' + ev.i;
+    if(groupedCount[key]) return false;
+    groupedCount[key] = 1;
+    return true;
+  });
+
+  const perStepCap = {};
+  out = out.filter(ev => {
+    const s = ev.s;
+    perStepCap[s] = (perStepCap[s] || 0) + 1;
+    return perStepCap[s] <= 3;
+  });
+
+  currentPhraseEvents = out;
+  currentPhraseSteps = base.steps;
+  currentVariantLabel = 'Variant';
+}
+
 function noteForEventIndex(i){
   if(!activeNotes.length) return null;
   const safeIndex = clamp(i, 0, activeNotes.length - 1);
@@ -1709,6 +1959,24 @@ function scheduleEvent(ev, stepMs, phrase, idxInStep){
     '▶ ' + phrase.name + ' — ' + note.label + ' · ' + handLabel + duoLabel;
 }
 
+function setupFold(toggleId, panelId, defaultOpen=false){
+  const btn = document.getElementById(toggleId);
+  const panel = document.getElementById(panelId);
+  if(!btn || !panel) return;
+
+  function apply(open){
+    btn.classList.toggle('open', open);
+    panel.classList.toggle('open', open);
+  }
+
+  apply(defaultOpen);
+
+  btn.addEventListener('click', () => {
+    const willOpen = !panel.classList.contains('open');
+    apply(willOpen);
+  });
+}
+
 function populateSeqUI(){
   const keySel = document.getElementById('seqKey');
   const scaleSel = document.getElementById('seqScale');
@@ -1752,8 +2020,7 @@ function populateSeqUI(){
 
   phraseSel.addEventListener('change', () => {
     seqState.phrase = phraseSel.value;
-    updateSeqMeta();
-    renderStepStrip();
+    resetPhraseVariant();
     if(seqPlaying){
       stopSequencer();
       startSequencer();
@@ -1762,6 +2029,26 @@ function populateSeqUI(){
 
   document.getElementById('seqPlay').addEventListener('click', startSequencer);
   document.getElementById('seqStop').addEventListener('click', stopSequencer);
+
+  document.getElementById('variantBtn').addEventListener('click', () => {
+    generatePhraseVariant();
+    renderStepStrip();
+    updateSeqMeta();
+    document.getElementById('status-note').textContent = '✦ Variant generated';
+    if(seqPlaying){
+      stopSequencer();
+      startSequencer();
+    }
+  });
+
+  document.getElementById('resetVariantBtn').addEventListener('click', () => {
+    resetPhraseVariant();
+    document.getElementById('status-note').textContent = '↺ Base phrase restored';
+    if(seqPlaying){
+      stopSequencer();
+      startSequencer();
+    }
+  });
 
   const micro = document.getElementById('micro');
   const subMix = document.getElementById('subMix');
@@ -1841,6 +2128,14 @@ function populateSeqUI(){
     const btn = document.getElementById('duoModeToggle');
     btn.textContent = PERF.duoMode ? 'On' : 'Off';
     btn.classList.toggle('active', PERF.duoMode);
+
+    const duoFoldBtn = document.getElementById('duoFoldBtn');
+    const duoFoldPanel = document.getElementById('duoFoldPanel');
+    if(PERF.duoMode && duoFoldBtn && duoFoldPanel){
+      duoFoldBtn.classList.add('open');
+      duoFoldPanel.classList.add('open');
+    }
+
     updateSeqMeta();
   });
 
@@ -1853,13 +2148,12 @@ function populateSeqUI(){
     });
   });
 
-  renderStepStrip();
-  updateSeqMeta();
+  resetPhraseVariant();
 }
 
 function renderStepStrip(){
   const strip = document.getElementById('stepStrip');
-  const phrase = PHRASES[seqState.phrase];
+  const phrase = getActivePhrase();
   strip.innerHTML = '';
   for(let i=0;i<phrase.steps;i++){
     const d = document.createElement('div');
@@ -1872,7 +2166,7 @@ function renderStepStrip(){
 }
 
 function markCurrentStep(step){
-  const phrase = PHRASES[seqState.phrase];
+  const phrase = getActivePhrase();
   for(let i=0;i<phrase.steps;i++){
     const el = document.getElementById('step-dot-' + i);
     if(!el) continue;
@@ -1881,7 +2175,7 @@ function markCurrentStep(step){
 }
 
 function updateSeqMeta(){
-  const phrase = PHRASES[seqState.phrase];
+  const phrase = getBasePhrase();
   const scale = SCALE_DEFS[seqState.scale];
   const handModeLabel = PERF.handMode === 'alternate'
     ? 'Alternance'
@@ -1904,6 +2198,7 @@ function updateSeqMeta(){
     '<strong>Tonalité :</strong> ' + seqState.key + ' · ' +
     '<strong>Scale :</strong> ' + scale.name + ' · ' +
     '<strong>Tempo interne :</strong> ' + phrase.bpm + ' BPM<br>' +
+    '<strong>Variant :</strong> ' + currentVariantLabel + ' · ' +
     '<strong>Hands :</strong> ' + handModeLabel + ' · ' +
     '<strong>Microtiming :</strong> ' + Math.round(PERF.microAmount*100) + '% · ' +
     '<strong>Sub Octave :</strong> ' + subText + '<br>' +
@@ -1911,7 +2206,7 @@ function updateSeqMeta(){
     '<strong>Duo :</strong> ' + duoText;
 
   document.getElementById('status-right').textContent =
-    seqState.key + ' · ' + scale.name + ' · ' + phrase.name;
+    seqState.key + ' · ' + scale.name + ' · ' + phrase.name + ' · ' + currentVariantLabel;
 }
 
 async function startSequencer(){
@@ -1919,23 +2214,25 @@ async function startSequencer(){
   if(actx && actx.state === 'suspended') await actx.resume();
   stopSequencer();
 
-  const phrase = PHRASES[seqState.phrase];
-  const stepMs = (60000 / phrase.bpm) / 4;
+  const phrase = getActivePhrase();
+  const bpm = getBasePhrase().bpm;
+  const stepMs = (60000 / bpm) / 4;
   seqStep = 0;
   seqPlaying = true;
   altHandState = 0;
   ensembleDrift = 0;
 
   document.getElementById('seqPlay').classList.add('active');
-  document.getElementById('status-note').textContent = '▶ Phrase: ' + phrase.name;
+  document.getElementById('status-note').textContent = '▶ Phrase: ' + getBasePhrase().name + ' · ' + currentVariantLabel;
 
   renderStepStrip();
 
   seqTimer = setInterval(() => {
-    const events = phrase.events.filter(ev => ev.s === seqStep);
-    events.forEach((ev, idxInStep) => scheduleEvent(ev, stepMs, phrase, idxInStep));
+    const current = getActivePhrase();
+    const events = current.events.filter(ev => ev.s === seqStep);
+    events.forEach((ev, idxInStep) => scheduleEvent(ev, stepMs, current, idxInStep));
     markCurrentStep(seqStep);
-    seqStep = (seqStep + 1) % phrase.steps;
+    seqStep = (seqStep + 1) % current.steps;
   }, stepMs);
 }
 
@@ -2186,6 +2483,8 @@ document.getElementById('startAudio').addEventListener('click', async () => {
 
 populateSeqUI();
 rebuildKeyboard();
+setupFold('ensembleFoldBtn', 'ensembleFoldPanel', true);
+setupFold('duoFoldBtn', 'duoFoldPanel', false);
 </script>
 </body>
 </html>
