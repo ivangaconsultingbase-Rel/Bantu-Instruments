@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>BALAFON — Elektron Dark Red + Ensemble Sequencer V3</title>
+<title>BALAFON — Elektron Dark Red + Ensemble Duo V5</title>
 
 <style>
   :root{
@@ -751,7 +751,7 @@
 
 <header>
   <h1>BALAFON</h1>
-  <div class="subtitle">Idiophone Mélodique · Phrase Sequencer · Ensemble Performance</div>
+  <div class="subtitle">Idiophone Mélodique · Phrase Sequencer · Ensemble Duo</div>
 </header>
 
 <div class="plugin-frame">
@@ -855,10 +855,37 @@
         </div>
       </div>
 
+      <div class="mini-grid">
+        <div class="mini-card">
+          <span class="control-label">Duo Mode</span>
+          <button id="duoModeToggle" class="toggle-chip">Off</button>
+        </div>
+
+        <div class="mini-card">
+          <span class="control-label">Duo Activity</span>
+          <div class="slider-container">
+            <input type="range" id="duoActivity" min="0" max="100" value="58">
+            <span class="value-display" id="duoActivity-val">58</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="mini-grid">
+        <div class="mini-card" style="grid-column:1 / -1;">
+          <span class="control-label">Duo Style</span>
+          <select id="duoStyle" class="select-ui">
+            <option value="support">Support</option>
+            <option value="response">Response</option>
+            <option value="counter">Counter</option>
+            <option value="mixed">Mixed</option>
+          </select>
+        </div>
+      </div>
+
       <div class="hand-legend">
         <span class="hand-pill l">LEFT HAND</span>
         <span class="hand-pill r">RIGHT HAND</span>
-        <span class="hand-pill b">DOUBLED / ENSEMBLE</span>
+        <span class="hand-pill b">DOUBLED / ENSEMBLE / DUO</span>
       </div>
 
       <div class="panel-title" style="margin-top:14px;font-size:10px;">Pattern</div>
@@ -1046,7 +1073,7 @@
       <span>ENGINE ACTIF</span>
     </div>
     <span id="status-note">— Sélectionnez une note ou lancez une phrase —</span>
-    <span id="status-right">Balafon ensemble engine</span>
+    <span id="status-right">Balafon ensemble duo engine</span>
   </div>
 </div>
 
@@ -1159,7 +1186,10 @@ const PERF = {
   ensembleOn:true,
   ensembleMix:0.42,
   ensembleDetune:0.26,
-  stereoWidth:0.62
+  stereoWidth:0.62,
+  duoMode:false,
+  duoStyle:'support',
+  duoActivity:0.58
 };
 
 let actx=null, masterOut=null, analyser=null, instrumentBus=null;
@@ -1334,11 +1364,18 @@ function applyHandFlash(index, hand='R', ms=180){
 function createPanNode(hand='R', voiceRole='main'){
   if(!actx) return null;
   if(typeof actx.createStereoPanner !== 'function') return null;
+
   const panner = actx.createStereoPanner();
   const width = PERF.stereoWidth;
   let base = hand === 'L' ? -width : width;
+
   if(voiceRole === 'sub') base *= 0.45;
   if(voiceRole === 'ensemble') base *= -0.65;
+  if(voiceRole === 'duo') {
+    base *= -0.82;
+    base += hand === 'L' ? 0.12 : -0.12;
+  }
+
   panner.pan.value = clamp(base, -1, 1);
   return panner;
 }
@@ -1514,6 +1551,61 @@ function noteForEventIndex(i){
   return activeNotes[safeIndex];
 }
 
+function clampNoteIndex(i){
+  return clamp(i, 0, activeNotes.length - 1);
+}
+
+function getPhraseDensityAtStep(phrase, step){
+  return phrase.events.filter(ev => ev.s === step).length;
+}
+
+function duoIndexForEvent(ev, phrase, hand, idxInStep){
+  const base = ev.i;
+  const density = getPhraseDensityAtStep(phrase, ev.s);
+  const style = PERF.duoStyle;
+
+  if(style === 'support'){
+    const offset = (base < 4) ? 2 : (base < 8 ? 3 : -2);
+    return clampNoteIndex(base + offset);
+  }
+
+  if(style === 'response'){
+    if(hand === 'L') return clampNoteIndex(base + 4);
+    return clampNoteIndex(base - 3);
+  }
+
+  if(style === 'counter'){
+    const mirrorCenter = Math.floor((activeNotes.length - 1) / 2);
+    const mirrored = mirrorCenter + (mirrorCenter - base);
+    const adjusted = density > 1 ? mirrored - 1 : mirrored;
+    return clampNoteIndex(adjusted);
+  }
+
+  const selector = (ev.s + idxInStep + base) % 3;
+  if(selector === 0){
+    return clampNoteIndex(base + (hand === 'L' ? 3 : -2));
+  }
+  if(selector === 1){
+    return clampNoteIndex(base + (base < 6 ? 4 : -3));
+  }
+  return clampNoteIndex(Math.floor((base + clampNoteIndex(base + 3)) / 2));
+}
+
+function shouldPlayDuoVoice(ev, phrase){
+  if(!PERF.duoMode) return false;
+  if(!PERF.ensembleOn) return false;
+
+  const activity = PERF.duoActivity;
+  const accentBias = (ev.v || 0.8) * 0.22;
+  const rhythmicBias = (ev.s % 4 === 0) ? 0.16 : 0;
+  const threshold = 0.42 - activity * 0.28 - accentBias - rhythmicBias;
+
+  const seed = Math.sin((ev.s + 1) * 1.37 + (ev.i + 2) * 0.73);
+  const normalized = (seed + 1) / 2;
+
+  return normalized >= Math.max(0.05, threshold);
+}
+
 function computeMicroOffset(stepMs, eventIndex, stepIndex){
   const amtMs = stepMs * 0.28 * PERF.microAmount;
   const swingSeed = Math.sin((eventIndex + 1) * 1.7 + stepIndex * 0.91);
@@ -1583,21 +1675,38 @@ function scheduleEvent(ev, stepMs, phrase, idxInStep){
     const ensembleDelay = 0.009 + (PERF.ensembleMix * 0.015);
     const ensembleBright = hand === 'R' ? 0.94 : 0.98;
 
-    playNote(note.freq, {
+    let secondaryFreq = note.freq;
+    let secondaryIndex = ev.i;
+    let secondaryRole = 'ensemble';
+
+    if(shouldPlayDuoVoice(ev, phrase)){
+      secondaryIndex = duoIndexForEvent(ev, phrase, hand, idxInStep);
+      const secondaryNote = noteForEventIndex(secondaryIndex);
+      if(secondaryNote){
+        secondaryFreq = secondaryNote.freq;
+        secondaryRole = 'duo';
+      }
+    }
+
+    playNote(secondaryFreq, {
       when: when + ensembleDelay,
       velocity: velocity * PERF.ensembleMix,
       duration: duration * 1.08,
       brightness: ensembleBright,
       hand,
-      voiceRole:'ensemble',
+      voiceRole: secondaryRole,
       detuneCents: detune
     });
+
+    if(secondaryRole === 'duo'){
+      applyHandFlash(secondaryIndex, 'B', Math.max(130, stepMs * 0.88));
+    }
   }
 
   const handLabel = hand === 'L' ? 'LEFT' : 'RIGHT';
-  const ensLabel = PERF.ensembleOn ? ' · ENS' : '';
+  const duoLabel = PERF.duoMode ? ' · DUO' : (PERF.ensembleOn ? ' · ENS' : '');
   document.getElementById('status-note').textContent =
-    '▶ ' + phrase.name + ' — ' + note.label + ' · ' + handLabel + ensLabel;
+    '▶ ' + phrase.name + ' — ' + note.label + ' · ' + handLabel + duoLabel;
 }
 
 function populateSeqUI(){
@@ -1659,8 +1768,10 @@ function populateSeqUI(){
   const ensembleMix = document.getElementById('ensembleMix');
   const ensembleDetune = document.getElementById('ensembleDetune');
   const stereoWidth = document.getElementById('stereoWidth');
+  const duoActivity = document.getElementById('duoActivity');
+  const duoStyle = document.getElementById('duoStyle');
 
-  [micro, subMix, ensembleMix, ensembleDetune, stereoWidth].forEach(setSliderVisual);
+  [micro, subMix, ensembleMix, ensembleDetune, stereoWidth, duoActivity].forEach(setSliderVisual);
 
   micro.addEventListener('input', () => {
     PERF.microAmount = parseFloat(micro.value) / 100;
@@ -1697,6 +1808,18 @@ function populateSeqUI(){
     updateSeqMeta();
   });
 
+  duoActivity.addEventListener('input', () => {
+    PERF.duoActivity = parseFloat(duoActivity.value) / 100;
+    document.getElementById('duoActivity-val').textContent = duoActivity.value;
+    setSliderVisual(duoActivity);
+    updateSeqMeta();
+  });
+
+  duoStyle.addEventListener('change', () => {
+    PERF.duoStyle = duoStyle.value;
+    updateSeqMeta();
+  });
+
   document.getElementById('subOctToggle').addEventListener('click', () => {
     PERF.subOct = !PERF.subOct;
     const btn = document.getElementById('subOctToggle');
@@ -1710,6 +1833,14 @@ function populateSeqUI(){
     const btn = document.getElementById('ensembleToggle');
     btn.textContent = PERF.ensembleOn ? 'On' : 'Off';
     btn.classList.toggle('active', PERF.ensembleOn);
+    updateSeqMeta();
+  });
+
+  document.getElementById('duoModeToggle').addEventListener('click', () => {
+    PERF.duoMode = !PERF.duoMode;
+    const btn = document.getElementById('duoModeToggle');
+    btn.textContent = PERF.duoMode ? 'On' : 'Off';
+    btn.classList.toggle('active', PERF.duoMode);
     updateSeqMeta();
   });
 
@@ -1752,10 +1883,20 @@ function markCurrentStep(step){
 function updateSeqMeta(){
   const phrase = PHRASES[seqState.phrase];
   const scale = SCALE_DEFS[seqState.scale];
-  const handModeLabel = PERF.handMode === 'alternate' ? 'Alternance' : (PERF.handMode === 'phrase' ? 'Phrase' : 'Libre');
-  const subText = PERF.subOct ? ('On · ' + Math.round(PERF.subMix*100) + '%') : 'Off';
+  const handModeLabel = PERF.handMode === 'alternate'
+    ? 'Alternance'
+    : (PERF.handMode === 'phrase' ? 'Phrase' : 'Libre');
+
+  const subText = PERF.subOct
+    ? ('On · ' + Math.round(PERF.subMix*100) + '%')
+    : 'Off';
+
   const ensembleText = PERF.ensembleOn
     ? ('On · mix ' + Math.round(PERF.ensembleMix*100) + '% · detune ' + Math.round(PERF.ensembleDetune*100) + '% · width ' + Math.round(PERF.stereoWidth*100) + '%')
+    : 'Off';
+
+  const duoText = PERF.duoMode
+    ? ('On · ' + PERF.duoStyle + ' · act. ' + Math.round(PERF.duoActivity*100) + '%')
     : 'Off';
 
   document.getElementById('phraseMeta').innerHTML =
@@ -1766,7 +1907,8 @@ function updateSeqMeta(){
     '<strong>Hands :</strong> ' + handModeLabel + ' · ' +
     '<strong>Microtiming :</strong> ' + Math.round(PERF.microAmount*100) + '% · ' +
     '<strong>Sub Octave :</strong> ' + subText + '<br>' +
-    '<strong>Ensemble :</strong> ' + ensembleText;
+    '<strong>Ensemble :</strong> ' + ensembleText + '<br>' +
+    '<strong>Duo :</strong> ' + duoText;
 
   document.getElementById('status-right').textContent =
     seqState.key + ' · ' + scale.name + ' · ' + phrase.name;
