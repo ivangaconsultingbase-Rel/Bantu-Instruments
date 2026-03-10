@@ -11,6 +11,7 @@ class Emullotron {
     this.sourceBuffer = null;
     this.virtualTapes = new Map();
     this.activeVoices = new Map();
+
     this.params = {
       masterVolume: 0.7,
       tapeLength: 8,
@@ -68,6 +69,24 @@ class Emullotron {
 
     this.supportedExtensions = ['wav', 'wave', 'aif', 'aiff', 'caf', 'mp3', 'm4a'];
 
+    this.defaultBanks = {
+      string: {
+        name: 'STRING',
+        path: 'samples/string.wav'
+      },
+      flute: {
+        name: 'FLUTE',
+        path: 'samples/flute.wav'
+      },
+      piano: {
+        name: 'PIANO',
+        path: 'samples/piano.wav'
+      }
+    };
+
+    this.currentBank = 'string';
+    this.currentSampleSource = 'bank';
+
     this.init();
   }
 
@@ -76,10 +95,12 @@ class Emullotron {
     this.setupKeyboard();
     this.setupKnobs();
     this.setupFileLoader();
+    this.setupBankSelector();
     this.setupComputerKeyboard();
     await this.setupMIDI();
     this.startVUMeter();
     this.updateLCDState();
+    this.tryAutoLoadDefaultBank();
   }
 
   async initAudioContext() {
@@ -426,6 +447,7 @@ class Emullotron {
 
     await this.initAudioContext();
 
+    this.currentSampleSource = 'manual';
     this.updateStatus(`Loading ${file.name}...`);
     document.getElementById('sample-name').textContent = file.name.substring(0, 28).toUpperCase();
     this.updateLCDState();
@@ -443,11 +465,72 @@ class Emullotron {
     }
   }
 
+  async loadBank(bankKey) {
+    const bank = this.defaultBanks[bankKey];
+    if (!bank) return;
+
+    this.currentBank = bankKey;
+    this.currentSampleSource = 'bank';
+    this.updateBankButtons();
+    this.updateLCDState();
+
+    try {
+      await this.initAudioContext();
+      this.updateStatus(`Loading bank ${bank.name}...`);
+      document.getElementById('sample-name').textContent = `${bank.name}.WAV`;
+
+      const response = await fetch(bank.path);
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+
+      const arrayBuffer = await response.arrayBuffer();
+      this.sourceBuffer = await this.audioContext.decodeAudioData(arrayBuffer);
+
+      await this.generateVirtualTapes();
+      this.updateStatus(`Ready — ${bank.name}`);
+      document.getElementById('sample-name').textContent = `${bank.name}.WAV`;
+      this.updateLCDState();
+    } catch (error) {
+      this.sourceBuffer = null;
+      this.updateStatus(`Bank missing: ${bank.path}`);
+      console.error(`Bank load error (${bankKey}):`, error);
+    }
+  }
+
+  async tryAutoLoadDefaultBank() {
+    try {
+      await this.loadBank(this.currentBank);
+    } catch (e) {
+      console.warn('Default bank autoload skipped:', e);
+    }
+  }
+
   setupUI() {
     document.addEventListener('contextmenu', (e) => {
       if (e.target.classList.contains('knob')) {
         e.preventDefault();
       }
+    });
+  }
+
+  setupBankSelector() {
+    const container = document.getElementById('bank-selector');
+    if (!container) return;
+
+    container.querySelectorAll('.bank-btn').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const bankKey = btn.dataset.bank;
+        await this.loadBank(bankKey);
+      });
+    });
+
+    this.updateBankButtons();
+  }
+
+  updateBankButtons() {
+    document.querySelectorAll('.bank-btn').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.bank === this.currentBank);
     });
   }
 
@@ -875,9 +958,14 @@ class Emullotron {
   }
 
   updateLCDState() {
+    const bankEl = document.getElementById('lcd-bank');
     const rootEl = document.getElementById('lcd-root');
     const voicesEl = document.getElementById('lcd-voices');
     const engineEl = document.getElementById('lcd-engine');
+
+    if (bankEl) {
+      bankEl.textContent = this.defaultBanks[this.currentBank]?.name || '--';
+    }
 
     if (rootEl) rootEl.textContent = this.midiToNoteName(Math.round(this.params.rootNote));
     if (voicesEl) voicesEl.textContent = String(this.activeVoices.size);
