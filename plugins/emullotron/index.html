@@ -1,0 +1,1509 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EMULLOTRON</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Playfair+Display:ital,wght@0,700;1,400&family=VT323&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0e0904;
+    --panel: #1a1208;
+    --panel2: #221a0d;
+    --border: #3d2e14;
+    --border2: #2a2010;
+    --amber: #c8860a;
+    --amber-dim: #7a5208;
+    --amber-bright: #f0a820;
+    --tape: #5a3f0e;
+    --tape-active: #c89018;
+    --ivory: #e0cda0;
+    --ivory-dark: #c8b882;
+    --key-black: #180e04;
+    --text: #c8a050;
+    --text-dim: #6b5030;
+    --text-bright: #e8c070;
+    --red: #c84020;
+    --green: #40a840;
+    --screw: #2a2010;
+    --led-off: #1a0a04;
+    --led-on: #f84020;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Share Tech Mono', monospace;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    user-select: none;
+    overflow-x: hidden;
+  }
+
+  /* Noise texture overlay */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+    background-size: 200px;
+    pointer-events: none;
+    z-index: 1000;
+    opacity: 0.5;
+  }
+
+  .machine {
+    width: 100%;
+    max-width: 960px;
+    background: var(--panel);
+    border: 2px solid var(--border);
+    border-radius: 6px;
+    box-shadow:
+      0 0 0 1px #0a0602,
+      0 4px 40px rgba(0,0,0,0.8),
+      inset 0 1px 0 rgba(200,160,80,0.08);
+    position: relative;
+  }
+
+  /* Screw corners */
+  .machine::before, .machine::after {
+    content: '✦';
+    position: absolute;
+    color: var(--screw);
+    font-size: 10px;
+    top: 8px;
+  }
+  .machine::before { left: 12px; }
+  .machine::after { right: 12px; }
+
+  /* ─── HEADER ─── */
+  .header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 24px 12px;
+    border-bottom: 1px solid var(--border2);
+    background: linear-gradient(180deg, #1e1608 0%, #160e06 100%);
+    border-radius: 4px 4px 0 0;
+  }
+
+  .brand {
+    display: flex;
+    flex-direction: column;
+    line-height: 1;
+  }
+
+  .brand-name {
+    font-family: 'Playfair Display', serif;
+    font-style: italic;
+    font-size: 28px;
+    color: var(--amber-bright);
+    letter-spacing: -0.5px;
+    text-shadow: 0 0 20px rgba(200,140,20,0.4);
+  }
+
+  .brand-sub {
+    font-size: 8px;
+    color: var(--text-dim);
+    letter-spacing: 3px;
+    margin-top: 3px;
+    text-transform: uppercase;
+  }
+
+  .header-center {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .sample-display {
+    background: #0a0804;
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    padding: 4px 12px;
+    font-family: 'VT323', monospace;
+    font-size: 16px;
+    color: var(--amber);
+    min-width: 220px;
+    text-align: center;
+    letter-spacing: 1px;
+    cursor: pointer;
+    transition: border-color 0.2s;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .sample-display:hover { border-color: var(--amber-dim); }
+  .sample-display.active { color: var(--amber-bright); border-color: var(--amber); }
+  .sample-display.drag-over { border-color: var(--amber-bright); background: #1a1204; }
+
+  .load-hint {
+    font-size: 8px;
+    color: var(--text-dim);
+    letter-spacing: 1px;
+  }
+
+  .header-right {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .vu-meter {
+    display: flex;
+    gap: 2px;
+    align-items: flex-end;
+    height: 32px;
+  }
+  .vu-bar {
+    width: 4px;
+    background: var(--led-off);
+    border-radius: 1px;
+    transition: height 0.05s;
+    min-height: 2px;
+  }
+
+  .power-led {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--led-off);
+    border: 1px solid #2a1a08;
+    box-shadow: none;
+    transition: all 0.1s;
+  }
+  .power-led.on {
+    background: var(--led-on);
+    box-shadow: 0 0 6px var(--led-on), 0 0 12px rgba(248,64,32,0.4);
+  }
+
+  /* ─── TAPE STRIPS ─── */
+  .tape-section {
+    background: #0e0802;
+    border-bottom: 1px solid var(--border2);
+    padding: 8px 24px;
+    overflow: hidden;
+  }
+
+  .tape-label {
+    font-size: 7px;
+    color: var(--text-dim);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+
+  .tape-strips {
+    display: flex;
+    gap: 2px;
+    align-items: flex-end;
+    height: 28px;
+  }
+
+  .tape-strip {
+    flex: 1;
+    height: 100%;
+    background: var(--tape);
+    border-radius: 1px;
+    position: relative;
+    overflow: hidden;
+    opacity: 0.3;
+    transition: opacity 0.05s;
+  }
+
+  .tape-strip.active {
+    opacity: 1;
+    background: var(--tape-active);
+  }
+
+  .tape-progress {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: 0%;
+    background: rgba(255,200,80,0.3);
+    transition: width 0.05s linear;
+  }
+
+  .tape-strip .notch {
+    position: absolute;
+    top: 3px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 2px;
+    height: 2px;
+    background: rgba(0,0,0,0.4);
+    border-radius: 50%;
+  }
+
+  /* ─── CONTROLS ─── */
+  .controls {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    border-bottom: 1px solid var(--border2);
+  }
+
+  .section {
+    padding: 16px 20px;
+    border-right: 1px solid var(--border2);
+    position: relative;
+  }
+  .section:last-child { border-right: none; }
+
+  .section-label {
+    font-size: 7px;
+    letter-spacing: 4px;
+    color: var(--amber-dim);
+    text-transform: uppercase;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .section-label::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border2);
+  }
+
+  .knobs-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px 8px;
+  }
+
+  .knob-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .knob-container {
+    position: relative;
+    width: 44px;
+    height: 44px;
+    cursor: ns-resize;
+  }
+
+  .knob-svg {
+    width: 44px;
+    height: 44px;
+    transform: rotate(-135deg);
+    pointer-events: none;
+  }
+
+  .knob-track {
+    fill: none;
+    stroke: #1a1208;
+    stroke-width: 4;
+    stroke-linecap: round;
+  }
+
+  .knob-fill {
+    fill: none;
+    stroke: var(--amber);
+    stroke-width: 4;
+    stroke-linecap: round;
+    filter: drop-shadow(0 0 3px rgba(200,140,20,0.5));
+    transition: stroke-dashoffset 0.02s;
+  }
+
+  .knob-dot {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 5px;
+    height: 5px;
+    background: var(--amber-bright);
+    border-radius: 50%;
+    transform-origin: center;
+    pointer-events: none;
+    box-shadow: 0 0 4px rgba(200,180,80,0.6);
+  }
+
+  .knob-label {
+    font-size: 7px;
+    color: var(--text-dim);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    text-align: center;
+  }
+
+  .knob-value {
+    font-family: 'VT323', monospace;
+    font-size: 11px;
+    color: var(--amber);
+    letter-spacing: 0px;
+  }
+
+  /* ─── KEYBOARD ─── */
+  .keyboard-section {
+    padding: 16px 20px 20px;
+    background: linear-gradient(180deg, #160e06 0%, #0e0804 100%);
+  }
+
+  .kb-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+  }
+
+  .kb-info {
+    font-size: 7px;
+    color: var(--text-dim);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+
+  .kb-hint {
+    font-size: 7px;
+    color: var(--text-dim);
+    letter-spacing: 1px;
+  }
+
+  .keyboard {
+    position: relative;
+    height: 90px;
+    display: flex;
+  }
+
+  .key-white {
+    flex: 1;
+    background: linear-gradient(180deg, var(--ivory-dark) 0%, var(--ivory) 60%, #d4c090 100%);
+    border: 1px solid #8a7040;
+    border-top: 2px solid #a08048;
+    border-radius: 0 0 4px 4px;
+    cursor: pointer;
+    position: relative;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    padding-bottom: 5px;
+    transition: background 0.03s;
+    z-index: 1;
+  }
+
+  .key-white.active {
+    background: linear-gradient(180deg, #a8901c 0%, #c8b030 60%, #b09020 100%);
+    border-color: #806010;
+  }
+
+  .key-white.root-note {
+    border-bottom: 3px solid var(--amber);
+  }
+
+  .key-label {
+    font-size: 7px;
+    color: var(--text-dim);
+    letter-spacing: 0;
+    opacity: 0.6;
+    pointer-events: none;
+  }
+
+  .key-white.active .key-label { color: #40200a; }
+
+  .key-black-wrap {
+    position: absolute;
+    top: 0;
+    height: 56%;
+    z-index: 2;
+    pointer-events: none;
+  }
+
+  .key-black {
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(180deg, #1e1408 0%, var(--key-black) 40%, #2a1c08 100%);
+    border: 1px solid #0a0602;
+    border-top: 1px solid #3a2a10;
+    border-radius: 0 0 3px 3px;
+    cursor: pointer;
+    pointer-events: all;
+    transition: background 0.03s;
+    box-shadow: 2px 4px 6px rgba(0,0,0,0.6);
+  }
+
+  .key-black.active {
+    background: linear-gradient(180deg, #6a5010 0%, #c8a020 100%);
+  }
+
+  /* ─── OCTAVE ZONES ─── */
+  .zone-label {
+    position: absolute;
+    bottom: -14px;
+    font-size: 7px;
+    color: var(--text-dim);
+    letter-spacing: 1px;
+    text-align: center;
+    transform: translateX(-50%);
+  }
+
+  /* ─── FOOTER ─── */
+  .footer {
+    padding: 8px 24px;
+    border-top: 1px solid var(--border2);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 7px;
+    color: var(--text-dim);
+    letter-spacing: 2px;
+    background: #0e0904;
+    border-radius: 0 0 4px 4px;
+  }
+
+  .voices-display {
+    display: flex;
+    gap: 4px;
+    align-items: center;
+  }
+
+  .voice-dot {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: var(--led-off);
+    border: 1px solid var(--border);
+    transition: all 0.05s;
+  }
+
+  .voice-dot.active {
+    background: var(--amber);
+    box-shadow: 0 0 4px var(--amber);
+  }
+
+  /* File input hidden */
+  #file-input { display: none; }
+
+  /* Drag area */
+  .drag-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(10,6,2,0.85);
+    z-index: 100;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Playfair Display', serif;
+    font-style: italic;
+    font-size: 28px;
+    color: var(--amber-bright);
+    border: 3px dashed var(--amber);
+    margin: 20px;
+    border-radius: 8px;
+  }
+  .drag-overlay.show { display: flex; }
+
+  /* Animations */
+  @keyframes tape-pulse {
+    0%, 100% { opacity: 0.8; }
+    50% { opacity: 1; }
+  }
+
+  .tape-strip.active { animation: tape-pulse 0.8s ease-in-out infinite; }
+
+  @keyframes scanline {
+    0% { transform: translateY(-100%); }
+    100% { transform: translateY(100vh); }
+  }
+
+  .scanline {
+    position: fixed;
+    width: 100%;
+    height: 2px;
+    background: rgba(200,160,80,0.02);
+    pointer-events: none;
+    z-index: 999;
+    animation: scanline 8s linear infinite;
+  }
+</style>
+</head>
+<body>
+<div class="scanline"></div>
+<div class="drag-overlay" id="dragOverlay">▶ DROP AUDIO SAMPLE HERE</div>
+<input type="file" id="file-input" accept="audio/*">
+
+<div class="machine">
+
+  <!-- HEADER -->
+  <div class="header">
+    <div class="brand">
+      <div class="brand-name">Emullotron</div>
+      <div class="brand-sub">Magnetic Tape Emulator · Mk.I</div>
+    </div>
+
+    <div class="header-center">
+      <div class="sample-display" id="sampleDisplay" title="Click to load or drag & drop an audio file">
+        ▸ NO TAPE LOADED ◂
+      </div>
+      <div class="load-hint">CLICK TO LOAD · DRAG & DROP AUDIO FILE</div>
+    </div>
+
+    <div class="header-right">
+      <div class="vu-meter" id="vuMeter">
+        <div class="vu-bar" style="height: 4px;" id="vu0"></div>
+        <div class="vu-bar" style="height: 4px;" id="vu1"></div>
+        <div class="vu-bar" style="height: 4px;" id="vu2"></div>
+        <div class="vu-bar" style="height: 4px;" id="vu3"></div>
+        <div class="vu-bar" style="height: 4px;" id="vu4"></div>
+        <div class="vu-bar" style="height: 4px;" id="vu5"></div>
+        <div class="vu-bar" style="height: 4px;" id="vu6"></div>
+        <div class="vu-bar" style="height: 4px;" id="vu7"></div>
+      </div>
+      <div class="power-led" id="powerLed"></div>
+    </div>
+  </div>
+
+  <!-- TAPE STRIPS VISUALIZATION -->
+  <div class="tape-section">
+    <div class="tape-label">TAPE TRACKS</div>
+    <div class="tape-strips" id="tapeStrips"></div>
+  </div>
+
+  <!-- CONTROLS -->
+  <div class="controls">
+
+    <!-- TAPE SECTION -->
+    <div class="section">
+      <div class="section-label">Tape</div>
+      <div class="knobs-grid">
+        <div class="knob-wrap">
+          <div class="knob-container" data-param="tapeLength" data-min="2" data-max="12" data-default="7">
+            <svg class="knob-svg" viewBox="0 0 44 44">
+              <circle class="knob-track" cx="22" cy="22" r="16" stroke-dasharray="201" stroke-dashoffset="50"/>
+              <circle class="knob-fill" cx="22" cy="22" r="16" stroke-dasharray="201" stroke-dashoffset="101"/>
+            </svg>
+            <div class="knob-dot"></div>
+          </div>
+          <div class="knob-label">Tape Len</div>
+          <div class="knob-value" data-param-val="tapeLength">7.0s</div>
+        </div>
+
+        <div class="knob-wrap">
+          <div class="knob-container" data-param="wow" data-min="0" data-max="1" data-default="0.35">
+            <svg class="knob-svg" viewBox="0 0 44 44">
+              <circle class="knob-track" cx="22" cy="22" r="16" stroke-dasharray="201" stroke-dashoffset="50"/>
+              <circle class="knob-fill" cx="22" cy="22" r="16" stroke-dasharray="201" stroke-dashoffset="101"/>
+            </svg>
+            <div class="knob-dot"></div>
+          </div>
+          <div class="knob-label">Wow</div>
+          <div class="knob-value" data-param-val="wow">35%</div>
+        </div>
+
+        <div class="knob-wrap">
+          <div class="knob-container" data-param="flutter" data-min="0" data-max="1" data-default="0.25">
+            <svg class="knob-svg" viewBox="0 0 44 44">
+              <circle class="knob-track" cx="22" cy="22" r="16" stroke-dasharray="201" stroke-dashoffset="50"/>
+              <circle class="knob-fill" cx="22" cy="22" r="16" stroke-dasharray="201" stroke-dashoffset="101"/>
+            </svg>
+            <div class="knob-dot"></div>
+          </div>
+          <div class="knob-label">Flutter</div>
+          <div class="knob-value" data-param-val="flutter">25%</div>
+        </div>
+
+        <div class="knob-wrap">
+          <div class="knob-container" data-param="tapeAge" data-min="0" data-max="1" data-default="0.3">
+            <svg class="knob-svg" viewBox="0 0 44 44">
+              <circle class="knob-track" cx="22" cy="22" r="16" stroke-dasharray="201" stroke-dashoffset="50"/>
+              <circle class="knob-fill" cx="22" cy="22" r="16" stroke-dasharray="201" stroke-dashoffset="101"/>
+            </svg>
+            <div class="knob-dot"></div>
+          </div>
+          <div class="knob-label">Age</div>
+          <div class="knob-value" data-param-val="tapeAge">30%</div>
+        </div>
+
+        <div class="knob-wrap" style="grid-column: 1/-1; justify-self: center;">
+          <div class="knob-container" data-param="noise" data-min="0" data-max="1" data-default="0.12">
+            <svg class="knob-svg" viewBox="0 0 44 44">
+              <circle class="knob-track" cx="22" cy="22" r="16" stroke-dasharray="201" stroke-dashoffset="50"/>
+              <circle class="knob-fill" cx="22" cy="22" r="16" stroke-dasharray="201" stroke-dashoffset="101"/>
+            </svg>
+            <div class="knob-dot"></div>
+          </div>
+          <div class="knob-label">Mech. Noise</div>
+          <div class="knob-value" data-param-val="noise">12%</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SOUND SECTION -->
+    <div class="section">
+      <div class="section-label">Sound</div>
+      <div class="knobs-grid">
+        <div class="knob-wrap">
+          <div class="knob-container" data-param="tone" data-min="0" data-max="1" data-default="0.5">
+            <svg class="knob-svg" viewBox="0 0 44 44">
+              <circle class="knob-track" cx="22" cy="22" r="16" stroke-dasharray="201" stroke-dashoffset="50"/>
+              <circle class="knob-fill" cx="22" cy="22" r="16" stroke-dasharray="201" stroke-dashoffset="101"/>
+            </svg>
+            <div class="knob-dot"></div>
+          </div>
+          <div class="knob-label">Tone</div>
+          <div class="knob-value" data-param-val="tone">0dB</div>
+        </div>
+
+        <div class="knob-wrap">
+          <div class="knob-container" data-param="brightness" data-min="0" data-max="1" data-default="0.55">
+            <svg class="knob-svg" viewBox="0 0 44 44">
+              <circle class="knob-track" cx="22" cy="22" r="16" stroke-dasharray="201" stroke-dashoffset="50"/>
+              <circle class="knob-fill" cx="22" cy="22" r="16" stroke-dasharray="201" stroke-dashoffset="101"/>
+            </svg>
+            <div class="knob-dot"></div>
+          </div>
+          <div class="knob-label">Bright</div>
+          <div class="knob-value" data-param-val="brightness">55%</div>
+        </div>
+
+        <div class="knob-wrap">
+          <div class="knob-container" data-param="saturation" data-min="0" data-max="1" data-default="0.2">
+            <svg class="knob-svg" viewBox="0 0 44 44">
+              <circle class="knob-track" cx="22" cy="22" r="16" stroke-dasharray="201" stroke-dashoffset="50"/>
+              <circle class="knob-fill" cx="22" cy="22" r="16" stroke-dasharray="201" stroke-dashoffset="101"/>
+            </svg>
+            <div class="knob-dot"></div>
+          </div>
+          <div class="knob-label">Saturation</div>
+          <div class="knob-value" data-param-val="saturation">20%</div>
+        </div>
+
+        <div class="knob-wrap">
+          <div class="knob-container" data-param="volume" data-min="0" data-max="1" data-default="0.75">
+            <svg class="knob-svg" viewBox="0 0 44 44">
+              <circle class="knob-track" cx="22" cy="22" r="16" stroke-dasharray="201" stroke-dashoffset="50"/>
+              <circle class="knob-fill" cx="22" cy="22" r="16" stroke-dasharray="201" stroke-dashoffset="101"/>
+            </svg>
+            <div class="knob-dot"></div>
+          </div>
+          <div class="knob-label">Volume</div>
+          <div class="knob-value" data-param-val="volume">75%</div>
+        </div>
+
+        <div class="knob-wrap" style="grid-column: 1/-1; justify-self: center;">
+          <div class="knob-container" data-param="motorDrift" data-min="0" data-max="1" data-default="0.2">
+            <svg class="knob-svg" viewBox="0 0 44 44">
+              <circle class="knob-track" cx="22" cy="22" r="16" stroke-dasharray="201" stroke-dashoffset="50"/>
+              <circle class="knob-fill" cx="22" cy="22" r="16" stroke-dasharray="201" stroke-dashoffset="101"/>
+            </svg>
+            <div class="knob-dot"></div>
+          </div>
+          <div class="knob-label">Motor Drift</div>
+          <div class="knob-value" data-param-val="motorDrift">20%</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- KEYBOARD SECTION -->
+    <div class="section">
+      <div class="section-label">Key Mapping</div>
+      <div class="knobs-grid">
+        <div class="knob-wrap">
+          <div class="knob-container" data-param="drift" data-min="0" data-max="1" data-default="0.4">
+            <svg class="knob-svg" viewBox="0 0 44 44">
+              <circle class="knob-track" cx="22" cy="22" r="16" stroke-dasharray="201" stroke-dashoffset="50"/>
+              <circle class="knob-fill" cx="22" cy="22" r="16" stroke-dasharray="201" stroke-dashoffset="101"/>
+            </svg>
+            <div class="knob-dot"></div>
+          </div>
+          <div class="knob-label">Drift/Key</div>
+          <div class="knob-value" data-param-val="drift">40%</div>
+        </div>
+
+        <div class="knob-wrap">
+          <div class="knob-container" data-param="stereoWidth" data-min="0" data-max="1" data-default="0.5">
+            <svg class="knob-svg" viewBox="0 0 44 44">
+              <circle class="knob-track" cx="22" cy="22" r="16" stroke-dasharray="201" stroke-dashoffset="50"/>
+              <circle class="knob-fill" cx="22" cy="22" r="16" stroke-dasharray="201" stroke-dashoffset="101"/>
+            </svg>
+            <div class="knob-dot"></div>
+          </div>
+          <div class="knob-label">Stereo</div>
+          <div class="knob-value" data-param-val="stereoWidth">50%</div>
+        </div>
+
+        <div class="knob-wrap">
+          <div class="knob-container" data-param="attackSoft" data-min="0" data-max="1" data-default="0.4">
+            <svg class="knob-svg" viewBox="0 0 44 44">
+              <circle class="knob-track" cx="22" cy="22" r="16" stroke-dasharray="201" stroke-dashoffset="50"/>
+              <circle class="knob-fill" cx="22" cy="22" r="16" stroke-dasharray="201" stroke-dashoffset="101"/>
+            </svg>
+            <div class="knob-dot"></div>
+          </div>
+          <div class="knob-label">Atk Soft</div>
+          <div class="knob-value" data-param-val="attackSoft">40%</div>
+        </div>
+
+        <div class="knob-wrap">
+          <div class="knob-container" data-param="release" data-min="0" data-max="1" data-default="0.3">
+            <svg class="knob-svg" viewBox="0 0 44 44">
+              <circle class="knob-track" cx="22" cy="22" r="16" stroke-dasharray="201" stroke-dashoffset="50"/>
+              <circle class="knob-fill" cx="22" cy="22" r="16" stroke-dasharray="201" stroke-dashoffset="101"/>
+            </svg>
+            <div class="knob-dot"></div>
+          </div>
+          <div class="knob-label">Release</div>
+          <div class="knob-value" data-param-val="release">30%</div>
+        </div>
+
+        <div class="knob-wrap" style="grid-column: 1/-1; justify-self: center;">
+          <div class="knob-container" data-param="headPressure" data-min="0" data-max="1" data-default="0.5">
+            <svg class="knob-svg" viewBox="0 0 44 44">
+              <circle class="knob-track" cx="22" cy="22" r="16" stroke-dasharray="201" stroke-dashoffset="50"/>
+              <circle class="knob-fill" cx="22" cy="22" r="16" stroke-dasharray="201" stroke-dashoffset="101"/>
+            </svg>
+            <div class="knob-dot"></div>
+          </div>
+          <div class="knob-label">Head Press.</div>
+          <div class="knob-value" data-param-val="headPressure">50%</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- KEYBOARD -->
+  <div class="keyboard-section">
+    <div class="kb-header">
+      <div class="kb-info">KEYBOARD · 3 OCTAVES · ROOT: <span id="rootDisplay">C4</span></div>
+      <div class="kb-hint">QWERTY → PIANO · A=C · W=C# · S=D … | Z/X OCTAVE ±</div>
+    </div>
+    <div class="keyboard" id="keyboard"></div>
+    <div style="display:flex; justify-content:space-between; margin-top: 18px; font-size:7px; color: var(--text-dim); letter-spacing:1px;">
+      <span id="octaveLow">C3 ← GRAVE ZONE</span>
+      <span>ROOT NOTE ZONE</span>
+      <span id="octaveHigh">BRIGHT ZONE → C6</span>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <div class="footer">
+    <span>EMULLOTRON MK.I · VIRTUAL TAPE ENGINE</span>
+    <div class="voices-display">
+      VOICES:
+      <div class="voice-dot" id="vd0"></div>
+      <div class="voice-dot" id="vd1"></div>
+      <div class="voice-dot" id="vd2"></div>
+      <div class="voice-dot" id="vd3"></div>
+      <div class="voice-dot" id="vd4"></div>
+      <div class="voice-dot" id="vd5"></div>
+      <div class="voice-dot" id="vd6"></div>
+      <div class="voice-dot" id="vd7"></div>
+    </div>
+    <span id="statusBar">READY · NO TAPE</span>
+  </div>
+
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════════
+// EMULLOTRON AUDIO ENGINE
+// ═══════════════════════════════════════════════════════════════════
+
+const MIDI_ROOT_DEFAULT = 60; // C4
+const NOTE_NAMES = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+const KEYBOARD_START = 48; // C3
+const KEYBOARD_END   = 83; // B5
+const TOTAL_KEYS = KEYBOARD_END - KEYBOARD_START + 1; // 36
+
+// Parameters state
+const params = {
+  tapeLength:    7.0,
+  wow:           0.35,
+  flutter:       0.25,
+  tapeAge:       0.30,
+  noise:         0.12,
+  tone:          0.50,
+  brightness:    0.55,
+  saturation:    0.20,
+  volume:        0.75,
+  motorDrift:    0.20,
+  drift:         0.40,
+  stereoWidth:   0.50,
+  attackSoft:    0.40,
+  release:       0.30,
+  headPressure:  0.50,
+  rootNote:      MIDI_ROOT_DEFAULT
+};
+
+// Per-note random variations (generated on sample load)
+const noteVariations = {};
+
+// Active voices
+const activeVoices = {};
+// Tape progress tracking
+const tapeProgress = {};
+
+let audioCtx = null;
+let masterGain = null;
+let analyserNode = null;
+let sourceBuffer = null;
+let sampleName = '';
+
+// ── INIT AUDIO ──────────────────────────────────────────────────────
+function initAudio() {
+  if (audioCtx) return;
+  audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  masterGain = audioCtx.createGain();
+  masterGain.gain.value = params.volume;
+
+  analyserNode = audioCtx.createAnalyser();
+  analyserNode.fftSize = 256;
+
+  masterGain.connect(analyserNode);
+  analyserNode.connect(audioCtx.destination);
+
+  document.getElementById('powerLed').classList.add('on');
+  startVUMeter();
+}
+
+// ── NOISE BUFFER ───────────────────────────────────────────────────
+function createNoiseBuffer(duration) {
+  const size = Math.ceil(audioCtx.sampleRate * (duration + 0.5));
+  const buf = audioCtx.createBuffer(1, size, audioCtx.sampleRate);
+  const d = buf.getChannelData(0);
+  // Brownian-ish noise
+  let last = 0;
+  for (let i = 0; i < size; i++) {
+    const white = Math.random() * 2 - 1;
+    last = (last + 0.02 * white) / 1.02;
+    d[i] = last * 8;
+  }
+  return buf;
+}
+
+// ── SATURATION CURVE ──────────────────────────────────────────────
+function makeSatCurve(amount) {
+  const n = 512;
+  const curve = new Float32Array(n);
+  const k = amount * 80 + 1;
+  for (let i = 0; i < n; i++) {
+    const x = (i * 2) / n - 1;
+    curve[i] = (Math.PI + k) * x / (Math.PI + k * Math.abs(x));
+  }
+  return curve;
+}
+
+// ── GENERATE NOTE VARIATIONS ─────────────────────────────────────
+function generateNoteVariations() {
+  for (let note = KEYBOARD_START; note <= KEYBOARD_END; note++) {
+    const semOffset = note - params.rootNote;
+    // Darker, noisier for extremes
+    const zoneFactor = Math.abs(semOffset) / 24;
+    noteVariations[note] = {
+      pitchCents:       (Math.random() - 0.5) * 12 * params.drift,    // ±6 cents max
+      filterFreqMult:   0.8 + Math.random() * 0.4 + zoneFactor * -0.2,
+      noiseLevel:       0.003 + Math.random() * 0.004 + zoneFactor * 0.004,
+      attackJitter:     Math.random() * 0.035 * params.attackSoft,
+      wowRate:          0.25 + Math.random() * 0.55,
+      flutterRate:      5.5  + Math.random() * 7.0,
+      wowPhase:         Math.random() * Math.PI * 2,
+      flutterPhase:     Math.random() * Math.PI * 2,
+      panPos:           (semOffset / 24) * params.stereoWidth * 0.5,
+      tapeLengthMult:   0.9 + Math.random() * 0.2,   // slight variation per note
+    };
+  }
+}
+
+// ── NOTE ON ────────────────────────────────────────────────────────
+function noteOn(midiNote, velocity = 0.8) {
+  if (!audioCtx || !sourceBuffer) return;
+  if (activeVoices[midiNote]) noteOff(midiNote, true);
+
+  const v = noteVariations[midiNote];
+  if (!v) return;
+
+  const semitones  = midiNote - params.rootNote;
+  const baseRate   = Math.pow(2, semitones / 12);
+  const pitchRatio = Math.pow(2, v.pitchCents / 1200);
+  const playRate   = baseRate * pitchRatio;
+
+  // ── NODES ────────────────────────────────────────────────────
+  const source = audioCtx.createBufferSource();
+  source.buffer = sourceBuffer;
+  source.playbackRate.value = playRate;
+
+  // WOW LFO → playbackRate
+  const wowOsc = audioCtx.createOscillator();
+  wowOsc.type = 'sine';
+  wowOsc.frequency.value = v.wowRate;
+  const wowGain = audioCtx.createGain();
+  wowGain.gain.value = params.wow * 0.009;
+  wowOsc.connect(wowGain);
+  wowGain.connect(source.playbackRate);
+  wowOsc.start();
+
+  // FLUTTER LFO → playbackRate
+  const flutterOsc = audioCtx.createOscillator();
+  flutterOsc.type = 'sine';
+  flutterOsc.frequency.value = v.flutterRate;
+  const flutterGain = audioCtx.createGain();
+  flutterGain.gain.value = params.flutter * 0.003;
+  flutterOsc.connect(flutterGain);
+  flutterGain.connect(source.playbackRate);
+  flutterOsc.start();
+
+  // MOTOR DRIFT: slow random LFO
+  const driftOsc = audioCtx.createOscillator();
+  driftOsc.type = 'triangle';
+  driftOsc.frequency.value = 0.07 + Math.random() * 0.08;
+  const driftGain = audioCtx.createGain();
+  driftGain.gain.value = params.motorDrift * 0.004;
+  driftOsc.connect(driftGain);
+  driftGain.connect(source.playbackRate);
+  driftOsc.start();
+
+  // TAPE AGE FILTER
+  const ageFilter = audioCtx.createBiquadFilter();
+  ageFilter.type = 'lowpass';
+  const ageFreq = 14000 * (1 - params.tapeAge * 0.72) * v.filterFreqMult;
+  ageFilter.frequency.value = Math.max(800, ageFreq);
+  ageFilter.Q.value = 0.6;
+
+  // BRIGHTNESS FILTER (shelf)
+  const brightFilter = audioCtx.createBiquadFilter();
+  brightFilter.type = 'highshelf';
+  brightFilter.frequency.value = 3000;
+  brightFilter.gain.value = (params.brightness - 0.5) * 10;
+
+  // TONE (mid peaking)
+  const toneFilter = audioCtx.createBiquadFilter();
+  toneFilter.type = 'peaking';
+  toneFilter.frequency.value = 800;
+  toneFilter.Q.value = 0.8;
+  toneFilter.gain.value = (params.tone - 0.5) * 10;
+
+  // HEAD PRESSURE: subtle low mid boost
+  const pressFilter = audioCtx.createBiquadFilter();
+  pressFilter.type = 'peaking';
+  pressFilter.frequency.value = 300;
+  pressFilter.Q.value = 1.2;
+  pressFilter.gain.value = params.headPressure * 4 - 2;
+
+  // SATURATION
+  const waveshaper = audioCtx.createWaveShaper();
+  waveshaper.curve = makeSatCurve(params.saturation);
+  waveshaper.oversample = '2x';
+
+  // VCA
+  const vca = audioCtx.createGain();
+  vca.gain.value = 0;
+
+  // PANNER (stereo width)
+  const panner = audioCtx.createStereoPanner();
+  panner.pan.value = v.panPos;
+
+  // ── CONNECT MAIN CHAIN ──────────────────────────────────────
+  source.connect(ageFilter);
+  ageFilter.connect(brightFilter);
+  brightFilter.connect(toneFilter);
+  toneFilter.connect(pressFilter);
+  pressFilter.connect(waveshaper);
+  waveshaper.connect(vca);
+  vca.connect(panner);
+  panner.connect(masterGain);
+
+  // ── MECHANICAL NOISE (parallel) ──────────────────────────────
+  const maxLen = params.tapeLength * v.tapeLengthMult;
+  const noiseBuffer = createNoiseBuffer(maxLen);
+  const noiseNode = audioCtx.createBufferSource();
+  noiseNode.buffer = noiseBuffer;
+
+  const noiseHP = audioCtx.createBiquadFilter();
+  noiseHP.type = 'highpass';
+  noiseHP.frequency.value = 600 + Math.random() * 400;
+
+  const noiseGain = audioCtx.createGain();
+  noiseGain.gain.value = params.noise * v.noiseLevel * 0.8 * velocity;
+
+  noiseNode.connect(noiseHP);
+  noiseHP.connect(noiseGain);
+  noiseGain.connect(vca);
+  noiseNode.start();
+
+  // ── ATTACK ENVELOPE ──────────────────────────────────────────
+  const softness = 0.008 + params.attackSoft * 0.06;
+  const jitter   = v.attackJitter;
+  const now = audioCtx.currentTime;
+
+  vca.gain.setValueAtTime(0, now);
+  // Very slight initial dip for head-contact imperfection
+  if (params.headPressure > 0.3) {
+    vca.gain.setValueAtTime(velocity * 0.3, now + jitter * 0.5);
+    vca.gain.linearRampToValueAtTime(velocity * 0.85, now + jitter + softness * 0.4);
+    vca.gain.linearRampToValueAtTime(velocity, now + jitter + softness);
+  } else {
+    vca.gain.linearRampToValueAtTime(velocity, now + jitter + softness);
+  }
+
+  // Tape end fade
+  const endTime = now + maxLen;
+  vca.gain.setValueAtTime(velocity, endTime - 0.4);
+  vca.gain.linearRampToValueAtTime(0, endTime);
+
+  // Start + schedule stop
+  source.start(now);
+  source.stop(endTime + 0.05);
+  noiseNode.stop(endTime + 0.1);
+
+  // ── SAVE VOICE ───────────────────────────────────────────────
+  activeVoices[midiNote] = {
+    source, vca, wowOsc, flutterOsc, driftOsc, noiseNode, noiseGain,
+    startTime: now, maxLen
+  };
+
+  // Track tape progress for visualization
+  tapeProgress[midiNote] = { startTime: now, maxLen };
+
+  updateVoiceDots();
+  setTapeActive(midiNote, true);
+  setStatus(`PLAYING: ${noteName(midiNote)} · ${semitones > 0 ? '+' : ''}${semitones} ST`);
+
+  // Auto-cleanup when source ends
+  source.addEventListener('ended', () => {
+    cleanupVoice(midiNote);
+  });
+}
+
+// ── NOTE OFF ──────────────────────────────────────────────────────
+function noteOff(midiNote, immediate = false) {
+  const voice = activeVoices[midiNote];
+  if (!voice) return;
+
+  const { vca, source, wowOsc, flutterOsc, driftOsc, noiseNode } = voice;
+  const releaseTime = immediate ? 0.01 : 0.02 + params.release * 0.12;
+  const now = audioCtx.currentTime;
+
+  vca.gain.cancelScheduledValues(now);
+  vca.gain.setValueAtTime(vca.gain.value, now);
+  vca.gain.linearRampToValueAtTime(0, now + releaseTime);
+
+  const stopAt = now + releaseTime + 0.05;
+  try { source.stop(stopAt); } catch(e) {}
+  try { noiseNode.stop(stopAt); } catch(e) {}
+
+  setTimeout(() => {
+    try { wowOsc.stop(); flutterOsc.stop(); driftOsc.stop(); } catch(e) {}
+    cleanupVoice(midiNote);
+  }, (releaseTime + 0.15) * 1000);
+
+  delete activeVoices[midiNote];
+  delete tapeProgress[midiNote];
+  setTapeActive(midiNote, false);
+  updateVoiceDots();
+}
+
+function cleanupVoice(note) {
+  delete activeVoices[note];
+  delete tapeProgress[note];
+  setTapeActive(note, false);
+  updateVoiceDots();
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// SAMPLE LOADING
+// ═══════════════════════════════════════════════════════════════════
+async function loadSample(file) {
+  initAudio();
+  setStatus('LOADING TAPE...');
+
+  const arrayBuffer = await file.arrayBuffer();
+  try {
+    sourceBuffer = await audioCtx.decodeAudioData(arrayBuffer);
+    sampleName = file.name.replace(/\.[^.]+$/, '').toUpperCase().substring(0, 24);
+
+    document.getElementById('sampleDisplay').textContent = `◀ ${sampleName} ▶`;
+    document.getElementById('sampleDisplay').classList.add('active');
+
+    generateNoteVariations();
+    setStatus(`TAPE LOADED · ${(sourceBuffer.duration).toFixed(1)}s · ${sourceBuffer.sampleRate}Hz`);
+
+    // Flash tape strips
+    for (let i = 0; i < TOTAL_KEYS; i++) {
+      setTimeout(() => {
+        const strip = document.getElementById(`strip-${KEYBOARD_START + i}`);
+        if (strip) {
+          strip.classList.add('active');
+          setTimeout(() => strip.classList.remove('active'), 150);
+        }
+      }, i * 12);
+    }
+  } catch (e) {
+    setStatus('ERROR: CANNOT DECODE AUDIO FILE');
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// KEYBOARD CONSTRUCTION
+// ═══════════════════════════════════════════════════════════════════
+const WHITE_NOTES = [0,2,4,5,7,9,11]; // C D E F G A B
+const BLACK_NOTES = [1,3,6,8,10];
+
+function noteName(midi) {
+  const oct = Math.floor(midi / 12) - 1;
+  return NOTE_NAMES[midi % 12] + oct;
+}
+
+function isBlack(midi) { return BLACK_NOTES.includes(midi % 12); }
+
+function buildKeyboard() {
+  const kb = document.getElementById('keyboard');
+  kb.innerHTML = '';
+
+  // Count white keys for positioning black keys
+  const whiteKeyWidth = 100 / 21; // 3 octaves = 21 white keys
+  let whiteIndex = 0;
+  const whitePositions = {};
+
+  for (let note = KEYBOARD_START; note <= KEYBOARD_END; note++) {
+    if (!isBlack(note)) {
+      whitePositions[note] = whiteIndex;
+      whiteIndex++;
+    }
+  }
+
+  // White keys
+  for (let note = KEYBOARD_START; note <= KEYBOARD_END; note++) {
+    if (isBlack(note)) continue;
+    const key = document.createElement('div');
+    key.className = 'key-white';
+    key.id = `key-${note}`;
+    if (note === params.rootNote) key.classList.add('root-note');
+
+    const label = document.createElement('div');
+    label.className = 'key-label';
+    if (note % 12 === 0) label.textContent = noteName(note); // C notes only
+    key.appendChild(label);
+
+    key.addEventListener('mousedown', (e) => { e.preventDefault(); initAudio(); noteOn(note, 0.8); });
+    key.addEventListener('mouseup',   () => noteOff(note));
+    key.addEventListener('mouseleave', () => { if (activeVoices[note]) noteOff(note); });
+
+    key.addEventListener('touchstart', (e) => { e.preventDefault(); initAudio(); noteOn(note, 0.8); }, { passive: false });
+    key.addEventListener('touchend', () => noteOff(note));
+
+    kb.appendChild(key);
+  }
+
+  // Black keys (positioned absolutely)
+  const blackOffsets = { 1: 0.55, 3: 1.55, 6: 3.55, 8: 4.55, 10: 5.55 };
+
+  for (let note = KEYBOARD_START; note <= KEYBOARD_END; note++) {
+    if (!isBlack(note)) continue;
+    const deg = note % 12;
+
+    // Find the octave position
+    const octaveStart = note - deg;
+    const octaveOffset = (octaveStart - KEYBOARD_START) / 12;
+    const posInOctave = blackOffsets[deg] || 0;
+    const totalWhitePos = octaveOffset * 7 + posInOctave;
+
+    const wrap = document.createElement('div');
+    wrap.className = 'key-black-wrap';
+    wrap.style.left = `${totalWhitePos * whiteKeyWidth - whiteKeyWidth * 0.3}%`;
+    wrap.style.width = `${whiteKeyWidth * 0.6}%`;
+
+    const key = document.createElement('div');
+    key.className = 'key-black';
+    key.id = `key-${note}`;
+
+    key.addEventListener('mousedown', (e) => { e.preventDefault(); initAudio(); noteOn(note, 0.8); });
+    key.addEventListener('mouseup',   () => noteOff(note));
+    key.addEventListener('mouseleave', () => { if (activeVoices[note]) noteOff(note); });
+    key.addEventListener('touchstart', (e) => { e.preventDefault(); initAudio(); noteOn(note, 0.8); }, { passive: false });
+    key.addEventListener('touchend', () => noteOff(note));
+
+    wrap.appendChild(key);
+    kb.appendChild(wrap);
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// TAPE STRIPS
+// ═══════════════════════════════════════════════════════════════════
+function buildTapeStrips() {
+  const container = document.getElementById('tapeStrips');
+  container.innerHTML = '';
+  for (let note = KEYBOARD_START; note <= KEYBOARD_END; note++) {
+    const strip = document.createElement('div');
+    strip.className = 'tape-strip';
+    strip.id = `strip-${note}`;
+    const notch = document.createElement('div');
+    notch.className = 'notch';
+    strip.appendChild(notch);
+    const prog = document.createElement('div');
+    prog.className = 'tape-progress';
+    prog.id = `prog-${note}`;
+    strip.appendChild(prog);
+    container.appendChild(strip);
+  }
+}
+
+function setTapeActive(note, active) {
+  const strip = document.getElementById(`strip-${note}`);
+  const key = document.getElementById(`key-${note}`);
+  if (strip) strip.classList.toggle('active', active);
+  if (key) key.classList.toggle('active', active);
+  if (!active) {
+    const prog = document.getElementById(`prog-${note}`);
+    if (prog) prog.style.width = '0%';
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// VU METER
+// ═══════════════════════════════════════════════════════════════════
+function startVUMeter() {
+  const dataArray = new Uint8Array(analyserNode.frequencyBinCount);
+  const bars = document.querySelectorAll('.vu-bar');
+  const maxBarH = 28;
+
+  function draw() {
+    requestAnimationFrame(draw);
+    analyserNode.getByteFrequencyData(dataArray);
+
+    // Tape progress update
+    const now = audioCtx ? audioCtx.currentTime : 0;
+    for (const [noteStr, tp] of Object.entries(tapeProgress)) {
+      const elapsed = now - tp.startTime;
+      const pct = Math.min(100, (elapsed / tp.maxLen) * 100);
+      const prog = document.getElementById(`prog-${noteStr}`);
+      if (prog) prog.style.width = pct + '%';
+    }
+
+    // VU bars (8 frequency bands)
+    const step = Math.floor(dataArray.length / 8);
+    bars.forEach((bar, i) => {
+      const val = dataArray[i * step] / 255;
+      const h = Math.max(2, val * maxBarH);
+      bar.style.height = h + 'px';
+      bar.style.background = val > 0.8 ? '#f84020' : val > 0.6 ? '#c8a020' : '#c8860a';
+    });
+  }
+  draw();
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// VOICE DOTS
+// ═══════════════════════════════════════════════════════════════════
+function updateVoiceDots() {
+  const active = Object.keys(activeVoices);
+  for (let i = 0; i < 8; i++) {
+    const dot = document.getElementById(`vd${i}`);
+    if (dot) dot.classList.toggle('active', i < active.length);
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// STATUS
+// ═══════════════════════════════════════════════════════════════════
+function setStatus(msg) {
+  document.getElementById('statusBar').textContent = msg;
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// KNOBS
+// ═══════════════════════════════════════════════════════════════════
+const CIRC = 2 * Math.PI * 16; // circumference of r=16 circle
+const ARC_RANGE = 270; // degrees of rotation
+const ARC_DEG = (ARC_RANGE / 360) * CIRC; // arc length
+
+function setKnobValue(container, normalizedVal) {
+  const fill = container.querySelector('.knob-fill');
+  const dot = container.querySelector('.knob-dot');
+  const offset = CIRC - normalizedVal * ARC_DEG;
+  fill.style.strokeDashoffset = offset;
+
+  // Rotate dot (-135 to +135 degrees)
+  const angle = -135 + normalizedVal * 270;
+  const rad = (angle * Math.PI) / 180;
+  const cx = 22, cy = 22, r = 14;
+  // Dot is in SVG space rotated -135deg already; use CSS transform on parent SVG
+  const dotAngle = -135 + normalizedVal * 270 + 135; // adjust for SVG rotation offset
+  dot.style.transform = `translate(-50%, -50%) rotate(${dotAngle}deg) translateY(-14px) rotate(-${dotAngle}deg)`;
+}
+
+function getKnobDisplayVal(param, val) {
+  switch(param) {
+    case 'tapeLength':  return val.toFixed(1) + 's';
+    case 'tone':        return ((val - 0.5) * 20).toFixed(0) + 'dB';
+    case 'saturation':  return Math.round(val * 100) + '%';
+    case 'volume':      return Math.round(val * 100) + '%';
+    case 'noise':       return Math.round(val * 100) + '%';
+    case 'wow':         return Math.round(val * 100) + '%';
+    case 'flutter':     return Math.round(val * 100) + '%';
+    case 'tapeAge':     return Math.round(val * 100) + '%';
+    case 'brightness':  return Math.round(val * 100) + '%';
+    case 'motorDrift':  return Math.round(val * 100) + '%';
+    case 'drift':       return Math.round(val * 100) + '%';
+    case 'stereoWidth': return Math.round(val * 100) + '%';
+    case 'attackSoft':  return Math.round(val * 100) + '%';
+    case 'release':     return Math.round(val * 100) + '%';
+    case 'headPressure':return Math.round(val * 100) + '%';
+    default:            return val.toFixed(2);
+  }
+}
+
+function initKnobs() {
+  const knobs = document.querySelectorAll('.knob-container');
+  knobs.forEach(container => {
+    const param   = container.dataset.param;
+    const min     = parseFloat(container.dataset.min);
+    const max     = parseFloat(container.dataset.max);
+    const def     = parseFloat(container.dataset.default);
+
+    let val = params[param] !== undefined ? params[param] : def;
+    let norm = (val - min) / (max - min);
+
+    // Init knob display
+    setKnobValue(container, norm);
+    const valEl = document.querySelector(`[data-param-val="${param}"]`);
+    if (valEl) valEl.textContent = getKnobDisplayVal(param, val);
+
+    let startY, startNorm;
+
+    function onMove(e) {
+      const y = e.touches ? e.touches[0].clientY : e.clientY;
+      const delta = (startY - y) / 180;
+      norm = Math.max(0, Math.min(1, startNorm + delta));
+      val = min + norm * (max - min);
+      params[param] = val;
+      setKnobValue(container, norm);
+      if (valEl) valEl.textContent = getKnobDisplayVal(param, val);
+
+      // Live update master gain
+      if (param === 'volume' && masterGain) masterGain.gain.value = val;
+    }
+
+    function onUp() {
+      document.removeEventListener('mousemove', onMove);
+      document.removeEventListener('mouseup', onUp);
+      document.removeEventListener('touchmove', onMove);
+      document.removeEventListener('touchend', onUp);
+    }
+
+    container.addEventListener('mousedown', (e) => {
+      e.preventDefault();
+      startY = e.clientY; startNorm = norm;
+      document.addEventListener('mousemove', onMove);
+      document.addEventListener('mouseup', onUp);
+    });
+
+    container.addEventListener('touchstart', (e) => {
+      e.preventDefault();
+      startY = e.touches[0].clientY; startNorm = norm;
+      document.addEventListener('touchmove', onMove);
+      document.addEventListener('touchend', onUp);
+    }, { passive: false });
+
+    container.addEventListener('dblclick', () => {
+      val = def; norm = (def - min) / (max - min);
+      params[param] = val;
+      setKnobValue(container, norm);
+      if (valEl) valEl.textContent = getKnobDisplayVal(param, val);
+      if (param === 'volume' && masterGain) masterGain.gain.value = val;
+    });
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// COMPUTER KEYBOARD MAPPING
+// ═══════════════════════════════════════════════════════════════════
+// Standard piano row: a=C, w=C#, s=D, e=D#, d=E, f=F, t=F#, g=G, y=G#, h=A, u=A#, j=B, k=C, o=C#, l=D, p=D#, ;=E
+let kbOctave = 4;
+
+const KEYMAP = {
+  'a': 0, 'w': 1, 's': 2, 'e': 3, 'd': 4,
+  'f': 5, 't': 6, 'g': 7, 'y': 8, 'h': 9,
+  'u': 10, 'j': 11, 'k': 12, 'o': 13, 'l': 14,
+  'p': 15, ';': 16
+};
+
+const activeKeys = new Set();
+
+document.addEventListener('keydown', (e) => {
+  if (e.repeat) return;
+  if (e.target.tagName === 'INPUT') return;
+
+  if (e.key === 'z') { kbOctave = Math.max(2, kbOctave - 1); setStatus(`KEYBOARD OCTAVE: ${kbOctave}`); return; }
+  if (e.key === 'x') { kbOctave = Math.min(6, kbOctave + 1); setStatus(`KEYBOARD OCTAVE: ${kbOctave}`); return; }
+
+  const semi = KEYMAP[e.key.toLowerCase()];
+  if (semi === undefined) return;
+
+  const midiNote = (kbOctave + 1) * 12 + semi;
+  if (midiNote < KEYBOARD_START || midiNote > KEYBOARD_END) return;
+  if (activeKeys.has(midiNote)) return;
+
+  activeKeys.add(midiNote);
+  initAudio();
+  noteOn(midiNote, 0.8);
+});
+
+document.addEventListener('keyup', (e) => {
+  const semi = KEYMAP[e.key.toLowerCase()];
+  if (semi === undefined) return;
+  const midiNote = (kbOctave + 1) * 12 + semi;
+  activeKeys.delete(midiNote);
+  noteOff(midiNote);
+});
+
+// ═══════════════════════════════════════════════════════════════════
+// FILE LOADING
+// ═══════════════════════════════════════════════════════════════════
+document.getElementById('sampleDisplay').addEventListener('click', () => {
+  document.getElementById('file-input').click();
+});
+
+document.getElementById('file-input').addEventListener('change', (e) => {
+  if (e.target.files[0]) loadSample(e.target.files[0]);
+});
+
+// Drag and drop
+const body = document.body;
+body.addEventListener('dragover', (e) => {
+  e.preventDefault();
+  document.getElementById('dragOverlay').classList.add('show');
+});
+body.addEventListener('dragleave', (e) => {
+  if (!e.relatedTarget) document.getElementById('dragOverlay').classList.remove('show');
+});
+body.addEventListener('drop', (e) => {
+  e.preventDefault();
+  document.getElementById('dragOverlay').classList.remove('show');
+  const file = e.dataTransfer.files[0];
+  if (file && file.type.startsWith('audio/')) {
+    loadSample(file);
+  } else {
+    setStatus('ERROR: NOT AN AUDIO FILE');
+  }
+});
+
+// ═══════════════════════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════════════════════
+buildTapeStrips();
+buildKeyboard();
+initKnobs();
+
+// Animate tape strip background subtly
+setInterval(() => {
+  document.querySelectorAll('.tape-strip:not(.active)').forEach(s => {
+    s.style.opacity = (0.25 + Math.random() * 0.08).toFixed(2);
+  });
+}, 2000);
+</script>
+</body>
+</html>
