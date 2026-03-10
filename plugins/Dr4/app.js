@@ -947,19 +947,6 @@ function initEvents() {
   });
 }
 
-// ─── INIT ─────────────────────────────────────────────────────────────────────
-buildTracks();
-buildParamRows();
-updateParamPanel();
-updateTapeReadouts();
-updateBitReadouts();
-updateShermanReadouts();
-initEvents();
-initSeqModeEvents();
-drawEnvCurve();
-
-})();
-
 // ═══════════════════════════════════════════════════════════════════════════════
 // SEQUENCING ALGORITHMS  (ajout v3)
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -1297,3 +1284,17 @@ function updatePadCursor(nx, ny) {
   const dot = qs('#gridsXYDot');
   if (dot) { dot.style.left = (nx * 100) + '%'; dot.style.top = (ny * 100) + '%'; }
 }
+
+// ─── INIT ─────────────────────────────────────────────────────────────────────
+buildTracks();
+buildParamRows();
+updateParamPanel();
+updateTapeReadouts();
+updateBitReadouts();
+updateShermanReadouts();
+initEvents();
+initSeqModeEvents();
+drawEnvCurve();
+
+
+})();
