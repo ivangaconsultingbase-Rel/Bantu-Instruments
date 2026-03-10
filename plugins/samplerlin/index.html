@@ -21,6 +21,12 @@
       </div>
 
       <div class="header-actions">
+        <div class="bank-selector" id="bank-selector">
+          <button class="bank-btn active" data-bank="string">STRING</button>
+          <button class="bank-btn" data-bank="flute">FLUTE</button>
+          <button class="bank-btn" data-bank="piano">PIANO</button>
+        </div>
+
         <button id="load-sample" class="te-btn">LOAD SAMPLE</button>
         <input
           type="file"
@@ -42,6 +48,10 @@
             <div class="lcd-cell">
               <div class="lcd-label">STATUS</div>
               <div class="lcd-value" id="status-text">READY — LOAD A SAMPLE TO BEGIN</div>
+            </div>
+            <div class="lcd-cell lcd-small">
+              <div class="lcd-label">BANK</div>
+              <div class="lcd-value" id="lcd-bank">STRING</div>
             </div>
             <div class="lcd-cell lcd-small">
               <div class="lcd-label">ROOT</div>
