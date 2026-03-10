@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>DR-4 — Drum Machine + FX</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Exo+2:wght@300;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+<div id="app">
+  <div class="machine">
+
+    <!-- ── HEADER ──────────────────────────────────────────────────────── -->
+    <div class="machine-header">
+      <div class="brand">
+        <div class="brand-logo">DR<span>4</span></div>
+        <div class="brand-sub">DRUM MACHINE</div>
+        <div class="brand-sub2">Modor Style · 4 Tracks · FX Rack</div>
+      </div>
+      <div class="transport-wrap">
+        <div class="transport-group">
+          <button id="playBtn"  class="transport-btn play-btn">▶ PLAY</button>
+          <button id="stopBtn"  class="transport-btn stop-btn">■ STOP</button>
+        </div>
+        <div class="hw-field">
+          <label class="hw-label">BPM</label>
+          <div class="bpm-wrap">
+            <button class="bpm-adj" id="bpmDown">−</button>
+            <input id="bpmNum" type="number" min="60" max="200" value="120" class="bpm-num">
+            <button class="bpm-adj" id="bpmUp">+</button>
+          </div>
+          <input id="bpmSlider" type="range" min="60" max="200" value="120" class="hw-slider wide">
+        </div>
+        <div class="hw-field narrow">
+          <label class="hw-label">SWING</label>
+          <input id="swingSlider" type="range" min="0" max="0.4" step="0.01" value="0.08" class="hw-slider">
+          <div class="hw-readout" id="swingReadout">8%</div>
+        </div>
+        <div class="hw-field narrow">
+          <label class="hw-label">MASTER</label>
+          <input id="masterSlider" type="range" min="0" max="1" step="0.01" value="0.82" class="hw-slider">
+          <div class="hw-readout" id="masterReadout">82%</div>
+        </div>
+      </div>
+      <button id="audioBtn" class="audio-btn">
+        <span class="audio-dot"></span>START AUDIO
+      </button>
+    </div>
+
+    <!-- ── TRACKS ──────────────────────────────────────────────────────── -->
+    <div class="tracks-section" id="tracksSection"></div>
+
+    <!-- ── SEQ MODE PANEL ─────────────────────────────────────────────── -->
+    <div class="seqmode-panel">
+      <div class="seqmode-header">
+        <span class="seqmode-label">SEQUENCING</span>
+        <div class="seqmode-btns">
+          <button class="seqmode-btn active" data-mode="manual">MANUAL</button>
+          <button class="seqmode-btn" data-mode="euclidean">EUCLIDEAN</button>
+          <button class="seqmode-btn" data-mode="grids">GRIDS</button>
+        </div>
+      </div>
+
+      <!-- MANUAL hint -->
+      <div id="seqPanelManual" class="seqmode-body">
+        <span class="seqmode-hint">Cliquer sur les steps · Shift+clic = accent · Clic droit = accent seul</span>
+      </div>
+
+      <!-- EUCLIDEAN -->
+      <div id="seqPanelEuclid" class="seqmode-body hidden">
+        <div class="seqmode-row">
+          <div class="seqmode-field">
+            <label class="seqmode-flabel">BEATS K</label>
+            <input type="range" id="euclidK" min="1" max="16" step="1" value="4" class="hw-slider seq-slider">
+            <span class="seqmode-readout" id="euclidKOut">4</span>
+          </div>
+          <div class="seqmode-field">
+            <label class="seqmode-flabel">STEPS N</label>
+            <input type="range" id="euclidN" min="2" max="16" step="1" value="16" class="hw-slider seq-slider">
+            <span class="seqmode-readout" id="euclidNOut">16</span>
+          </div>
+          <div class="seqmode-field">
+            <label class="seqmode-flabel">OFFSET</label>
+            <input type="range" id="euclidOffset" min="0" max="15" step="1" value="0" class="hw-slider seq-slider">
+            <span class="seqmode-readout" id="euclidOffOut">0</span>
+          </div>
+          <div class="seqmode-actions">
+            <span class="seqmode-info" id="euclidInfo">E(4,16)</span>
+            <button class="seq-apply-btn" id="euclidApply">▶ TRACK</button>
+            <button class="seq-apply-btn secondary" id="euclidApplyAll">▶ ALL</button>
+          </div>
+        </div>
+        <div class="euclid-presets">
+          <span class="seqmode-flabel">PRESETS :</span>
+          <button class="euclid-preset" data-preset="3,8">3:8</button>
+          <button class="euclid-preset" data-preset="5,8">5:8</button>
+          <button class="euclid-preset" data-preset="3,16">3:16</button>
+          <button class="euclid-preset" data-preset="5,16">5:16</button>
+          <button class="euclid-preset" data-preset="7,16">7:16</button>
+          <button class="euclid-preset" data-preset="11,16">11:16</button>
+          <button class="euclid-preset" data-preset="4,12">4:12</button>
+          <button class="euclid-preset" data-preset="5,12">5:12</button>
+          <button class="euclid-preset" data-preset="7,12">7:12</button>
+        </div>
+      </div>
+
+      <!-- GRIDS -->
+      <div id="seqPanelGrids" class="seqmode-body hidden">
+        <div class="grids-layout">
+          <!-- XY Pad -->
+          <div class="grids-pad-wrap">
+            <div class="grids-pad-labels"><span>STYLE →</span></div>
+            <div class="grids-pad-side"><span>DENSITY ↓</span></div>
+            <div id="gridsXYPad" class="grids-xy-pad">
+              <div id="gridsXYDot" class="grids-xy-dot"></div>
+            </div>
+            <div class="grids-pad-coords">
+              <span class="seqmode-flabel">X <span id="gridsXOut">76</span></span>
+              <span class="seqmode-flabel">Y <span id="gridsYOut">76</span></span>
+            </div>
+            <input type="range" id="gridsX" min="0" max="1" step="0.004" value="0.3" class="hw-slider grids-hidden-range">
+            <input type="range" id="gridsY" min="0" max="1" step="0.004" value="0.3" class="hw-slider grids-hidden-range">
+          </div>
+          <!-- Density per track -->
+          <div class="grids-density">
+            <div class="grids-density-label">DENSITY</div>
+            <div class="grids-dens-row">
+              <span class="grids-track-dot" style="background:#ff6b35">BD</span>
+              <input type="range" id="gridsDens_bd" min="0" max="1" step="0.01" value="0.65" class="hw-slider seq-slider dens-slider">
+              <span class="seqmode-readout" id="gridsDensOut_bd">65%</span>
+            </div>
+            <div class="grids-dens-row">
+              <span class="grids-track-dot" style="background:#38c4c4">SD</span>
+              <input type="range" id="gridsDens_sd" min="0" max="1" step="0.01" value="0.65" class="hw-slider seq-slider dens-slider">
+              <span class="seqmode-readout" id="gridsDensOut_sd">65%</span>
+            </div>
+            <div class="grids-dens-row">
+              <span class="grids-track-dot" style="background:#f5d000">HH</span>
+              <input type="range" id="gridsDens_hh" min="0" max="1" step="0.01" value="0.65" class="hw-slider seq-slider dens-slider">
+              <span class="seqmode-readout" id="gridsDensOut_hh">65%</span>
+            </div>
+            <div class="grids-dens-row">
+              <span class="grids-track-dot" style="background:#b060ff">CP</span>
+              <input type="range" id="gridsDens_cp" min="0" max="1" step="0.01" value="0.65" class="hw-slider seq-slider dens-slider">
+              <span class="seqmode-readout" id="gridsDensOut_cp">65%</span>
+            </div>
+            <button class="seq-apply-btn" id="gridsApply" style="margin-top:8px">▶ GENERATE</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── INSTRUMENT PARAM PANEL ─────────────────────────────────────── -->
+    <div class="params-panel" id="paramsPanel">
+      <div class="params-header">
+        <div class="params-left">
+          <div class="params-track-badge" id="paramsTrackBadge">BD</div>
+          <div>
+            <div class="params-track-name" id="paramsTrackName">BASS DRUM</div>
+            <div class="params-model" id="paramsModel">Drive BD Model</div>
+          </div>
+        </div>
+        <button id="previewTrackBtn" class="preview-mini-btn">▶ PREVIEW</button>
+      </div>
+      <div class="params-body">
+        <div class="pgroup">
+          <div class="pgroup-label">AMP ENV</div>
+          <div class="prow" id="paramRow_decay"></div>
+          <div class="prow" id="paramRow_curve"></div>
+        </div>
+        <div class="pgroup">
+          <div class="pgroup-label">PITCH ENV</div>
+          <div class="prow" id="paramRow_pitch"></div>
+          <div class="prow" id="paramRow_amount"></div>
+          <div class="prow" id="paramRow_pdec"></div>
+          <div class="prow" id="paramRow_pcrv"></div>
+        </div>
+        <div class="pgroup model-group">
+          <div class="pgroup-label" id="modelGroupLabel">MODEL PARAMS</div>
+          <div class="prow" id="paramRow_x"></div>
+          <div class="prow" id="paramRow_y"></div>
+          <div class="prow" id="paramRow_z"></div>
+          <div class="prow" id="paramRow_t"></div>
+        </div>
+        <div class="pgroup curve-group">
+          <div class="pgroup-label">ENVELOPE CURVE</div>
+          <canvas id="envCanvas" width="180" height="72"></canvas>
+          <div class="curve-labels">
+            <span>LIN</span><span>SQL</span><span>EXP</span><span>SQR</span><span>RCP</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── FX RACK ─────────────────────────────────────────────────────── -->
+    <div class="fx-rack" id="fxRack">
+      <div class="fx-rack-label">FX CHAIN &nbsp;→&nbsp; TAPE SAT &nbsp;·&nbsp; BIT/SR CRUSH &nbsp;·&nbsp; SHERMAN FILTERBANK</div>
+
+      <div class="fx-units-row">
+
+        <!-- ── TAPE SATURATION ─────────────────────────────────────────── -->
+        <div class="fx-unit" id="fxTapeUnit">
+          <div class="fx-unit-header">
+            <button class="fx-bypass-btn" id="tapeBypass" title="Active/Bypass">
+              <span class="fx-led" id="tapeLed"></span>
+            </button>
+            <div class="fx-titles">
+              <div class="fx-unit-title">TAPE SAT</div>
+              <div class="fx-unit-sub">Harmonics · Wow · Flutter</div>
+            </div>
+          </div>
+          <div class="fx-unit-body">
+            <div class="fx-row">
+              <div class="fx-knob-wrap">
+                <label class="fx-knob-label">DRIVE</label>
+                <input type="range" class="fx-slider" id="tapeDrive" min="0" max="1" step="0.01" value="0">
+                <div class="fx-readout" id="tapeDriveOut">0%</div>
+              </div>
+              <div class="fx-knob-wrap">
+                <label class="fx-knob-label">SAT</label>
+                <input type="range" class="fx-slider" id="tapeSat" min="0" max="1" step="0.01" value="0">
+                <div class="fx-readout" id="tapeSatOut">0%</div>
+              </div>
+              <div class="fx-knob-wrap">
+                <label class="fx-knob-label">WOW</label>
+                <input type="range" class="fx-slider" id="tapeWow" min="0" max="1" step="0.01" value="0">
+                <div class="fx-readout" id="tapeWowOut">0%</div>
+              </div>
+              <div class="fx-knob-wrap">
+                <label class="fx-knob-label">FLUTTER</label>
+                <input type="range" class="fx-slider" id="tapeFlutter" min="0" max="1" step="0.01" value="0">
+                <div class="fx-readout" id="tapeFlutterOut">0%</div>
+              </div>
+              <div class="fx-knob-wrap">
+                <label class="fx-knob-label">TONE</label>
+                <input type="range" class="fx-slider" id="tapeTone" min="0" max="1" step="0.01" value="0.6">
+                <div class="fx-readout" id="tapeToneOut">—</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── BIT / SR CRUSHER ────────────────────────────────────────── -->
+        <div class="fx-unit" id="fxBitUnit">
+          <div class="fx-unit-header">
+            <button class="fx-bypass-btn" id="bitBypass" title="Active/Bypass">
+              <span class="fx-led" id="bitLed"></span>
+            </button>
+            <div class="fx-titles">
+              <div class="fx-unit-title">BIT/SR CRUSH</div>
+              <div class="fx-unit-sub">Bit Reduction · Sample Rate</div>
+            </div>
+          </div>
+          <div class="fx-unit-body">
+            <div class="fx-row">
+              <div class="fx-knob-wrap wide">
+                <label class="fx-knob-label">BITS</label>
+                <input type="range" class="fx-slider" id="bitDepth" min="1" max="16" step="0.25" value="16">
+                <div class="fx-readout" id="bitDepthOut">16 bit</div>
+              </div>
+              <div class="fx-knob-wrap wide">
+                <label class="fx-knob-label">SR REDUCE</label>
+                <input type="range" class="fx-slider" id="srAmount" min="1" max="64" step="1" value="1">
+                <div class="fx-readout" id="srAmountOut">÷ 1</div>
+              </div>
+              <div class="fx-knob-wrap">
+                <label class="fx-knob-label">MIX</label>
+                <input type="range" class="fx-slider" id="bitMix" min="0" max="1" step="0.01" value="1">
+                <div class="fx-readout" id="bitMixOut">100%</div>
+              </div>
+            </div>
+            <!-- Mini bitscope -->
+            <canvas id="bitScope" width="160" height="32"></canvas>
+          </div>
+        </div>
+
+        <!-- ── SHERMAN FILTERBANK ──────────────────────────────────────── -->
+        <div class="fx-unit fx-sherman" id="fxShermanUnit">
+          <div class="fx-unit-header sherman-header">
+            <button class="fx-bypass-btn" id="shermanBypass" title="Active/Bypass">
+              <span class="fx-led" id="shermanLed"></span>
+            </button>
+            <div class="fx-titles">
+              <div class="fx-unit-title">SHERMAN FILTERBANK</div>
+              <div class="fx-unit-sub">Dual 12dB · Self-Osc · Drive · LFO</div>
+            </div>
+            <div class="sherman-mode-btns">
+              <button class="mode-btn active" data-mode="lp">LP</button>
+              <button class="mode-btn" data-mode="bp">BP</button>
+              <button class="mode-btn" data-mode="hp">HP</button>
+              <button class="mode-btn" data-mode="notch">NOTCH</button>
+            </div>
+          </div>
+          <div class="fx-unit-body sherman-body">
+            <div class="fx-row sherman-row">
+              <div class="fx-knob-wrap xl">
+                <label class="fx-knob-label">FREQ</label>
+                <input type="range" class="fx-slider sherman-freq-slider" id="shermanFreq"
+                  min="0" max="1" step="0.002" value="0.55">
+                <div class="fx-readout" id="shermanFreqOut">—</div>
+              </div>
+              <div class="fx-knob-wrap">
+                <label class="fx-knob-label">RES</label>
+                <input type="range" class="fx-slider" id="shermanRes" min="0" max="1" step="0.01" value="0.3">
+                <div class="fx-readout" id="shermanResOut">30%</div>
+              </div>
+              <div class="fx-knob-wrap">
+                <label class="fx-knob-label">PRE DRIVE</label>
+                <input type="range" class="fx-slider" id="shermanDrive" min="0" max="1" step="0.01" value="0.1">
+                <div class="fx-readout" id="shermanDriveOut">10%</div>
+              </div>
+              <div class="fx-knob-wrap">
+                <label class="fx-knob-label">DIST</label>
+                <input type="range" class="fx-slider" id="shermanDist" min="0" max="1" step="0.01" value="0">
+                <div class="fx-readout" id="shermanDistOut">0%</div>
+              </div>
+              <div class="fx-knob-wrap">
+                <label class="fx-knob-label">LFO RATE</label>
+                <input type="range" class="fx-slider" id="shermanLfoRate" min="0" max="1" step="0.01" value="0">
+                <div class="fx-readout" id="shermanLfoRateOut">OFF</div>
+              </div>
+              <div class="fx-knob-wrap">
+                <label class="fx-knob-label">LFO DEPTH</label>
+                <input type="range" class="fx-slider" id="shermanLfoDepth" min="0" max="1" step="0.01" value="0">
+                <div class="fx-readout" id="shermanLfoDepthOut">0%</div>
+              </div>
+              <div class="fx-knob-wrap">
+                <label class="fx-knob-label">MIX</label>
+                <input type="range" class="fx-slider" id="shermanMix" min="0" max="1" step="0.01" value="1">
+                <div class="fx-readout" id="shermanMixOut">100%</div>
+              </div>
+            </div>
+            <!-- Self-osc scope -->
+            <div class="scope-wrap">
+              <canvas id="shermanScope" width="200" height="48"></canvas>
+              <div class="scope-caption">
+                <span class="scope-dot" id="scopeDot"></span>
+                <span id="scopeLabel">IDLE</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /fx-units-row -->
+    </div><!-- /fx-rack -->
+
+    <div class="hint-bar">
+      ESPACE = play/stop &nbsp;·&nbsp; clic = on/off step &nbsp;·&nbsp;
+      SHIFT+clic / clic-droit = accent &nbsp;·&nbsp; clic sur le nom = sélectionner piste &nbsp;·&nbsp;
+      P = preview piste sélectionnée
+    </div>
+  </div>
+</div>
+<script src="app.js"></script>
+</body>
+</html>
