@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Emullotron</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="emullotron">
+    <header class="header">
+      <div class="logo">
+        <span class="logo-text">EMULLOTRON</span>
+        <span class="logo-sub">Virtual Tape Instrument</span>
+      </div>
+      <div class="display">
+        <div class="display-screen">
+          <span id="sample-name">No sample loaded</span>
+        </div>
+        <button id="load-sample" class="load-btn">LOAD</button>
+        <input type="file" id="file-input" accept="audio/*" hidden>
+      </div>
+      <div class="master">
+        <div class="vu-meter">
+          <div class="vu-bar" id="vu-left"></div>
+          <div class="vu-bar" id="vu-right"></div>
+        </div>
+        <div class="knob-group">
+          <div class="knob-container">
+            <div class="knob" data-param="masterVolume" data-min="0" data-max="1" data-value="0.7"></div>
+            <span class="knob-label">MASTER</span>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <main class="controls">
+      <section class="section tape-section">
+        <h2 class="section-title">TAPE</h2>
+        <div class="knob-row">
+          <div class="knob-container">
+            <div class="knob" data-param="tapeLength" data-min="2" data-max="12" data-value="8"></div>
+            <span class="knob-label">LENGTH</span>
+          </div>
+          <div class="knob-container">
+            <div class="knob" data-param="startJitter" data-min="0" data-max="100" data-value="30"></div>
+            <span class="knob-label">JITTER</span>
+          </div>
+          <div class="knob-container">
+            <div class="knob" data-param="wow" data-min="0" data-max="100" data-value="35"></div>
+            <span class="knob-label">WOW</span>
+          </div>
+          <div class="knob-container">
+            <div class="knob" data-param="flutter" data-min="0" data-max="100" data-value="25"></div>
+            <span class="knob-label">FLUTTER</span>
+          </div>
+          <div class="knob-container">
+            <div class="knob" data-param="tapeAge" data-min="0" data-max="100" data-value="40"></div>
+            <span class="knob-label">AGE</span>
+          </div>
+          <div class="knob-container">
+            <div class="knob" data-param="mechanicalNoise" data-min="0" data-max="100" data-value="20"></div>
+            <span class="knob-label">NOISE</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="section sound-section">
+        <h2 class="section-title">SOUND</h2>
+        <div class="knob-row">
+          <div class="knob-container">
+            <div class="knob" data-param="tone" data-min="0" data-max="100" data-value="50"></div>
+            <span class="knob-label">TONE</span>
+          </div>
+          <div class="knob-container">
+            <div class="knob" data-param="brightness" data-min="0" data-max="100" data-value="60"></div>
+            <span class="knob-label">BRIGHT</span>
+          </div>
+          <div class="knob-container">
+            <div class="knob" data-param="saturation" data-min="0" data-max="100" data-value="30"></div>
+            <span class="knob-label">DRIVE</span>
+          </div>
+          <div class="knob-container">
+            <div class="knob" data-param="attack" data-min="0" data-max="100" data-value="40"></div>
+            <span class="knob-label">ATTACK</span>
+          </div>
+          <div class="knob-container">
+            <div class="knob" data-param="release" data-min="0" data-max="100" data-value="50"></div>
+            <span class="knob-label">RELEASE</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="section keyboard-section">
+        <h2 class="section-title">KEYBOARD</h2>
+        <div class="knob-row">
+          <div class="knob-container">
+            <div class="knob" data-param="rootNote" data-min="36" data-max="84" data-value="60"></div>
+            <span class="knob-label">ROOT</span>
+          </div>
+          <div class="knob-container">
+            <div class="knob" data-param="driftPerKey" data-min="0" data-max="100" data-value="25"></div>
+            <span class="knob-label">DRIFT</span>
+          </div>
+          <div class="knob-container">
+            <div class="knob" data-param="stereoWidth" data-min="0" data-max="100" data-value="50"></div>
+            <span class="knob-label">WIDTH</span>
+          </div>
+          <div class="knob-container">
+            <div class="knob" data-param="keyClick" data-min="0" data-max="100" data-value="15"></div>
+            <span class="knob-label">CLICK</span>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <section class="tape-display">
+      <div class="tape-reels">
+        <div class="reel reel-left" id="reel-left">
+          <div class="reel-center"></div>
+        </div>
+        <div class="tape-path">
+          <div class="tape-indicator" id="tape-indicator"></div>
+        </div>
+        <div class="reel reel-right" id="reel-right">
+          <div class="reel-center"></div>
+        </div>
+      </div>
+      <div class="active-voices" id="active-voices"></div>
+    </section>
+
+    <section class="keyboard-container">
+      <div class="keyboard" id="keyboard"></div>
+    </section>
+
+    <footer class="footer">
+      <div class="status">
+        <span id="status-text">Ready — Load a sample to begin</span>
+      </div>
+      <div class="midi-status">
+        <span class="midi-indicator" id="midi-indicator"></span>
+        <span id="midi-text">MIDI: --</span>
+      </div>
+    </footer>
+  </div>
+
+  <script src="emullotron.js"></script>
+</body>
+</html>
