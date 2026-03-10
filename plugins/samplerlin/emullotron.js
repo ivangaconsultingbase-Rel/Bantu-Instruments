@@ -30,8 +30,9 @@ class Emullotron {
       keyClick: 15
     };
     
-    this.noteRange = { min: 36, max: 84 }; // C2 to C6
+    this.noteRange = { min: 36, max: 84 };
     this.isInitialized = false;
+    this.keyMap = {};
     
     this.init();
   }
@@ -41,6 +42,7 @@ class Emullotron {
     this.setupKeyboard();
     this.setupKnobs();
     this.setupFileLoader();
+    this.setupComputerKeyboard();
     await this.setupMIDI();
     this.startVUMeter();
   }
@@ -50,24 +52,19 @@ class Emullotron {
     
     this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
     
-    // Master chain
     this.masterGain = this.audioContext.createGain();
     this.masterGain.gain.value = this.params.masterVolume;
     
-    // Analyser for VU meter
     this.analyser = this.audioContext.createAnalyser();
     this.analyser.fftSize = 256;
     
-    // Tape saturation (master)
     this.masterSaturation = this.createSaturation(0.2);
     
-    // Master EQ
     this.masterEQ = this.audioContext.createBiquadFilter();
     this.masterEQ.type = 'lowshelf';
     this.masterEQ.frequency.value = 300;
     this.masterEQ.gain.value = 2;
     
-    // Connect master chain
     this.masterGain
       .connect(this.masterSaturation)
       .connect(this.masterEQ)
@@ -78,7 +75,6 @@ class Emullotron {
     this.updateStatus('Audio engine initialized');
   }
 
-  // Créer une courbe de saturation type bande
   createSaturation(amount) {
     const waveshaper = this.audioContext.createWaveShaper();
     const samples = 44100;
@@ -86,7 +82,6 @@ class Emullotron {
     
     for (let i = 0; i < samples; i++) {
       const x = (i * 2) / samples - 1;
-      // Soft clipping avec caractère tape
       curve[i] = Math.tanh(x * (1 + amount * 3)) * (1 - amount * 0.1);
     }
     
@@ -95,7 +90,6 @@ class Emullotron {
     return waveshaper;
   }
 
-  // Générer les bandes virtuelles à partir du sample source
   async generateVirtualTapes() {
     if (!this.sourceBuffer) return;
     
@@ -106,7 +100,7 @@ class Emullotron {
     
     for (let note = this.noteRange.min; note <= this.noteRange.max; note++) {
       const semitoneOffset = note - rootNote;
-      const tape = await this.createVirtualTape(note, semitoneOffset);
+      const tape = this.createVirtualTape(note, semitoneOffset);
       this.virtualTapes.set(note, tape);
     }
     
@@ -114,23 +108,18 @@ class Emullotron {
     this.updateKeyboardRoot();
   }
 
-  // Créer une bande virtuelle unique pour chaque note
-  async createVirtualTape(note, semitoneOffset) {
+  createVirtualTape(note, semitoneOffset) {
     const playbackRate = Math.pow(2, semitoneOffset / 12);
     
-    // Variations uniques par note (comme si chaque bande était différente)
     const drift = this.params.driftPerKey / 100;
     const uniquePitchOffset = (Math.random() - 0.5) * drift * 0.02;
     const uniqueFilterOffset = (Math.random() - 0.5) * drift * 400;
     const uniqueNoiseLevel = Math.random() * drift * 0.3;
     
-    // Caractéristiques selon la zone du clavier
     const zonePosition = (note - this.noteRange.min) / (this.noteRange.max - this.noteRange.min);
     const isLow = zonePosition < 0.33;
     const isHigh = zonePosition > 0.66;
     
-    // Les graves sont plus sombres et instables
-    // Les aigus sont plus bruités et courts
     const zoneCharacter = {
       filterOffset: isLow ? -600 : (isHigh ? 200 : 0),
       instability: isLow ? 1.3 : (isHigh ? 0.8 : 1),
@@ -150,9 +139,10 @@ class Emullotron {
     };
   }
 
-  // Jouer une note
   playNote(note, velocity = 1) {
     if (!this.isInitialized || !this.sourceBuffer) return;
+    if (note < this.noteRange.min || note > this.noteRange.max) return;
+    
     if (this.activeVoices.has(note)) {
       this.stopNote(note);
     }
@@ -163,51 +153,46 @@ class Emullotron {
     const voice = this.createVoice(tape, velocity);
     this.activeVoices.set(note, voice);
     
-    // Démarrer la lecture
     voice.source.start(0);
     voice.startTime = this.audioContext.currentTime;
     
-    // Limite de durée de bande
     const maxDuration = this.params.tapeLength * tape.lengthFactor;
     voice.stopTimeout = setTimeout(() => {
       this.fadeOutVoice(voice, 0.5);
+      this.activeVoices.delete(note);
+      this.updateVoiceDisplay();
+      if (this.activeVoices.size === 0) {
+        this.stopReelAnimation();
+      }
     }, maxDuration * 1000);
     
     this.updateVoiceDisplay();
     this.startReelAnimation();
   }
 
-  // Créer une voix avec toute la chaîne audio
   createVoice(tape, velocity) {
-    // Source buffer
     const source = this.audioContext.createBufferSource();
     source.buffer = this.sourceBuffer;
     source.playbackRate.value = tape.playbackRate;
     
-    // Appliquer wow et flutter
     this.applyWowFlutter(source, tape);
     
-    // Filtre (tone + age)
     const filter = this.audioContext.createBiquadFilter();
     filter.type = 'lowpass';
     const ageEffect = 1 - (this.params.tapeAge / 100) * 0.5;
     filter.frequency.value = tape.filterFreq * ageEffect * (this.params.brightness / 50);
     filter.Q.value = 0.7;
     
-    // Filtre tone (high shelf)
     const toneFilter = this.audioContext.createBiquadFilter();
     toneFilter.type = 'highshelf';
     toneFilter.frequency.value = 2000;
     toneFilter.gain.value = (this.params.tone - 50) / 10;
     
-    // Saturation par voix
     const saturation = this.createSaturation(this.params.saturation / 100);
     
-    // Gain avec enveloppe
     const gain = this.audioContext.createGain();
     gain.gain.value = 0;
     
-    // Enveloppe d'attaque
     const attackTime = (this.params.attack / 100) * 0.15 + tape.attackVariation;
     const jitter = (this.params.startJitter / 100) * 0.02;
     const attackStart = this.audioContext.currentTime + Math.random() * jitter;
@@ -215,11 +200,9 @@ class Emullotron {
     gain.gain.setValueAtTime(0, attackStart);
     gain.gain.linearRampToValueAtTime(velocity * 0.8, attackStart + attackTime);
     
-    // Stereo panner
     const panner = this.audioContext.createStereoPanner();
     panner.pan.value = Math.max(-1, Math.min(1, tape.stereoPan));
     
-    // Chaîne principale
     source.connect(filter);
     filter.connect(toneFilter);
     toneFilter.connect(saturation);
@@ -227,10 +210,11 @@ class Emullotron {
     gain.connect(panner);
     panner.connect(this.masterGain);
     
-    // Bruit mécanique
     let noiseGain = null;
+    let noiseSource = null;
+    
     if (this.params.mechanicalNoise > 5) {
-      const noise = this.createNoiseSource();
+      noiseSource = this.createNoiseSource();
       const noiseFilter = this.audioContext.createBiquadFilter();
       noiseFilter.type = 'bandpass';
       noiseFilter.frequency.value = 800;
@@ -240,14 +224,13 @@ class Emullotron {
       const noiseLevel = tape.noiseLevel * (this.params.mechanicalNoise / 50);
       noiseGain.gain.value = noiseLevel * velocity;
       
-      noise.connect(noiseFilter);
+      noiseSource.connect(noiseFilter);
       noiseFilter.connect(noiseGain);
       noiseGain.connect(panner);
       
-      noise.start();
+      noiseSource.start();
     }
     
-    // Key click
     if (this.params.keyClick > 5) {
       this.playKeyClick(panner, velocity);
     }
@@ -260,13 +243,13 @@ class Emullotron {
       gain,
       panner,
       noiseGain,
+      noiseSource,
       tape,
       startTime: null,
       stopTimeout: null
     };
   }
 
-  // Appliquer wow et flutter via modulation du playbackRate
   applyWowFlutter(source, tape) {
     const now = this.audioContext.currentTime;
     const duration = this.params.tapeLength;
@@ -275,9 +258,7 @@ class Emullotron {
     const flutterAmount = (this.params.flutter / 100) * 0.005 * tape.instability;
     
     const baseRate = source.playbackRate.value;
-    
-    // Simuler le wow (lent, 0.5-2 Hz) et flutter (rapide, 5-12 Hz)
-    const steps = Math.floor(duration * 20); // 20 points par seconde
+    const steps = Math.floor(duration * 20);
     
     for (let i = 0; i < steps; i++) {
       const t = i / 20;
@@ -292,7 +273,6 @@ class Emullotron {
     }
   }
 
-  // Créer une source de bruit
   createNoiseSource() {
     const bufferSize = this.audioContext.sampleRate * 2;
     const buffer = this.audioContext.createBuffer(1, bufferSize, this.audioContext.sampleRate);
@@ -308,7 +288,6 @@ class Emullotron {
     return noise;
   }
 
-  // Click de touche
   playKeyClick(destination, velocity) {
     const clickDuration = 0.015;
     const clickGain = this.audioContext.createGain();
@@ -331,7 +310,6 @@ class Emullotron {
     noise.stop(this.audioContext.currentTime + clickDuration);
   }
 
-  // Arrêter une note
   stopNote(note) {
     const voice = this.activeVoices.get(note);
     if (!voice) return;
@@ -351,7 +329,6 @@ class Emullotron {
     }
   }
 
-  // Fade out d'une voix
   fadeOutVoice(voice, duration) {
     const now = this.audioContext.currentTime;
     
@@ -367,11 +344,11 @@ class Emullotron {
     setTimeout(() => {
       try {
         voice.source.stop();
+        if (voice.noiseSource) voice.noiseSource.stop();
       } catch (e) {}
     }, duration * 1000 + 50);
   }
 
-  // Charger un fichier audio
   async loadSample(file) {
     await this.initAudioContext();
     
@@ -393,7 +370,6 @@ class Emullotron {
   // === UI METHODS ===
 
   setupUI() {
-    // Prevent context menu on knobs
     document.addEventListener('contextmenu', (e) => {
       if (e.target.classList.contains('knob')) {
         e.preventDefault();
@@ -403,48 +379,156 @@ class Emullotron {
 
   setupKeyboard() {
     const keyboard = document.getElementById('keyboard');
-    const whiteNotes = [0, 2, 4, 5, 7, 9, 11];
-    const blackNotes = [1, 3, 6, 8, 10];
+    keyboard.innerHTML = '';
     
-    // Générer 3 octaves (C3 à B5)
-    for (let octave = 3; octave <= 5; octave++) {
-      for (let i = 0; i < 12; i++) {
-        const note = octave * 12 + i;
-        if (note < this.noteRange.min || note > this.noteRange.max) continue;
-        
-        const isBlack = blackNotes.includes(i);
+    const blackNoteOffsets = {
+      1: 0.6,   // C#
+      3: 0.75,  // D#
+      6: 0.6,   // F#
+      8: 0.7,   // G#
+      10: 0.8   // A#
+    };
+    
+    let whiteKeyIndex = 0;
+    const whiteKeyWidth = 36;
+    
+    // Créer les touches blanches d'abord
+    for (let note = 48; note <= 84; note++) {
+      const noteInOctave = note % 12;
+      const isBlack = [1, 3, 6, 8, 10].includes(noteInOctave);
+      
+      if (!isBlack) {
         const key = document.createElement('div');
-        key.className = `key ${isBlack ? 'key-black' : 'key-white'}`;
+        key.className = 'key key-white';
         key.dataset.note = note;
-        
-        if (!isBlack) {
-          keyboard.appendChild(key);
-        }
+        key.style.left = `${whiteKeyIndex * whiteKeyWidth}px`;
+        keyboard.appendChild(key);
+        whiteKeyIndex++;
       }
     }
     
-    // Ajouter les touches noires
-    const whiteKeys = keyboard.querySelectorAll('.key-white');
-    let whiteIndex = 0;
+    // Puis les touches noires
+    whiteKeyIndex = 0;
+    for (let note = 48; note <= 84; note++) {
+      const noteInOctave = note % 12;
+      const isBlack = [1, 3, 6, 8, 10].includes(noteInOctave);
+      const isWhite = [0, 2, 4, 5, 7, 9, 11].includes(noteInOctave);
+      
+      if (isBlack) {
+        const key = document.createElement('div');
+        key.className = 'key key-black';
+        key.dataset.note = note;
+        
+        const offset = blackNoteOffsets[noteInOctave] || 0.5;
+        key.style.left = `${(whiteKeyIndex - 1 + offset) * whiteKeyWidth}px`;
+        keyboard.appendChild(key);
+      }
+      
+      if (isWhite) {
+        whiteKeyIndex++;
+      }
+    }
     
-    for (let octave = 3; octave <= 5; octave++) {
-      for (let i = 0; i < 12; i++) {
-        const note = octave * 12 + i;
-        if (note < this.noteRange.min || note > this.noteRange.max) continue;
+    // Event listeners pour les touches
+    keyboard.querySelectorAll('.key').forEach(key => {
+      const note = parseInt(key.dataset.note);
+      
+      key.addEventListener('mousedown', (e) => {
+        e.preventDefault();
+        this.initAudioContext();
+        this.playNote(note, 0.8);
+        key.classList.add('active');
+      });
+      
+      key.addEventListener('mouseup', () => {
+        this.stopNote(note);
+        key.classList.remove('active');
+      });
+      
+      key.addEventListener('mouseleave', () => {
+        if (key.classList.contains('active')) {
+          this.stopNote(note);
+          key.classList.remove('active');
+        }
+      });
+      
+      key.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        this.initAudioContext();
+        this.playNote(note, 0.8);
+        key.classList.add('active');
+      });
+      
+      key.addEventListener('touchend', () => {
+        this.stopNote(note);
+        key.classList.remove('active');
+      });
+    });
+  }
+
+  setupComputerKeyboard() {
+    // Mapping clavier AZERTY -> notes MIDI
+    const keyToNote = {
+      'KeyQ': 60, 'KeyZ': 61, 'KeyS': 62, 'KeyE': 63, 'KeyD': 64,
+      'KeyF': 65, 'KeyT': 66, 'KeyG': 67, 'KeyY': 68, 'KeyH': 69,
+      'KeyU': 70, 'KeyJ': 71, 'KeyK': 72, 'KeyO': 73, 'KeyL': 74,
+      'KeyP': 75, 'KeyM': 76, 'BracketLeft': 77, 'Comma': 78,
+      'BracketRight': 79, 'Period': 80
+    };
+    
+    document.addEventListener('keydown', (e) => {
+      if (e.repeat) return;
+      if (e.target.tagName === 'INPUT') return;
+      
+      const note = keyToNote[e.code];
+      if (note !== undefined) {
+        e.preventDefault();
+        this.initAudioContext();
+        this.playNote(note, 0.8);
         
-        const isBlack = blackNotes.includes(i);
-        const isWhite = whiteNotes.includes(i);
+        const keyEl = document.querySelector(`.key[data-note="${note}"]`);
+        if (keyEl) keyEl.classList.add('active');
+      }
+    });
+    
+    document.addEventListener('keyup', (e) => {
+      const note = keyToNote[e.code];
+      if (note !== undefined) {
+        this.stopNote(note);
         
-        if (isBlack) {
-          const key = document.createElement('div');
-          key.className = 'key key-black';
-          key.dataset.note = note;
-          
-          const whiteKey = whiteKeys[whiteIndex];
-          if (whiteKey) {
-            const rect = whiteKey.getBoundingClientRect();
-            const keyboardRect = keyboard.getBoundingClientRect();
-            key.style.left = `${whiteKey.offsetLeft + wh0].clientY);
+        const keyEl = document.querySelector(`.key[data-note="${note}"]`);
+        if (keyEl) keyEl.classList.remove('active');
+      }
+    });
+  }
+
+  setupKnobs() {
+    const knobs = document.querySelectorAll('.knob');
+    
+    knobs.forEach(knob => {
+      const param = knob.dataset.param;
+      const min = parseFloat(knob.dataset.min);
+      const max = parseFloat(knob.dataset.max);
+      const initialValue = parseFloat(knob.dataset.value);
+      
+      this.params[param] = initialValue;
+      this.updateKnobVisual(knob, initialValue, min, max);
+      
+      let isDragging = false;
+      let startY = 0;
+      let startValue = 0;
+      
+      const onStart = (e) => {
+        isDragging = true;
+        startY = e.type.includes('touch') ? e.touches[0].clientY : e.clientY;
+        startValue = this.params[param];
+        e.preventDefault();
+      };
+      
+      const onMove = (e) => {
+        if (!isDragging) return;
+        
+        const clientY = e.type.includes('touch') ? e.touches[0].clientY : e.clientY;
         const deltaY = startY - clientY;
         const range = max - min;
         const sensitivity = 200;
@@ -456,19 +540,18 @@ class Emullotron {
         this.updateKnobVisual(knob, newValue, min, max);
         this.onParamChange(param, newValue);
       };
-
+      
       const onEnd = () => {
         isDragging = false;
       };
-
+      
       knob.addEventListener('mousedown', onStart);
-      knob.addEventListener('touchstart', onStart);
+      knob.addEventListener('touchstart', onStart, { passive: false });
       document.addEventListener('mousemove', onMove);
-      document.addEventListener('touchmove', onMove);
+      document.addEventListener('touchmove', onMove, { passive: false });
       document.addEventListener('mouseup', onEnd);
       document.addEventListener('touchend', onEnd);
       
-      // Double-click to reset
       knob.addEventListener('dblclick', () => {
         this.params[param] = initialValue;
         this.updateKnobVisual(knob, initialValue, min, max);
@@ -531,7 +614,9 @@ class Emullotron {
     const loadBtn = document.getElementById('load-sample');
     const fileInput = document.getElementById('file-input');
     
-    loadBtn.addEventListener('click', () => fileInput.click());
+    loadBtn.addEventListener('click', () => {
+      fileInput.click();
+    });
     
     fileInput.addEventListener('change', (e) => {
       if (e.target.files.length > 0) {
@@ -539,19 +624,20 @@ class Emullotron {
       }
     });
 
-    // Drag and drop
-    document.querySelector('.emullotron').addEventListener('dragover', (e) => {
+    const emullotron = document.querySelector('.emullotron');
+    
+    emullotron.addEventListener('dragover', (e) => {
       e.preventDefault();
-      e.currentTarget.style.borderColor = 'var(--accent)';
+      emullotron.style.borderColor = 'var(--accent)';
     });
 
-    document.querySelector('.emullotron').addEventListener('dragleave', (e) => {
-      e.currentTarget.style.borderColor = '#333';
+    emullotron.addEventListener('dragleave', () => {
+      emullotron.style.borderColor = '#333';
     });
 
-    document.querySelector('.emullotron').addEventListener('drop', (e) => {
+    emullotron.addEventListener('drop', (e) => {
       e.preventDefault();
-      e.currentTarget.style.borderColor = '#333';
+      emullotron.style.borderColor = '#333';
       
       if (e.dataTransfer.files.length > 0) {
         this.loadSample(e.dataTransfer.files[0]);
@@ -560,28 +646,29 @@ class Emullotron {
   }
 
   async setupMIDI() {
+    const indicator = document.getElementById('midi-indicator');
+    const text = document.getElementById('midi-text');
+    
     if (!navigator.requestMIDIAccess) {
-      document.getElementById('midi-text').textContent = 'MIDI: Not supported';
+      text.textContent = 'MIDI: Not supported';
       return;
     }
 
     try {
       const midiAccess = await navigator.requestMIDIAccess();
-      const indicator = document.getElementById('midi-indicator');
-      const text = document.getElementById('midi-text');
       
-      midiAccess.inputs.forEach(input => {
+      const connectInput = (input) => {
         input.onmidimessage = (e) => this.onMIDIMessage(e);
         indicator.classList.add('connected');
         text.textContent = `MIDI: ${input.name}`;
-      });
+      };
+      
+      midiAccess.inputs.forEach(connectInput);
 
       midiAccess.onstatechange = (e) => {
         if (e.port.type === 'input') {
           if (e.port.state === 'connected') {
-            e.port.onmidimessage = (ev) => this.onMIDIMessage(ev);
-            indicator.classList.add('connected');
-            text.textContent = `MIDI: ${e.port.name}`;
+            connectInput(e.port);
           } else {
             indicator.classList.remove('connected');
             text.textContent = 'MIDI: Disconnected';
@@ -589,7 +676,8 @@ class Emullotron {
         }
       };
     } catch (error) {
-      document.getElementById('midi-text').textContent = 'MIDI: Error';
+      text.textContent = 'MIDI: Error';
+      console.error('MIDI Error:', error);
     }
   }
 
