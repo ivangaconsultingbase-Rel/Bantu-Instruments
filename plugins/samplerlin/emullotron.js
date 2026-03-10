@@ -66,6 +66,8 @@ class Emullotron {
       this.keyToNote[k.code] = k.note;
     });
 
+    this.supportedExtensions = ['wav', 'wave', 'aif', 'aiff', 'caf', 'mp3', 'm4a'];
+
     this.init();
   }
 
@@ -393,7 +395,35 @@ class Emullotron {
     }, duration * 1000 + 50);
   }
 
+  isSupportedSampleFile(file) {
+    if (!file || !file.name) return false;
+
+    const ext = (file.name.split('.').pop() || '').toLowerCase();
+    if (this.supportedExtensions.includes(ext)) {
+      return true;
+    }
+
+    const type = (file.type || '').toLowerCase();
+    if (
+      type.startsWith('audio/') ||
+      type.includes('wav') ||
+      type.includes('wave') ||
+      type.includes('aiff') ||
+      type.includes('mpeg') ||
+      type.includes('mp4')
+    ) {
+      return true;
+    }
+
+    return false;
+  }
+
   async loadSample(file) {
+    if (!this.isSupportedSampleFile(file)) {
+      this.updateStatus(`Unsupported file type: ${file?.name || 'unknown file'}`);
+      return;
+    }
+
     await this.initAudioContext();
 
     this.updateStatus(`Loading ${file.name}...`);
@@ -412,8 +442,6 @@ class Emullotron {
       console.error(error);
     }
   }
-
-  // === UI METHODS ===
 
   setupUI() {
     document.addEventListener('contextmenu', (e) => {
@@ -643,14 +671,16 @@ class Emullotron {
     const loadBtn = document.getElementById('load-sample');
     const fileInput = document.getElementById('file-input');
 
-    loadBtn.addEventListener('click', () => {
+    loadBtn.addEventListener('click', async () => {
+      await this.initAudioContext();
       fileInput.click();
     });
 
-    fileInput.addEventListener('change', (e) => {
+    fileInput.addEventListener('change', async (e) => {
       if (e.target.files.length > 0) {
-        this.loadSample(e.target.files[0]);
+        await this.loadSample(e.target.files[0]);
       }
+      e.target.value = '';
     });
 
     const emullotron = document.querySelector('.emullotron');
@@ -665,12 +695,12 @@ class Emullotron {
       emullotron.style.outline = 'none';
     });
 
-    emullotron.addEventListener('drop', (e) => {
+    emullotron.addEventListener('drop', async (e) => {
       e.preventDefault();
       emullotron.style.outline = 'none';
 
       if (e.dataTransfer.files.length > 0) {
-        this.loadSample(e.dataTransfer.files[0]);
+        await this.loadSample(e.dataTransfer.files[0]);
       }
     });
   }
@@ -864,7 +894,6 @@ class Emullotron {
   }
 }
 
-// Initialisation
 document.addEventListener('DOMContentLoaded', () => {
   window.emullotron = new Emullotron();
 });
