@@ -23,13 +23,18 @@
   --seq-color: #34d399;
 }
 
+html,
 body {
-  font-family: 'Space Mono', monospace;
+  min-height: 100%;
+}
+
+body {
+  font-family: "Space Mono", monospace;
   background: #111;
   min-height: 100vh;
   display: flex;
   justify-content: center;
-  align-items: center;
+  align-items: flex-start;
   padding: 20px;
   color: var(--text);
 }
@@ -41,9 +46,9 @@ body {
   border-radius: 12px;
   border: 2px solid var(--border);
   overflow: hidden;
-  box-shadow: 
-    0 20px 60px rgba(0,0,0,0.5),
-    inset 0 1px 0 rgba(255,255,255,0.03);
+  box-shadow:
+    0 20px 60px rgba(0, 0, 0, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.03);
 }
 
 /* Header */
@@ -54,12 +59,14 @@ body {
   padding: 16px 20px;
   background: var(--surface);
   border-bottom: 1px solid var(--border);
+  gap: 12px;
 }
 
 .brand {
   display: flex;
   align-items: baseline;
   gap: 8px;
+  flex-shrink: 0;
 }
 
 .brand-name {
@@ -82,6 +89,7 @@ body {
   border-radius: 4px;
   padding: 10px 16px;
   min-width: 220px;
+  flex: 1;
 }
 
 .screen-row {
@@ -99,6 +107,7 @@ body {
   font-size: 9px;
   color: var(--text-dim);
   width: 50px;
+  flex-shrink: 0;
 }
 
 .screen-value {
@@ -126,6 +135,7 @@ body {
 .status-leds {
   display: flex;
   gap: 8px;
+  flex-shrink: 0;
 }
 
 .led {
@@ -153,10 +163,12 @@ body {
   padding: 16px 20px;
   background: var(--surface-alt);
   border-bottom: 1px solid var(--border);
+  flex-wrap: wrap;
 }
 
 .bank-btn {
   flex: 1;
+  min-width: 120px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -231,6 +243,7 @@ body {
   flex-direction: column;
   align-items: center;
   gap: 6px;
+  min-width: 0;
 }
 
 .encoder {
@@ -242,6 +255,7 @@ body {
   position: relative;
   cursor: pointer;
   transition: border-color 0.15s;
+  touch-action: none;
 }
 
 .encoder:hover {
@@ -292,16 +306,19 @@ body {
   font-size: 9px;
   color: var(--text-dim);
   letter-spacing: 2px;
+  flex-shrink: 0;
 }
 
 .preset-row {
   display: flex;
   gap: 6px;
   flex: 1;
+  flex-wrap: wrap;
 }
 
 .preset-btn {
   flex: 1;
+  min-width: 90px;
   padding: 8px 4px;
   background: var(--key-bg);
   border: 1px solid var(--border);
@@ -325,7 +342,7 @@ body {
   color: #fff;
 }
 
-/* ═══ MODE CONTROLS ═══ */
+/* Mode Controls */
 .mode-section {
   padding: 14px 20px;
   background: var(--surface-alt);
@@ -357,6 +374,7 @@ body {
 .mode-btns {
   display: flex;
   gap: 4px;
+  flex-wrap: wrap;
 }
 
 .mode-btn {
@@ -385,13 +403,6 @@ body {
   color: #fff;
 }
 
-.mode-btn.arp-active {
-  background: var(--arp-color);
-  border-color: var(--arp-color);
-  color: #fff;
-}
-
-/* ARP sub-controls */
 .arp-row {
   display: flex;
   align-items: flex-end;
@@ -401,7 +412,6 @@ body {
   flex-wrap: wrap;
 }
 
-/* BPM control */
 .bpm-ctrl {
   display: flex;
   align-items: center;
@@ -436,7 +446,7 @@ body {
   letter-spacing: 1px;
 }
 
-/* ═══ STEP RECORDER ═══ */
+/* Step Recorder */
 .seq-section {
   padding: 14px 20px;
   background: var(--bg);
@@ -454,6 +464,7 @@ body {
 .seq-transport {
   display: flex;
   gap: 6px;
+  flex-wrap: wrap;
 }
 
 .seq-btn {
@@ -494,15 +505,13 @@ body {
   color: #fff;
 }
 
-/* Step Grid */
 .seq-grid {
-  display: flex;
+  display: grid;
+  grid-template-columns: repeat(8, minmax(52px, 1fr));
   gap: 5px;
-  flex-wrap: wrap;
 }
 
 .seq-step {
-  flex: 1;
   min-width: 52px;
   height: 50px;
   background: #1e1e1e;
@@ -571,7 +580,7 @@ body {
   display: block;
 }
 
-/* Keyboard Section */
+/* Keyboard */
 .keyboard-section {
   padding: 20px;
   background: var(--bg);
@@ -582,6 +591,7 @@ body {
   gap: 4px;
   justify-content: center;
   flex-wrap: wrap;
+  min-height: 42px;
 }
 
 .key {
@@ -598,6 +608,7 @@ body {
   transition: all 0.08s;
   user-select: none;
   position: relative;
+  flex: 0 0 auto;
 }
 
 .key:hover {
@@ -721,6 +732,7 @@ body {
   font-size: 9px;
   color: var(--text-dim);
   letter-spacing: 1px;
+  gap: 10px;
 }
 
 .footer-center {
@@ -744,31 +756,39 @@ body {
 
 /* Responsive */
 @media (max-width: 700px) {
+  body {
+    padding: 10px;
+  }
+
+  .header {
+    flex-wrap: wrap;
+  }
+
+  .screen {
+    min-width: 100%;
+  }
+
   .controls {
     grid-template-columns: 1fr;
   }
-  
+
   .control-row {
     justify-content: space-around;
   }
-  
+
   .key {
     width: 36px;
     height: 36px;
   }
-  
+
   .key-letter {
     font-size: 10px;
   }
-  
+
   .key-note {
     display: none;
   }
-  
-  .banks {
-    flex-wrap: wrap;
-  }
-  
+
   .bank-btn {
     min-width: calc(50% - 4px);
   }
@@ -781,7 +801,16 @@ body {
     gap: 10px;
   }
 
+  .seq-grid {
+    grid-template-columns: repeat(4, minmax(38px, 1fr));
+  }
+
   .seq-step {
     min-width: 38px;
+  }
+
+  .footer {
+    flex-wrap: wrap;
+    justify-content: center;
   }
 }
