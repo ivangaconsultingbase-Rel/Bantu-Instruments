@@ -1,6 +1,6 @@
 /**
- * EMULLOTRON - Virtual Tape Instrument
- * Emulation d'un Mellotron en Web Audio API
+ * EMULLOTRON MK2 - Virtual Tape Instrument
+ * Style Elektron / Teenage Engineering
  */
 
 class Emullotron {
@@ -11,7 +11,7 @@ class Emullotron {
     this.sourceBuffer = null;
     this.virtualTapes = new Map();
     this.activeVoices = new Map();
-
+    
     this.params = {
       masterVolume: 0.7,
       tapeLength: 8,
@@ -20,169 +20,377 @@ class Emullotron {
       flutter: 25,
       tapeAge: 40,
       mechanicalNoise: 20,
-      tone: 50,
       brightness: 60,
       saturation: 30,
       attack: 40,
       release: 50,
-      rootNote: 60,
-      driftPerKey: 25,
-      stereoWidth: 50,
-      keyClick: 15
+      driftPerKey: 25
     };
-
-    this.noteRange = { min: 36, max: 84 };
-    this.isInitialized = false;
-
-    this.keyLayout = [
-      [
-        { code: 'KeyQ', label: 'Q', note: 60 },
-        { code: 'KeyZ', label: 'Z', note: 61 },
-        { code: 'KeyS', label: 'S', note: 62 },
-        { code: 'KeyE', label: 'E', note: 63 },
-        { code: 'KeyD', label: 'D', note: 64 },
-        { code: 'KeyF', label: 'F', note: 65 },
-        { code: 'KeyT', label: 'T', note: 66 },
-        { code: 'KeyG', label: 'G', note: 67 },
-        { code: 'KeyY', label: 'Y', note: 68 },
-        { code: 'KeyH', label: 'H', note: 69 },
-        { code: 'KeyU', label: 'U', note: 70 },
-        { code: 'KeyJ', label: 'J', note: 71 }
-      ],
-      [
-        { code: 'KeyK', label: 'K', note: 72 },
-        { code: 'KeyO', label: 'O', note: 73 },
-        { code: 'KeyL', label: 'L', note: 74 },
-        { code: 'KeyP', label: 'P', note: 75 },
-        { code: 'KeyM', label: 'M', note: 76 },
-        { code: 'BracketLeft', label: '[', note: 77 },
-        { code: 'Comma', label: ',', note: 78 },
-        { code: 'BracketRight', label: ']', note: 79 },
-        { code: 'Period', label: '.', note: 80 }
-      ]
-    ];
-
-    this.keyToNote = {};
-    this.keyLayout.flat().forEach(k => {
-      this.keyToNote[k.code] = k.note;
-    });
-
-    this.supportedExtensions = ['wav', 'wave', 'aif', 'aiff', 'caf', 'mp3', 'm4a'];
-
-    this.defaultBanks = {
-      string: {
-        name: 'STRING',
-        path: 'samples/string.wav'
+    
+    // Banks configuration
+    this.banks = {
+      strings: {
+        name: 'STRINGS',
+        file: 'samples/strings.wav',
+        presetOverrides: {
+          wow: 40,
+          flutter: 30,
+          tapeAge: 45,
+          brightness: 55,
+          attack: 50,
+          release: 60
+        }
       },
       flute: {
         name: 'FLUTE',
-        path: 'samples/flute.wav'
+        file: 'samples/flute.wav',
+        presetOverrides: {
+          wow: 25,
+          flutter: 20,
+          tapeAge: 30,
+          brightness: 70,
+          attack: 30,
+          release: 45
+        }
       },
       piano: {
         name: 'PIANO',
-        path: 'samples/piano.wav'
+        file: 'samples/piano.wav',
+        presetOverrides: {
+          wow: 20,
+          flutter: 15,
+          tapeAge: 35,
+          brightness: 65,
+          attack: 20,
+          release: 55
+        }
+      },
+      custom: {
+        name: 'CUSTOM',
+        file: null,
+        presetOverrides: {}
       }
     };
-
-    this.currentBank = 'string';
-    this.currentSampleSource = 'bank';
-
+    
+    // Sound presets
+    this.presets = {
+      pristine: {
+        tapeLength: 10,
+        startJitter: 10,
+        wow: 10,
+        flutter: 8,
+        tapeAge: 10,
+        mechanicalNoise: 5,
+        brightness: 75,
+        saturation: 15,
+        attack: 20,
+        release: 40,
+        driftPerKey: 10
+      },
+      vintage: {
+        tapeLength: 8,
+        startJitter: 30,
+        wow: 35,
+        flutter: 25,
+        tapeAge: 45,
+        mechanicalNoise: 25,
+        brightness: 55,
+        saturation: 35,
+        attack: 45,
+        release: 50,
+        driftPerKey: 30
+      },
+      worn: {
+        tapeLength: 7,
+        startJitter: 50,
+        wow: 55,
+        flutter: 45,
+        tapeAge: 65,
+        mechanicalNoise: 40,
+        brightness: 45,
+        saturation: 45,
+        attack: 55,
+        release: 55,
+        driftPerKey: 45
+      },
+      broken: {
+        tapeLength: 5,
+        startJitter: 80,
+        wow: 80,
+        flutter: 70,
+        tapeAge: 85,
+        mechanicalNoise: 60,
+        brightness: 35,
+        saturation: 65,
+        attack: 70,
+        release: 60,
+        driftPerKey: 70
+      },
+      dreamy: {
+        tapeLength: 12,
+        startJitter: 40,
+        wow: 60,
+        flutter: 20,
+        tapeAge: 50,
+        mechanicalNoise: 15,
+        brightness: 40,
+        saturation: 25,
+        attack: 65,
+        release: 80,
+        driftPerKey: 35
+      }
+    };
+    
+    this.currentBank = null;
+    this.currentPreset = null;
+    this.baseOctave = 4;
+    this.noteRange = { min: 36, max: 96 };
+    this.isInitialized = false;
+    
+    // Key mapping (computer keyboard layout)
+    this.keyboardLayout = [
+      { key: 'Q', code: 'KeyQ', note: 0, black: false },
+      { key: 'Z', code: 'KeyZ', note: 1, black: true },
+      { key: 'S', code: 'KeyS', note: 2, black: false },
+      { key: 'E', code: 'KeyE', note: 3, black: true },
+      { key: 'D', code: 'KeyD', note: 4, black: false },
+      { key: 'F', code: 'KeyF', note: 5, black: false },
+      { key: 'T', code: 'KeyT', note: 6, black: true },
+      { key: 'G', code: 'KeyG', note: 7, black: false },
+      { key: 'Y', code: 'KeyY', note: 8, black: true },
+      { key: 'H', code: 'KeyH', note: 9, black: false },
+      { key: 'U', code: 'KeyU', note: 10, black: true },
+      { key: 'J', code: 'KeyJ', note: 11, black: false },
+      { key: 'K', code: 'KeyK', note: 12, black: false },
+      { key: 'O', code: 'KeyO', note: 13, black: true },
+      { key: 'L', code: 'KeyL', note: 14, black: false },
+      { key: 'P', code: 'KeyP', note: 15, black: true },
+      { key: 'M', code: 'KeyM', note: 16, black: false }
+    ];
+    
     this.init();
   }
 
   async init() {
-    this.setupUI();
-    this.setupKeyboard();
-    this.setupKnobs();
-    this.setupFileLoader();
-    this.setupBankSelector();
+    this.buildKeyboard();
+    this.setupEncoders();
+    this.setupBanks();
+    this.setupPresets();
+    this.setupOctaveButtons();
     this.setupComputerKeyboard();
     await this.setupMIDI();
-    this.startVUMeter();
-    this.updateLCDState();
-    this.tryAutoLoadDefaultBank();
+    this.updateDisplay();
   }
 
   async initAudioContext() {
-    if (this.audioContext) {
-      if (this.audioContext.state === 'suspended') {
-        await this.audioContext.resume();
-      }
-      return;
-    }
-
+    if (this.audioContext) return;
+    
     this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
-
+    
     this.masterGain = this.audioContext.createGain();
     this.masterGain.gain.value = this.params.masterVolume;
-
+    
     this.analyser = this.audioContext.createAnalyser();
     this.analyser.fftSize = 256;
-
+    
     this.masterSaturation = this.createSaturation(0.2);
-
+    
     this.masterEQ = this.audioContext.createBiquadFilter();
     this.masterEQ.type = 'lowshelf';
     this.masterEQ.frequency.value = 300;
     this.masterEQ.gain.value = 2;
-
+    
     this.masterGain
       .connect(this.masterSaturation)
       .connect(this.masterEQ)
       .connect(this.analyser)
       .connect(this.audioContext.destination);
-
+    
     this.isInitialized = true;
-    this.updateStatus('Audio engine initialized');
-    this.updateLCDState();
+    document.getElementById('led-audio').classList.add('active');
+    this.updateStatus('AUDIO OK');
+    
+    this.startMeter();
   }
 
   createSaturation(amount) {
     const waveshaper = this.audioContext.createWaveShaper();
     const samples = 44100;
     const curve = new Float32Array(samples);
-
+    
     for (let i = 0; i < samples; i++) {
       const x = (i * 2) / samples - 1;
       curve[i] = Math.tanh(x * (1 + amount * 3)) * (1 - amount * 0.1);
     }
-
+    
     waveshaper.curve = curve;
     waveshaper.oversample = '2x';
     return waveshaper;
   }
 
+  // === BANKS ===
+  
+  setupBanks() {
+    document.querySelectorAll('.bank-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const bankId = btn.dataset.bank;
+        
+        if (bankId === 'custom') {
+          document.getElementById('file-input').click();
+        } else {
+          this.loadBank(bankId);
+        }
+      });
+    });
+    
+    document.getElementById('file-input').addEventListener('change', (e) => {
+      if (e.target.files.length > 0) {
+        this.loadCustomSample(e.target.files[0]);
+      }
+    });
+  }
+  
+  async loadBank(bankId) {
+    const bank = this.banks[bankId];
+    if (!bank || !bank.file) return;
+    
+    const btn = document.querySelector(`[data-bank="${bankId}"]`);
+    btn.classList.add('loading');
+    
+    try {
+      await this.initAudioContext();
+      this.updateStatus('LOADING...');
+      
+      const response = await fetch(bank.file);
+      if (!response.ok) {
+        throw new Error(`Sample not found: ${bank.file}`);
+      }
+      
+      const arrayBuffer = await response.arrayBuffer();
+      this.sourceBuffer = await this.audioContext.decodeAudioData(arrayBuffer);
+      
+      this.currentBank = bankId;
+      this.applyBankPreset(bank);
+      await this.generateVirtualTapes();
+      
+      this.updateBankButtons();
+      this.updateDisplay();
+      this.updateStatus('READY');
+      
+    } catch (error) {
+      console.error('Error loading bank:', error);
+      this.updateStatus('LOAD ERROR');
+      document.getElementById('sample-name').textContent = 'ERROR';
+    }
+    
+    btn.classList.remove('loading');
+  }
+  
+  async loadCustomSample(file) {
+    const btn = document.querySelector('[data-bank="custom"]');
+    btn.classList.add('loading');
+    
+    try {
+      await this.initAudioContext();
+      this.updateStatus('LOADING...');
+      
+      const arrayBuffer = await file.arrayBuffer();
+      this.sourceBuffer = await this.audioContext.decodeAudioData(arrayBuffer);
+      
+      this.banks.custom.name = file.name.substring(0, 12).toUpperCase();
+      this.currentBank = 'custom';
+      
+      await this.generateVirtualTapes();
+      
+      this.updateBankButtons();
+      this.updateDisplay();
+      this.updateStatus('READY');
+      
+    } catch (error) {
+      console.error('Error loading sample:', error);
+      this.updateStatus('LOAD ERROR');
+    }
+    
+    btn.classList.remove('loading');
+  }
+  
+  applyBankPreset(bank) {
+    if (!bank.presetOverrides) return;
+    
+    Object.entries(bank.presetOverrides).forEach(([param, value]) => {
+      this.params[param] = value;
+      this.updateEncoderVisual(param);
+    });
+  }
+  
+  updateBankButtons() {
+    document.querySelectorAll('.bank-btn').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.bank === this.currentBank);
+    });
+  }
+
+  // === PRESETS ===
+  
+  setupPresets() {
+    document.querySelectorAll('.preset-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        this.applyPreset(btn.dataset.preset);
+      });
+    });
+  }
+  
+  applyPreset(presetId) {
+    const preset = this.presets[presetId];
+    if (!preset) return;
+    
+    this.currentPreset = presetId;
+    
+    Object.entries(preset).forEach(([param, value]) => {
+      this.params[param] = value;
+      this.updateEncoderVisual(param);
+      this.onParamChange(param, value);
+    });
+    
+    // Update preset buttons
+    document.querySelectorAll('.preset-btn').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.preset === presetId);
+    });
+    
+    // Regenerate tapes with new params
+    if (this.sourceBuffer) {
+      this.generateVirtualTapes();
+    }
+    
+    this.updateStatus(presetId.toUpperCase());
+  }
+
+  // === VIRTUAL TAPES ===
+  
   async generateVirtualTapes() {
     if (!this.sourceBuffer) return;
-
+    
     this.virtualTapes.clear();
-    const rootNote = Math.round(this.params.rootNote);
-
-    this.updateStatus('Generating virtual tapes...');
-
+    const rootNote = this.baseOctave * 12 + 12; // C of current octave + 1
+    
     for (let note = this.noteRange.min; note <= this.noteRange.max; note++) {
       const semitoneOffset = note - rootNote;
       const tape = this.createVirtualTape(note, semitoneOffset);
       this.virtualTapes.set(note, tape);
     }
-
-    this.updateStatus(`${this.virtualTapes.size} virtual tapes generated`);
-    this.updateKeyboardRoot();
-    this.updateLCDState();
   }
 
   createVirtualTape(note, semitoneOffset) {
     const playbackRate = Math.pow(2, semitoneOffset / 12);
-
+    
     const drift = this.params.driftPerKey / 100;
     const uniquePitchOffset = (Math.random() - 0.5) * drift * 0.02;
     const uniqueFilterOffset = (Math.random() - 0.5) * drift * 400;
     const uniqueNoiseLevel = Math.random() * drift * 0.3;
-
+    
     const zonePosition = (note - this.noteRange.min) / (this.noteRange.max - this.noteRange.min);
     const isLow = zonePosition < 0.33;
     const isHigh = zonePosition > 0.66;
-
+    
     const zoneCharacter = {
       filterOffset: isLow ? -600 : (isHigh ? 200 : 0),
       instability: isLow ? 1.3 : (isHigh ? 0.8 : 1),
@@ -198,117 +406,103 @@ class Emullotron {
       instability: zoneCharacter.instability,
       lengthFactor: zoneCharacter.lengthFactor,
       attackVariation: 0.01 + Math.random() * 0.03,
-      stereoPan: ((note - 60) / 24) * (this.params.stereoWidth / 100)
+      stereoPan: (note - 60) / 48
     };
   }
 
-  playNote(note, velocity = 1) {
-    if (!this.isInitialized || !this.sourceBuffer) return;
+  // === AUDIO PLAYBACK ===
+  
+  playNote(note, velocity = 0.8) {
+    if (!this.isInitialized || !this.sourceBuffer) {
+      this.updateStatus('NO SAMPLE');
+      return;
+    }
+    
     if (note < this.noteRange.min || note > this.noteRange.max) return;
-
+    
     if (this.activeVoices.has(note)) {
       this.stopNote(note);
     }
-
+    
     const tape = this.virtualTapes.get(note);
     if (!tape) return;
 
     const voice = this.createVoice(tape, velocity);
     this.activeVoices.set(note, voice);
-
+    
     voice.source.start(0);
     voice.startTime = this.audioContext.currentTime;
-
+    
     const maxDuration = this.params.tapeLength * tape.lengthFactor;
     voice.stopTimeout = setTimeout(() => {
       this.fadeOutVoice(voice, 0.5);
       this.activeVoices.delete(note);
-      this.updateVoiceDisplay();
-      if (this.activeVoices.size === 0) {
-        this.stopReelAnimation();
-      }
-      this.updateLCDState();
+      this.updateVoicesCount();
     }, maxDuration * 1000);
-
-    this.updateVoiceDisplay();
-    this.startReelAnimation();
-    this.updateLCDState();
+    
+    this.updateVoicesCount();
   }
 
   createVoice(tape, velocity) {
     const source = this.audioContext.createBufferSource();
     source.buffer = this.sourceBuffer;
     source.playbackRate.value = tape.playbackRate;
-
+    
     this.applyWowFlutter(source, tape);
-
+    
     const filter = this.audioContext.createBiquadFilter();
     filter.type = 'lowpass';
     const ageEffect = 1 - (this.params.tapeAge / 100) * 0.5;
     filter.frequency.value = tape.filterFreq * ageEffect * (this.params.brightness / 50);
     filter.Q.value = 0.7;
-
-    const toneFilter = this.audioContext.createBiquadFilter();
-    toneFilter.type = 'highshelf';
-    toneFilter.frequency.value = 2000;
-    toneFilter.gain.value = (this.params.tone - 50) / 10;
-
+    
     const saturation = this.createSaturation(this.params.saturation / 100);
-
+    
     const gain = this.audioContext.createGain();
     gain.gain.value = 0;
-
-    const attackTime = (this.params.attack / 100) * 0.15 + tape.attackVariation;
-    const jitter = (this.params.startJitter / 100) * 0.02;
+    
+    const attackTime = (this.params.attack / 100) * 0.2 + tape.attackVariation;
+    const jitter = (this.params.startJitter / 100) * 0.03;
     const attackStart = this.audioContext.currentTime + Math.random() * jitter;
-
+    
     gain.gain.setValueAtTime(0, attackStart);
     gain.gain.linearRampToValueAtTime(velocity * 0.8, attackStart + attackTime);
-
+    
     const panner = this.audioContext.createStereoPanner();
-    panner.pan.value = Math.max(-1, Math.min(1, tape.stereoPan));
-
+    panner.pan.value = Math.max(-1, Math.min(1, tape.stereoPan * 0.6));
+    
     source.connect(filter);
-    filter.connect(toneFilter);
-    toneFilter.connect(saturation);
+    filter.connect(saturation);
     saturation.connect(gain);
     gain.connect(panner);
     panner.connect(this.masterGain);
-
-    let noiseGain = null;
+    
     let noiseSource = null;
-
+    let noiseGain = null;
+    
     if (this.params.mechanicalNoise > 5) {
       noiseSource = this.createNoiseSource();
       const noiseFilter = this.audioContext.createBiquadFilter();
       noiseFilter.type = 'bandpass';
       noiseFilter.frequency.value = 800;
       noiseFilter.Q.value = 2;
-
+      
       noiseGain = this.audioContext.createGain();
-      const noiseLevel = tape.noiseLevel * (this.params.mechanicalNoise / 50);
-      noiseGain.gain.value = noiseLevel * velocity;
-
+      noiseGain.gain.value = tape.noiseLevel * (this.params.mechanicalNoise / 50) * velocity;
+      
       noiseSource.connect(noiseFilter);
       noiseFilter.connect(noiseGain);
       noiseGain.connect(panner);
-
       noiseSource.start();
-    }
-
-    if (this.params.keyClick > 5) {
-      this.playKeyClick(panner, velocity);
     }
 
     return {
       source,
       filter,
-      toneFilter,
-      saturation,
       gain,
       panner,
-      noiseGain,
       noiseSource,
+      noiseGain,
       tape,
       startTime: null,
       stopTimeout: null
@@ -318,19 +512,19 @@ class Emullotron {
   applyWowFlutter(source, tape) {
     const now = this.audioContext.currentTime;
     const duration = this.params.tapeLength;
-
+    
     const wowAmount = (this.params.wow / 100) * 0.015 * tape.instability;
     const flutterAmount = (this.params.flutter / 100) * 0.005 * tape.instability;
-
+    
     const baseRate = source.playbackRate.value;
     const steps = Math.floor(duration * 20);
-
+    
     for (let i = 0; i < steps; i++) {
       const t = i / 20;
-      const wow = Math.sin(t * Math.PI * 1.2) * wowAmount;
-      const flutter = Math.sin(t * Math.PI * 14) * flutterAmount;
+      const wow = Math.sin(t * Math.PI * 1.2 + Math.random() * 0.5) * wowAmount;
+      const flutter = Math.sin(t * Math.PI * 14 + Math.random() * 2) * flutterAmount;
       const drift = (Math.random() - 0.5) * 0.002;
-
+      
       source.playbackRate.setValueAtTime(
         baseRate * (1 + wow + flutter + drift),
         now + t
@@ -342,72 +536,44 @@ class Emullotron {
     const bufferSize = this.audioContext.sampleRate * 2;
     const buffer = this.audioContext.createBuffer(1, bufferSize, this.audioContext.sampleRate);
     const data = buffer.getChannelData(0);
-
+    
     for (let i = 0; i < bufferSize; i++) {
       data[i] = Math.random() * 2 - 1;
     }
-
+    
     const noise = this.audioContext.createBufferSource();
     noise.buffer = buffer;
     noise.loop = true;
     return noise;
   }
 
-  playKeyClick(destination, velocity) {
-    const clickDuration = 0.015;
-    const clickGain = this.audioContext.createGain();
-    const clickFilter = this.audioContext.createBiquadFilter();
-
-    clickFilter.type = 'highpass';
-    clickFilter.frequency.value = 2000;
-
-    const noise = this.createNoiseSource();
-    const level = (this.params.keyClick / 100) * 0.3 * velocity;
-
-    clickGain.gain.setValueAtTime(level, this.audioContext.currentTime);
-    clickGain.gain.exponentialRampToValueAtTime(0.001, this.audioContext.currentTime + clickDuration);
-
-    noise.connect(clickFilter);
-    clickFilter.connect(clickGain);
-    clickGain.connect(destination);
-
-    noise.start();
-    noise.stop(this.audioContext.currentTime + clickDuration);
-  }
-
   stopNote(note) {
     const voice = this.activeVoices.get(note);
     if (!voice) return;
-
+    
     if (voice.stopTimeout) {
       clearTimeout(voice.stopTimeout);
     }
-
+    
     const releaseTime = (this.params.release / 100) * 0.5 + 0.05;
     this.fadeOutVoice(voice, releaseTime);
-
+    
     this.activeVoices.delete(note);
-    this.updateVoiceDisplay();
-
-    if (this.activeVoices.size === 0) {
-      this.stopReelAnimation();
-    }
-
-    this.updateLCDState();
+    this.updateVoicesCount();
   }
 
   fadeOutVoice(voice, duration) {
     const now = this.audioContext.currentTime;
-
+    
     voice.gain.gain.cancelScheduledValues(now);
     voice.gain.gain.setValueAtTime(voice.gain.gain.value, now);
     voice.gain.gain.linearRampToValueAtTime(0, now + duration);
-
+    
     if (voice.noiseGain) {
       voice.noiseGain.gain.cancelScheduledValues(now);
       voice.noiseGain.gain.linearRampToValueAtTime(0, now + duration);
     }
-
+    
     setTimeout(() => {
       try {
         voice.source.stop();
@@ -416,572 +582,301 @@ class Emullotron {
     }, duration * 1000 + 50);
   }
 
-  isSupportedSampleFile(file) {
-    if (!file || !file.name) return false;
-
-    const ext = (file.name.split('.').pop() || '').toLowerCase();
-    if (this.supportedExtensions.includes(ext)) {
-      return true;
-    }
-
-    const type = (file.type || '').toLowerCase();
-    if (
-      type.startsWith('audio/') ||
-      type.includes('wav') ||
-      type.includes('wave') ||
-      type.includes('aiff') ||
-      type.includes('mpeg') ||
-      type.includes('mp4')
-    ) {
-      return true;
-    }
-
-    return false;
-  }
-
-  async loadSample(file) {
-    if (!this.isSupportedSampleFile(file)) {
-      this.updateStatus(`Unsupported file type: ${file?.name || 'unknown file'}`);
-      return;
-    }
-
-    await this.initAudioContext();
-
-    this.currentSampleSource = 'manual';
-    this.updateStatus(`Loading ${file.name}...`);
-    document.getElementById('sample-name').textContent = file.name.substring(0, 28).toUpperCase();
-    this.updateLCDState();
-
-    try {
-      const arrayBuffer = await file.arrayBuffer();
-      this.sourceBuffer = await this.audioContext.decodeAudioData(arrayBuffer);
-
-      await this.generateVirtualTapes();
-      this.updateStatus(`Ready — ${file.name}`);
-      this.updateLCDState();
-    } catch (error) {
-      this.updateStatus(`Error loading file: ${error.message}`);
-      console.error(error);
-    }
-  }
-
-  async loadBank(bankKey) {
-    const bank = this.defaultBanks[bankKey];
-    if (!bank) return;
-
-    this.currentBank = bankKey;
-    this.currentSampleSource = 'bank';
-    this.updateBankButtons();
-    this.updateLCDState();
-
-    try {
-      await this.initAudioContext();
-      this.updateStatus(`Loading bank ${bank.name}...`);
-      document.getElementById('sample-name').textContent = `${bank.name}.WAV`;
-
-      const response = await fetch(bank.path);
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}`);
-      }
-
-      const arrayBuffer = await response.arrayBuffer();
-      this.sourceBuffer = await this.audioContext.decodeAudioData(arrayBuffer);
-
-      await this.generateVirtualTapes();
-      this.updateStatus(`Ready — ${bank.name}`);
-      document.getElementById('sample-name').textContent = `${bank.name}.WAV`;
-      this.updateLCDState();
-    } catch (error) {
-      this.sourceBuffer = null;
-      this.updateStatus(`Bank missing: ${bank.path}`);
-      console.error(`Bank load error (${bankKey}):`, error);
-    }
-  }
-
-  async tryAutoLoadDefaultBank() {
-    try {
-      await this.loadBank(this.currentBank);
-    } catch (e) {
-      console.warn('Default bank autoload skipped:', e);
-    }
-  }
-
-  setupUI() {
-    document.addEventListener('contextmenu', (e) => {
-      if (e.target.classList.contains('knob')) {
-        e.preventDefault();
-      }
-    });
-  }
-
-  setupBankSelector() {
-    const container = document.getElementById('bank-selector');
-    if (!container) return;
-
-    container.querySelectorAll('.bank-btn').forEach(btn => {
-      btn.addEventListener('click', async () => {
-        const bankKey = btn.dataset.bank;
-        await this.loadBank(bankKey);
-      });
-    });
-
-    this.updateBankButtons();
-  }
-
-  updateBankButtons() {
-    document.querySelectorAll('.bank-btn').forEach(btn => {
-      btn.classList.toggle('active', btn.dataset.bank === this.currentBank);
-    });
-  }
-
-  setupKeyboard() {
+  // === UI: KEYBOARD ===
+  
+  buildKeyboard() {
     const keyboard = document.getElementById('keyboard');
     keyboard.innerHTML = '';
-
+    
     const noteNames = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
-
-    this.keyLayout.forEach((rowData) => {
-      const row = document.createElement('div');
-      row.className = 'key-row';
-
-      rowData.forEach(({ code, label, note }) => {
-        const key = document.createElement('div');
-        key.className = 'key computer-key';
-        key.dataset.note = note;
-        key.dataset.code = code;
-
-        const noteName = noteNames[note % 12];
-        const octave = Math.floor(note / 12) - 1;
-
-        key.innerHTML = `
-          <div class="keycap-top">
-            <span class="keycap-char">${label}</span>
-            <span class="keycap-note">${noteName}${octave}</span>
-          </div>
-          <div class="keycap-bottom">
-            <span class="keycap-midi">MIDI ${note}</span>
-          </div>
-        `;
-
-        const noteNumber = parseInt(key.dataset.note, 10);
-
-        const startKey = async (e) => {
-          e.preventDefault();
-          await this.initAudioContext();
-          this.playNote(noteNumber, 0.8);
-          key.classList.add('active');
-        };
-
-        const endKey = () => {
-          this.stopNote(noteNumber);
-          key.classList.remove('active');
-        };
-
-        key.addEventListener('mousedown', startKey);
-        key.addEventListener('mouseup', endKey);
-        key.addEventListener('mouseleave', () => {
-          if (key.classList.contains('active')) {
-            endKey();
-          }
-        });
-
-        key.addEventListener('touchstart', startKey, { passive: false });
-        key.addEventListener('touchend', endKey);
-        key.addEventListener('touchcancel', endKey);
-
-        row.appendChild(key);
-      });
-
-      keyboard.appendChild(row);
-    });
-
-    this.updateKeyboardRoot();
-  }
-
-  setupComputerKeyboard() {
-    document.addEventListener('keydown', async (e) => {
-      if (e.repeat) return;
-      if (e.target.tagName === 'INPUT') return;
-
-      const note = this.keyToNote[e.code];
-      if (note !== undefined) {
+    
+    this.keyboardLayout.forEach(keyDef => {
+      const key = document.createElement('div');
+      key.className = `key ${keyDef.black ? 'black' : ''}`;
+      key.dataset.noteOffset = keyDef.note;
+      key.dataset.code = keyDef.code;
+      
+      const midiNote = this.baseOctave * 12 + keyDef.note;
+      const noteName = noteNames[midiNote % 12];
+      const isRoot = keyDef.note === 0;
+      
+      if (isRoot) key.classList.add('root');
+      
+      key.innerHTML = `
+        <span class="key-letter">${keyDef.key}</span>
+        <span class="key-note">${noteName}</span>
+      `;
+      
+      key.addEventListener('mousedown', (e) => {
         e.preventDefault();
-        await this.initAudioContext();
+        this.initAudioContext();
+        const note = this.baseOctave * 12 + keyDef.note;
         this.playNote(note, 0.8);
-
-        const keyEl = document.querySelector(`.computer-key[data-note="${note}"]`);
+        key.classList.add('active');
+      });
+      
+      key.addEventListener('mouseup', () => {
+        const note = this.baseOctave * 12 + keyDef.note;
+        this.stopNote(note);
+        key.classList.remove('active');
+      });
+      
+      key.addEventListener('mouseleave', () => {
+        if (key.classList.contains('active')) {
+          const note = this.baseOctave * 12 + keyDef.note;
+          this.stopNote(note);
+          key.classList.remove('active');
+        }
+      });
+      
+      key.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        this.initAudioContext();
+        const note = this.baseOctave * 12 + keyDef.note;
+        this.playNote(note, 0.8);
+        key.classList.add('active');
+      });
+      
+      key.addEventListener('touchend', () => {
+        const note = this.baseOctave * 12 + keyDef.note;
+        this.stopNote(note);
+        key.classList.remove('active');
+      });
+      
+      keyboard.appendChild(key);
+    });
+  }
+  
+  setupComputerKeyboard() {
+    document.addEventListener('keydown', (e) => {
+      if (e.repeat || e.target.tagName === 'INPUT') return;
+      
+      const keyDef = this.keyboardLayout.find(k => k.code === e.code);
+      if (keyDef) {
+        e.preventDefault();
+        this.initAudioContext();
+        const note = this.baseOctave * 12 + keyDef.note;
+        this.playNote(note, 0.8);
+        
+        const keyEl = document.querySelector(`.key[data-code="${e.code}"]`);
         if (keyEl) keyEl.classList.add('active');
       }
+      
+      // Octave control
+      if (e.code === 'ArrowUp' || e.code === 'ArrowRight') {
+        this.changeOctave(1);
+      } else if (e.code === 'ArrowDown' || e.code === 'ArrowLeft') {
+        this.changeOctave(-1);
+      }
     });
-
+    
     document.addEventListener('keyup', (e) => {
-      const note = this.keyToNote[e.code];
-      if (note !== undefined) {
+      const keyDef = this.keyboardLayout.find(k => k.code === e.code);
+      if (keyDef) {
+        const note = this.baseOctave * 12 + keyDef.note;
         this.stopNote(note);
-
-        const keyEl = document.querySelector(`.computer-key[data-note="${note}"]`);
+        
+        const keyEl = document.querySelector(`.key[data-code="${e.code}"]`);
         if (keyEl) keyEl.classList.remove('active');
       }
     });
   }
+  
+  setupOctaveButtons() {
+    document.getElementById('oct-up').addEventListener('click', () => this.changeOctave(1));
+    document.getElementById('oct-down').addEventListener('click', () => this.changeOctave(-1));
+  }
+  
+  changeOctave(delta) {
+    const newOctave = this.baseOctave + delta;
+    if (newOctave >= 2 && newOctave <= 6) {
+      this.baseOctave = newOctave;
+      document.getElementById('octave-display').textContent = this.baseOctave;
+      this.buildKeyboard();
+    }
+  }
 
-  setupKnobs() {
-    const knobs = document.querySelectorAll('.knob');
-
-    knobs.forEach(knob => {
-      const param = knob.dataset.param;
-      const min = parseFloat(knob.dataset.min);
-      const max = parseFloat(knob.dataset.max);
-      const initialValue = parseFloat(knob.dataset.value);
-
+  // === UI: ENCODERS ===
+  
+  setupEncoders() {
+    document.querySelectorAll('.encoder').forEach(encoder => {
+      const param = encoder.dataset.param;
+      const min = parseFloat(encoder.dataset.min);
+      const max = parseFloat(encoder.dataset.max);
+      const initialValue = parseFloat(encoder.dataset.value);
+      
       this.params[param] = initialValue;
-      this.updateKnobVisual(knob, initialValue, min, max);
-
+      this.updateEncoderVisualElement(encoder, initialValue, min, max);
+      
       let isDragging = false;
       let startY = 0;
       let startValue = 0;
-
+      
       const onStart = (e) => {
         isDragging = true;
         startY = e.type.includes('touch') ? e.touches[0].clientY : e.clientY;
         startValue = this.params[param];
         e.preventDefault();
       };
-
+      
       const onMove = (e) => {
         if (!isDragging) return;
-
+        
         const clientY = e.type.includes('touch') ? e.touches[0].clientY : e.clientY;
         const deltaY = startY - clientY;
         const range = max - min;
-        const sensitivity = 200;
-
+        const sensitivity = 150;
+        
         let newValue = startValue + (deltaY / sensitivity) * range;
         newValue = Math.max(min, Math.min(max, newValue));
-
+        
         this.params[param] = newValue;
-        this.updateKnobVisual(knob, newValue, min, max);
+        this.updateEncoderVisualElement(encoder, newValue, min, max);
         this.onParamChange(param, newValue);
       };
-
+      
       const onEnd = () => {
         isDragging = false;
       };
-
-      knob.addEventListener('mousedown', onStart);
-      knob.addEventListener('touchstart', onStart, { passive: false });
+      
+      encoder.addEventListener('mousedown', onStart);
+      encoder.addEventListener('touchstart', onStart, { passive: false });
       document.addEventListener('mousemove', onMove);
       document.addEventListener('touchmove', onMove, { passive: false });
       document.addEventListener('mouseup', onEnd);
       document.addEventListener('touchend', onEnd);
-
-      knob.addEventListener('dblclick', () => {
+      
+      encoder.addEventListener('dblclick', () => {
         this.params[param] = initialValue;
-        this.updateKnobVisual(knob, initialValue, min, max);
+        this.updateEncoderVisualElement(encoder, initialValue, min, max);
         this.onParamChange(param, initialValue);
       });
     });
   }
-
-  updateKnobVisual(knob, value, min, max) {
-    const normalizedValue = (value - min) / (max - min);
-    const rotation = -135 + normalizedValue * 270;
-    knob.style.setProperty('--rotation', `${rotation}deg`);
-
-    const readout = knob.parentElement.querySelector('.knob-readout');
-    if (readout) {
-      if (max === 1) {
-        readout.textContent = Math.round(value * 100);
-      } else if (Number.isInteger(min) && Number.isInteger(max)) {
-        readout.textContent = Math.round(value);
-      } else {
-        readout.textContent = value.toFixed(1);
-      }
-    }
+  
+  updateEncoderVisualElement(encoder, value, min, max) {
+    const indicator = encoder.querySelector('.encoder-indicator');
+    const normalized = (value - min) / (max - min);
+    const rotation = -135 + normalized * 270;
+    indicator.style.setProperty('--rotation', `${rotation}deg`);
+  }
+  
+  updateEncoderVisual(param) {
+    const encoder = document.querySelector(`.encoder[data-param="${param}"]`);
+    if (!encoder) return;
+    
+    const min = parseFloat(encoder.dataset.min);
+    const max = parseFloat(encoder.dataset.max);
+    this.updateEncoderVisualElement(encoder, this.params[param], min, max);
   }
 
   onParamChange(param, value) {
-    switch (param) {
-      case 'masterVolume':
-        if (this.masterGain && this.audioContext) {
-          this.masterGain.gain.setTargetAtTime(value, this.audioContext.currentTime, 0.05);
-        }
-        break;
-      case 'rootNote':
-        this.generateVirtualTapes();
-        break;
-      case 'brightness':
-      case 'tone':
-        this.updateActiveVoicesFilter();
-        break;
+    if (param === 'masterVolume' && this.masterGain) {
+      this.masterGain.gain.setTargetAtTime(value, this.audioContext.currentTime, 0.05);
     }
-
-    this.updateLCDState();
-  }
-
-  updateActiveVoicesFilter() {
-    if (!this.audioContext) return;
-
-    this.activeVoices.forEach(voice => {
-      const ageEffect = 1 - (this.params.tapeAge / 100) * 0.5;
-      voice.filter.frequency.setTargetAtTime(
-        voice.tape.filterFreq * ageEffect * (this.params.brightness / 50),
-        this.audioContext.currentTime,
-        0.1
-      );
-      voice.toneFilter.gain.setTargetAtTime(
-        (this.params.tone - 50) / 10,
-        this.audioContext.currentTime,
-        0.1
-      );
-    });
-  }
-
-  updateKeyboardRoot() {
-    document.querySelectorAll('.computer-key').forEach(key => {
-      key.classList.remove('root-key');
-    });
-
-    const rootKey = document.querySelector(`.computer-key[data-note="${Math.round(this.params.rootNote)}"]`);
-    if (rootKey) {
-      rootKey.classList.add('root-key');
+    
+    // Clear active preset indicator when manually changing params
+    if (this.currentPreset) {
+      this.currentPreset = null;
+      document.querySelectorAll('.preset-btn').forEach(btn => {
+        btn.classList.remove('active');
+      });
     }
-
-    this.updateLCDState();
   }
 
-  setupFileLoader() {
-    const loadBtn = document.getElementById('load-sample');
-    const fileInput = document.getElementById('file-input');
-
-    loadBtn.addEventListener('click', async () => {
-      await this.initAudioContext();
-      fileInput.click();
-    });
-
-    fileInput.addEventListener('change', async (e) => {
-      if (e.target.files.length > 0) {
-        await this.loadSample(e.target.files[0]);
-      }
-      e.target.value = '';
-    });
-
-    const emullotron = document.querySelector('.emullotron');
-
-    emullotron.addEventListener('dragover', (e) => {
-      e.preventDefault();
-      emullotron.style.outline = '3px solid rgba(255,111,61,0.6)';
-      emullotron.style.outlineOffset = '-3px';
-    });
-
-    emullotron.addEventListener('dragleave', () => {
-      emullotron.style.outline = 'none';
-    });
-
-    emullotron.addEventListener('drop', async (e) => {
-      e.preventDefault();
-      emullotron.style.outline = 'none';
-
-      if (e.dataTransfer.files.length > 0) {
-        await this.loadSample(e.dataTransfer.files[0]);
-      }
-    });
-  }
-
+  // === MIDI ===
+  
   async setupMIDI() {
-    const indicator = document.getElementById('midi-indicator');
-    const text = document.getElementById('midi-text');
-
     if (!navigator.requestMIDIAccess) {
-      text.textContent = 'NOT SUPPORTED';
+      document.getElementById('midi-status').textContent = 'NO MIDI';
       return;
     }
 
     try {
       const midiAccess = await navigator.requestMIDIAccess();
-
-      const connectInput = (input) => {
+      
+      midiAccess.inputs.forEach(input => {
         input.onmidimessage = (e) => this.onMIDIMessage(e);
-        indicator.classList.add('connected');
-        text.textContent = input.name.toUpperCase().slice(0, 14);
-      };
-
-      midiAccess.inputs.forEach(connectInput);
+        document.getElementById('led-midi').classList.add('active');
+        document.getElementById('midi-status').textContent = 'MIDI ON';
+      });
 
       midiAccess.onstatechange = (e) => {
-        if (e.port.type === 'input') {
-          if (e.port.state === 'connected') {
-            connectInput(e.port);
-          } else {
-            indicator.classList.remove('connected');
-            text.textContent = 'DISCONNECTED';
-          }
+        if (e.port.type === 'input' && e.port.state === 'connected') {
+          e.port.onmidimessage = (ev) => this.onMIDIMessage(ev);
+          document.getElementById('led-midi').classList.add('active');
+          document.getElementById('midi-status').textContent = 'MIDI ON';
         }
       };
     } catch (error) {
-      text.textContent = 'ERROR';
-      console.error('MIDI Error:', error);
+      document.getElementById('midi-status').textContent = 'MIDI ERR';
     }
   }
 
   onMIDIMessage(e) {
     const [status, note, velocity] = e.data;
     const command = status & 0xf0;
-
-    const indicator = document.getElementById('midi-indicator');
-    indicator.classList.add('active');
-    setTimeout(() => indicator.classList.remove('active'), 100);
+    
+    document.getElementById('led-midi').classList.add('warning');
+    setTimeout(() => document.getElementById('led-midi').classList.remove('warning'), 100);
 
     if (command === 0x90 && velocity > 0) {
       this.initAudioContext();
       this.playNote(note, velocity / 127);
-
-      const keyEl = document.querySelector(`.computer-key[data-note="${note}"]`);
-      if (keyEl) keyEl.classList.add('active');
     } else if (command === 0x80 || (command === 0x90 && velocity === 0)) {
       this.stopNote(note);
-
-      const keyEl = document.querySelector(`.computer-key[data-note="${note}"]`);
-      if (keyEl) keyEl.classList.remove('active');
     }
   }
 
-  updateVoiceDisplay() {
-    const container = document.getElementById('active-voices');
-    container.innerHTML = '';
-
-    this.activeVoices.forEach((voice, note) => {
-      const noteNames = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
-      const noteName = noteNames[note % 12];
-      const octave = Math.floor(note / 12) - 1;
-
-      const div = document.createElement('div');
-      div.className = 'voice-indicator';
-      div.dataset.note = note;
-      div.innerHTML = `
-        <span>${noteName}${octave}</span>
-        <div class="tape-mini">
-          <div class="tape-mini-fill" style="width: 0%"></div>
-        </div>
-      `;
-      container.appendChild(div);
-    });
-
-    this.updateTapeProgress();
-    this.updateLCDState();
+  // === DISPLAY ===
+  
+  updateDisplay() {
+    const bankName = this.currentBank ? this.banks[this.currentBank].name : '---';
+    document.getElementById('bank-name').textContent = bankName;
+    
+    const sampleName = this.sourceBuffer ? 
+      (this.currentBank === 'custom' ? this.banks.custom.name : bankName) : 
+      'NO FILE';
+    document.getElementById('sample-name').textContent = sampleName;
   }
-
-  updateTapeProgress() {
-    if (this.activeVoices.size === 0) {
-      document.getElementById('tape-indicator').style.width = '0%';
-      return;
-    }
-
-    const updateFrame = () => {
-      if (this.activeVoices.size === 0 || !this.audioContext) return;
-
-      let maxProgress = 0;
-
-      this.activeVoices.forEach((voice, note) => {
-        if (!voice.startTime) return;
-
-        const elapsed = this.audioContext.currentTime - voice.startTime;
-        const maxDuration = this.params.tapeLength * voice.tape.lengthFactor;
-        const progress = Math.min(100, (elapsed / maxDuration) * 100);
-
-        maxProgress = Math.max(maxProgress, progress);
-
-        const indicator = document.querySelector(`.voice-indicator[data-note="${note}"] .tape-mini-fill`);
-        if (indicator) {
-          indicator.style.width = `${progress}%`;
-        }
-      });
-
-      document.getElementById('tape-indicator').style.width = `${maxProgress}%`;
-
-      if (this.activeVoices.size > 0) {
-        requestAnimationFrame(updateFrame);
-      }
-    };
-
-    requestAnimationFrame(updateFrame);
+  
+  updateVoicesCount() {
+    document.getElementById('voices-count').textContent = this.activeVoices.size;
   }
-
-  startReelAnimation() {
-    document.getElementById('reel-left').classList.add('spinning');
-    document.getElementById('reel-right').classList.add('spinning');
+  
+  updateStatus(text) {
+    document.getElementById('status-text').textContent = text;
   }
-
-  stopReelAnimation() {
-    document.getElementById('reel-left').classList.remove('spinning');
-    document.getElementById('reel-right').classList.remove('spinning');
-    document.getElementById('tape-indicator').style.width = '0%';
-  }
-
-  startVUMeter() {
-    const leftBar = document.getElementById('vu-left');
-    const rightBar = document.getElementById('vu-right');
-
+  
+  startMeter() {
+    const tapeFill = document.getElementById('tape-fill');
+    
     const update = () => {
-      if (this.analyser) {
-        const dataArray = new Uint8Array(this.analyser.frequencyBinCount);
-        this.analyser.getByteFrequencyData(dataArray);
-
-        let sum = 0;
-        for (let i = 0; i < dataArray.length; i++) {
-          sum += dataArray[i];
-        }
-        const average = sum / dataArray.length / 255;
-
-        const scale = Math.max(0.08, Math.min(1, average * 3));
-        leftBar.style.transform = `scaleY(${scale})`;
-        rightBar.style.transform = `scaleY(${scale * (0.9 + Math.random() * 0.2)})`;
+      if (this.activeVoices.size > 0) {
+        let maxProgress = 0;
+        
+        this.activeVoices.forEach(voice => {
+          if (voice.startTime) {
+            const elapsed = this.audioContext.currentTime - voice.startTime;
+            const maxDuration = this.params.tapeLength * voice.tape.lengthFactor;
+            const progress = Math.min(100, (elapsed / maxDuration) * 100);
+            maxProgress = Math.max(maxProgress, progress);
+          }
+        });
+        
+        tapeFill.style.width = `${maxProgress}%`;
+      } else {
+        tapeFill.style.width = '0%';
       }
-
+      
       requestAnimationFrame(update);
     };
-
+    
     update();
-  }
-
-  updateStatus(message) {
-    const statusEl = document.getElementById('status-text');
-    if (statusEl) {
-      statusEl.textContent = String(message).toUpperCase();
-    }
-    this.updateLCDState();
-  }
-
-  midiToNoteName(note) {
-    const names = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
-    return `${names[note % 12]}${Math.floor(note / 12) - 1}`;
-  }
-
-  updateLCDState() {
-    const bankEl = document.getElementById('lcd-bank');
-    const rootEl = document.getElementById('lcd-root');
-    const voicesEl = document.getElementById('lcd-voices');
-    const engineEl = document.getElementById('lcd-engine');
-
-    if (bankEl) {
-      bankEl.textContent = this.defaultBanks[this.currentBank]?.name || '--';
-    }
-
-    if (rootEl) rootEl.textContent = this.midiToNoteName(Math.round(this.params.rootNote));
-    if (voicesEl) voicesEl.textContent = String(this.activeVoices.size);
-
-    if (engineEl) {
-      if (!this.audioContext) {
-        engineEl.textContent = 'STANDBY';
-      } else if (this.sourceBuffer) {
-        engineEl.textContent = 'READY';
-      } else {
-        engineEl.textContent = 'AUDIO ON';
-      }
-    }
   }
 }
 
+// Init
 document.addEventListener('DOMContentLoaded', () => {
   window.emullotron = new Emullotron();
 });
