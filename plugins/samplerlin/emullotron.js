@@ -1,606 +1,566 @@
 /**
 
-- EMULLOTRON MK2 - Virtual Tape Instrument
-- Features: Ensemble, Speed, Chord/Drone, ARP, Step Recorder
+- EMULLOTRON MK2 — Virtual Tape Instrument
+- Features: Ensemble 1/2/3v, Speed ½×/1×/2×, Poly/Chord/Drone/ARP, Step Recorder
   */
 
 class Emullotron {
+
+// ═══════════════════════════════════════════════════════════════
+// CONSTRUCTOR
+// ═══════════════════════════════════════════════════════════════
+
 constructor() {
-this.audioContext = null;
-this.masterGain = null;
-this.analyser = null;
-this.sourceBuffer = null;
-this.virtualTapes = new Map();
+/* Audio graph */
+this.audioCtx      = null;
+this.masterGain    = null;
+this.analyser      = null;
+this.masterSat     = null;
+this.masterEQ      = null;
+this.sourceBuffer  = null;
+this.virtualTapes  = new Map();
 
 ```
-// activeVoices: Map<noteKey, voice[]>
+/*
+ * activeVoices : Map<midiNote, VoiceGroup>
+ * VoiceGroup   : { voices: Voice[], autoTimer: id|null }
+ */
 this.activeVoices = new Map();
 
+/* Audio params */
 this.params = {
-  masterVolume: 0.7,
-  tapeLength: 8,
-  startJitter: 30,
-  wow: 35,
-  flutter: 25,
-  tapeAge: 40,
+  masterVolume   : 0.7,
+  tapeLength     : 8,
+  startJitter    : 30,
+  wow            : 35,
+  flutter        : 25,
+  tapeAge        : 40,
   mechanicalNoise: 20,
-  brightness: 60,
-  saturation: 30,
-  attack: 40,
-  release: 50,
-  driftPerKey: 25
+  brightness     : 60,
+  saturation     : 30,
+  attack         : 40,
+  release        : 50,
+  driftPerKey    : 25
 };
 
-// ─── NEW: Mode State ───────────────────────────────────────────
-this.ensembleVoices = 1;         // 1 | 2 | 3
-this.speedMode = 1.0;            // 0.5 | 1.0 | 2.0
-this.playMode = 'poly';          // poly | chord | drone | arp
-this.chordType = 'major';        // major | minor | sus2
+/* Mode state */
+this.ensembleVoices = 1;       // 1 | 2 | 3
+this.speedMode      = 1.0;     // 0.5 | 1.0 | 2.0
+this.playMode       = 'poly';  // poly | chord | drone | arp
+this.chordType      = 'major'; // major | minor | sus2
 
-// Chord tracking: rootNote -> [note, note, note]
+/* Chord: rootNote -> [note…] */
 this.chordMap = new Map();
 
-// Drone
+/* Drone */
 this.droneNote = null;
 
-// ARP
-this.arpPattern = 'up';
-this.arpBPM = 120;
-this.arpOctaves = 1;
-this.arpHeldNotes = new Set();
+/* ARP */
+this.arpPattern     = 'up';
+this.arpBPM         = 120;
+this.arpOctaves     = 1;
+this.arpHeldNotes   = new Set();
 this.arpCurrentNote = null;
-this.arpIndex = 0;
-this.arpDirection = 1;
-this.arpTimer = null;
+this.arpIndex       = 0;
+this.arpDirection   = 1;
+this.arpTimer       = null;
 
-// Step Recorder
+/* Step recorder */
+this.seqMaxSteps  = 16;
 this.seqStepCount = 8;
-this.seqSteps = Array(16).fill(null);  // max 16 steps
-this.seqCursor = 0;                    // recording cursor
-this.seqPlayHead = 0;                  // playback head
-this.seqBPM = 120;
-this.seqIsRecording = false;
-this.seqIsPlaying = false;
-this.seqTimer = null;
-this.seqLastNote = null;               // currently playing seq note
-// ──────────────────────────────────────────────────────────────
+this.seqSteps     = new Array(this.seqMaxSteps).fill(null);
+this.seqCursor    = 0;
+this.seqPlayHead  = 0;
+this.seqBPM       = 120;
+this.seqRecording = false;
+this.seqPlaying   = false;
+this.seqTimer     = null;
+this.seqLastNote  = null;
 
+/* Banks */
 this.banks = {
-  strings: {
-    name: 'STRINGS', file: 'samples/strings.wav',
-    presetOverrides: { wow: 40, flutter: 30, tapeAge: 45, brightness: 55, attack: 50, release: 60 }
-  },
-  flute: {
-    name: 'FLUTE', file: 'samples/flute.wav',
-    presetOverrides: { wow: 25, flutter: 20, tapeAge: 30, brightness: 70, attack: 30, release: 45 }
-  },
-  piano: {
-    name: 'PIANO', file: 'samples/piano.wav',
-    presetOverrides: { wow: 20, flutter: 15, tapeAge: 35, brightness: 65, attack: 20, release: 55 }
-  },
-  custom: { name: 'CUSTOM', file: null, presetOverrides: {} }
+  strings: { name:'STRINGS', file:'samples/strings.wav',
+    presetOverrides:{ wow:40, flutter:30, tapeAge:45, brightness:55, attack:50, release:60 } },
+  flute:   { name:'FLUTE',   file:'samples/flute.wav',
+    presetOverrides:{ wow:25, flutter:20, tapeAge:30, brightness:70, attack:30, release:45 } },
+  piano:   { name:'PIANO',   file:'samples/piano.wav',
+    presetOverrides:{ wow:20, flutter:15, tapeAge:35, brightness:65, attack:20, release:55 } },
+  custom:  { name:'CUSTOM',  file:null, presetOverrides:{} }
 };
 
+/* Sound presets */
 this.presets = {
-  pristine:  { tapeLength:10, startJitter:10, wow:10, flutter:8,  tapeAge:10, mechanicalNoise:5,  brightness:75, saturation:15, attack:20, release:40, driftPerKey:10 },
-  vintage:   { tapeLength:8,  startJitter:30, wow:35, flutter:25, tapeAge:45, mechanicalNoise:25, brightness:55, saturation:35, attack:45, release:50, driftPerKey:30 },
-  worn:      { tapeLength:7,  startJitter:50, wow:55, flutter:45, tapeAge:65, mechanicalNoise:40, brightness:45, saturation:45, attack:55, release:55, driftPerKey:45 },
-  broken:    { tapeLength:5,  startJitter:80, wow:80, flutter:70, tapeAge:85, mechanicalNoise:60, brightness:35, saturation:65, attack:70, release:60, driftPerKey:70 },
-  dreamy:    { tapeLength:12, startJitter:40, wow:60, flutter:20, tapeAge:50, mechanicalNoise:15, brightness:40, saturation:25, attack:65, release:80, driftPerKey:35 }
+  pristine:{ tapeLength:10, startJitter:10, wow:10,  flutter:8,  tapeAge:10, mechanicalNoise:5,  brightness:75, saturation:15, attack:20, release:40, driftPerKey:10 },
+  vintage: { tapeLength:8,  startJitter:30, wow:35,  flutter:25, tapeAge:45, mechanicalNoise:25, brightness:55, saturation:35, attack:45, release:50, driftPerKey:30 },
+  worn:    { tapeLength:7,  startJitter:50, wow:55,  flutter:45, tapeAge:65, mechanicalNoise:40, brightness:45, saturation:45, attack:55, release:55, driftPerKey:45 },
+  broken:  { tapeLength:5,  startJitter:80, wow:80,  flutter:70, tapeAge:85, mechanicalNoise:60, brightness:35, saturation:65, attack:70, release:60, driftPerKey:70 },
+  dreamy:  { tapeLength:12, startJitter:40, wow:60,  flutter:20, tapeAge:50, mechanicalNoise:15, brightness:40, saturation:25, attack:65, release:80, driftPerKey:35 }
 };
 
-this.currentBank = null;
+this.currentBank   = null;
 this.currentPreset = null;
-this.baseOctave = 4;
-this.noteRange = { min: 24, max: 108 };
-this.isInitialized = false;
+this.baseOctave    = 4;
+this.noteRange     = { min:24, max:108 };
+this.isReady       = false;
 
-this.keyboardLayout = [
-  { key:'Q', code:'KeyQ', note:0,  black:false },
-  { key:'Z', code:'KeyZ', note:1,  black:true  },
-  { key:'S', code:'KeyS', note:2,  black:false },
-  { key:'E', code:'KeyE', note:3,  black:true  },
-  { key:'D', code:'KeyD', note:4,  black:false },
-  { key:'F', code:'KeyF', note:5,  black:false },
-  { key:'T', code:'KeyT', note:6,  black:true  },
-  { key:'G', code:'KeyG', note:7,  black:false },
-  { key:'Y', code:'KeyY', note:8,  black:true  },
-  { key:'H', code:'KeyH', note:9,  black:false },
-  { key:'U', code:'KeyU', note:10, black:true  },
-  { key:'J', code:'KeyJ', note:11, black:false },
-  { key:'K', code:'KeyK', note:12, black:false },
-  { key:'O', code:'KeyO', note:13, black:true  },
-  { key:'L', code:'KeyL', note:14, black:false },
-  { key:'P', code:'KeyP', note:15, black:true  },
-  { key:'M', code:'KeyM', note:16, black:false }
+/* Computer keyboard layout — note offset from octave root (C=0) */
+this.keyLayout = [
+  { key:'Q', code:'KeyQ',  note:0,  black:false },
+  { key:'Z', code:'KeyZ',  note:1,  black:true  },
+  { key:'S', code:'KeyS',  note:2,  black:false },
+  { key:'E', code:'KeyE',  note:3,  black:true  },
+  { key:'D', code:'KeyD',  note:4,  black:false },
+  { key:'F', code:'KeyF',  note:5,  black:false },
+  { key:'T', code:'KeyT',  note:6,  black:true  },
+  { key:'G', code:'KeyG',  note:7,  black:false },
+  { key:'Y', code:'KeyY',  note:8,  black:true  },
+  { key:'H', code:'KeyH',  note:9,  black:false },
+  { key:'U', code:'KeyU',  note:10, black:true  },
+  { key:'J', code:'KeyJ',  note:11, black:false },
+  { key:'K', code:'KeyK',  note:12, black:false },
+  { key:'O', code:'KeyO',  note:13, black:true  },
+  { key:'L', code:'KeyL',  note:14, black:false },
+  { key:'P', code:'KeyP',  note:15, black:true  },
+  { key:'M', code:'KeyM',  note:16, black:false }
 ];
 
-this.init();
+this._init();
 ```
 
 }
 
-async init() {
-this.buildKeyboard();
-this.setupEncoders();
-this.setupBanks();
-this.setupPresets();
-this.setupOctaveButtons();
-this.setupComputerKeyboard();
-this.setupModeControls();
-this.setupStepRecorder();
-await this.setupMIDI();
-this.updateDisplay();
-this.updateModeDisplay();
+// ═══════════════════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════════════════
+
+_init() {
+try {
+this._buildKeyboard();
+this._setupEncoders();
+this._setupBanks();
+this._setupPresets();
+this._setupOctaveButtons();
+this._setupComputerKeyboard();
+this._setupModeControls();
+this._setupStepRecorder();
+this._updateDisplay();
+this._updateModeDisplay();
+} catch (err) {
+console.error(’[EMULLOTRON] Init failed:’, err);
+}
+this._setupMIDI(); // async, fire-and-forget
 }
 
 // ═══════════════════════════════════════════════════════════════
-// AUDIO CONTEXT INIT
+// AUDIO CONTEXT
 // ═══════════════════════════════════════════════════════════════
 
-async initAudioContext() {
-if (this.audioContext) return;
-
-```
-this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
-this.masterGain = this.audioContext.createGain();
+async _initAudio() {
+if (this.audioCtx) return;
+this.audioCtx   = new (window.AudioContext || window.webkitAudioContext)();
+this.masterGain = this.audioCtx.createGain();
 this.masterGain.gain.value = this.params.masterVolume;
-this.analyser = this.audioContext.createAnalyser();
+this.analyser   = this.audioCtx.createAnalyser();
 this.analyser.fftSize = 256;
-this.masterSaturation = this.createSaturation(0.2);
-this.masterEQ = this.audioContext.createBiquadFilter();
-this.masterEQ.type = 'lowshelf';
+this.masterSat  = this._makeSaturation(0.2);
+this.masterEQ   = this.audioCtx.createBiquadFilter();
+this.masterEQ.type = ‘lowshelf’;
 this.masterEQ.frequency.value = 300;
 this.masterEQ.gain.value = 2;
 
+```
 this.masterGain
-  .connect(this.masterSaturation)
+  .connect(this.masterSat)
   .connect(this.masterEQ)
   .connect(this.analyser)
-  .connect(this.audioContext.destination);
+  .connect(this.audioCtx.destination);
 
-this.isInitialized = true;
-document.getElementById('led-audio').classList.add('active');
-this.updateStatus('AUDIO OK');
-this.startMeter();
+this.isReady = true;
+this._led('led-audio', 'active');
+this._status('AUDIO OK');
+this._startMeter();
 ```
 
 }
 
-createSaturation(amount) {
-const waveshaper = this.audioContext.createWaveShaper();
-const samples = 44100;
-const curve = new Float32Array(samples);
-for (let i = 0; i < samples; i++) {
-const x = (i * 2) / samples - 1;
+_makeSaturation(amount) {
+const ws    = this.audioCtx.createWaveShaper();
+const N     = 44100;
+const curve = new Float32Array(N);
+for (let i = 0; i < N; i++) {
+const x = (i * 2) / N - 1;
 curve[i] = Math.tanh(x * (1 + amount * 3)) * (1 - amount * 0.1);
 }
-waveshaper.curve = curve;
-waveshaper.oversample = ‘2x’;
-return waveshaper;
+ws.curve = curve;
+ws.oversample = ‘2x’;
+return ws;
 }
 
 // ═══════════════════════════════════════════════════════════════
-// BANKS & PRESETS
+// BANKS
 // ═══════════════════════════════════════════════════════════════
 
-setupBanks() {
+_setupBanks() {
 document.querySelectorAll(’.bank-btn’).forEach(btn => {
 btn.addEventListener(‘click’, () => {
-const bankId = btn.dataset.bank;
-if (bankId === ‘custom’) {
+const id = btn.dataset.bank;
+if (id === ‘custom’) {
 document.getElementById(‘file-input’).click();
 } else {
-this.loadBank(bankId);
+this._loadBank(id);
 }
 });
 });
-document.getElementById(‘file-input’).addEventListener(‘change’, (e) => {
-if (e.target.files.length > 0) this.loadCustomSample(e.target.files[0]);
+const fi = document.getElementById(‘file-input’);
+if (fi) {
+fi.addEventListener(‘change’, e => {
+if (e.target.files.length) this._loadCustom(e.target.files[0]);
 });
+}
 }
 
-async loadBank(bankId) {
+async _loadBank(bankId) {
 const bank = this.banks[bankId];
 if (!bank || !bank.file) return;
 const btn = document.querySelector(`[data-bank="${bankId}"]`);
-btn.classList.add(‘loading’);
+if (btn) btn.classList.add(‘loading’);
 try {
-await this.initAudioContext();
-this.updateStatus(‘LOADING…’);
-const response = await fetch(bank.file);
-if (!response.ok) throw new Error(`Sample not found: ${bank.file}`);
-const arrayBuffer = await response.arrayBuffer();
-this.sourceBuffer = await this.audioContext.decodeAudioData(arrayBuffer);
-this.currentBank = bankId;
-this.applyBankPreset(bank);
-await this.generateVirtualTapes();
-this.updateBankButtons();
-this.updateDisplay();
-this.updateStatus(‘READY’);
+await this._initAudio();
+this._status(‘LOADING…’);
+const resp = await fetch(bank.file);
+if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+const ab = await resp.arrayBuffer();
+this.sourceBuffer = await this.audioCtx.decodeAudioData(ab);
+this.currentBank  = bankId;
+this._applyBankOverrides(bank);
+this._generateTapes();
+this._updateBankBtns();
+this._updateDisplay();
+this._status(‘READY’);
 } catch (err) {
-console.error(err);
-this.updateStatus(‘LOAD ERROR’);
+console.error(’[EMULLOTRON] loadBank:’, err);
+this._status(‘LOAD ERR’);
 }
-btn.classList.remove(‘loading’);
+if (btn) btn.classList.remove(‘loading’);
 }
 
-async loadCustomSample(file) {
+async _loadCustom(file) {
 const btn = document.querySelector(’[data-bank=“custom”]’);
-btn.classList.add(‘loading’);
+if (btn) btn.classList.add(‘loading’);
 try {
-await this.initAudioContext();
-this.updateStatus(‘LOADING…’);
-const arrayBuffer = await file.arrayBuffer();
-this.sourceBuffer = await this.audioContext.decodeAudioData(arrayBuffer);
-this.banks.custom.name = file.name.substring(0, 12).toUpperCase();
+await this._initAudio();
+this._status(‘LOADING…’);
+const ab = await file.arrayBuffer();
+this.sourceBuffer = await this.audioCtx.decodeAudioData(ab);
+this.banks.custom.name = file.name.slice(0, 12).toUpperCase();
 this.currentBank = ‘custom’;
-await this.generateVirtualTapes();
-this.updateBankButtons();
-this.updateDisplay();
-this.updateStatus(‘READY’);
+this._generateTapes();
+this._updateBankBtns();
+this._updateDisplay();
+this._status(‘READY’);
 } catch (err) {
-console.error(err);
-this.updateStatus(‘LOAD ERROR’);
+console.error(’[EMULLOTRON] loadCustom:’, err);
+this._status(‘LOAD ERR’);
 }
-btn.classList.remove(‘loading’);
+if (btn) btn.classList.remove(‘loading’);
 }
 
-applyBankPreset(bank) {
+_applyBankOverrides(bank) {
 if (!bank.presetOverrides) return;
-Object.entries(bank.presetOverrides).forEach(([p, v]) => {
-this.params[p] = v;
-this.updateEncoderVisual(p);
+Object.entries(bank.presetOverrides).forEach(([k, v]) => {
+this.params[k] = v;
+this._syncEncoderVisual(k);
 });
 }
 
-updateBankButtons() {
+_updateBankBtns() {
 document.querySelectorAll(’.bank-btn’).forEach(btn => {
 btn.classList.toggle(‘active’, btn.dataset.bank === this.currentBank);
 });
 }
 
-setupPresets() {
+// ═══════════════════════════════════════════════════════════════
+// PRESETS
+// ═══════════════════════════════════════════════════════════════
+
+_setupPresets() {
 document.querySelectorAll(’.preset-btn’).forEach(btn => {
-btn.addEventListener(‘click’, () => this.applyPreset(btn.dataset.preset));
+btn.addEventListener(‘click’, () => this._applyPreset(btn.dataset.preset));
 });
 }
 
-applyPreset(presetId) {
-const preset = this.presets[presetId];
-if (!preset) return;
-this.currentPreset = presetId;
-Object.entries(preset).forEach(([p, v]) => {
-this.params[p] = v;
-this.updateEncoderVisual(p);
-this.onParamChange(p, v);
+_applyPreset(id) {
+const p = this.presets[id];
+if (!p) return;
+this.currentPreset = id;
+Object.entries(p).forEach(([k, v]) => {
+this.params[k] = v;
+this._syncEncoderVisual(k);
+this._onParamChange(k, v);
 });
 document.querySelectorAll(’.preset-btn’).forEach(btn => {
-btn.classList.toggle(‘active’, btn.dataset.preset === presetId);
+btn.classList.toggle(‘active’, btn.dataset.preset === id);
 });
-if (this.sourceBuffer) this.generateVirtualTapes();
-this.updateStatus(presetId.toUpperCase());
+if (this.sourceBuffer) this._generateTapes();
+this._status(id.toUpperCase());
 }
 
 // ═══════════════════════════════════════════════════════════════
 // VIRTUAL TAPES
 // ═══════════════════════════════════════════════════════════════
 
-async generateVirtualTapes() {
+_generateTapes() {
 if (!this.sourceBuffer) return;
 this.virtualTapes.clear();
-const rootNote = this.baseOctave * 12 + 12;
-for (let note = this.noteRange.min; note <= this.noteRange.max; note++) {
-this.virtualTapes.set(note, this.createVirtualTape(note, note - rootNote));
+const root = this.baseOctave * 12 + 12;
+for (let n = this.noteRange.min; n <= this.noteRange.max; n++) {
+this.virtualTapes.set(n, this._makeTape(n, n - root));
 }
 }
 
-createVirtualTape(note, semitoneOffset) {
-const playbackRate = Math.pow(2, semitoneOffset / 12);
+_makeTape(note, semitones) {
+const rate  = Math.pow(2, semitones / 12);
 const drift = this.params.driftPerKey / 100;
-const uniquePitchOffset = (Math.random() - 0.5) * drift * 0.02;
-const uniqueFilterOffset = (Math.random() - 0.5) * drift * 400;
-const uniqueNoiseLevel = Math.random() * drift * 0.3;
-const zonePos = (note - this.noteRange.min) / (this.noteRange.max - this.noteRange.min);
-const isLow = zonePos < 0.33, isHigh = zonePos > 0.66;
-const zoneChar = {
-filterOffset: isLow ? -600 : (isHigh ? 200 : 0),
-instability: isLow ? 1.3 : (isHigh ? 0.8 : 1),
-noiseBoost: isHigh ? 1.5 : 1,
-lengthFactor: isHigh ? 0.85 : 1
-};
+const zp    = (note - this.noteRange.min) / (this.noteRange.max - this.noteRange.min);
+const isLow = zp < 0.33;
+const isHi  = zp > 0.66;
 return {
 note,
-playbackRate: playbackRate * (1 + uniquePitchOffset),
-filterFreq: 2000 + uniqueFilterOffset + zoneChar.filterOffset,
-noiseLevel: (0.02 + uniqueNoiseLevel) * zoneChar.noiseBoost,
-instability: zoneChar.instability,
-lengthFactor: zoneChar.lengthFactor,
-attackVariation: 0.01 + Math.random() * 0.03,
-stereoPan: (note - 60) / 48
+playbackRate    : rate * (1 + (Math.random() - 0.5) * drift * 0.02),
+filterFreq      : 2000 + (Math.random() - 0.5) * drift * 400 + (isLow ? -600 : isHi ? 200 : 0),
+noiseLevel      : (0.02 + Math.random() * drift * 0.3) * (isHi ? 1.5 : 1),
+instability     : isLow ? 1.3 : isHi ? 0.8 : 1,
+lengthFactor    : isHi ? 0.85 : 1,
+attackVariation : 0.01 + Math.random() * 0.03,
+stereoPan       : (note - 60) / 48
 };
 }
 
 // ═══════════════════════════════════════════════════════════════
-// PLAY NOTE — routes through modes
+// PUBLIC PLAY / STOP  (routes to correct mode)
 // ═══════════════════════════════════════════════════════════════
 
-playNote(note, velocity = 0.8) {
-if (!this.isInitialized || !this.sourceBuffer) {
-this.updateStatus(‘NO SAMPLE’);
-return;
-}
+playNote(note, vel = 0.8) {
+if (!this.isReady || !this.sourceBuffer) { this._status(‘NO SAMPLE’); return; }
 if (note < this.noteRange.min || note > this.noteRange.max) return;
 
 ```
-switch (this.playMode) {
-  case 'arp':
-    this.addArpNote(note);
-    return;
-
-  case 'drone':
-    this.handleDroneNote(note, velocity);
-    // Record the drone note in step sequencer if recording
-    if (this.seqIsRecording) this.recordStep(note);
-    return;
-
-  case 'chord':
-    this.playChord(note, velocity);
-    if (this.seqIsRecording) this.recordStep(note);
-    return;
-
-  default: // poly
-    if (this.seqIsRecording) this.recordStep(note);
-    this._playEnsemble(note, velocity);
+if (this.playMode === 'arp') {
+  this._arpAdd(note);
+  return;
 }
+if (this.playMode === 'drone') {
+  this._droneToggle(note, vel);
+  if (this.seqRecording) this._seqRecord(note);
+  return;
+}
+if (this.playMode === 'chord') {
+  this._playChord(note, vel);
+  if (this.seqRecording) this._seqRecord(note);
+  return;
+}
+/* poly */
+if (this.seqRecording) this._seqRecord(note);
+this._playEnsemble(note, vel);
 ```
 
 }
 
 stopNote(note) {
-switch (this.playMode) {
-case ‘arp’:
-this.removeArpNote(note);
+if (this.playMode === ‘arp’)   { this._arpRemove(note);  return; }
+if (this.playMode === ‘chord’) { this._stopChord(note);  return; }
+if (this.playMode === ‘drone’) {
+/* only release melody notes; drone persists until toggled */
+if (note !== this.droneNote) this._killVoices(note);
 return;
-case ‘chord’:
-this._stopChord(note);
-return;
-case ‘drone’:
-// Melody notes (not the drone itself) stop normally
-if (note !== this.droneNote) this._stopVoices(note);
-return;
-default:
-this._stopVoices(note);
 }
+this._killVoices(note);
 }
 
-// ─── Ensemble playback ──────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════
+// ENSEMBLE ENGINE
+// ═══════════════════════════════════════════════════════════════
 
-_playEnsemble(note, velocity) {
-if (this.activeVoices.has(note)) this._stopVoices(note);
+/**
+
+- @param {number}  note     - MIDI note
+- @param {number}  vel      - 0..1
+- @param {boolean} infinite - skip auto-stop timer (drone use)
+  */
+  _playEnsemble(note, vel, infinite = false) {
+  this._killVoices(note);
 
 ```
-const detunings = this._ensembleDetunings();
 const tape = this.virtualTapes.get(note);
 if (!tape) return;
 
-const voices = detunings.map(detuneSemitones => {
-  const rate = tape.playbackRate * Math.pow(2, detuneSemitones / 12) * this.speedMode;
-  const adjustedTape = { ...tape, playbackRate: rate };
-  const v = this.createVoice(adjustedTape, velocity / Math.sqrt(detunings.length));
+const dets   = this._detunings();
+const vPerV  = vel / Math.sqrt(dets.length);
+
+const voices = dets.map(dt => {
+  const rate = tape.playbackRate * Math.pow(2, dt / 12) * this.speedMode;
+  const v = this._createVoice({ ...tape, playbackRate: rate }, vPerV);
   v.source.start(0);
-  v.startTime = this.audioContext.currentTime;
+  v.startTime = this.audioCtx.currentTime;
   return v;
 });
 
-this.activeVoices.set(note, voices);
+let autoTimer = null;
+if (!infinite) {
+  const ms = this.params.tapeLength * tape.lengthFactor * 1000;
+  autoTimer = setTimeout(() => {
+    this._fadeGroup(note, 0.5);
+    this._updateVoiceCount();
+  }, ms);
+}
 
-// Auto-release after tape length
-const maxDuration = this.params.tapeLength * tape.lengthFactor;
-const t = setTimeout(() => {
-  this._fadeOutVoices(note, 0.5);
-  this.updateVoicesCount();
-}, maxDuration * 1000);
-voices[0]._autoStopTimer = t;
-
-this.updateVoicesCount();
+this.activeVoices.set(note, { voices, autoTimer });
+this._updateVoiceCount();
 ```
 
 }
 
-_ensembleDetunings() {
-if (this.ensembleVoices === 1) return [0];
-if (this.ensembleVoices === 2) return [-0.10, 0.10];
-return [-0.14, 0, 0.14];
+_detunings() {
+if (this.ensembleVoices === 2) return [-0.10,  0.10];
+if (this.ensembleVoices === 3) return [-0.14,  0,    0.14];
+return [0];
 }
 
-_stopVoices(note) {
-const voices = this.activeVoices.get(note);
-if (!voices) return;
-voices.forEach(v => {
-if (v._autoStopTimer) clearTimeout(v._autoStopTimer);
-});
-const releaseTime = (this.params.release / 100) * 0.5 + 0.05;
-voices.forEach(v => this.fadeOutVoice(v, releaseTime));
+/* Stop with release envelope */
+_killVoices(note) {
+const grp = this.activeVoices.get(note);
+if (!grp) return;
+if (grp.autoTimer) clearTimeout(grp.autoTimer);
+const rel = (this.params.release / 100) * 0.5 + 0.05;
+grp.voices.forEach(v => this._fadeVoice(v, rel));
 this.activeVoices.delete(note);
-this.updateVoicesCount();
+this._updateVoiceCount();
 }
 
-_fadeOutVoices(note, duration) {
-const voices = this.activeVoices.get(note);
-if (!voices) return;
-voices.forEach(v => {
-if (v._autoStopTimer) clearTimeout(v._autoStopTimer);
-this.fadeOutVoice(v, duration);
-});
+/* Fade used by auto-stop */
+_fadeGroup(note, dur) {
+const grp = this.activeVoices.get(note);
+if (!grp) return;
+if (grp.autoTimer) clearTimeout(grp.autoTimer);
+grp.voices.forEach(v => this._fadeVoice(v, dur));
 this.activeVoices.delete(note);
 }
 
-// ─── Chord mode ─────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════
+// CHORD MODE
+// ═══════════════════════════════════════════════════════════════
 
-playChord(rootNote, velocity) {
-const intervals = this._chordIntervals();
-const chordNotes = intervals.map(i => rootNote + i);
-chordNotes.forEach((n, i) => {
-const vel = i === 0 ? velocity : velocity * 0.65;
-this._playEnsemble(n, vel);
-});
-this.chordMap.set(rootNote, chordNotes);
-// Also mark root key as active
-this._highlightKey(rootNote, true);
+_playChord(rootNote, vel) {
+const notes = this._chordIntervals().map(i => rootNote + i);
+notes.forEach((n, idx) => {
+if (n >= this.noteRange.min && n <= this.noteRange.max) {
+this._playEnsemble(n, idx === 0 ? vel : vel * 0.65);
 }
-
-_chordIntervals() {
-const types = { major: [0, 4, 7], minor: [0, 3, 7], sus2: [0, 2, 7] };
-return types[this.chordType] || [0, 4, 7];
+});
+this.chordMap.set(rootNote, notes);
 }
 
 _stopChord(rootNote) {
-const notes = this.chordMap.get(rootNote);
-if (notes) {
-notes.forEach(n => this._stopVoices(n));
+const notes = this.chordMap.get(rootNote) || [rootNote];
+notes.forEach(n => this._killVoices(n));
 this.chordMap.delete(rootNote);
-} else {
-this._stopVoices(rootNote);
-}
-this._highlightKey(rootNote, false);
 }
 
-// ─── Drone mode ─────────────────────────────────────────────────
+_chordIntervals() {
+const tbl = { major:[0,4,7], minor:[0,3,7], sus2:[0,2,7] };
+return tbl[this.chordType] || [0,4,7];
+}
 
-handleDroneNote(note, velocity) {
-// Toggle drone if same note pressed again
+// ═══════════════════════════════════════════════════════════════
+// DRONE MODE
+// ═══════════════════════════════════════════════════════════════
+
+_droneToggle(note, vel) {
 if (note === this.droneNote) {
-this._stopVoices(note);
+/* toggle off */
+this._killVoices(note);
+this._setKeyClass(note, false, ‘drone-held’);
 this.droneNote = null;
-this._updateDroneDisplay();
-return;
-}
-
-```
-// Start new drone — stop old if any
+} else {
+/* switch drone to new note */
 if (this.droneNote !== null) {
-  this._stopVoices(this.droneNote);
-  const oldKey = document.querySelector(`.key.drone-held`);
-  if (oldKey) oldKey.classList.remove('drone-held');
+this._killVoices(this.droneNote);
+this._setKeyClass(this.droneNote, false, ‘drone-held’);
 }
-
 this.droneNote = note;
-// Play with no auto-release (pass a very long tapeLength effectively)
-const tape = this.virtualTapes.get(note);
-if (!tape) return;
-
-const detunings = this._ensembleDetunings();
-const voices = detunings.map(d => {
-  const rate = tape.playbackRate * Math.pow(2, d / 12) * this.speedMode;
-  const adj = { ...tape, playbackRate: rate, lengthFactor: 999 };
-  const v = this.createVoice(adj, velocity / Math.sqrt(detunings.length));
-  v.source.start(0);
-  v.startTime = this.audioContext.currentTime;
-  return v;
-});
-
-this.activeVoices.set(note, voices);
-this.updateVoicesCount();
-
-// Highlight key
-const keyEl = document.querySelector(`.key[data-note="${note % 12}"]`);
-// Find via noteOffset
-const keyOffset = note - this.baseOctave * 12;
-const keyEls = document.querySelectorAll('.key');
-keyEls.forEach(k => {
-  if (parseInt(k.dataset.noteOffset) === keyOffset) k.classList.add('drone-held');
-});
-
+this._playEnsemble(note, vel, true /* infinite */);
+this._setKeyClass(note, true, ‘drone-held’);
+}
 this._updateDroneDisplay();
-```
-
 }
 
 _updateDroneDisplay() {
-const disp = document.getElementById(‘drone-display’);
-const noteSpan = document.getElementById(‘drone-note’);
-if (this.droneNote !== null) {
-disp.style.display = ‘inline’;
-noteSpan.textContent = this._noteName(this.droneNote);
-} else {
-disp.style.display = ‘none’;
-}
+const el = document.getElementById(‘drone-display’);
+if (!el) return;
+el.style.display = this.droneNote !== null ? ‘inline’ : ‘none’;
+const nn = document.getElementById(‘drone-note’);
+if (nn && this.droneNote !== null) nn.textContent = this._midiName(this.droneNote);
 }
 
 // ═══════════════════════════════════════════════════════════════
 // ARPEGGIATOR
 // ═══════════════════════════════════════════════════════════════
 
-addArpNote(note) {
+_arpAdd(note) {
 this.arpHeldNotes.add(note);
-this._highlightKey(note, true, ‘arp’);
+this._setKeyClass(note, true, ‘arp-held’);
 this._updateArpDisplay();
-
-```
-if (this.arpTimer === null) {
-  // Fire immediately then start interval
-  this._tickArp();
-  const ms = (60 / this.arpBPM) * 1000;
-  this.arpTimer = setInterval(() => this._tickArp(), ms);
-}
-```
-
+if (!this.arpTimer) this._arpStart();
 }
 
-removeArpNote(note) {
+_arpRemove(note) {
 this.arpHeldNotes.delete(note);
-this._highlightKey(note, false, ‘arp’);
+this._setKeyClass(note, false, ‘arp-held’);
 this._updateArpDisplay();
-
-```
-if (this.arpHeldNotes.size === 0) {
-  this._stopArp();
-}
-```
-
+if (this.arpHeldNotes.size === 0) this._arpStop();
 }
 
-_stopArp() {
+_arpStart() {
+this._arpTick();
+const ms = (60 / this.arpBPM) * 1000;
+this.arpTimer = setInterval(() => this._arpTick(), ms);
+}
+
+_arpStop() {
 if (this.arpTimer) { clearInterval(this.arpTimer); this.arpTimer = null; }
 if (this.arpCurrentNote !== null) {
-this._stopVoices(this.arpCurrentNote);
+this._killVoices(this.arpCurrentNote);
 this.arpCurrentNote = null;
 }
-this.arpIndex = 0;
+this.arpIndex     = 0;
 this.arpDirection = 1;
 }
 
-_tickArp() {
-if (this.arpHeldNotes.size === 0) return;
+_arpTick() {
+if (!this.arpHeldNotes.size) return;
+if (this.arpCurrentNote !== null) this._killVoices(this.arpCurrentNote);
 
 ```
-// Stop previous arp note
-if (this.arpCurrentNote !== null) {
-  this._stopVoices(this.arpCurrentNote);
-}
+const seq = this._arpSequence();
+if (!seq.length) return;
 
-const notes = this._buildArpSequence();
-this.arpIndex = Math.max(0, Math.min(this.arpIndex, notes.length - 1));
-const nextNote = notes[this.arpIndex];
-this.arpCurrentNote = nextNote;
-this._playEnsemble(nextNote, 0.8);
-
-// Advance index based on pattern
-this._advanceArpIndex(notes.length);
+/* clamp index */
+this.arpIndex = ((this.arpIndex % seq.length) + seq.length) % seq.length;
+const note    = seq[this.arpIndex];
+this.arpCurrentNote = note;
+this._playEnsemble(note, 0.8);
+this._advanceArp(seq.length);
 ```
 
 }
 
-_buildArpSequence() {
-let sorted = […this.arpHeldNotes].sort((a, b) => a - b);
-if (this.arpOctaves === 2) {
-sorted = […sorted, …sorted.map(n => n + 12)];
-}
-return sorted;
+_arpSequence() {
+let s = […this.arpHeldNotes].sort((a, b) => a - b);
+if (this.arpOctaves === 2) s = […s, …s.map(n => n + 12)];
+return s;
 }
 
-_advanceArpIndex(len) {
+_advanceArp(len) {
 switch (this.arpPattern) {
 case ‘up’:
 this.arpIndex = (this.arpIndex + 1) % len;
@@ -610,8 +570,8 @@ this.arpIndex = (this.arpIndex - 1 + len) % len;
 break;
 case ‘pingpong’:
 this.arpIndex += this.arpDirection;
-if (this.arpIndex >= len - 1) { this.arpDirection = -1; this.arpIndex = len - 1; }
-else if (this.arpIndex <= 0) { this.arpDirection = 1; this.arpIndex = 0; }
+if (this.arpIndex >= len) { this.arpDirection = -1; this.arpIndex = len - 2; }
+else if (this.arpIndex < 0) { this.arpDirection = 1; this.arpIndex = 1; }
 break;
 case ‘random’:
 this.arpIndex = Math.floor(Math.random() * len);
@@ -621,23 +581,24 @@ break;
 
 _setArpBPM(bpm) {
 this.arpBPM = Math.max(30, Math.min(300, bpm));
-document.getElementById(‘arp-bpm-val’).textContent = this.arpBPM;
-if (this.arpTimer !== null) {
+const el = document.getElementById(‘arp-bpm-val’);
+if (el) el.textContent = this.arpBPM;
+if (this.arpTimer) {
 clearInterval(this.arpTimer);
 const ms = (60 / this.arpBPM) * 1000;
-this.arpTimer = setInterval(() => this._tickArp(), ms);
+this.arpTimer = setInterval(() => this._arpTick(), ms);
 }
 }
 
 _updateArpDisplay() {
-const disp = document.getElementById(‘arp-display’);
-const noteSpan = document.getElementById(‘arp-notes’);
+const el = document.getElementById(‘arp-display’);
+if (!el) return;
 if (this.arpHeldNotes.size > 0) {
-disp.style.display = ‘inline’;
-const names = […this.arpHeldNotes].sort((a,b)=>a-b).map(n => this._noteName(n)).join(’ ’);
-noteSpan.textContent = names;
+el.style.display = ‘inline’;
+const ns = document.getElementById(‘arp-notes’);
+if (ns) ns.textContent = […this.arpHeldNotes].sort((a,b)=>a-b).map(n=>this._midiName(n)).join(’ ’);
 } else {
-disp.style.display = ‘none’;
+el.style.display = ‘none’;
 }
 }
 
@@ -645,559 +606,545 @@ disp.style.display = ‘none’;
 // STEP RECORDER
 // ═══════════════════════════════════════════════════════════════
 
-setupStepRecorder() {
-// Transport buttons
-document.getElementById(‘seq-rec’).addEventListener(‘click’, () => this._toggleRec());
-document.getElementById(‘seq-play’).addEventListener(‘click’, () => this._togglePlay());
-document.getElementById(‘seq-clear’).addEventListener(‘click’, () => this._clearSeq());
+_setupStepRecorder() {
+const $ = id => document.getElementById(id);
 
 ```
-// BPM
-document.getElementById('seq-bpm-up').addEventListener('click', () => this._setSeqBPM(this.seqBPM + 5));
-document.getElementById('seq-bpm-down').addEventListener('click', () => this._setSeqBPM(this.seqBPM - 5));
+$('seq-rec').addEventListener('click',   () => this._seqToggleRec());
+$('seq-play').addEventListener('click',  () => this._seqTogglePlay());
+$('seq-clear').addEventListener('click', () => this._seqClear());
 
-// Step count
-document.getElementById('seq-steps-up').addEventListener('click', () => {
-  this.seqStepCount = Math.min(16, this.seqStepCount + 1);
-  document.getElementById('seq-steps-val').textContent = this.seqStepCount;
-  this._buildSeqGrid();
+$('seq-bpm-up').addEventListener('click',    () => this._seqSetBPM(this.seqBPM + 5));
+$('seq-bpm-down').addEventListener('click',  () => this._seqSetBPM(this.seqBPM - 5));
+$('seq-steps-up').addEventListener('click',  () => {
+  this.seqStepCount = Math.min(this.seqMaxSteps, this.seqStepCount + 1);
+  $('seq-steps-val').textContent = this.seqStepCount;
+  this._seqBuildGrid();
 });
-document.getElementById('seq-steps-down').addEventListener('click', () => {
+$('seq-steps-down').addEventListener('click', () => {
   this.seqStepCount = Math.max(2, this.seqStepCount - 1);
-  document.getElementById('seq-steps-val').textContent = this.seqStepCount;
-  this._buildSeqGrid();
+  $('seq-steps-val').textContent = this.seqStepCount;
+  this._seqBuildGrid();
 });
 
-this._buildSeqGrid();
+this._seqBuildGrid();
 ```
 
 }
 
-_buildSeqGrid() {
+_seqBuildGrid() {
 const grid = document.getElementById(‘seq-grid’);
+if (!grid) return;
 grid.innerHTML = ‘’;
-for (let i = 0; i < this.seqStepCount; i++) {
-const step = document.createElement(‘div’);
-step.className = ‘seq-step’ + (this.seqSteps[i] ? ’ filled’ : ‘’);
-step.dataset.index = i;
 
 ```
-  const numEl = document.createElement('span');
-  numEl.className = 'step-num';
+for (let i = 0; i < this.seqStepCount; i++) {
+  const cell = document.createElement('div');
+  cell.className   = 'seq-step';
+  cell.dataset.idx = i;
+
+  const numEl  = document.createElement('span');
+  numEl.className  = 'step-num';
   numEl.textContent = i + 1;
 
   const noteEl = document.createElement('span');
-  noteEl.className = 'step-note';
-  noteEl.textContent = this.seqSteps[i] ? this._noteName(this.seqSteps[i]) : '—';
+  noteEl.className  = 'step-note';
+  noteEl.textContent = '—';
 
   const dot = document.createElement('div');
   dot.className = 'step-dot';
 
-  step.appendChild(numEl);
-  step.appendChild(noteEl);
-  step.appendChild(dot);
+  cell.appendChild(numEl);
+  cell.appendChild(noteEl);
+  cell.appendChild(dot);
 
-  // Click: if recording, set cursor; otherwise, clear step
-  step.addEventListener('click', () => {
-    if (this.seqIsRecording) {
+  cell.addEventListener('click', () => {
+    if (this.seqRecording) {
       this.seqCursor = i;
-      this._updateSeqGrid();
     } else {
       this.seqSteps[i] = null;
-      this._updateSeqGrid();
     }
+    this._seqRefreshGrid();
   });
 
-  grid.appendChild(step);
+  grid.appendChild(cell);
 }
+this._seqRefreshGrid();
 ```
 
 }
 
-_updateSeqGrid() {
-const steps = document.querySelectorAll(’.seq-step’);
-steps.forEach((el, i) => {
-el.classList.toggle(‘filled’, !!this.seqSteps[i]);
-el.classList.toggle(‘playing’, this.seqIsPlaying && i === this.seqPlayHead);
-el.classList.toggle(‘cursor’, this.seqIsRecording && i === this.seqCursor);
+_seqRefreshGrid() {
+document.querySelectorAll(’.seq-step’).forEach(el => {
+const i    = parseInt(el.dataset.idx);
+const note = this.seqSteps[i];
+el.classList.toggle(‘filled’,  !!note);
+el.classList.toggle(‘playing’, this.seqPlaying   && i === this.seqPlayHead);
+el.classList.toggle(‘cursor’,  this.seqRecording && i === this.seqCursor);
 const noteEl = el.querySelector(’.step-note’);
-noteEl.textContent = this.seqSteps[i] ? this._noteName(this.seqSteps[i]) : ‘—’;
+if (noteEl) noteEl.textContent = note ? this._midiName(note) : ‘—’;
 });
 }
 
-recordStep(note) {
+_seqRecord(note) {
 this.seqSteps[this.seqCursor] = note;
 this.seqCursor = (this.seqCursor + 1) % this.seqStepCount;
-this._updateSeqGrid();
+this._seqRefreshGrid();
 }
 
-_toggleRec() {
-this.seqIsRecording = !this.seqIsRecording;
-if (this.seqIsRecording) {
+_seqToggleRec() {
+this.seqRecording = !this.seqRecording;
+if (this.seqRecording) {
 this.seqCursor = 0;
-// Stop playback if recording
-if (this.seqIsPlaying) this._stopSeqPlayback();
+if (this.seqPlaying) this._seqStopPlay();
 }
 const btn = document.getElementById(‘seq-rec’);
-btn.classList.toggle(‘rec-active’, this.seqIsRecording);
-this._updateSeqGrid();
+if (btn) btn.classList.toggle(‘rec-active’, this.seqRecording);
+this._seqRefreshGrid();
 }
 
-_togglePlay() {
-if (this.seqIsPlaying) {
-this._stopSeqPlayback();
-} else {
-this._startSeqPlayback();
-}
+_seqTogglePlay() {
+if (this.seqPlaying) this._seqStopPlay(); else this._seqStartPlay();
 }
 
-_startSeqPlayback() {
-if (!this.isInitialized || !this.sourceBuffer) {
-this.updateStatus(‘NO SAMPLE’);
-return;
-}
-this.seqIsPlaying = true;
+_seqStartPlay() {
+if (!this.isReady || !this.sourceBuffer) { this._status(‘NO SAMPLE’); return; }
+this.seqPlaying  = true;
 this.seqPlayHead = 0;
-// Stop recording if playing
-if (this.seqIsRecording) {
-this.seqIsRecording = false;
-document.getElementById(‘seq-rec’).classList.remove(‘rec-active’);
+if (this.seqRecording) {
+this.seqRecording = false;
+const r = document.getElementById(‘seq-rec’);
+if (r) r.classList.remove(‘rec-active’);
 }
-document.getElementById(‘seq-play’).classList.add(‘active’);
-document.getElementById(‘seq-play’).textContent = ‘■ STOP’;
-this._tickSeq();
+const btn = document.getElementById(‘seq-play’);
+if (btn) { btn.classList.add(‘active’); btn.textContent = ‘■ STOP’; }
+this._seqTick();
 const ms = (60 / this.seqBPM) * 1000;
-this.seqTimer = setInterval(() => this._tickSeq(), ms);
+this.seqTimer = setInterval(() => this._seqTick(), ms);
 }
 
-_stopSeqPlayback() {
-this.seqIsPlaying = false;
+_seqStopPlay() {
+this.seqPlaying = false;
 if (this.seqTimer) { clearInterval(this.seqTimer); this.seqTimer = null; }
-if (this.seqLastNote !== null) {
-this._stopVoices(this.seqLastNote);
-this.seqLastNote = null;
-}
-document.getElementById(‘seq-play’).classList.remove(‘active’);
-document.getElementById(‘seq-play’).textContent = ‘▶ PLAY’;
-this._updateSeqGrid();
+if (this.seqLastNote !== null) { this._killVoices(this.seqLastNote); this.seqLastNote = null; }
+const btn = document.getElementById(‘seq-play’);
+if (btn) { btn.classList.remove(‘active’); btn.textContent = ‘▶ PLAY’; }
+this._seqRefreshGrid();
 }
 
-_tickSeq() {
-// Stop previous note
-if (this.seqLastNote !== null) {
-this._stopVoices(this.seqLastNote);
-this.seqLastNote = null;
+_seqTick() {
+if (this.seqLastNote !== null) { this._killVoices(this.seqLastNote); this.seqLastNote = null; }
+const note = this.seqSteps[this.seqPlayHead];
+if (note !== null && note !== undefined) {
+this._playEnsemble(note, 0.8);
+this.seqLastNote = note;
 }
-
-```
-const step = this.seqSteps[this.seqPlayHead];
-if (step !== null) {
-  this._playEnsemble(step, 0.8);
-  this.seqLastNote = step;
-}
-
-this._updateSeqGrid();
+this._seqRefreshGrid();
 this.seqPlayHead = (this.seqPlayHead + 1) % this.seqStepCount;
-```
-
 }
 
-_clearSeq() {
-this._stopSeqPlayback();
-this.seqSteps = Array(16).fill(null);
-this.seqCursor = 0;
+_seqClear() {
+this._seqStopPlay();
+this.seqSteps    = new Array(this.seqMaxSteps).fill(null);
+this.seqCursor   = 0;
 this.seqPlayHead = 0;
-this._buildSeqGrid();
+this._seqBuildGrid();
 }
 
-_setSeqBPM(bpm) {
+_seqSetBPM(bpm) {
 this.seqBPM = Math.max(30, Math.min(300, bpm));
-document.getElementById(‘seq-bpm-val’).textContent = this.seqBPM;
-if (this.seqIsPlaying) {
-this._stopSeqPlayback();
-this._startSeqPlayback();
-}
+const el = document.getElementById(‘seq-bpm-val’);
+if (el) el.textContent = this.seqBPM;
+if (this.seqPlaying) { this._seqStopPlay(); this._seqStartPlay(); }
 }
 
 // ═══════════════════════════════════════════════════════════════
-// MODE CONTROLS SETUP
+// MODE CONTROLS
 // ═══════════════════════════════════════════════════════════════
 
-setupModeControls() {
-// Ensemble
+_setupModeControls() {
+/* Ensemble */
 document.querySelectorAll(’[data-ensemble]’).forEach(btn => {
 btn.addEventListener(‘click’, () => {
 this.ensembleVoices = parseInt(btn.dataset.ensemble);
-document.querySelectorAll(’[data-ensemble]’).forEach(b => b.classList.toggle(‘active’, b === btn));
-this.updateModeDisplay();
+this._activateGroup(’[data-ensemble]’, btn);
+this._updateModeDisplay();
 });
 });
 
 ```
-// Speed
+/* Speed */
 document.querySelectorAll('[data-speed]').forEach(btn => {
   btn.addEventListener('click', () => {
     this.speedMode = parseFloat(btn.dataset.speed);
-    document.querySelectorAll('[data-speed]').forEach(b => b.classList.toggle('active', b === btn));
-    this.updateModeDisplay();
+    this._activateGroup('[data-speed]', btn);
+    this._updateModeDisplay();
   });
 });
 
-// Play Mode
+/* Play Mode */
 document.querySelectorAll('[data-playmode]').forEach(btn => {
   btn.addEventListener('click', () => {
-    const prev = this.playMode;
+    const prev    = this.playMode;
     this.playMode = btn.dataset.playmode;
-    document.querySelectorAll('[data-playmode]').forEach(b => b.classList.toggle('active', b === btn));
+    this._activateGroup('[data-playmode]', btn);
 
-    // Cleanup previous mode state
-    if (prev === 'arp' && this.playMode !== 'arp') this._stopArp();
+    /* clean up leaving modes */
+    if (prev === 'arp' && this.playMode !== 'arp') this._arpStop();
     if (prev === 'drone' && this.playMode !== 'drone' && this.droneNote !== null) {
-      this._stopVoices(this.droneNote);
+      this._killVoices(this.droneNote);
+      this._setKeyClass(this.droneNote, false, 'drone-held');
       this.droneNote = null;
       this._updateDroneDisplay();
     }
 
-    // Show/hide ARP sub-controls
-    document.getElementById('arp-row').style.display = (this.playMode === 'arp') ? 'flex' : 'none';
-    // Show/hide chord type for CHORD mode
-    document.getElementById('chord-type-group').style.display =
-      (this.playMode === 'chord') ? 'flex' : 'none';
+    /* sub-panel visibility */
+    const arpRow   = document.getElementById('arp-row');
+    const chordGrp = document.getElementById('chord-type-group');
+    if (arpRow)   arpRow.style.display   = (this.playMode === 'arp')   ? 'flex' : 'none';
+    if (chordGrp) chordGrp.style.display = (this.playMode === 'chord') ? 'flex' : 'none';
 
-    // Show/hide display helpers
-    document.getElementById('drone-display').style.display =
-      (this.playMode === 'drone' && this.droneNote) ? 'inline' : 'none';
-    document.getElementById('arp-display').style.display =
-      (this.playMode === 'arp' && this.arpHeldNotes.size > 0) ? 'inline' : 'none';
+    const dd = document.getElementById('drone-display');
+    if (dd && this.playMode !== 'drone') dd.style.display = 'none';
+    const ad = document.getElementById('arp-display');
+    if (ad && this.playMode !== 'arp')   ad.style.display = 'none';
 
-    this.updateModeDisplay();
-    this.updateStatus(this.playMode.toUpperCase());
+    this._updateModeDisplay();
+    this._status(this.playMode.toUpperCase());
   });
 });
 
-// Chord type
+/* Chord type */
 document.querySelectorAll('[data-chordtype]').forEach(btn => {
   btn.addEventListener('click', () => {
     this.chordType = btn.dataset.chordtype;
-    document.querySelectorAll('[data-chordtype]').forEach(b => b.classList.toggle('active', b === btn));
+    this._activateGroup('[data-chordtype]', btn);
   });
 });
 
-// ARP pattern
+/* ARP pattern */
 document.querySelectorAll('[data-arpmode]').forEach(btn => {
   btn.addEventListener('click', () => {
-    this.arpPattern = btn.dataset.arpmode;
-    document.querySelectorAll('[data-arpmode]').forEach(b => b.classList.toggle('active', b === btn));
-    this.arpIndex = 0;
+    this.arpPattern   = btn.dataset.arpmode;
+    this.arpIndex     = 0;
     this.arpDirection = 1;
+    this._activateGroup('[data-arpmode]', btn);
   });
 });
 
-// ARP BPM
-document.getElementById('arp-bpm-up').addEventListener('click', () => this._setArpBPM(this.arpBPM + 5));
-document.getElementById('arp-bpm-down').addEventListener('click', () => this._setArpBPM(this.arpBPM - 5));
+/* ARP BPM */
+const arpUp = document.getElementById('arp-bpm-up');
+const arpDn = document.getElementById('arp-bpm-down');
+if (arpUp) arpUp.addEventListener('click', () => this._setArpBPM(this.arpBPM + 5));
+if (arpDn) arpDn.addEventListener('click', () => this._setArpBPM(this.arpBPM - 5));
 
-// ARP Octaves
+/* ARP Octaves */
 document.querySelectorAll('[data-arpoct]').forEach(btn => {
   btn.addEventListener('click', () => {
     this.arpOctaves = parseInt(btn.dataset.arpoct);
-    document.querySelectorAll('[data-arpoct]').forEach(b => b.classList.toggle('active', b === btn));
+    this._activateGroup('[data-arpoct]', btn);
   });
 });
 ```
 
 }
 
-updateModeDisplay() {
-const speedLabel = this.speedMode === 0.5 ? ‘½×’ : (this.speedMode === 2 ? ‘2×’ : ‘1×’);
-document.getElementById(‘mode-display’).textContent =
-`${this.playMode.toUpperCase()} · ${this.ensembleVoices}V · ${speedLabel}`;
+_activateGroup(selector, activeBtn) {
+document.querySelectorAll(selector).forEach(b => b.classList.toggle(‘active’, b === activeBtn));
+}
+
+_updateModeDisplay() {
+const spd = this.speedMode === 0.5 ? ‘½×’ : (this.speedMode === 2 ? ‘2×’ : ‘1×’);
+const el  = document.getElementById(‘mode-display’);
+if (el) el.textContent = `${this.playMode.toUpperCase()} · ${this.ensembleVoices}V · ${spd}`;
 }
 
 // ═══════════════════════════════════════════════════════════════
-// AUDIO VOICE CREATION
+// VOICE CREATION  (single Web Audio voice)
 // ═══════════════════════════════════════════════════════════════
 
-createVoice(tape, velocity) {
-const source = this.audioContext.createBufferSource();
-source.buffer = this.sourceBuffer;
-source.playbackRate.value = tape.playbackRate;
-this.applyWowFlutter(source, tape);
+_createVoice(tape, vel) {
+const ctx = this.audioCtx;
 
 ```
-const filter = this.audioContext.createBiquadFilter();
-filter.type = 'lowpass';
-const ageEffect = 1 - (this.params.tapeAge / 100) * 0.5;
-filter.frequency.value = tape.filterFreq * ageEffect * (this.params.brightness / 50);
-filter.Q.value = 0.7;
+const src = ctx.createBufferSource();
+src.buffer = this.sourceBuffer;
+src.playbackRate.value = tape.playbackRate;
+this._applyWowFlutter(src, tape);
 
-const saturation = this.createSaturation(this.params.saturation / 100);
+const flt = ctx.createBiquadFilter();
+flt.type = 'lowpass';
+flt.frequency.value =
+  tape.filterFreq * (1 - (this.params.tapeAge / 100) * 0.5) * (this.params.brightness / 50);
+flt.Q.value = 0.7;
 
-const gain = this.audioContext.createGain();
-gain.gain.value = 0;
-const attackTime = (this.params.attack / 100) * 0.2 + tape.attackVariation;
-const jitter = (this.params.startJitter / 100) * 0.03;
-const attackStart = this.audioContext.currentTime + Math.random() * jitter;
-gain.gain.setValueAtTime(0, attackStart);
-gain.gain.linearRampToValueAtTime(velocity * 0.8, attackStart + attackTime);
+const sat = this._makeSaturation(this.params.saturation / 100);
 
-const panner = this.audioContext.createStereoPanner();
-panner.pan.value = Math.max(-1, Math.min(1, tape.stereoPan * 0.6));
+const gn  = ctx.createGain();
+gn.gain.value = 0;
+const att = (this.params.attack / 100) * 0.2 + tape.attackVariation;
+const jit = (this.params.startJitter / 100) * 0.03;
+const t0  = ctx.currentTime + Math.random() * jit;
+gn.gain.setValueAtTime(0, t0);
+gn.gain.linearRampToValueAtTime(vel * 0.8, t0 + att);
 
-source.connect(filter);
-filter.connect(saturation);
-saturation.connect(gain);
-gain.connect(panner);
-panner.connect(this.masterGain);
+const pan = ctx.createStereoPanner();
+pan.pan.value = Math.max(-1, Math.min(1, tape.stereoPan * 0.6));
 
-let noiseSource = null, noiseGain = null;
+/* chain: src → flt → sat → gn → pan → master */
+src.connect(flt);
+flt.connect(sat);
+sat.connect(gn);
+gn.connect(pan);
+pan.connect(this.masterGain);
+
+let noiseGain = null;
+let noiseSrc  = null;
 if (this.params.mechanicalNoise > 5) {
-  noiseSource = this.createNoiseSource();
-  const noiseFilter = this.audioContext.createBiquadFilter();
-  noiseFilter.type = 'bandpass';
-  noiseFilter.frequency.value = 800;
-  noiseFilter.Q.value = 2;
-  noiseGain = this.audioContext.createGain();
-  noiseGain.gain.value = tape.noiseLevel * (this.params.mechanicalNoise / 50) * velocity;
-  noiseSource.connect(noiseFilter);
-  noiseFilter.connect(noiseGain);
-  noiseGain.connect(panner);
-  noiseSource.start();
+  noiseSrc = this._makeNoise();
+  const nf = ctx.createBiquadFilter();
+  nf.type  = 'bandpass';
+  nf.frequency.value = 800;
+  nf.Q.value = 2;
+  noiseGain = ctx.createGain();
+  noiseGain.gain.value = tape.noiseLevel * (this.params.mechanicalNoise / 50) * vel;
+  noiseSrc.connect(nf);
+  nf.connect(noiseGain);
+  noiseGain.connect(pan);
+  noiseSrc.start();
 }
 
-return { source, filter, gain, panner, noiseSource, noiseGain, tape, startTime: null };
+return { source: src, gain: gn, noiseGain, noiseSrc, tape, startTime: null };
 ```
 
 }
 
-applyWowFlutter(source, tape) {
-const now = this.audioContext.currentTime;
-const duration = this.params.tapeLength;
-const wowAmount = (this.params.wow / 100) * 0.015 * tape.instability;
-const flutterAmount = (this.params.flutter / 100) * 0.005 * tape.instability;
-const baseRate = source.playbackRate.value;
-const steps = Math.floor(duration * 20);
+_applyWowFlutter(src, tape) {
+const now   = this.audioCtx.currentTime;
+const dur   = this.params.tapeLength;
+const wAmt  = (this.params.wow     / 100) * 0.015 * tape.instability;
+const fAmt  = (this.params.flutter / 100) * 0.005 * tape.instability;
+const base  = src.playbackRate.value;
+const steps = Math.floor(dur * 20);
 for (let i = 0; i < steps; i++) {
 const t = i / 20;
-const wow = Math.sin(t * Math.PI * 1.2 + Math.random() * 0.5) * wowAmount;
-const flutter = Math.sin(t * Math.PI * 14 + Math.random() * 2) * flutterAmount;
-const drift = (Math.random() - 0.5) * 0.002;
-source.playbackRate.setValueAtTime(baseRate * (1 + wow + flutter + drift), now + t);
+const w = Math.sin(t * Math.PI * 1.2 + Math.random() * 0.5) * wAmt;
+const f = Math.sin(t * Math.PI * 14  + Math.random() * 2.0) * fAmt;
+const d = (Math.random() - 0.5) * 0.002;
+src.playbackRate.setValueAtTime(base * (1 + w + f + d), now + t);
 }
 }
 
-createNoiseSource() {
-const bufferSize = this.audioContext.sampleRate * 2;
-const buffer = this.audioContext.createBuffer(1, bufferSize, this.audioContext.sampleRate);
-const data = buffer.getChannelData(0);
-for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
-const noise = this.audioContext.createBufferSource();
-noise.buffer = buffer;
-noise.loop = true;
-return noise;
+_makeNoise() {
+const sz  = this.audioCtx.sampleRate * 2;
+const buf = this.audioCtx.createBuffer(1, sz, this.audioCtx.sampleRate);
+const ch  = buf.getChannelData(0);
+for (let i = 0; i < sz; i++) ch[i] = Math.random() * 2 - 1;
+const ns = this.audioCtx.createBufferSource();
+ns.buffer = buf;
+ns.loop   = true;
+return ns;
 }
 
-fadeOutVoice(voice, duration) {
-const now = this.audioContext.currentTime;
-voice.gain.gain.cancelScheduledValues(now);
-voice.gain.gain.setValueAtTime(voice.gain.gain.value, now);
-voice.gain.gain.linearRampToValueAtTime(0, now + duration);
-if (voice.noiseGain) {
-voice.noiseGain.gain.cancelScheduledValues(now);
-voice.noiseGain.gain.linearRampToValueAtTime(0, now + duration);
+*fadeVoice(v, dur) {
+const now = this.audioCtx.currentTime;
+v.gain.gain.cancelScheduledValues(now);
+v.gain.gain.setValueAtTime(v.gain.gain.value, now);
+v.gain.gain.linearRampToValueAtTime(0, now + dur);
+if (v.noiseGain) {
+v.noiseGain.gain.cancelScheduledValues(now);
+v.noiseGain.gain.linearRampToValueAtTime(0, now + dur);
 }
 setTimeout(() => {
-try { voice.source.stop(); } catch(e) {}
-try { if (voice.noiseSource) voice.noiseSource.stop(); } catch(e) {}
-}, duration * 1000 + 50);
+try { v.source.stop(); }   catch (*) {}
+try { if (v.noiseSrc) v.noiseSrc.stop(); } catch (_) {}
+}, dur * 1000 + 100);
 }
 
 // ═══════════════════════════════════════════════════════════════
-// UI: KEYBOARD
+// KEYBOARD  (visual)
 // ═══════════════════════════════════════════════════════════════
 
-buildKeyboard() {
-const keyboard = document.getElementById(‘keyboard’);
-keyboard.innerHTML = ‘’;
-const noteNames = [‘C’,‘C#’,‘D’,‘D#’,‘E’,‘F’,‘F#’,‘G’,‘G#’,‘A’,‘A#’,‘B’];
+_buildKeyboard() {
+const kb = document.getElementById(‘keyboard’);
+if (!kb) return;
+kb.innerHTML = ‘’;
+const names = [‘C’,‘C#’,‘D’,‘D#’,‘E’,‘F’,‘F#’,‘G’,‘G#’,‘A’,‘A#’,‘B’];
 
 ```
-this.keyboardLayout.forEach(keyDef => {
-  const key = document.createElement('div');
-  key.className = `key ${keyDef.black ? 'black' : ''}`;
-  key.dataset.noteOffset = keyDef.note;
-  key.dataset.code = keyDef.code;
-  const midiNote = this.baseOctave * 12 + keyDef.note;
-  const noteName = noteNames[midiNote % 12];
-  if (keyDef.note === 0) key.classList.add('root');
-  key.innerHTML = `
-    <span class="key-letter">${keyDef.key}</span>
-    <span class="key-note">${noteName}</span>
-  `;
+this.keyLayout.forEach(kd => {
+  const el   = document.createElement('div');
+  const midi = this.baseOctave * 12 + kd.note;
+  el.className = 'key' + (kd.black ? ' black' : '') + (kd.note === 0 ? ' root' : '');
+  el.dataset.noteOffset = kd.note;
+  el.dataset.code       = kd.code;
+  el.innerHTML =
+    `<span class="key-letter">${kd.key}</span>` +
+    `<span class="key-note">${names[midi % 12]}</span>`;
 
-  const onDown = (e) => {
+  const onDown = e => {
     e.preventDefault();
-    this.initAudioContext();
-    const note = this.baseOctave * 12 + keyDef.note;
-    this.playNote(note, 0.8);
-    if (this.playMode !== 'arp') key.classList.add('active');
+    this._initAudio().then(() => {
+      const note = this.baseOctave * 12 + kd.note;
+      this.playNote(note, 0.8);
+      if (this.playMode !== 'arp' && this.playMode !== 'drone') el.classList.add('active');
+    });
   };
   const onUp = () => {
-    const note = this.baseOctave * 12 + keyDef.note;
+    const note = this.baseOctave * 12 + kd.note;
     this.stopNote(note);
-    key.classList.remove('active');
+    el.classList.remove('active');
   };
 
-  key.addEventListener('mousedown', onDown);
-  key.addEventListener('mouseup', onUp);
-  key.addEventListener('mouseleave', () => { if (key.classList.contains('active')) onUp(); });
-  key.addEventListener('touchstart', onDown, { passive: false });
-  key.addEventListener('touchend', onUp);
+  el.addEventListener('mousedown',  onDown);
+  el.addEventListener('mouseup',    onUp);
+  el.addEventListener('mouseleave', () => { if (el.classList.contains('active')) onUp(); });
+  el.addEventListener('touchstart', onDown, { passive: false });
+  el.addEventListener('touchend',   onUp);
 
-  keyboard.appendChild(key);
+  kb.appendChild(el);
 });
 ```
 
 }
 
-_highlightKey(note, on, mode = ‘normal’) {
+/* Add/remove a CSS class on the key matching a MIDI note */
+_setKeyClass(note, on, cls) {
 const offset = note - this.baseOctave * 12;
-document.querySelectorAll(’.key’).forEach(k => {
-if (parseInt(k.dataset.noteOffset) === offset) {
-if (on) {
-k.classList.add(mode === ‘arp’ ? ‘arp-held’ : ‘active’);
-} else {
-k.classList.remove(‘active’, ‘arp-held’, ‘drone-held’);
-}
+document.querySelectorAll(’.key’).forEach(el => {
+if (parseInt(el.dataset.noteOffset) === offset) {
+el.classList.toggle(cls, on);
 }
 });
 }
 
-setupComputerKeyboard() {
-const heldKeys = new Set();
+_setupComputerKeyboard() {
+const held = new Set();
 
 ```
-document.addEventListener('keydown', (e) => {
+document.addEventListener('keydown', e => {
   if (e.repeat || e.target.tagName === 'INPUT') return;
-
-  const keyDef = this.keyboardLayout.find(k => k.code === e.code);
-  if (keyDef) {
+  const kd = this.keyLayout.find(k => k.code === e.code);
+  if (kd) {
     e.preventDefault();
-    if (heldKeys.has(e.code)) return;
-    heldKeys.add(e.code);
-    this.initAudioContext();
-    const note = this.baseOctave * 12 + keyDef.note;
-    this.playNote(note, 0.8);
-    if (this.playMode !== 'arp') {
-      const keyEl = document.querySelector(`.key[data-code="${e.code}"]`);
-      if (keyEl) keyEl.classList.add('active');
-    }
+    if (held.has(e.code)) return;
+    held.add(e.code);
+    this._initAudio().then(() => {
+      const note = this.baseOctave * 12 + kd.note;
+      this.playNote(note, 0.8);
+      if (this.playMode !== 'arp' && this.playMode !== 'drone') {
+        const el = document.querySelector(`.key[data-code="${e.code}"]`);
+        if (el) el.classList.add('active');
+      }
+    });
   }
-  if (e.code === 'ArrowUp' || e.code === 'ArrowRight') { e.preventDefault(); this.changeOctave(1); }
-  else if (e.code === 'ArrowDown' || e.code === 'ArrowLeft') { e.preventDefault(); this.changeOctave(-1); }
+  if (e.code === 'ArrowUp'   || e.code === 'ArrowRight') { e.preventDefault(); this._changeOctave(1);  }
+  if (e.code === 'ArrowDown' || e.code === 'ArrowLeft')  { e.preventDefault(); this._changeOctave(-1); }
 });
 
-document.addEventListener('keyup', (e) => {
-  heldKeys.delete(e.code);
-  const keyDef = this.keyboardLayout.find(k => k.code === e.code);
-  if (keyDef) {
-    const note = this.baseOctave * 12 + keyDef.note;
+document.addEventListener('keyup', e => {
+  held.delete(e.code);
+  const kd = this.keyLayout.find(k => k.code === e.code);
+  if (kd) {
+    const note = this.baseOctave * 12 + kd.note;
     this.stopNote(note);
-    const keyEl = document.querySelector(`.key[data-code="${e.code}"]`);
-    if (keyEl) keyEl.classList.remove('active');
+    const el = document.querySelector(`.key[data-code="${e.code}"]`);
+    if (el) el.classList.remove('active');
   }
 });
 ```
 
 }
 
-setupOctaveButtons() {
-document.getElementById(‘oct-up’).addEventListener(‘click’, () => this.changeOctave(1));
-document.getElementById(‘oct-down’).addEventListener(‘click’, () => this.changeOctave(-1));
+_setupOctaveButtons() {
+const u = document.getElementById(‘oct-up’);
+const d = document.getElementById(‘oct-down’);
+if (u) u.addEventListener(‘click’, () => this._changeOctave(1));
+if (d) d.addEventListener(‘click’, () => this._changeOctave(-1));
 }
 
-changeOctave(delta) {
+_changeOctave(delta) {
 const n = this.baseOctave + delta;
 if (n >= 2 && n <= 6) {
 this.baseOctave = n;
-document.getElementById(‘octave-display’).textContent = n;
-this.buildKeyboard();
+const el = document.getElementById(‘octave-display’);
+if (el) el.textContent = n;
+this._buildKeyboard();
 }
 }
 
 // ═══════════════════════════════════════════════════════════════
-// UI: ENCODERS
+// ENCODERS
 // ═══════════════════════════════════════════════════════════════
 
-setupEncoders() {
-document.querySelectorAll(’.encoder’).forEach(encoder => {
-const param = encoder.dataset.param;
-const min = parseFloat(encoder.dataset.min);
-const max = parseFloat(encoder.dataset.max);
-const initialValue = parseFloat(encoder.dataset.value);
-this.params[param] = initialValue;
-this.updateEncoderVisualElement(encoder, initialValue, min, max);
+_setupEncoders() {
+document.querySelectorAll(’.encoder’).forEach(enc => {
+const param = enc.dataset.param;
+const min   = parseFloat(enc.dataset.min);
+const max   = parseFloat(enc.dataset.max);
+const init  = parseFloat(enc.dataset.value);
 
 ```
-  let isDragging = false, startY = 0, startValue = 0;
+  this.params[param] = init;
+  this._setEncoderAngle(enc, init, min, max);
 
-  const onStart = (e) => {
-    isDragging = true;
-    startY = e.type.includes('touch') ? e.touches[0].clientY : e.clientY;
-    startValue = this.params[param];
+  let drag = false, startY = 0, startVal = 0;
+
+  const onStart = e => {
+    drag     = true;
+    startY   = e.touches ? e.touches[0].clientY : e.clientY;
+    startVal = this.params[param];
     e.preventDefault();
   };
-  const onMove = (e) => {
-    if (!isDragging) return;
-    const clientY = e.type.includes('touch') ? e.touches[0].clientY : e.clientY;
-    const delta = startY - clientY;
-    let newVal = startValue + (delta / 150) * (max - min);
-    newVal = Math.max(min, Math.min(max, newVal));
-    this.params[param] = newVal;
-    this.updateEncoderVisualElement(encoder, newVal, min, max);
-    this.onParamChange(param, newVal);
+  const onMove = e => {
+    if (!drag) return;
+    const cy = e.touches ? e.touches[0].clientY : e.clientY;
+    let v = startVal + ((startY - cy) / 150) * (max - min);
+    v = Math.max(min, Math.min(max, v));
+    this.params[param] = v;
+    this._setEncoderAngle(enc, v, min, max);
+    this._onParamChange(param, v);
   };
-  const onEnd = () => { isDragging = false; };
+  const onEnd = () => { drag = false; };
 
-  encoder.addEventListener('mousedown', onStart);
-  encoder.addEventListener('touchstart', onStart, { passive: false });
-  document.addEventListener('mousemove', onMove);
-  document.addEventListener('touchmove', onMove, { passive: false });
-  document.addEventListener('mouseup', onEnd);
-  document.addEventListener('touchend', onEnd);
+  enc.addEventListener('mousedown',  onStart);
+  enc.addEventListener('touchstart', onStart, { passive: false });
+  document.addEventListener('mousemove',  onMove);
+  document.addEventListener('touchmove',  onMove, { passive: false });
+  document.addEventListener('mouseup',    onEnd);
+  document.addEventListener('touchend',   onEnd);
 
-  encoder.addEventListener('dblclick', () => {
-    this.params[param] = initialValue;
-    this.updateEncoderVisualElement(encoder, initialValue, min, max);
-    this.onParamChange(param, initialValue);
+  enc.addEventListener('dblclick', () => {
+    this.params[param] = init;
+    this._setEncoderAngle(enc, init, min, max);
+    this._onParamChange(param, init);
   });
 });
 ```
 
 }
 
-updateEncoderVisualElement(encoder, value, min, max) {
-const indicator = encoder.querySelector(’.encoder-indicator’);
-const normalized = (value - min) / (max - min);
-const rotation = -135 + normalized * 270;
-indicator.style.setProperty(’–rotation’, `${rotation}deg`);
+_setEncoderAngle(enc, val, min, max) {
+const ind = enc.querySelector(’.encoder-indicator’);
+if (!ind) return;
+const rot = -135 + ((val - min) / (max - min)) * 270;
+ind.style.setProperty(’–rotation’, `${rot}deg`);
 }
 
-updateEncoderVisual(param) {
-const encoder = document.querySelector(`.encoder[data-param="${param}"]`);
-if (!encoder) return;
-const min = parseFloat(encoder.dataset.min);
-const max = parseFloat(encoder.dataset.max);
-this.updateEncoderVisualElement(encoder, this.params[param], min, max);
+_syncEncoderVisual(param) {
+const enc = document.querySelector(`.encoder[data-param="${param}"]`);
+if (!enc) return;
+this._setEncoderAngle(enc, this.params[param],
+parseFloat(enc.dataset.min), parseFloat(enc.dataset.max));
 }
 
-onParamChange(param, value) {
+_onParamChange(param, val) {
 if (param === ‘masterVolume’ && this.masterGain) {
-this.masterGain.gain.setTargetAtTime(value, this.audioContext.currentTime, 0.05);
+this.masterGain.gain.setTargetAtTime(val, this.audioCtx.currentTime, 0.05);
 }
 if (this.currentPreset) {
 this.currentPreset = null;
-document.querySelectorAll(’.preset-btn’).forEach(btn => btn.classList.remove(‘active’));
+document.querySelectorAll(’.preset-btn’).forEach(b => b.classList.remove(‘active’));
 }
 }
 
@@ -1205,98 +1152,97 @@ document.querySelectorAll(’.preset-btn’).forEach(btn => btn.classList.remove
 // MIDI
 // ═══════════════════════════════════════════════════════════════
 
-async setupMIDI() {
+async _setupMIDI() {
 if (!navigator.requestMIDIAccess) {
-document.getElementById(‘midi-status’).textContent = ‘NO MIDI’;
+const el = document.getElementById(‘midi-status’);
+if (el) el.textContent = ‘NO MIDI’;
 return;
 }
 try {
-const midiAccess = await navigator.requestMIDIAccess();
-midiAccess.inputs.forEach(input => {
-input.onmidimessage = (e) => this.onMIDIMessage(e);
-document.getElementById(‘led-midi’).classList.add(‘active’);
-document.getElementById(‘midi-status’).textContent = ‘MIDI ON’;
-});
-midiAccess.onstatechange = (e) => {
-if (e.port.type === ‘input’ && e.port.state === ‘connected’) {
-e.port.onmidimessage = (ev) => this.onMIDIMessage(ev);
-document.getElementById(‘led-midi’).classList.add(‘active’);
-document.getElementById(‘midi-status’).textContent = ‘MIDI ON’;
-}
+const ma = await navigator.requestMIDIAccess();
+const connect = port => {
+port.onmidimessage = e => this._onMIDI(e);
+this.*led(‘led-midi’, ‘active’);
+const el = document.getElementById(‘midi-status’);
+if (el) el.textContent = ‘MIDI ON’;
 };
-} catch(e) {
-document.getElementById(‘midi-status’).textContent = ‘MIDI ERR’;
+ma.inputs.forEach(connect);
+ma.onstatechange = e => {
+if (e.port.type === ‘input’ && e.port.state === ‘connected’) connect(e.port);
+};
+} catch (*) {
+const el = document.getElementById(‘midi-status’);
+if (el) el.textContent = ‘MIDI ERR’;
 }
 }
 
-onMIDIMessage(e) {
-const [status, note, velocity] = e.data;
-const command = status & 0xf0;
-document.getElementById(‘led-midi’).classList.add(‘warning’);
-setTimeout(() => document.getElementById(‘led-midi’).classList.remove(‘warning’), 100);
-if (command === 0x90 && velocity > 0) {
-this.initAudioContext();
-this.playNote(note, velocity / 127);
-} else if (command === 0x80 || (command === 0x90 && velocity === 0)) {
+_onMIDI(e) {
+const [st, note, vel] = e.data;
+const cmd = st & 0xf0;
+this._led(‘led-midi’, ‘warning’);
+setTimeout(() => this._led(‘led-midi’, null), 100);
+if (cmd === 0x90 && vel > 0) {
+this._initAudio().then(() => this.playNote(note, vel / 127));
+} else if (cmd === 0x80 || (cmd === 0x90 && vel === 0)) {
 this.stopNote(note);
 }
 }
 
 // ═══════════════════════════════════════════════════════════════
-// DISPLAY & METERS
+// DISPLAY
 // ═══════════════════════════════════════════════════════════════
 
-updateDisplay() {
-const bankName = this.currentBank ? this.banks[this.currentBank].name : ‘—’;
-document.getElementById(‘bank-name’).textContent = bankName;
-const sampleName = this.sourceBuffer
-? (this.currentBank === ‘custom’ ? this.banks.custom.name : bankName)
-: ‘NO FILE’;
-document.getElementById(‘sample-name’).textContent = sampleName;
+_updateDisplay() {
+const name = this.currentBank ? this.banks[this.currentBank].name : ‘—’;
+const bn   = document.getElementById(‘bank-name’);
+const sn   = document.getElementById(‘sample-name’);
+if (bn) bn.textContent = name;
+if (sn) sn.textContent = this.sourceBuffer ? name : ‘NO FILE’;
 }
 
-updateVoicesCount() {
-document.getElementById(‘voices-count’).textContent = this.activeVoices.size;
+_updateVoiceCount() {
+const el = document.getElementById(‘voices-count’);
+if (el) el.textContent = this.activeVoices.size;
 }
 
-updateStatus(text) {
-document.getElementById(‘status-text’).textContent = text;
+_status(txt) {
+const el = document.getElementById(‘status-text’);
+if (el) el.textContent = txt;
 }
 
-startMeter() {
-const tapeFill = document.getElementById(‘tape-fill’);
-const update = () => {
-if (this.activeVoices.size > 0) {
-let maxProgress = 0;
-this.activeVoices.forEach(voices => {
-const v = voices[0];
-if (v && v.startTime) {
-const elapsed = this.audioContext.currentTime - v.startTime;
-const maxDur = this.params.tapeLength * (v.tape ? v.tape.lengthFactor : 1);
-const progress = Math.min(100, (elapsed / maxDur) * 100);
-maxProgress = Math.max(maxProgress, progress);
+_led(id, state) {
+const el = document.getElementById(id);
+if (!el) return;
+el.classList.remove(‘active’, ‘warning’);
+if (state) el.classList.add(state);
+}
+
+_midiName(midi) {
+const n = [‘C’,‘C#’,‘D’,‘D#’,‘E’,‘F’,‘F#’,‘G’,‘G#’,‘A’,‘A#’,‘B’];
+return n[midi % 12] + (Math.floor(midi / 12) - 1);
+}
+
+_startMeter() {
+const bar = document.getElementById(‘tape-fill’);
+if (!bar) return;
+const tick = () => {
+let maxPct = 0;
+this.activeVoices.forEach(grp => {
+const v = grp.voices[0];
+if (v && v.startTime !== null) {
+const elapsed = this.audioCtx.currentTime - v.startTime;
+const maxDur  = this.params.tapeLength * (v.tape ? v.tape.lengthFactor : 1);
+maxPct = Math.max(maxPct, Math.min(100, (elapsed / maxDur) * 100));
 }
 });
-tapeFill.style.width = `${maxProgress}%`;
-} else {
-tapeFill.style.width = ‘0%’;
-}
-requestAnimationFrame(update);
+bar.style.width = maxPct + ‘%’;
+requestAnimationFrame(tick);
 };
-update();
-}
-
-// ═══════════════════════════════════════════════════════════════
-// UTILS
-// ═══════════════════════════════════════════════════════════════
-
-_noteName(midiNote) {
-const names = [‘C’,‘C#’,‘D’,‘D#’,‘E’,‘F’,‘F#’,‘G’,‘G#’,‘A’,‘A#’,‘B’];
-const oct = Math.floor(midiNote / 12) - 1;
-return names[midiNote % 12] + oct;
+tick();
 }
 }
 
+// ───────────────────────────────────────────────────────────────
 document.addEventListener(‘DOMContentLoaded’, () => {
 window.emullotron = new Emullotron();
 });
