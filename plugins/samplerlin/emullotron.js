@@ -1,5 +1,5 @@
 /**
- * EMULLOTRON MK2 - Virtual Tape Instrument
+ * SAMPLErIN MK2 - Virtual Tape Instrument
  * Style Elektron / Teenage Engineering
  */
 
