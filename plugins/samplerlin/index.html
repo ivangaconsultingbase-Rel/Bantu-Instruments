@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
@@ -43,283 +42,270 @@
       </div>
     </header>
 
-```
-<!-- Bank Selector -->
-<section class="banks">
-  <button class="bank-btn" data-bank="strings">
-    <span class="bank-icon">◈</span>
-    <span class="bank-label">STRINGS</span>
-  </button>
-  <button class="bank-btn" data-bank="flute">
-    <span class="bank-icon">◇</span>
-    <span class="bank-label">FLUTE</span>
-  </button>
-  <button class="bank-btn" data-bank="piano">
-    <span class="bank-icon">▢</span>
-    <span class="bank-label">PIANO</span>
-  </button>
-  <button class="bank-btn" data-bank="custom" id="custom-bank-btn">
-    <span class="bank-icon">+</span>
-    <span class="bank-label">CUSTOM</span>
-  </button>
-  <input type="file" id="file-input" accept="audio/*" hidden>
-</section>
+    <!-- Bank Selector -->
+    <section class="banks">
+      <button class="bank-btn" data-bank="strings">
+        <span class="bank-icon">◈</span>
+        <span class="bank-label">STRINGS</span>
+      </button>
+      <button class="bank-btn" data-bank="flute">
+        <span class="bank-icon">◇</span>
+        <span class="bank-label">FLUTE</span>
+      </button>
+      <button class="bank-btn" data-bank="piano">
+        <span class="bank-icon">▢</span>
+        <span class="bank-label">PIANO</span>
+      </button>
+      <button class="bank-btn" data-bank="custom" id="custom-bank-btn">
+        <span class="bank-icon">+</span>
+        <span class="bank-label">CUSTOM</span>
+      </button>
+      <input type="file" id="file-input" accept="audio/*,.wav,.aif,.aiff,.mp3,.m4a" hidden>
+    </section>
 
-<!-- Main Controls -->
-<section class="controls">
-  <div class="control-group">
-    <span class="group-label">TAPE</span>
-    <div class="control-row">
-      <div class="encoder-container">
-        <div class="encoder" data-param="tapeLength" data-min="2" data-max="12" data-value="8">
-          <div class="encoder-ring"></div>
-          <div class="encoder-indicator"></div>
+    <!-- Main Controls -->
+    <section class="controls">
+      <div class="control-group">
+        <span class="group-label">TAPE</span>
+        <div class="control-row">
+          <div class="encoder-container">
+            <div class="encoder" data-param="tapeLength" data-min="2" data-max="12" data-value="8">
+              <div class="encoder-ring"></div>
+              <div class="encoder-indicator"></div>
+            </div>
+            <span class="encoder-label">LENGTH</span>
+          </div>
+          <div class="encoder-container">
+            <div class="encoder" data-param="wow" data-min="0" data-max="100" data-value="35">
+              <div class="encoder-ring"></div>
+              <div class="encoder-indicator"></div>
+            </div>
+            <span class="encoder-label">WOW</span>
+          </div>
+          <div class="encoder-container">
+            <div class="encoder" data-param="flutter" data-min="0" data-max="100" data-value="25">
+              <div class="encoder-ring"></div>
+              <div class="encoder-indicator"></div>
+            </div>
+            <span class="encoder-label">FLUTTER</span>
+          </div>
+          <div class="encoder-container">
+            <div class="encoder" data-param="tapeAge" data-min="0" data-max="100" data-value="40">
+              <div class="encoder-ring"></div>
+              <div class="encoder-indicator"></div>
+            </div>
+            <span class="encoder-label">AGE</span>
+          </div>
         </div>
-        <span class="encoder-label">LENGTH</span>
       </div>
-      <div class="encoder-container">
-        <div class="encoder" data-param="wow" data-min="0" data-max="100" data-value="35">
-          <div class="encoder-ring"></div>
-          <div class="encoder-indicator"></div>
+
+      <div class="control-group">
+        <span class="group-label">TONE</span>
+        <div class="control-row">
+          <div class="encoder-container">
+            <div class="encoder" data-param="brightness" data-min="0" data-max="100" data-value="60">
+              <div class="encoder-ring"></div>
+              <div class="encoder-indicator"></div>
+            </div>
+            <span class="encoder-label">BRIGHT</span>
+          </div>
+          <div class="encoder-container">
+            <div class="encoder" data-param="saturation" data-min="0" data-max="100" data-value="30">
+              <div class="encoder-ring"></div>
+              <div class="encoder-indicator"></div>
+            </div>
+            <span class="encoder-label">DRIVE</span>
+          </div>
+          <div class="encoder-container">
+            <div class="encoder" data-param="attack" data-min="0" data-max="100" data-value="40">
+              <div class="encoder-ring"></div>
+              <div class="encoder-indicator"></div>
+            </div>
+            <span class="encoder-label">ATTACK</span>
+          </div>
+          <div class="encoder-container">
+            <div class="encoder" data-param="release" data-min="0" data-max="100" data-value="50">
+              <div class="encoder-ring"></div>
+              <div class="encoder-indicator"></div>
+            </div>
+            <span class="encoder-label">RELEASE</span>
+          </div>
         </div>
-        <span class="encoder-label">WOW</span>
       </div>
-      <div class="encoder-container">
-        <div class="encoder" data-param="flutter" data-min="0" data-max="100" data-value="25">
-          <div class="encoder-ring"></div>
-          <div class="encoder-indicator"></div>
+
+      <div class="control-group">
+        <span class="group-label">CHARACTER</span>
+        <div class="control-row">
+          <div class="encoder-container">
+            <div class="encoder" data-param="mechanicalNoise" data-min="0" data-max="100" data-value="20">
+              <div class="encoder-ring"></div>
+              <div class="encoder-indicator"></div>
+            </div>
+            <span class="encoder-label">NOISE</span>
+          </div>
+          <div class="encoder-container">
+            <div class="encoder" data-param="startJitter" data-min="0" data-max="100" data-value="30">
+              <div class="encoder-ring"></div>
+              <div class="encoder-indicator"></div>
+            </div>
+            <span class="encoder-label">JITTER</span>
+          </div>
+          <div class="encoder-container">
+            <div class="encoder" data-param="driftPerKey" data-min="0" data-max="100" data-value="25">
+              <div class="encoder-ring"></div>
+              <div class="encoder-indicator"></div>
+            </div>
+            <span class="encoder-label">DRIFT</span>
+          </div>
+          <div class="encoder-container">
+            <div class="encoder" data-param="masterVolume" data-min="0" data-max="1" data-value="0.7">
+              <div class="encoder-ring"></div>
+              <div class="encoder-indicator"></div>
+            </div>
+            <span class="encoder-label">VOLUME</span>
+          </div>
         </div>
-        <span class="encoder-label">FLUTTER</span>
       </div>
-      <div class="encoder-container">
-        <div class="encoder" data-param="tapeAge" data-min="0" data-max="100" data-value="40">
-          <div class="encoder-ring"></div>
-          <div class="encoder-indicator"></div>
+    </section>
+
+    <!-- Preset Buttons -->
+    <section class="presets">
+      <span class="presets-label">PRESETS</span>
+      <div class="preset-row">
+        <button class="preset-btn" data-preset="pristine">PRISTINE</button>
+        <button class="preset-btn" data-preset="vintage">VINTAGE</button>
+        <button class="preset-btn" data-preset="worn">WORN</button>
+        <button class="preset-btn" data-preset="broken">BROKEN</button>
+        <button class="preset-btn" data-preset="dreamy">DREAMY</button>
+      </div>
+    </section>
+
+    <!-- Mode Controls -->
+    <section class="mode-section">
+      <div class="mode-row">
+        <div class="mode-group">
+          <span class="mode-group-label">ENSEMBLE</span>
+          <div class="mode-btns">
+            <button class="mode-btn active" data-ensemble="1">1V</button>
+            <button class="mode-btn" data-ensemble="2">2V</button>
+            <button class="mode-btn" data-ensemble="3">3V</button>
+          </div>
         </div>
-        <span class="encoder-label">AGE</span>
-      </div>
-    </div>
-  </div>
 
-  <div class="control-group">
-    <span class="group-label">TONE</span>
-    <div class="control-row">
-      <div class="encoder-container">
-        <div class="encoder" data-param="brightness" data-min="0" data-max="100" data-value="60">
-          <div class="encoder-ring"></div>
-          <div class="encoder-indicator"></div>
+        <div class="mode-group">
+          <span class="mode-group-label">SPEED</span>
+          <div class="mode-btns">
+            <button class="mode-btn" data-speed="0.5">½×</button>
+            <button class="mode-btn active" data-speed="1">1×</button>
+            <button class="mode-btn" data-speed="2">2×</button>
+          </div>
         </div>
-        <span class="encoder-label">BRIGHT</span>
-      </div>
-      <div class="encoder-container">
-        <div class="encoder" data-param="saturation" data-min="0" data-max="100" data-value="30">
-          <div class="encoder-ring"></div>
-          <div class="encoder-indicator"></div>
+
+        <div class="mode-group">
+          <span class="mode-group-label">MODE</span>
+          <div class="mode-btns">
+            <button class="mode-btn active" data-playmode="poly">POLY</button>
+            <button class="mode-btn" data-playmode="chord">CHRD</button>
+            <button class="mode-btn" data-playmode="drone">DRON</button>
+            <button class="mode-btn" data-playmode="arp">ARP</button>
+          </div>
         </div>
-        <span class="encoder-label">DRIVE</span>
-      </div>
-      <div class="encoder-container">
-        <div class="encoder" data-param="attack" data-min="0" data-max="100" data-value="40">
-          <div class="encoder-ring"></div>
-          <div class="encoder-indicator"></div>
+
+        <div class="mode-group" id="chord-type-group" style="display:none">
+          <span class="mode-group-label">CHORD</span>
+          <div class="mode-btns">
+            <button class="mode-btn active" data-chordtype="major">MAJ</button>
+            <button class="mode-btn" data-chordtype="minor">MIN</button>
+            <button class="mode-btn" data-chordtype="sus2">SUS2</button>
+          </div>
         </div>
-        <span class="encoder-label">ATTACK</span>
       </div>
-      <div class="encoder-container">
-        <div class="encoder" data-param="release" data-min="0" data-max="100" data-value="50">
-          <div class="encoder-ring"></div>
-          <div class="encoder-indicator"></div>
+
+      <div class="arp-row" id="arp-row" style="display:none">
+        <div class="mode-group">
+          <span class="mode-group-label">PATTERN</span>
+          <div class="mode-btns">
+            <button class="mode-btn active" data-arpmode="up">UP</button>
+            <button class="mode-btn" data-arpmode="down">DN</button>
+            <button class="mode-btn" data-arpmode="pingpong">PP</button>
+            <button class="mode-btn" data-arpmode="random">RND</button>
+          </div>
         </div>
-        <span class="encoder-label">RELEASE</span>
-      </div>
-    </div>
-  </div>
-
-  <div class="control-group">
-    <span class="group-label">CHARACTER</span>
-    <div class="control-row">
-      <div class="encoder-container">
-        <div class="encoder" data-param="mechanicalNoise" data-min="0" data-max="100" data-value="20">
-          <div class="encoder-ring"></div>
-          <div class="encoder-indicator"></div>
+        <div class="mode-group">
+          <span class="mode-group-label">RATE BPM</span>
+          <div class="bpm-ctrl">
+            <button class="bpm-btn" id="arp-bpm-down">−</button>
+            <span class="bpm-val" id="arp-bpm-val">120</span>
+            <button class="bpm-btn" id="arp-bpm-up">+</button>
+          </div>
         </div>
-        <span class="encoder-label">NOISE</span>
-      </div>
-      <div class="encoder-container">
-        <div class="encoder" data-param="startJitter" data-min="0" data-max="100" data-value="30">
-          <div class="encoder-ring"></div>
-          <div class="encoder-indicator"></div>
+        <div class="mode-group">
+          <span class="mode-group-label">OCTAVES</span>
+          <div class="mode-btns">
+            <button class="mode-btn active" data-arpoct="1">1</button>
+            <button class="mode-btn" data-arpoct="2">2</button>
+          </div>
         </div>
-        <span class="encoder-label">JITTER</span>
       </div>
-      <div class="encoder-container">
-        <div class="encoder" data-param="driftPerKey" data-min="0" data-max="100" data-value="25">
-          <div class="encoder-ring"></div>
-          <div class="encoder-indicator"></div>
+    </section>
+
+    <!-- Step Recorder -->
+    <section class="seq-section">
+      <div class="seq-header">
+        <span class="mode-group-label">STEP RECORDER</span>
+        <div class="seq-transport">
+          <button class="seq-btn" id="seq-rec">● REC</button>
+          <button class="seq-btn" id="seq-play">▶ PLAY</button>
+          <button class="seq-btn danger" id="seq-clear">✕ CLR</button>
         </div>
-        <span class="encoder-label">DRIFT</span>
-      </div>
-      <div class="encoder-container">
-        <div class="encoder" data-param="masterVolume" data-min="0" data-max="1" data-value="0.7">
-          <div class="encoder-ring"></div>
-          <div class="encoder-indicator"></div>
+        <div class="mode-group">
+          <span class="mode-group-label">BPM</span>
+          <div class="bpm-ctrl">
+            <button class="bpm-btn" id="seq-bpm-down">−</button>
+            <span class="bpm-val" id="seq-bpm-val">120</span>
+            <button class="bpm-btn" id="seq-bpm-up">+</button>
+          </div>
         </div>
-        <span class="encoder-label">VOLUME</span>
+        <div class="mode-group">
+          <span class="mode-group-label">STEPS</span>
+          <div class="bpm-ctrl">
+            <button class="bpm-btn" id="seq-steps-down">−</button>
+            <span class="bpm-val" id="seq-steps-val">8</span>
+            <button class="bpm-btn" id="seq-steps-up">+</button>
+          </div>
+        </div>
       </div>
-    </div>
-  </div>
-</section>
+      <div class="seq-grid" id="seq-grid"></div>
+    </section>
 
-<!-- Preset Buttons -->
-<section class="presets">
-  <span class="presets-label">PRESETS</span>
-  <div class="preset-row">
-    <button class="preset-btn" data-preset="pristine">PRISTINE</button>
-    <button class="preset-btn" data-preset="vintage">VINTAGE</button>
-    <button class="preset-btn" data-preset="worn">WORN</button>
-    <button class="preset-btn" data-preset="broken">BROKEN</button>
-    <button class="preset-btn" data-preset="dreamy">DREAMY</button>
-  </div>
-</section>
-
-<!-- ═══ NEW: Mode Controls ═══ -->
-<section class="mode-section">
-  <div class="mode-row">
-
-    <!-- Ensemble -->
-    <div class="mode-group">
-      <span class="mode-group-label">ENSEMBLE</span>
-      <div class="mode-btns">
-        <button class="mode-btn active" data-ensemble="1">1V</button>
-        <button class="mode-btn" data-ensemble="2">2V</button>
-        <button class="mode-btn" data-ensemble="3">3V</button>
+    <!-- Keyboard -->
+    <section class="keyboard-section">
+      <div class="keyboard" id="keyboard"></div>
+      <div class="keyboard-info">
+        <span>OCTAVE: <span id="octave-display">4</span></span>
+        <div class="octave-btns">
+          <button class="octave-btn" id="oct-down">−</button>
+          <button class="octave-btn" id="oct-up">+</button>
+        </div>
+        <span id="drone-display" class="drone-display" style="display:none">DRONE: <span id="drone-note">--</span></span>
+        <span id="arp-display" class="arp-display" style="display:none">ARP: <span id="arp-notes">--</span></span>
       </div>
-    </div>
+    </section>
 
-    <!-- Speed -->
-    <div class="mode-group">
-      <span class="mode-group-label">SPEED</span>
-      <div class="mode-btns">
-        <button class="mode-btn" data-speed="0.5">½×</button>
-        <button class="mode-btn active" data-speed="1">1×</button>
-        <button class="mode-btn" data-speed="2">2×</button>
+    <!-- Footer -->
+    <footer class="footer">
+      <div class="footer-left">
+        <span id="voices-count">0</span> VOICES
       </div>
-    </div>
-
-    <!-- Play Mode -->
-    <div class="mode-group">
-      <span class="mode-group-label">MODE</span>
-      <div class="mode-btns">
-        <button class="mode-btn active" data-playmode="poly">POLY</button>
-        <button class="mode-btn" data-playmode="chord">CHRD</button>
-        <button class="mode-btn" data-playmode="drone">DRON</button>
-        <button class="mode-btn" data-playmode="arp">ARP</button>
+      <div class="footer-center">
+        <span id="status-text">READY</span>
       </div>
-    </div>
-
-    <!-- Chord type (visible when CHORD or ARP) -->
-    <div class="mode-group" id="chord-type-group" style="display:none">
-      <span class="mode-group-label">CHORD</span>
-      <div class="mode-btns">
-        <button class="mode-btn active" data-chordtype="major">MAJ</button>
-        <button class="mode-btn" data-chordtype="minor">MIN</button>
-        <button class="mode-btn" data-chordtype="sus2">SUS2</button>
+      <div class="footer-right">
+        <span id="midi-status">MIDI OFF</span>
       </div>
-    </div>
-
-  </div>
-
-  <!-- ARP sub-controls (shown when ARP mode active) -->
-  <div class="arp-row" id="arp-row" style="display:none">
-    <div class="mode-group">
-      <span class="mode-group-label">PATTERN</span>
-      <div class="mode-btns">
-        <button class="mode-btn active" data-arpmode="up">UP</button>
-        <button class="mode-btn" data-arpmode="down">DN</button>
-        <button class="mode-btn" data-arpmode="pingpong">PP</button>
-        <button class="mode-btn" data-arpmode="random">RND</button>
-      </div>
-    </div>
-    <div class="mode-group">
-      <span class="mode-group-label">RATE BPM</span>
-      <div class="bpm-ctrl">
-        <button class="bpm-btn" id="arp-bpm-down">−</button>
-        <span class="bpm-val" id="arp-bpm-val">120</span>
-        <button class="bpm-btn" id="arp-bpm-up">+</button>
-      </div>
-    </div>
-    <div class="mode-group">
-      <span class="mode-group-label">OCTAVES</span>
-      <div class="mode-btns">
-        <button class="mode-btn active" data-arpoct="1">1</button>
-        <button class="mode-btn" data-arpoct="2">2</button>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- ═══ NEW: Step Recorder ═══ -->
-<section class="seq-section">
-  <div class="seq-header">
-    <span class="mode-group-label">STEP RECORDER</span>
-    <div class="seq-transport">
-      <button class="seq-btn" id="seq-rec">● REC</button>
-      <button class="seq-btn" id="seq-play">▶ PLAY</button>
-      <button class="seq-btn danger" id="seq-clear">✕ CLR</button>
-    </div>
-    <div class="mode-group">
-      <span class="mode-group-label">BPM</span>
-      <div class="bpm-ctrl">
-        <button class="bpm-btn" id="seq-bpm-down">−</button>
-        <span class="bpm-val" id="seq-bpm-val">120</span>
-        <button class="bpm-btn" id="seq-bpm-up">+</button>
-      </div>
-    </div>
-    <div class="mode-group">
-      <span class="mode-group-label">STEPS</span>
-      <div class="bpm-ctrl">
-        <button class="bpm-btn" id="seq-steps-down">−</button>
-        <span class="bpm-val" id="seq-steps-val">8</span>
-        <button class="bpm-btn" id="seq-steps-up">+</button>
-      </div>
-    </div>
-  </div>
-  <div class="seq-grid" id="seq-grid">
-    <!-- Steps generated by JS -->
-  </div>
-</section>
-
-<!-- Keyboard -->
-<section class="keyboard-section">
-  <div class="keyboard" id="keyboard"></div>
-  <div class="keyboard-info">
-    <span>OCTAVE: <span id="octave-display">4</span></span>
-    <div class="octave-btns">
-      <button class="octave-btn" id="oct-down">−</button>
-      <button class="octave-btn" id="oct-up">+</button>
-    </div>
-    <span id="drone-display" class="drone-display" style="display:none">DRONE: <span id="drone-note">--</span></span>
-    <span id="arp-display" class="arp-display" style="display:none">ARP: <span id="arp-notes">--</span></span>
-  </div>
-</section>
-
-<!-- Footer -->
-<footer class="footer">
-  <div class="footer-left">
-    <span id="voices-count">0</span> VOICES
-  </div>
-  <div class="footer-center">
-    <span id="status-text">READY</span>
-  </div>
-  <div class="footer-right">
-    <span id="midi-status">MIDI OFF</span>
-  </div>
-</footer>
-```
-
+    </footer>
   </div>
 
   <script src="emullotron.js"></script>
-
 </body>
 </html>
