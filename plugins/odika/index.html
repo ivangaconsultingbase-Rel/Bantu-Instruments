@@ -1,0 +1,2045 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GRANULAR RESYNTHESIZER</title>
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Share+Tech+Mono&family=Bebas+Neue&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #111116;
+  --panel: #1c1c24;
+  --panel-dark: #14141a;
+  --panel-light: #24242e;
+  --border: #2e2e40;
+  --border-bright: #44445a;
+  --amber: #ffaa00;
+  --amber-dim: #7a5000;
+  --cyan: #00ccff;
+  --cyan-dim: #004a5a;
+  --pink: #ff3399;
+  --pink-dim: #6a0040;
+  --green: #44ff88;
+  --green-dim: #0a3a1a;
+  --text: #c8c8dc;
+  --text-dim: #555568;
+  --text-bright: #f0f0ff;
+  --knob-body: #2a2a36;
+  --knob-track: #1a1a22;
+  --knob-indicator: #ffffff;
+  --section-grain: #ffaa00;
+  --section-delay: #00ccff;
+  --section-space: #9966ff;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Rajdhani', sans-serif;
+  font-weight: 500;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 12px;
+  background-image:
+    radial-gradient(ellipse 60% 40% at 50% 0%, rgba(255,170,0,0.04) 0%, transparent 70%),
+    repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(255,255,255,0.008) 2px, rgba(255,255,255,0.008) 3px);
+  user-select: none;
+}
+
+.plugin-wrapper {
+  width: 100%;
+  max-width: 1060px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* ─── HEADER ─────────────────────────────── */
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 18px;
+  background: var(--panel-dark);
+  border: 1px solid var(--border);
+  border-radius: 6px 6px 0 0;
+  border-top: 2px solid var(--amber);
+}
+
+.plugin-name {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 24px;
+  letter-spacing: 6px;
+  color: var(--amber);
+  text-shadow: 0 0 20px rgba(255,170,0,0.4);
+}
+
+.plugin-sub {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 10px;
+  color: var(--text-dim);
+  letter-spacing: 2px;
+  margin-top: 2px;
+}
+
+.header-controls {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.bpm-display {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.bpm-label {
+  font-size: 11px;
+  color: var(--text-dim);
+  letter-spacing: 2px;
+}
+
+.bpm-value {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 22px;
+  color: var(--amber);
+  background: var(--panel-dark);
+  border: 1px solid var(--amber-dim);
+  border-radius: 4px;
+  padding: 2px 8px;
+  min-width: 64px;
+  text-align: center;
+  cursor: ns-resize;
+}
+
+.btn-transport {
+  display: flex;
+  gap: 6px;
+}
+
+.btn {
+  font-family: 'Rajdhani', sans-serif;
+  font-weight: 700;
+  font-size: 11px;
+  letter-spacing: 2px;
+  padding: 6px 14px;
+  border-radius: 3px;
+  cursor: pointer;
+  border: 1px solid;
+  transition: all 0.1s;
+}
+
+.btn-start {
+  background: rgba(255,170,0,0.12);
+  border-color: var(--amber-dim);
+  color: var(--amber);
+}
+.btn-start:hover, .btn-start.active {
+  background: rgba(255,170,0,0.25);
+  border-color: var(--amber);
+  box-shadow: 0 0 12px rgba(255,170,0,0.3);
+}
+
+.btn-mic {
+  background: rgba(255,51,153,0.1);
+  border-color: var(--pink-dim);
+  color: var(--pink);
+}
+.btn-mic.active {
+  background: rgba(255,51,153,0.25);
+  border-color: var(--pink);
+  box-shadow: 0 0 12px rgba(255,51,153,0.3);
+}
+
+.led {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--border);
+  box-shadow: none;
+  transition: all 0.1s;
+}
+.led.active {
+  background: var(--green);
+  box-shadow: 0 0 8px var(--green);
+}
+.led.amber { background: var(--amber); box-shadow: 0 0 8px var(--amber); }
+
+/* ─── WAVEFORM ───────────────────────────── */
+.waveform-bar {
+  background: var(--panel-dark);
+  border: 1px solid var(--border);
+  border-top: none;
+  padding: 4px 18px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+#waveCanvas {
+  flex: 1;
+  height: 48px;
+  border-radius: 3px;
+  background: var(--panel-dark);
+}
+
+.vu-meter {
+  display: flex;
+  gap: 2px;
+  height: 48px;
+  align-items: flex-end;
+}
+
+.vu-bar-col {
+  display: flex;
+  flex-direction: column-reverse;
+  gap: 1px;
+  height: 100%;
+  width: 6px;
+}
+
+.vu-seg {
+  flex: 1;
+  border-radius: 1px;
+  background: var(--border);
+  transition: background 0.06s;
+  max-height: 4px;
+}
+
+/* ─── MAIN SECTIONS ──────────────────────── */
+.sections {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 8px;
+}
+
+.section {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.section-grain { border-top: 2px solid var(--section-grain); }
+.section-delay { border-top: 2px solid var(--section-delay); }
+.section-space { border-top: 2px solid var(--section-space); }
+
+.section-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 16px;
+  letter-spacing: 4px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.section-grain .section-title { color: var(--section-grain); }
+.section-delay .section-title { color: var(--section-delay); }
+.section-space .section-title { color: var(--section-space); }
+
+.section-title::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+
+.knob-row {
+  display: flex;
+  justify-content: space-around;
+  gap: 4px;
+}
+
+.knob-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  flex: 1;
+}
+
+.knob-canvas {
+  cursor: ns-resize;
+  border-radius: 50%;
+}
+
+.knob-label {
+  font-size: 9px;
+  letter-spacing: 1.5px;
+  color: var(--text-dim);
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.knob-val {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 10px;
+  color: var(--text);
+  text-align: center;
+}
+
+/* Toggle rows */
+.toggle-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.toggle-label {
+  font-size: 10px;
+  color: var(--text-dim);
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  min-width: 52px;
+}
+
+.btn-group {
+  display: flex;
+  gap: 3px;
+}
+
+.btn-sm {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 10px;
+  padding: 4px 9px;
+  border-radius: 2px;
+  cursor: pointer;
+  border: 1px solid var(--border);
+  background: var(--panel-dark);
+  color: var(--text-dim);
+  letter-spacing: 1px;
+  transition: all 0.1s;
+}
+
+.btn-sm.active {
+  border-color: var(--amber);
+  color: var(--amber);
+  background: rgba(255,170,0,0.1);
+}
+
+.btn-sm.active.cyan {
+  border-color: var(--cyan);
+  color: var(--cyan);
+  background: rgba(0,204,255,0.1);
+}
+
+.btn-sm.active.purple {
+  border-color: #9966ff;
+  color: #9966ff;
+  background: rgba(153,102,255,0.1);
+}
+
+select.plugin-select {
+  background: var(--panel-dark);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 10px;
+  padding: 4px 6px;
+  border-radius: 2px;
+  flex: 1;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  outline: none;
+}
+
+select.plugin-select:focus {
+  border-color: var(--cyan);
+}
+
+select.plugin-select option {
+  background: #1a1a22;
+}
+
+/* Sliders */
+.slider-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.slider-label {
+  font-size: 9px;
+  letter-spacing: 1.5px;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  min-width: 52px;
+}
+
+input[type=range].plugin-slider {
+  -webkit-appearance: none;
+  flex: 1;
+  height: 3px;
+  border-radius: 2px;
+  background: var(--panel-dark);
+  border: 1px solid var(--border);
+  outline: none;
+  cursor: ew-resize;
+}
+
+input[type=range].plugin-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--amber);
+  box-shadow: 0 0 6px rgba(255,170,0,0.5);
+  cursor: ew-resize;
+}
+
+input[type=range].plugin-slider.cyan::-webkit-slider-thumb {
+  background: var(--cyan);
+  box-shadow: 0 0 6px rgba(0,204,255,0.5);
+}
+
+input[type=range].plugin-slider.purple::-webkit-slider-thumb {
+  background: #9966ff;
+  box-shadow: 0 0 6px rgba(153,102,255,0.5);
+}
+
+.slider-val {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 9px;
+  color: var(--text);
+  min-width: 28px;
+  text-align: right;
+}
+
+/* Freeze button */
+.btn-freeze {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 14px;
+  letter-spacing: 4px;
+  padding: 7px 16px;
+  border-radius: 3px;
+  cursor: pointer;
+  border: 1px solid var(--border);
+  background: var(--panel-dark);
+  color: var(--text-dim);
+  transition: all 0.15s;
+  width: 100%;
+}
+
+.btn-freeze.active {
+  border-color: #9966ff;
+  color: #9966ff;
+  background: rgba(153,102,255,0.15);
+  box-shadow: 0 0 16px rgba(153,102,255,0.3), inset 0 0 8px rgba(153,102,255,0.1);
+}
+
+/* ─── BOTTOM MACRO BAR ───────────────────── */
+.macro-bar {
+  display: grid;
+  grid-template-columns: 200px 1fr 180px;
+  gap: 10px;
+  background: var(--panel-dark);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 14px 16px;
+}
+
+/* XY Pad */
+.xy-section {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.xy-title {
+  font-size: 9px;
+  letter-spacing: 2px;
+  color: var(--text-dim);
+  text-transform: uppercase;
+}
+
+#xyCanvas {
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  cursor: crosshair;
+  background: var(--panel-dark);
+}
+
+/* Keyboard */
+.keyboard-section {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.keyboard-title {
+  font-size: 9px;
+  letter-spacing: 2px;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.keyboard-oct {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+
+.btn-oct {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 2px;
+  cursor: pointer;
+  border: 1px solid var(--border);
+  background: var(--panel-dark);
+  color: var(--text-dim);
+}
+
+.oct-display {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 11px;
+  color: var(--text);
+  min-width: 18px;
+  text-align: center;
+}
+
+#keyboardCanvas {
+  flex: 1;
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  cursor: pointer;
+  background: var(--panel-dark);
+}
+
+/* Presets & Resynth */
+.preset-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.preset-title {
+  font-size: 9px;
+  letter-spacing: 2px;
+  color: var(--text-dim);
+  text-transform: uppercase;
+}
+
+.preset-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 5px;
+}
+
+.btn-preset {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 9px;
+  padding: 6px 8px;
+  border-radius: 2px;
+  cursor: pointer;
+  border: 1px solid var(--border);
+  background: var(--panel-dark);
+  color: var(--text-dim);
+  text-align: center;
+  transition: all 0.1s;
+  letter-spacing: 0.5px;
+}
+
+.btn-preset:hover {
+  border-color: var(--amber-dim);
+  color: var(--text);
+}
+
+.btn-preset.active {
+  border-color: var(--amber);
+  color: var(--amber);
+  background: rgba(255,170,0,0.08);
+}
+
+.btn-resynth {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 15px;
+  letter-spacing: 4px;
+  padding: 8px;
+  border-radius: 3px;
+  cursor: pointer;
+  border: 1px solid var(--amber-dim);
+  background: rgba(255,170,0,0.08);
+  color: var(--amber);
+  width: 100%;
+  transition: all 0.15s;
+}
+
+.btn-resynth:hover {
+  background: rgba(255,170,0,0.2);
+  border-color: var(--amber);
+  box-shadow: 0 0 16px rgba(255,170,0,0.25);
+}
+
+.btn-resynth:active {
+  transform: scale(0.97);
+}
+
+/* Master mix strip */
+.master-strip {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-left: 12px;
+  border-left: 1px solid var(--border);
+  min-width: 110px;
+  justify-content: center;
+}
+
+.master-label {
+  font-size: 9px;
+  letter-spacing: 2px;
+  color: var(--text-dim);
+  text-transform: uppercase;
+}
+
+/* Status bar */
+.status-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 5px 18px;
+  border: 1px solid var(--border);
+  border-top: none;
+  background: var(--panel-dark);
+  border-radius: 0 0 6px 6px;
+}
+
+.status-text {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 10px;
+  color: var(--text-dim);
+  letter-spacing: 1px;
+}
+
+.status-grains {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 10px;
+  color: var(--cyan);
+}
+
+/* Animations */
+@keyframes ledPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+.led.pulse { animation: ledPulse 1s ease-in-out infinite; }
+</style>
+</head>
+<body>
+<div class="plugin-wrapper">
+
+  <!-- HEADER -->
+  <div class="header">
+    <div>
+      <div class="plugin-name">GRANULAR RESYNTHESIZER</div>
+      <div class="plugin-sub">STEREO INSERT · GRAIN TEXTURE ENGINE · v1.0</div>
+    </div>
+    <div class="header-controls">
+      <div class="bpm-display">
+        <div class="bpm-label">BPM</div>
+        <div class="bpm-value" id="bpmDisplay" title="Drag to change BPM">120</div>
+      </div>
+      <div class="btn-transport">
+        <button class="btn btn-mic" id="btnMic">⏺ MIC</button>
+        <button class="btn btn-start" id="btnStart">▶ START</button>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:4px;">
+        <div class="led pulse" id="ledClock"></div>
+        <div class="led" id="ledSignal"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- WAVEFORM BAR -->
+  <div class="waveform-bar">
+    <canvas id="waveCanvas" width="760" height="48"></canvas>
+    <div class="vu-meter" id="vuMeterL"></div>
+    <div class="vu-meter" id="vuMeterR"></div>
+  </div>
+
+  <!-- MAIN THREE SECTIONS -->
+  <div class="sections">
+
+    <!-- ═══ GRAIN ═══ -->
+    <div class="section section-grain">
+      <div class="section-title">GRAIN</div>
+
+      <div class="knob-row">
+        <div class="knob-wrap">
+          <canvas class="knob-canvas" id="k-grainSize" width="54" height="54"></canvas>
+          <div class="knob-label">GRAIN SIZE</div>
+          <div class="knob-val" id="v-grainSize">1/8</div>
+        </div>
+        <div class="knob-wrap">
+          <canvas class="knob-canvas" id="k-spray" width="54" height="54"></canvas>
+          <div class="knob-label">SPRAY</div>
+          <div class="knob-val" id="v-spray">12ms</div>
+        </div>
+        <div class="knob-wrap">
+          <canvas class="knob-canvas" id="k-density" width="54" height="54"></canvas>
+          <div class="knob-label">DENSITY</div>
+          <div class="knob-val" id="v-density">8</div>
+        </div>
+        <div class="knob-wrap">
+          <canvas class="knob-canvas" id="k-panRand" width="54" height="54"></canvas>
+          <div class="knob-label">PAN RAND</div>
+          <div class="knob-val" id="v-panRand">50%</div>
+        </div>
+      </div>
+
+      <div class="toggle-row">
+        <div class="toggle-label">DIRECTION</div>
+        <div class="btn-group">
+          <button class="btn-sm active" id="dir-fwd" onclick="setDirection('fwd')">FWD</button>
+          <button class="btn-sm" id="dir-rev" onclick="setDirection('rev')">REV</button>
+          <button class="btn-sm" id="dir-rnd" onclick="setDirection('rnd')">RND</button>
+        </div>
+      </div>
+
+      <div class="slider-row">
+        <div class="slider-label">CENTER</div>
+        <input type="range" class="plugin-slider" id="s-center" min="0" max="100" value="30" step="1">
+        <div class="slider-val" id="sv-center">30%</div>
+      </div>
+
+      <div class="slider-row">
+        <div class="slider-label">SHAPE</div>
+        <input type="range" class="plugin-slider" id="s-envShape" min="0" max="100" value="50" step="1">
+        <div class="slider-val" id="sv-envShape">HANN</div>
+      </div>
+
+      <div class="slider-row">
+        <div class="slider-label">MIX</div>
+        <input type="range" class="plugin-slider" id="s-grainMix" min="0" max="100" value="80" step="1">
+        <div class="slider-val" id="sv-grainMix">80%</div>
+      </div>
+    </div>
+
+    <!-- ═══ DELAY ═══ -->
+    <div class="section section-delay">
+      <div class="section-title">DELAY</div>
+
+      <div class="knob-row">
+        <div class="knob-wrap">
+          <canvas class="knob-canvas" id="k-delTime" width="54" height="54"></canvas>
+          <div class="knob-label">TIME</div>
+          <div class="knob-val" id="v-delTime">1/4</div>
+        </div>
+        <div class="knob-wrap">
+          <canvas class="knob-canvas" id="k-delFb" width="54" height="54"></canvas>
+          <div class="knob-label">FEEDBACK</div>
+          <div class="knob-val" id="v-delFb">45%</div>
+        </div>
+        <div class="knob-wrap">
+          <canvas class="knob-canvas" id="k-delDiff" width="54" height="54"></canvas>
+          <div class="knob-label">DIFFUSE</div>
+          <div class="knob-val" id="v-delDiff">35%</div>
+        </div>
+        <div class="knob-wrap">
+          <canvas class="knob-canvas" id="k-delMix" width="54" height="54"></canvas>
+          <div class="knob-label">MIX</div>
+          <div class="knob-val" id="v-delMix">40%</div>
+        </div>
+      </div>
+
+      <div class="toggle-row">
+        <div class="toggle-label">SCALE</div>
+        <select class="plugin-select" id="sel-scale">
+          <option value="major">Major</option>
+          <option value="minor">Minor</option>
+          <option value="penta">Pentatonic</option>
+          <option value="dorian">Dorian</option>
+          <option value="lydian">Lydian</option>
+          <option value="mixo">Mixolydian</option>
+          <option value="phryg">Phrygian</option>
+          <option value="chrom">Chromatic</option>
+          <option value="none">No quantize</option>
+        </select>
+      </div>
+
+      <div class="toggle-row">
+        <div class="toggle-label">ROOT</div>
+        <select class="plugin-select" id="sel-root">
+          <option>C</option><option>C#</option><option>D</option>
+          <option>D#</option><option>E</option><option>F</option>
+          <option>F#</option><option>G</option><option>G#</option>
+          <option>A</option><option>A#</option><option>B</option>
+        </select>
+      </div>
+
+      <div class="slider-row">
+        <div class="slider-label">SPREAD</div>
+        <input type="range" class="plugin-slider cyan" id="s-spread" min="0" max="100" value="30" step="1">
+        <div class="slider-val" id="sv-spread">30%</div>
+      </div>
+
+      <div class="toggle-row">
+        <div class="toggle-label">MOD LFO</div>
+        <div class="btn-group">
+          <button class="btn-sm cyan" id="mod-off" onclick="setModLFO('off')">OFF</button>
+          <button class="btn-sm" id="mod-slow" onclick="setModLFO('slow')">SLOW</button>
+          <button class="btn-sm" id="mod-step" onclick="setModLFO('step')">STEP</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ SPACE ═══ -->
+    <div class="section section-space">
+      <div class="section-title">SPACE</div>
+
+      <div class="knob-row">
+        <div class="knob-wrap">
+          <canvas class="knob-canvas" id="k-revSize" width="54" height="54"></canvas>
+          <div class="knob-label">SIZE</div>
+          <div class="knob-val" id="v-revSize">65%</div>
+        </div>
+        <div class="knob-wrap">
+          <canvas class="knob-canvas" id="k-revDecay" width="54" height="54"></canvas>
+          <div class="knob-label">DECAY</div>
+          <div class="knob-val" id="v-revDecay">2.4s</div>
+        </div>
+        <div class="knob-wrap">
+          <canvas class="knob-canvas" id="k-revColor" width="54" height="54"></canvas>
+          <div class="knob-label">COLOR</div>
+          <div class="knob-val" id="v-revColor">0</div>
+        </div>
+        <div class="knob-wrap">
+          <canvas class="knob-canvas" id="k-revMix" width="54" height="54"></canvas>
+          <div class="knob-label">MIX</div>
+          <div class="knob-val" id="v-revMix">50%</div>
+        </div>
+      </div>
+
+      <div class="toggle-row">
+        <div class="toggle-label">MODE</div>
+        <div class="btn-group">
+          <button class="btn-sm active purple" id="rev-normal" onclick="setRevMode('normal')">ROOM</button>
+          <button class="btn-sm" id="rev-gran" onclick="setRevMode('gran')">GRAN</button>
+          <button class="btn-sm" id="rev-plate" onclick="setRevMode('plate')">PLATE</button>
+        </div>
+      </div>
+
+      <button class="btn-freeze" id="btnFreeze" onclick="toggleFreeze()">❄ FREEZE</button>
+
+      <div class="slider-row">
+        <div class="slider-label">SHIMMER</div>
+        <input type="range" class="plugin-slider purple" id="s-shimmer" min="0" max="100" value="0" step="1">
+        <div class="slider-val" id="sv-shimmer">0%</div>
+      </div>
+
+      <div class="slider-row">
+        <div class="slider-label">PREDELAY</div>
+        <input type="range" class="plugin-slider purple" id="s-predelay" min="0" max="100" value="15" step="1">
+        <div class="slider-val" id="sv-predelay">30ms</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MACRO BAR -->
+  <div class="macro-bar">
+
+    <!-- XY Pad -->
+    <div class="xy-section">
+      <div class="xy-title">MACRO XY · DENSITY/SPRAY → DRY/PAD</div>
+      <canvas id="xyCanvas" width="172" height="120"></canvas>
+    </div>
+
+    <!-- Keyboard -->
+    <div class="keyboard-section">
+      <div class="keyboard-title">
+        PITCH PLAY
+        <div class="keyboard-oct">
+          <button class="btn-oct" onclick="changeOctave(-1)">−</button>
+          <div class="oct-display" id="octDisplay">4</div>
+          <button class="btn-oct" onclick="changeOctave(1)">+</button>
+        </div>
+        <div style="flex:1"></div>
+        <div class="toggle-label" style="min-width:auto">TRANSPOSE</div>
+        <input type="range" class="plugin-slider" id="s-transpose" min="-24" max="24" value="0" step="1" style="width:80px">
+        <div class="slider-val" id="sv-transpose">0st</div>
+      </div>
+      <canvas id="keyboardCanvas" width="640" height="88"></canvas>
+    </div>
+
+    <!-- Presets + Resynth -->
+    <div class="preset-section">
+      <div class="preset-title">PRESETS</div>
+      <div class="preset-grid">
+        <button class="btn-preset" onclick="loadPreset('piano')" id="p-piano">Lo-Fi Piano<br>Clouds</button>
+        <button class="btn-preset" onclick="loadPreset('vocal')" id="p-vocal">Vocal Shimmer<br>Delay</button>
+        <button class="btn-preset" onclick="loadPreset('drums')" id="p-drums">Rhythmic Grain<br>Echo</button>
+        <button class="btn-preset" onclick="loadPreset('tape')" id="p-tape">Granular<br>Tape Verb</button>
+      </div>
+      <button class="btn-resynth" id="btnResynth">↺ RESYNTHESIZE</button>
+    </div>
+  </div>
+
+  <!-- STATUS BAR -->
+  <div class="status-bar">
+    <div class="status-text" id="statusText">READY · CLICK MIC TO ENABLE INPUT</div>
+    <div style="display:flex;gap:16px;align-items:center">
+      <div class="status-grains" id="grainCount">GRAINS: 0</div>
+      <div class="status-text" id="cpuText">CPU: 0%</div>
+      <div class="status-text" id="latencyText">LAT: —</div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════
+// AUDIO ENGINE
+// ═══════════════════════════════════════════════════════════════
+
+let audioCtx = null;
+let micStream = null;
+let sourceNode = null;
+let scriptNode = null;
+let analyserNode = null;
+let delayNodeL = null, delayNodeR = null;
+let feedbackGainL = null, feedbackGainR = null;
+let reverbNode = null;
+let masterGain = null;
+let dryGain = null;
+let wetGain = null;
+let isRunning = false;
+let frozen = false;
+let grainCount = 0;
+
+const SAMPLE_RATE_DEFAULT = 44100;
+const BUFFER_SECONDS = 4;
+const MAX_GRAINS = 24;
+
+// Granular engine state
+const engine = {
+  sampleRate: SAMPLE_RATE_DEFAULT,
+  bufferSize: SAMPLE_RATE_DEFAULT * BUFFER_SECONDS,
+  bufferL: null,
+  bufferR: null,
+  writePos: 0,
+  grains: [],
+  spawnAccum: 0,
+
+  // Params
+  grainSize: 0.125,   // seconds
+  spray: 0.02,
+  density: 8,
+  panRand: 0.5,
+  direction: 'fwd',
+  center: 0.3,
+  envShape: 0.5,
+  grainMix: 0.8,
+  pitchRatio: 1.0,
+  spread: 0.3,
+  freeze: false,
+
+  // Delay
+  delayTime: 0.5,
+  feedback: 0.45,
+  diffusion: 0.35,
+  delMix: 0.4,
+
+  // Reverb
+  revSize: 0.65,
+  revDecay: 2.4,
+  revColor: 0,
+  revMix: 0.5,
+  shimmer: 0,
+
+  // Modulation
+  modLFO: 'off',
+  lfoPhase: 0,
+  lfoRate: 0.3,
+
+  // BPM
+  bpm: 120,
+};
+
+const SCALES = {
+  major:  [0,2,4,5,7,9,11],
+  minor:  [0,2,3,5,7,8,10],
+  penta:  [0,2,4,7,9],
+  dorian: [0,2,3,5,7,9,10],
+  lydian: [0,2,4,6,7,9,11],
+  mixo:   [0,2,4,5,7,9,10],
+  phryg:  [0,1,3,5,7,8,10],
+  chrom:  [0,1,2,3,4,5,6,7,8,9,10,11],
+  none:   null,
+};
+
+const TEMPO_DIVS = {
+  '1/1':1, '1/2':0.5, '1/4':0.25, '1/8':0.125,
+  '1/16':0.0625, '1/32':0.03125, '1/64':0.015625,
+  '1/4d':0.375, '1/8d':0.1875, '1/4t':0.16667, '1/8t':0.08333,
+};
+
+const GRAIN_DIVS = ['1/1','1/2','1/4','1/8','1/16','1/32','1/64','1/4d','1/8d','1/4t','1/8t'];
+const DELAY_DIVS = ['1/1','1/2','1/4','1/8','1/16','1/8d','1/4d','1/8t'];
+
+function beatToSeconds(div, bpm) {
+  return (TEMPO_DIVS[div] || 0.25) * (60 / bpm) * 4;
+}
+
+function initBuffers(sr) {
+  engine.sampleRate = sr;
+  engine.bufferSize = Math.floor(sr * BUFFER_SECONDS);
+  engine.bufferL = new Float32Array(engine.bufferSize);
+  engine.bufferR = new Float32Array(engine.bufferSize);
+  engine.writePos = 0;
+  engine.grains = [];
+}
+
+function semitoneToRatio(st) { return Math.pow(2, st / 12); }
+
+function quantizeToPitch(ratio, scaleName, rootSemitone) {
+  if (scaleName === 'none' || !SCALES[scaleName]) return ratio;
+  const cents = Math.round(Math.log2(ratio) * 1200);
+  const scale = SCALES[scaleName];
+  let best = 0, bestDist = Infinity;
+  for (let oct = -2; oct <= 2; oct++) {
+    for (const deg of scale) {
+      const candidate = oct * 1200 + deg * 100 + rootSemitone * 100;
+      const d = Math.abs(cents - candidate);
+      if (d < bestDist) { bestDist = d; best = candidate; }
+    }
+  }
+  return semitoneToRatio(best / 100);
+}
+
+function spawnGrain() {
+  if (engine.grains.length >= MAX_GRAINS) return;
+  const sr = engine.sampleRate;
+  const size = Math.max(64, Math.floor(engine.grainSize * sr));
+  const spray = (Math.random() - 0.5) * engine.spray * sr;
+  const offset = Math.floor(engine.center * engine.bufferSize);
+  let startPos = engine.writePos - size - offset + Math.floor(spray);
+  startPos = ((startPos % engine.bufferSize) + engine.bufferSize) % engine.bufferSize;
+
+  let dir = engine.direction === 'fwd' ? 1 : engine.direction === 'rev' ? -1 : (Math.random()>0.5?1:-1);
+  const pan = (Math.random() * 2 - 1) * engine.panRand;
+
+  // Spread: pick a scale degree
+  let pitchRatio = engine.pitchRatio;
+  const scaleName = document.getElementById('sel-scale').value;
+  const rootNote = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B']
+    .indexOf(document.getElementById('sel-root').value);
+
+  if (engine.spread > 0.05 && Math.random() < engine.spread) {
+    const scaleArr = SCALES[scaleName] || SCALES.major;
+    const deg = scaleArr[Math.floor(Math.random() * scaleArr.length)];
+    const octShift = Math.floor(Math.random() * 3) - 1;
+    pitchRatio *= semitoneToRatio(deg + octShift * 12);
+  }
+
+  // LFO modulation
+  if (engine.modLFO !== 'off') {
+    const scaleArr = SCALES[scaleName] || SCALES.major;
+    let lfoVal;
+    if (engine.modLFO === 'step') {
+      lfoVal = scaleArr[Math.floor(engine.lfoPhase * scaleArr.length)] * 100;
+    } else {
+      lfoVal = Math.sin(engine.lfoPhase * Math.PI * 2) * 700;
+    }
+    pitchRatio *= semitoneToRatio(lfoVal / 100);
+  }
+
+  engine.grains.push({
+    pos: startPos,
+    size,
+    phase: 0,
+    direction: dir,
+    pan,
+    pitchRatio,
+    readAccum: 0,
+  });
+}
+
+function processGranular(inputL, inputR, outputL, outputR) {
+  const sr = engine.sampleRate;
+  const spawnInterval = Math.max(1, sr / Math.max(0.1, engine.density));
+
+  for (let i = 0; i < outputL.length; i++) {
+    // Write to circular buffer
+    if (!engine.freeze) {
+      engine.bufferL[engine.writePos] = inputL[i] || 0;
+      engine.bufferR[engine.writePos] = inputR[i] || 0;
+      engine.writePos = (engine.writePos + 1) % engine.bufferSize;
+    }
+
+    // Advance LFO
+    engine.lfoPhase = (engine.lfoPhase + engine.lfoRate / sr) % 1;
+
+    // Spawn grains
+    engine.spawnAccum++;
+    if (engine.spawnAccum >= spawnInterval) {
+      engine.spawnAccum -= spawnInterval;
+      spawnGrain();
+    }
+
+    // Sum grains
+    let sumL = 0, sumR = 0;
+    for (let g = engine.grains.length - 1; g >= 0; g--) {
+      const gr = engine.grains[g];
+      const env = 0.5 * (1 - Math.cos(Math.PI * 2 * gr.phase / gr.size));
+
+      // Fractional read with pitch
+      gr.readAccum += gr.pitchRatio * gr.direction;
+      const rp = (Math.floor(gr.pos + gr.readAccum) + engine.bufferSize * 4) % engine.bufferSize;
+
+      const sl = engine.bufferL[rp] * env;
+      const sr2 = engine.bufferR[rp] * env;
+      const panL = Math.sqrt(Math.max(0, 0.5 * (1 - gr.pan)));
+      const panR = Math.sqrt(Math.max(0, 0.5 * (1 + gr.pan)));
+
+      sumL += sl * panL * 0.7;
+      sumR += sr2 * panR * 0.7;
+
+      gr.phase++;
+      if (gr.phase >= gr.size) engine.grains.splice(g, 1);
+    }
+
+    const gain = engine.grainMix / Math.max(1, Math.sqrt(engine.grains.length * 0.5));
+    outputL[i] = sumL * gain;
+    outputR[i] = sumR * gain;
+  }
+
+  grainCount = engine.grains.length;
+}
+
+async function initAudio() {
+  try {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 44100 });
+    initBuffers(audioCtx.sampleRate);
+
+    // Request mic
+    micStream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false }});
+    sourceNode = audioCtx.createMediaStreamSource(micStream);
+
+    // Script processor (granular engine)
+    const bufSize = 2048;
+    scriptNode = audioCtx.createScriptProcessor(bufSize, 2, 2);
+    scriptNode.onaudioprocess = (e) => {
+      const inL = e.inputBuffer.getChannelData(0);
+      const inR = e.inputBuffer.numberOfChannels > 1 ? e.inputBuffer.getChannelData(1) : inL;
+      const outL = e.outputBuffer.getChannelData(0);
+      const outR = e.outputBuffer.getChannelData(1);
+      processGranular(inL, inR, outL, outR);
+    };
+
+    // Analyser for visualization
+    analyserNode = audioCtx.createAnalyser();
+    analyserNode.fftSize = 512;
+
+    // Delay
+    delayNodeL = audioCtx.createDelay(4);
+    delayNodeR = audioCtx.createDelay(4);
+    delayNodeL.delayTime.value = engine.delayTime;
+    delayNodeR.delayTime.value = engine.delayTime * 1.003;
+
+    feedbackGainL = audioCtx.createGain();
+    feedbackGainR = audioCtx.createGain();
+    feedbackGainL.gain.value = engine.feedback;
+    feedbackGainR.gain.value = engine.feedback;
+
+    const delMixGain = audioCtx.createGain();
+    delMixGain.gain.value = engine.delMix;
+
+    // Reverb
+    reverbNode = audioCtx.createConvolver();
+    updateReverbIR();
+    const revMixGain = audioCtx.createGain();
+    revMixGain.gain.value = engine.revMix;
+
+    // Master
+    masterGain = audioCtx.createGain();
+    masterGain.gain.value = 1.0;
+    dryGain = audioCtx.createGain();
+    dryGain.gain.value = 0.3;
+
+    // Connect: source → script → delay+reverb → master → destination
+    sourceNode.connect(scriptNode);
+
+    // Dry path
+    sourceNode.connect(dryGain);
+    dryGain.connect(analyserNode);
+    dryGain.connect(masterGain);
+
+    // Grain → delay
+    scriptNode.connect(delayNodeL, 0, 0);
+    scriptNode.connect(delayNodeR, 0, 0);
+    delayNodeL.connect(feedbackGainL);
+    feedbackGainL.connect(delayNodeL);
+    delayNodeR.connect(feedbackGainR);
+    feedbackGainR.connect(delayNodeR);
+
+    delayNodeL.connect(delMixGain);
+    delayNodeR.connect(delMixGain);
+    delMixGain.connect(reverbNode);
+    delMixGain.connect(masterGain);
+
+    // Reverb
+    reverbNode.connect(revMixGain);
+    revMixGain.connect(masterGain);
+
+    // Grain direct to analyser
+    scriptNode.connect(analyserNode);
+
+    masterGain.connect(audioCtx.destination);
+
+    setStatus('ACTIVE · GRANULAR ENGINE RUNNING');
+    document.getElementById('ledSignal').classList.add('active');
+    document.getElementById('btnMic').classList.add('active');
+    isRunning = true;
+
+    startViz();
+    return true;
+  } catch(e) {
+    setStatus('ERROR: ' + e.message);
+    return false;
+  }
+}
+
+function updateReverbIR() {
+  if (!audioCtx) return;
+  const sr = audioCtx.sampleRate;
+  const length = Math.floor(sr * engine.revDecay * engine.revSize);
+  const ir = audioCtx.createBuffer(2, Math.max(512, length), sr);
+  for (let c = 0; c < 2; c++) {
+    const ch = ir.getChannelData(c);
+    for (let i = 0; i < ch.length; i++) {
+      const env = Math.pow(1 - i / ch.length, 1 + engine.revSize);
+      ch[i] = (Math.random() * 2 - 1) * env;
+    }
+  }
+  reverbNode.buffer = ir;
+}
+
+function updateDelay() {
+  if (!delayNodeL) return;
+  delayNodeL.delayTime.value = engine.delayTime;
+  delayNodeR.delayTime.value = engine.delayTime * 1.003;
+  feedbackGainL.gain.value = engine.feedback;
+  feedbackGainR.gain.value = engine.feedback;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// KNOB SYSTEM
+// ═══════════════════════════════════════════════════════════════
+
+const knobDefs = {
+  'k-grainSize': {
+    min:0, max:10, defaultVal:3, label:'v-grainSize',
+    display: v => GRAIN_DIVS[Math.round(v)] || '1/8',
+    onChange: v => {
+      const div = GRAIN_DIVS[Math.round(v)] || '1/8';
+      engine.grainSize = beatToSeconds(div, engine.bpm);
+    }
+  },
+  'k-spray': {
+    min:0, max:1, defaultVal:0.2, label:'v-spray',
+    display: v => Math.round(v*200)+'ms',
+    onChange: v => { engine.spray = v * 0.3; }
+  },
+  'k-density': {
+    min:0, max:1, defaultVal:0.35, label:'v-density',
+    display: v => Math.round(1 + v*23),
+    onChange: v => { engine.density = 1 + v * 23; }
+  },
+  'k-panRand': {
+    min:0, max:1, defaultVal:0.5, label:'v-panRand',
+    display: v => Math.round(v*100)+'%',
+    onChange: v => { engine.panRand = v; }
+  },
+  'k-delTime': {
+    min:0, max:7, defaultVal:2, label:'v-delTime',
+    display: v => DELAY_DIVS[Math.round(v)] || '1/4',
+    onChange: v => {
+      const div = DELAY_DIVS[Math.round(v)] || '1/4';
+      engine.delayTime = beatToSeconds(div, engine.bpm);
+      updateDelay();
+    }
+  },
+  'k-delFb': {
+    min:0, max:1, defaultVal:0.45, label:'v-delFb',
+    display: v => Math.round(v*100)+'%',
+    onChange: v => { engine.feedback = v * 0.92; updateDelay(); }
+  },
+  'k-delDiff': {
+    min:0, max:1, defaultVal:0.35, label:'v-delDiff',
+    display: v => Math.round(v*100)+'%',
+    onChange: v => { engine.diffusion = v; }
+  },
+  'k-delMix': {
+    min:0, max:1, defaultVal:0.4, label:'v-delMix',
+    display: v => Math.round(v*100)+'%',
+    onChange: v => { engine.delMix = v; }
+  },
+  'k-revSize': {
+    min:0, max:1, defaultVal:0.65, label:'v-revSize',
+    display: v => Math.round(v*100)+'%',
+    onChange: v => { engine.revSize = v; updateReverbIR(); }
+  },
+  'k-revDecay': {
+    min:0, max:1, defaultVal:0.48, label:'v-revDecay',
+    display: v => (0.2 + v*9.8).toFixed(1)+'s',
+    onChange: v => { engine.revDecay = 0.2 + v * 9.8; updateReverbIR(); }
+  },
+  'k-revColor': {
+    min:0, max:1, defaultVal:0.5, label:'v-revColor',
+    display: v => { const c = Math.round((v-0.5)*24); return (c>0?'+':'')+c+'dB'; },
+    onChange: v => { engine.revColor = (v-0.5)*2; }
+  },
+  'k-revMix': {
+    min:0, max:1, defaultVal:0.5, label:'v-revMix',
+    display: v => Math.round(v*100)+'%',
+    onChange: v => { engine.revMix = v; }
+  },
+};
+
+const knobState = {};
+const KNOB_START_ANGLE = -135;
+const KNOB_END_ANGLE = 135;
+
+function drawKnob(id, val) {
+  const canvas = document.getElementById(id);
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const cx = canvas.width / 2, cy = canvas.height / 2;
+  const r = cx - 4;
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  const def = knobDefs[id];
+  const norm = (val - def.min) / (def.max - def.min);
+  const startA = (KNOB_START_ANGLE) * Math.PI / 180;
+  const endA = (KNOB_END_ANGLE) * Math.PI / 180;
+  const curA = (KNOB_START_ANGLE + norm * (KNOB_END_ANGLE - KNOB_START_ANGLE)) * Math.PI / 180;
+
+  // Track background
+  ctx.beginPath();
+  ctx.arc(cx, cy, r - 2, startA, endA);
+  ctx.strokeStyle = '#1a1a22';
+  ctx.lineWidth = 4;
+  ctx.stroke();
+
+  // Get section color
+  const sectionColors = {
+    'k-grainSize':'#ffaa00','k-spray':'#ffaa00','k-density':'#ffaa00','k-panRand':'#ffaa00',
+    'k-delTime':'#00ccff','k-delFb':'#00ccff','k-delDiff':'#00ccff','k-delMix':'#00ccff',
+    'k-revSize':'#9966ff','k-revDecay':'#9966ff','k-revColor':'#9966ff','k-revMix':'#9966ff',
+  };
+  const color = sectionColors[id] || '#ffaa00';
+
+  // Active arc
+  ctx.beginPath();
+  ctx.arc(cx, cy, r - 2, startA, curA);
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 4;
+  ctx.shadowColor = color;
+  ctx.shadowBlur = 6;
+  ctx.stroke();
+  ctx.shadowBlur = 0;
+
+  // Knob body
+  const bodyGrad = ctx.createRadialGradient(cx-3, cy-3, 2, cx, cy, r-6);
+  bodyGrad.addColorStop(0, '#3a3a48');
+  bodyGrad.addColorStop(1, '#1e1e28');
+  ctx.beginPath();
+  ctx.arc(cx, cy, r - 6, 0, Math.PI*2);
+  ctx.fillStyle = bodyGrad;
+  ctx.fill();
+  ctx.strokeStyle = '#3e3e52';
+  ctx.lineWidth = 1;
+  ctx.stroke();
+
+  // Indicator dot
+  const ix = cx + (r - 10) * Math.cos(curA - Math.PI/2);
+  const iy = cy + (r - 10) * Math.sin(curA - Math.PI/2);
+  ctx.beginPath();
+  ctx.arc(ix, iy, 2.5, 0, Math.PI*2);
+  ctx.fillStyle = '#ffffff';
+  ctx.shadowColor = '#ffffff';
+  ctx.shadowBlur = 4;
+  ctx.fill();
+  ctx.shadowBlur = 0;
+}
+
+function setupKnob(id) {
+  const canvas = document.getElementById(id);
+  if (!canvas) return;
+  const def = knobDefs[id];
+  knobState[id] = { val: def.defaultVal, dragging: false, startY: 0, startVal: 0 };
+  drawKnob(id, def.defaultVal);
+  updateKnobDisplay(id, def.defaultVal);
+  def.onChange(def.defaultVal);
+
+  canvas.addEventListener('mousedown', e => {
+    knobState[id].dragging = true;
+    knobState[id].startY = e.clientY;
+    knobState[id].startVal = knobState[id].val;
+    e.preventDefault();
+  });
+
+  canvas.addEventListener('dblclick', () => {
+    setKnob(id, def.defaultVal);
+  });
+
+  window.addEventListener('mousemove', e => {
+    if (!knobState[id].dragging) return;
+    const dy = knobState[id].startY - e.clientY;
+    const range = def.max - def.min;
+    const delta = (dy / 180) * range * (e.shiftKey ? 0.1 : 1);
+    const newVal = Math.max(def.min, Math.min(def.max, knobState[id].startVal + delta));
+    setKnob(id, newVal);
+  });
+
+  window.addEventListener('mouseup', () => {
+    knobState[id].dragging = false;
+  });
+
+  canvas.addEventListener('wheel', e => {
+    e.preventDefault();
+    const range = def.max - def.min;
+    const delta = (-e.deltaY / 400) * range;
+    const newVal = Math.max(def.min, Math.min(def.max, knobState[id].val + delta));
+    setKnob(id, newVal);
+  }, { passive: false });
+}
+
+function setKnob(id, val) {
+  const def = knobDefs[id];
+  knobState[id].val = val;
+  drawKnob(id, val);
+  updateKnobDisplay(id, val);
+  def.onChange(val);
+}
+
+function updateKnobDisplay(id, val) {
+  const def = knobDefs[id];
+  const el = document.getElementById(def.label);
+  if (el) el.textContent = def.display(val);
+}
+
+// ═══════════════════════════════════════════════════════════════
+// SLIDERS
+// ═══════════════════════════════════════════════════════════════
+
+function setupSliders() {
+  const sliders = [
+    { id:'s-center', val:'sv-center', fn: v => { engine.center = v/100; return Math.round(v)+'%'; }},
+    { id:'s-envShape', val:'sv-envShape', fn: v => {
+        engine.envShape = v/100;
+        const labels = ['TRAP','HANN','GAUSS','TRI','RECT'];
+        return labels[Math.round(v/25)] || 'HANN';
+    }},
+    { id:'s-grainMix', val:'sv-grainMix', fn: v => { engine.grainMix = v/100; return Math.round(v)+'%'; }},
+    { id:'s-spread', val:'sv-spread', fn: v => { engine.spread = v/100; return Math.round(v)+'%'; }},
+    { id:'s-shimmer', val:'sv-shimmer', fn: v => { engine.shimmer = v/100; return Math.round(v)+'%'; }},
+    { id:'s-predelay', val:'sv-predelay', fn: v => { return Math.round(v*2)+'ms'; }},
+    { id:'s-transpose', val:'sv-transpose', fn: v => {
+        engine.pitchRatio = semitoneToRatio(v);
+        return (v>0?'+':'')+Math.round(v)+'st';
+    }},
+  ];
+
+  sliders.forEach(s => {
+    const el = document.getElementById(s.id);
+    const disp = document.getElementById(s.val);
+    if (!el || !disp) return;
+    const update = () => { disp.textContent = s.fn(parseFloat(el.value)); };
+    el.addEventListener('input', update);
+    update();
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════
+// BPM CONTROL
+// ═══════════════════════════════════════════════════════════════
+
+let bpmDrag = false, bpmStartY = 0, bpmStartVal = 120;
+
+document.getElementById('bpmDisplay').addEventListener('mousedown', e => {
+  bpmDrag = true; bpmStartY = e.clientY; bpmStartVal = engine.bpm; e.preventDefault();
+});
+window.addEventListener('mousemove', e => {
+  if (!bpmDrag) return;
+  const dy = bpmStartY - e.clientY;
+  engine.bpm = Math.max(40, Math.min(300, bpmStartVal + dy));
+  document.getElementById('bpmDisplay').textContent = Math.round(engine.bpm);
+  // Update grain size and delay time based on selected divisions
+  knobDefs['k-grainSize'].onChange(knobState['k-grainSize']?.val ?? 3);
+  knobDefs['k-delTime'].onChange(knobState['k-delTime']?.val ?? 2);
+});
+window.addEventListener('mouseup', () => { bpmDrag = false; });
+
+// ═══════════════════════════════════════════════════════════════
+// XY PAD
+// ═══════════════════════════════════════════════════════════════
+
+const xyCanvas = document.getElementById('xyCanvas');
+const xyCtx = xyCanvas.getContext('2d');
+let xyDragging = false;
+let xyX = 0.3, xyY = 0.5;
+
+function drawXY() {
+  const w = xyCanvas.width, h = xyCanvas.height;
+  xyCtx.clearRect(0, 0, w, h);
+
+  // Background grid
+  xyCtx.strokeStyle = 'rgba(44,44,60,0.8)';
+  xyCtx.lineWidth = 1;
+  for (let i = 0; i <= 4; i++) {
+    xyCtx.beginPath(); xyCtx.moveTo(i*w/4, 0); xyCtx.lineTo(i*w/4, h); xyCtx.stroke();
+    xyCtx.beginPath(); xyCtx.moveTo(0, i*h/4); xyCtx.lineTo(w, i*h/4); xyCtx.stroke();
+  }
+
+  // Labels
+  xyCtx.font = '8px Share Tech Mono'; xyCtx.fillStyle = 'rgba(85,85,104,0.8)';
+  xyCtx.fillText('CLEAR', 4, h-4);
+  xyCtx.fillText('DENSE', w-36, h-4);
+  xyCtx.fillText('DRY', 4, 10);
+  xyCtx.fillText('PAD', 4, h-14);
+
+  // Crosshair
+  const px = xyX * w, py = (1-xyY) * h;
+  xyCtx.strokeStyle = 'rgba(255,170,0,0.2)';
+  xyCtx.lineWidth = 1;
+  xyCtx.setLineDash([3,3]);
+  xyCtx.beginPath(); xyCtx.moveTo(px, 0); xyCtx.lineTo(px, h); xyCtx.stroke();
+  xyCtx.beginPath(); xyCtx.moveTo(0, py); xyCtx.lineTo(w, py); xyCtx.stroke();
+  xyCtx.setLineDash([]);
+
+  // Cursor
+  xyCtx.beginPath();
+  xyCtx.arc(px, py, 7, 0, Math.PI*2);
+  xyCtx.fillStyle = 'rgba(255,170,0,0.2)';
+  xyCtx.fill();
+  xyCtx.strokeStyle = '#ffaa00';
+  xyCtx.lineWidth = 1.5;
+  xyCtx.stroke();
+  xyCtx.beginPath();
+  xyCtx.arc(px, py, 2.5, 0, Math.PI*2);
+  xyCtx.fillStyle = '#ffaa00';
+  xyCtx.shadowColor = '#ffaa00';
+  xyCtx.shadowBlur = 8;
+  xyCtx.fill();
+  xyCtx.shadowBlur = 0;
+}
+
+function applyXY() {
+  // X = density (left=clear, right=dense) and spray
+  engine.density = 2 + xyX * 22;
+  engine.spray = xyX * 0.15;
+  // Y = mix dry/wet
+  if (dryGain) dryGain.gain.setTargetAtTime(1 - xyY * 0.9, audioCtx.currentTime, 0.05);
+  engine.delMix = xyY * 0.6;
+  engine.revMix = xyY * 0.7;
+
+  // Update display knobs
+  const densEl = document.getElementById('v-density');
+  if (densEl) densEl.textContent = Math.round(engine.density);
+}
+
+function xyFromEvent(e) {
+  const r = xyCanvas.getBoundingClientRect();
+  const touch = e.touches ? e.touches[0] : e;
+  xyX = Math.max(0, Math.min(1, (touch.clientX - r.left) / r.width));
+  xyY = Math.max(0, Math.min(1, 1 - (touch.clientY - r.top) / r.height));
+  applyXY(); drawXY();
+}
+
+xyCanvas.addEventListener('mousedown', e => { xyDragging=true; xyFromEvent(e); });
+window.addEventListener('mousemove', e => { if (xyDragging) xyFromEvent(e); });
+window.addEventListener('mouseup', () => { xyDragging=false; });
+xyCanvas.addEventListener('touchstart', e => { e.preventDefault(); xyDragging=true; xyFromEvent(e); }, {passive:false});
+xyCanvas.addEventListener('touchmove', e => { e.preventDefault(); xyFromEvent(e); }, {passive:false});
+xyCanvas.addEventListener('touchend', () => { xyDragging=false; });
+
+// ═══════════════════════════════════════════════════════════════
+// KEYBOARD
+// ═══════════════════════════════════════════════════════════════
+
+const kbCanvas = document.getElementById('keyboardCanvas');
+const kbCtx = kbCanvas.getContext('2d');
+let kbOctave = 4;
+let activeNote = -1;
+
+const WHITE_NOTES = [0,2,4,5,7,9,11]; // C D E F G A B
+const BLACK_NOTES = [1,3,-1,6,8,10]; // C# D# - F# G# A#
+const BLACK_POSITIONS = [0,1,-1,3,4,5]; // positions after white keys
+
+function drawKeyboard() {
+  const w = kbCanvas.width, h = kbCanvas.height;
+  const numWhite = 14; // 2 octaves
+  const ww = w / numWhite;
+  kbCtx.clearRect(0, 0, w, h);
+
+  // White keys
+  for (let i = 0; i < numWhite; i++) {
+    const octOff = Math.floor(i / 7);
+    const noteInOct = WHITE_NOTES[i % 7];
+    const semitone = kbOctave * 12 + octOff * 12 + noteInOct;
+    const isActive = activeNote === semitone;
+
+    kbCtx.fillStyle = isActive ? 'rgba(255,170,0,0.4)' : 'rgba(30,30,40,0.9)';
+    kbCtx.fillRect(i * ww + 1, 1, ww - 2, h - 2);
+    kbCtx.strokeStyle = isActive ? '#ffaa00' : '#3a3a4a';
+    kbCtx.lineWidth = 1;
+    kbCtx.strokeRect(i * ww + 1, 1, ww - 2, h - 2);
+
+    // Note label
+    if (noteInOct === 0) {
+      kbCtx.font = '9px Share Tech Mono';
+      kbCtx.fillStyle = isActive ? '#ffaa00' : '#555568';
+      kbCtx.fillText('C'+(kbOctave+octOff), i*ww + 4, h-5);
+    }
+  }
+
+  // Black keys
+  const bw = ww * 0.6, bh = h * 0.58;
+  for (let i = 0; i < numWhite - 1; i++) {
+    const noteInOct7 = i % 7;
+    if (noteInOct7 === 2 || noteInOct7 === 6) continue; // no black after E and B
+    const octOff = Math.floor(i / 7);
+    const noteInOct = WHITE_NOTES[noteInOct7] + 1;
+    const semitone = kbOctave * 12 + octOff * 12 + noteInOct;
+    const isActive = activeNote === semitone;
+
+    const bx = (i + 1) * ww - bw / 2;
+    kbCtx.fillStyle = isActive ? 'rgba(255,170,0,0.6)' : '#111118';
+    kbCtx.fillRect(bx, 0, bw, bh);
+    kbCtx.strokeStyle = isActive ? '#ffaa00' : '#2a2a38';
+    kbCtx.lineWidth = 1;
+    kbCtx.strokeRect(bx, 0, bw, bh);
+  }
+}
+
+function noteFromKbClick(e) {
+  const r = kbCanvas.getBoundingClientRect();
+  const touch = e.touches ? e.touches[0] : e;
+  const x = touch.clientX - r.left;
+  const y = touch.clientY - r.top;
+  const w = kbCanvas.width, h = kbCanvas.height;
+  const numWhite = 14;
+  const ww = w / numWhite;
+  const bw = ww * 0.6, bh = h * 0.58;
+
+  // Check black keys first
+  for (let i = 0; i < numWhite - 1; i++) {
+    const noteInOct7 = i % 7;
+    if (noteInOct7 === 2 || noteInOct7 === 6) continue;
+    const octOff = Math.floor(i / 7);
+    const noteInOct = WHITE_NOTES[noteInOct7] + 1;
+    const bx = (i + 1) * ww - bw / 2;
+    if (x >= bx && x <= bx + bw && y <= bh) {
+      return kbOctave * 12 + octOff * 12 + noteInOct;
+    }
+  }
+  // White keys
+  const idx = Math.floor(x / ww);
+  if (idx < numWhite) {
+    const octOff = Math.floor(idx / 7);
+    return kbOctave * 12 + octOff * 12 + WHITE_NOTES[idx % 7];
+  }
+  return -1;
+}
+
+function playNote(semitone) {
+  activeNote = semitone;
+  const transpose = parseInt(document.getElementById('s-transpose').value) || 0;
+  engine.pitchRatio = semitoneToRatio(semitone - (kbOctave * 12 + 5) + transpose);
+  drawKeyboard();
+}
+
+function releaseNote() {
+  activeNote = -1;
+  engine.pitchRatio = semitoneToRatio(parseInt(document.getElementById('s-transpose').value) || 0);
+  drawKeyboard();
+}
+
+kbCanvas.addEventListener('mousedown', e => { playNote(noteFromKbClick(e)); });
+window.addEventListener('mouseup', () => { if (activeNote >= 0) releaseNote(); });
+kbCanvas.addEventListener('touchstart', e => { e.preventDefault(); playNote(noteFromKbClick(e)); }, {passive:false});
+kbCanvas.addEventListener('touchend', () => { releaseNote(); });
+
+function changeOctave(delta) {
+  kbOctave = Math.max(0, Math.min(8, kbOctave + delta));
+  document.getElementById('octDisplay').textContent = kbOctave;
+  drawKeyboard();
+}
+
+// ═══════════════════════════════════════════════════════════════
+// VU METERS
+// ═══════════════════════════════════════════════════════════════
+
+function buildVU(id) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.innerHTML = '';
+  const col = document.createElement('div');
+  col.className = 'vu-bar-col';
+  for (let i = 0; i < 12; i++) {
+    const seg = document.createElement('div');
+    seg.className = 'vu-seg';
+    col.appendChild(seg);
+  }
+  el.appendChild(col);
+}
+
+function updateVU(id, level) {
+  const col = document.querySelector(`#${id} .vu-bar-col`);
+  if (!col) return;
+  const segs = col.children;
+  const n = Math.round(level * segs.length);
+  for (let i = 0; i < segs.length; i++) {
+    const lit = i < n;
+    const pct = i / segs.length;
+    segs[i].style.background = lit ?
+      (pct > 0.83 ? '#ff3344' : pct > 0.66 ? '#ffaa00' : '#44ff88') : '#1a1a22';
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// WAVEFORM
+// ═══════════════════════════════════════════════════════════════
+
+const waveCanvas = document.getElementById('waveCanvas');
+const waveCtx = waveCanvas.getContext('2d');
+let waveData = new Uint8Array(256);
+let animFrame = null;
+let vuPhaseL = 0, vuPhaseR = 0;
+
+function drawWave() {
+  const w = waveCanvas.width, h = waveCanvas.height;
+  waveCtx.clearRect(0, 0, w, h);
+
+  if (analyserNode) {
+    analyserNode.getByteTimeDomainData(waveData);
+    const step = w / waveData.length;
+
+    // Gradient fill under waveform
+    const grad = waveCtx.createLinearGradient(0, 0, 0, h);
+    grad.addColorStop(0, 'rgba(255,170,0,0.15)');
+    grad.addColorStop(1, 'rgba(255,170,0,0)');
+
+    waveCtx.beginPath();
+    waveCtx.moveTo(0, h/2);
+    for (let i = 0; i < waveData.length; i++) {
+      const y = ((waveData[i] / 128) - 1) * (h * 0.45) + h / 2;
+      i === 0 ? waveCtx.moveTo(0, y) : waveCtx.lineTo(i * step, y);
+    }
+    waveCtx.lineTo(w, h/2);
+    waveCtx.closePath();
+    waveCtx.fillStyle = grad;
+    waveCtx.fill();
+
+    // Line
+    waveCtx.beginPath();
+    for (let i = 0; i < waveData.length; i++) {
+      const y = ((waveData[i] / 128) - 1) * (h * 0.45) + h / 2;
+      i === 0 ? waveCtx.moveTo(0, y) : waveCtx.lineTo(i * step, y);
+    }
+    waveCtx.strokeStyle = 'rgba(255,170,0,0.7)';
+    waveCtx.lineWidth = 1.5;
+    waveCtx.stroke();
+
+    // Calculate RMS for VU
+    let sum = 0;
+    for (const d of waveData) sum += ((d/128-1) ** 2);
+    const rms = Math.sqrt(sum/waveData.length);
+    updateVU('vuMeterL', Math.min(1, rms * 4 + Math.random()*0.05));
+    updateVU('vuMeterR', Math.min(1, rms * 4 + Math.random()*0.05));
+  } else {
+    // Idle animation
+    waveCtx.beginPath();
+    for (let x = 0; x < w; x++) {
+      const y = h/2 + Math.sin(x*0.04 + Date.now()*0.001) * 3 * Math.random();
+      x===0 ? waveCtx.moveTo(x,y) : waveCtx.lineTo(x,y);
+    }
+    waveCtx.strokeStyle = 'rgba(85,85,104,0.4)';
+    waveCtx.lineWidth = 1;
+    waveCtx.stroke();
+  }
+
+  // Beat indicator
+  if (isRunning) {
+    const beatInterval = 60000 / engine.bpm;
+    const phase = (Date.now() % beatInterval) / beatInterval;
+    const alpha = Math.max(0, 1 - phase * 3);
+    waveCtx.fillStyle = `rgba(255,170,0,${alpha * 0.5})`;
+    waveCtx.fillRect(0, 0, 3, h);
+  }
+
+  document.getElementById('grainCount').textContent = `GRAINS: ${grainCount}`;
+  animFrame = requestAnimationFrame(drawWave);
+}
+
+function startViz() {
+  if (animFrame) cancelAnimationFrame(animFrame);
+  drawWave();
+}
+
+// ═══════════════════════════════════════════════════════════════
+// TOGGLE CONTROLS
+// ═══════════════════════════════════════════════════════════════
+
+function setDirection(d) {
+  engine.direction = d;
+  ['fwd','rev','rnd'].forEach(x => {
+    const el = document.getElementById('dir-'+x);
+    if (el) {
+      el.className = 'btn-sm' + (x===d ? ' active' : '');
+    }
+  });
+}
+
+function setModLFO(m) {
+  engine.modLFO = m;
+  engine.lfoRate = m==='slow' ? 0.15 : 1.5;
+  ['off','slow','step'].forEach(x => {
+    const el = document.getElementById('mod-'+x);
+    if (el) el.className = 'btn-sm' + (x===m ? ' active cyan' : '');
+  });
+}
+
+function setRevMode(m) {
+  ['normal','gran','plate'].forEach(x => {
+    const el = document.getElementById('rev-'+x);
+    if (el) el.className = 'btn-sm' + (x===m ? ' active purple' : '');
+  });
+  updateReverbIR();
+}
+
+function toggleFreeze() {
+  frozen = !frozen;
+  engine.freeze = frozen;
+  const btn = document.getElementById('btnFreeze');
+  btn.classList.toggle('active', frozen);
+  btn.textContent = frozen ? '❄ FROZEN' : '❄ FREEZE';
+}
+
+// ═══════════════════════════════════════════════════════════════
+// PRESETS
+// ═══════════════════════════════════════════════════════════════
+
+const PRESETS = {
+  piano: {
+    name: 'Lo-Fi Piano Clouds',
+    grainSize: 4, spray: 0.3, density: 0.25, panRand: 0.4,
+    direction: 'fwd', center: 40, envShape: 60, grainMix: 75,
+    delTime: 1, delFb: 0.3, delDiff: 0.5, delMix: 0.35,
+    revSize: 0.7, revDecay: 0.55, revColor: 0.45, revMix: 0.6,
+    spread: 25, scale: 'major', shimmer: 20, predelay: 20,
+    xy: [0.25, 0.65], bpm: 90
+  },
+  vocal: {
+    name: 'Vocal Shimmer Delay',
+    grainSize: 3, spray: 0.2, density: 0.4, panRand: 0.6,
+    direction: 'fwd', center: 25, envShape: 50, grainMix: 85,
+    delTime: 2, delFb: 0.5, delDiff: 0.4, delMix: 0.5,
+    revSize: 0.75, revDecay: 0.5, revColor: 0.55, revMix: 0.65,
+    spread: 40, scale: 'major', shimmer: 60, predelay: 15,
+    xy: [0.4, 0.7], bpm: 120
+  },
+  drums: {
+    name: 'Rhythmic Grain Echo',
+    grainSize: 6, spray: 0.05, density: 0.65, panRand: 0.7,
+    direction: 'rnd', center: 15, envShape: 20, grainMix: 90,
+    delTime: 2, delFb: 0.35, delDiff: 0.2, delMix: 0.45,
+    revSize: 0.35, revDecay: 0.25, revColor: 0.5, revMix: 0.3,
+    spread: 10, scale: 'none', shimmer: 0, predelay: 5,
+    xy: [0.7, 0.4], bpm: 128
+  },
+  tape: {
+    name: 'Granular Tape Verb',
+    grainSize: 2, spray: 0.5, density: 0.2, panRand: 0.8,
+    direction: 'rnd', center: 50, envShape: 50, grainMix: 70,
+    delTime: 0, delFb: 0.6, delDiff: 0.7, delMix: 0.4,
+    revSize: 0.9, revDecay: 0.75, revColor: 0.4, revMix: 0.8,
+    spread: 15, scale: 'minor', shimmer: 35, predelay: 40,
+    xy: [0.2, 0.85], bpm: 80
+  },
+};
+
+function loadPreset(name) {
+  const p = PRESETS[name];
+  if (!p) return;
+
+  // Update knobs
+  setKnob('k-grainSize', p.grainSize);
+  setKnob('k-spray', p.spray);
+  setKnob('k-density', p.density);
+  setKnob('k-panRand', p.panRand);
+  setKnob('k-delTime', p.delTime);
+  setKnob('k-delFb', p.delFb);
+  setKnob('k-delDiff', p.delDiff);
+  setKnob('k-delMix', p.delMix);
+  setKnob('k-revSize', p.revSize);
+  setKnob('k-revDecay', p.revDecay);
+  setKnob('k-revColor', p.revColor);
+  setKnob('k-revMix', p.revMix);
+
+  // Update sliders
+  document.getElementById('s-center').value = p.center;
+  document.getElementById('s-envShape').value = p.envShape;
+  document.getElementById('s-grainMix').value = p.grainMix;
+  document.getElementById('s-spread').value = p.spread;
+  document.getElementById('s-shimmer').value = p.shimmer;
+  document.getElementById('s-predelay').value = p.predelay;
+  setupSliders();
+
+  setDirection(p.direction);
+  document.getElementById('sel-scale').value = p.scale;
+
+  // XY
+  xyX = p.xy[0]; xyY = p.xy[1];
+  applyXY(); drawXY();
+
+  // BPM
+  engine.bpm = p.bpm;
+  document.getElementById('bpmDisplay').textContent = p.bpm;
+
+  // Update preset buttons
+  Object.keys(PRESETS).forEach(k => {
+    const btn = document.getElementById('p-'+k);
+    if (btn) btn.classList.toggle('active', k === name);
+  });
+
+  setStatus(`PRESET: ${p.name.toUpperCase()}`);
+}
+
+// ═══════════════════════════════════════════════════════════════
+// RESYNTHESIZE
+// ═══════════════════════════════════════════════════════════════
+
+function resynthesize() {
+  // Randomize some params while keeping core structure
+  const locked = ['k-density', 'k-delFb']; // locked params
+  const randomizable = Object.keys(knobDefs).filter(k => !locked.includes(k));
+
+  randomizable.forEach(k => {
+    if (Math.random() > 0.5) {
+      const def = knobDefs[k];
+      const range = def.max - def.min;
+      const current = knobState[k]?.val ?? def.defaultVal;
+      const delta = (Math.random() - 0.5) * range * 0.4;
+      const newVal = Math.max(def.min, Math.min(def.max, current + delta));
+      setKnob(k, newVal);
+    }
+  });
+
+  // Random direction
+  const dirs = ['fwd','rev','rnd'];
+  setDirection(dirs[Math.floor(Math.random() * dirs.length)]);
+
+  // Random XY nudge
+  xyX = Math.max(0, Math.min(1, xyX + (Math.random()-0.5)*0.3));
+  xyY = Math.max(0, Math.min(1, xyY + (Math.random()-0.5)*0.3));
+  applyXY(); drawXY();
+
+  // Clear preset highlight
+  Object.keys(PRESETS).forEach(k => {
+    const btn = document.getElementById('p-'+k);
+    if (btn) btn.classList.remove('active');
+  });
+
+  // Animate button
+  const btn = document.getElementById('btnResynth');
+  btn.textContent = '⟳ GENERATING...';
+  setTimeout(() => { btn.textContent = '↺ RESYNTHESIZE'; }, 600);
+
+  setStatus('RESYNTHESIZED · NEW TEXTURE GENERATED');
+}
+
+document.getElementById('btnResynth').addEventListener('click', resynthesize);
+
+// ═══════════════════════════════════════════════════════════════
+// TRANSPORT
+// ═══════════════════════════════════════════════════════════════
+
+document.getElementById('btnMic').addEventListener('click', async () => {
+  if (!isRunning) {
+    setStatus('REQUESTING MIC ACCESS...');
+    const ok = await initAudio();
+    if (ok) {
+      document.getElementById('btnStart').classList.add('active');
+      document.getElementById('btnStart').textContent = '■ STOP';
+    }
+  } else {
+    // Stop
+    if (micStream) micStream.getTracks().forEach(t => t.stop());
+    if (audioCtx) audioCtx.close();
+    if (animFrame) cancelAnimationFrame(animFrame);
+    isRunning = false;
+    audioCtx = null;
+    document.getElementById('btnStart').classList.remove('active');
+    document.getElementById('btnStart').textContent = '▶ START';
+    document.getElementById('btnMic').classList.remove('active');
+    document.getElementById('ledSignal').classList.remove('active');
+    setStatus('STOPPED');
+    startViz();
+  }
+});
+
+document.getElementById('btnStart').addEventListener('click', () => {
+  if (!isRunning) {
+    document.getElementById('btnMic').click();
+  }
+});
+
+// ═══════════════════════════════════════════════════════════════
+// UTILITIES
+// ═══════════════════════════════════════════════════════════════
+
+function setStatus(msg) {
+  const el = document.getElementById('statusText');
+  if (el) el.textContent = msg;
+}
+
+// Clock LED
+let beatPhase = 0;
+setInterval(() => {
+  const led = document.getElementById('ledClock');
+  beatPhase = !beatPhase;
+  led.classList.toggle('amber', beatPhase);
+  led.classList.toggle('pulse', !beatPhase);
+}, Math.round(60000 / engine.bpm / 2));
+
+// ═══════════════════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════════════════
+
+// Build VU meters
+buildVU('vuMeterL');
+buildVU('vuMeterR');
+
+// Setup all knobs
+Object.keys(knobDefs).forEach(id => setupKnob(id));
+
+// Setup sliders
+setupSliders();
+
+// Draw initial UI
+drawXY();
+drawKeyboard();
+startViz();
+
+// Load default preset
+loadPreset('piano');
+
+</script>
+</body>
+</html>
