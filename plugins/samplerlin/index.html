@@ -3,8 +3,8 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>SAMPLERLIN MK2</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>EMULLOTRON MK2</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
   <style>
@@ -62,6 +62,7 @@ justify-content: space-between;
 padding: 16px 20px;
 background: #242424;
 border-bottom: 1px solid #333333;
+position: relative;
 }
 .brand { display:-webkit-flex; display:flex; -webkit-align-items:baseline; align-items:baseline; gap:8px; }
 .brand-name { font-size:18px; font-weight:700; letter-spacing:2px; color:#f0f0f0; }
@@ -299,6 +300,98 @@ font-size:9px; color:#666666; letter-spacing:1px;
 
 @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.4} }
 @-webkit-keyframes blink { 0%,100%{opacity:1} 50%{opacity:.4} }
+
+/* ── iPhone portrait — max 430px ── */
+@media screen and (max-width: 430px) {
+
+body { padding: 0; }
+
+.emullotron { border-radius: 0; border-left: none; border-right: none; }
+
+/* Header — stack vertically */
+.header {
+-webkit-flex-direction: column;
+flex-direction: column;
+-webkit-align-items: flex-start;
+align-items: flex-start;
+gap: 10px;
+padding: 12px 14px;
+}
+.brand { -webkit-justify-content: space-between; justify-content: space-between; width: 100%; }
+.brand-name { font-size: 15px; }
+.screen {
+width: 100%;
+min-width: 0;
+padding: 8px 12px;
+}
+.screen-value { font-size: 10px; }
+.status-leds { position: absolute; top: 14px; right: 14px; }
+
+/* Banks — 2×2 */
+.banks { padding: 10px 12px; gap: 6px; }
+.bank-btn, .custom-label {
+min-width: calc(50% - 3px);
+padding: 10px 6px;
+font-size: 8px;
+}
+.bank-icon { font-size: 14px; }
+
+/* Controls — 1 column */
+.controls { -webkit-flex-direction: column; flex-direction: column; }
+.control-group {
+width: 100%;
+min-width: 0;
+padding: 12px 14px;
+border-right: none;
+}
+.control-row { gap: 4px; -webkit-justify-content: space-around; justify-content: space-around; }
+.encoder { width: 38px; height: 38px; }
+.encoder-indicator { top: 7px; height: 8px; transform-origin: center 12px; -webkit-transform:translateX(-50%) rotate(-135deg); transform:translateX(-50%) rotate(-135deg); }
+.encoder-label { font-size: 7px; letter-spacing: 0; }
+
+/* Presets */
+.presets { padding: 10px 12px; gap: 8px; -webkit-flex-wrap: wrap; flex-wrap: wrap; }
+.presets-label { width: 100%; margin-bottom: 2px; }
+.preset-row { width: 100%; }
+.preset-btn { font-size: 7px; padding: 7px 2px; min-width: 0; }
+
+/* Mode section */
+.mode-section { padding: 10px 12px; }
+.mode-row { gap: 10px; }
+.mode-btn { padding: 5px 8px; font-size: 8px; }
+.mode-group-label { font-size: 7px; }
+.arp-row { gap: 10px; }
+.bpm-val { font-size: 10px; min-width: 26px; }
+
+/* Step recorder */
+.seq-section { padding: 10px 12px; }
+.seq-header { gap: 8px; }
+.seq-btn { padding: 5px 8px; font-size: 8px; }
+.seq-step { min-width: 0; height: 44px; -webkit-flex: 1; flex: 1; }
+.step-note { font-size: 9px; }
+.step-num  { font-size: 7px; }
+
+/* Keyboard */
+.keyboard-section { padding: 14px 10px; }
+.keyboard { gap: 3px; }
+.key { width: 34px; height: 40px; border-radius: 5px; }
+.key-letter { font-size: 10px; }
+.key-note   { font-size: 7px; margin-top: 1px; }
+.keyboard-info { gap: 10px; margin-top: 10px; font-size: 9px; }
+.octave-btn { width: 26px; height: 22px; font-size: 12px; }
+
+/* Footer */
+.footer { padding: 10px 14px; font-size: 8px; }
+}
+
+/* ── Very small (SE, mini) — max 375px ── */
+@media screen and (max-width: 375px) {
+.key { width: 30px; height: 38px; }
+.key-letter { font-size: 9px; }
+.key-note { display: none; }
+.encoder { width: 34px; height: 34px; }
+.preset-btn { letter-spacing: 0; }
+}
 </style>
 
 </head>
@@ -309,7 +402,7 @@ font-size:9px; color:#666666; letter-spacing:1px;
 
   <header class="header">
     <div class="brand">
-      <span class="brand-name">SAMPLErLIN</span>
+      <span class="brand-name">EMULLOTRON</span>
       <span class="brand-version">MK2</span>
     </div>
     <div class="screen">
