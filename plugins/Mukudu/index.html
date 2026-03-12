@@ -335,8 +335,8 @@ select:focus{ border-color:rgba(217,53,53,.55); }
         </div>
         <div class="divider"></div>
         <div class="ctrl">
-          <div class="ctrl-head"><span class="ctrl-lbl">Master</span><span class="ctrl-val" id="vMaster">30%</span></div>
-          <input id="rMaster" type="range" min="0" max="1" step="0.01" value="0.30">
+          <div class="ctrl-head"><span class="ctrl-lbl">Master</span><span class="ctrl-val" id="vMaster">70%</span></div>
+          <input id="rMaster" type="range" min="0" max="1" step="0.01" value="0.70">
         </div>
         <div class="divider"></div>
         <div class="ctrl">
@@ -622,7 +622,7 @@ const state = {
   playing:false, currentStep:-1, selectedStep:0, playMode:"LEGATO",
   seqLen:16, steps:[], clipboard:null,   // ✅ default 16
   synth:{ attack:0.10, release:1.50, brightness:0.40, ensemble:0.60, strings:true, organ:true, chorus:false, blend:0.50 },
-  metOn:false, metVol:0.35, sat:0.00, echoMix:0.00, echoTime:0.32, echoFb:0.35, master:0.30
+  metOn:false, metVol:0.35, sat:0.00, echoMix:0.00, echoTime:0.32, echoFb:0.35, master:0.70
 };
 
 const DRUM_TRACKS = [
