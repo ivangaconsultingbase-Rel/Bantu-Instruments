@@ -1,0 +1,1314 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>GRAINSCAPE V2 — Granular Resynth Insert</title>
+  <style>
+    :root{
+      --bg:#0b0c0f;
+      --bg2:#11141b;
+      --panel:#151922;
+      --panel2:#1b2130;
+      --line:#31394a;
+      --line2:#40495d;
+      --txt:#edf2f8;
+      --mut:#9aa7ba;
+      --acc:#d7ff5b;
+      --acc2:#87d7ff;
+      --acc3:#ffb86c;
+      --danger:#ff6f8d;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      --ui: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      --r:18px;
+      --shadow:0 14px 42px rgba(0,0,0,.35);
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      color:var(--txt);
+      font-family:var(--ui);
+      background:
+        radial-gradient(circle at top, #151a24 0%, #0b0c0f 42%, #06070a 100%);
+      -webkit-font-smoothing:antialiased;
+      overflow-x:hidden;
+    }
+    button,input,select{font:inherit}
+    .app{
+      max-width:1480px;
+      margin:0 auto;
+      padding:18px;
+      display:grid;
+      gap:16px;
+    }
+    .panel,.topbar,.macrobar,.padsWrap{
+      background:linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,.012));
+      border:1px solid var(--line);
+      border-radius:var(--r);
+      box-shadow:var(--shadow);
+    }
+    .topbar{
+      padding:16px;
+      display:grid;
+      grid-template-columns:1.25fr .95fr;
+      gap:16px;
+      align-items:stretch;
+    }
+    .brand{
+      display:flex;
+      flex-direction:column;
+      justify-content:space-between;
+      gap:14px;
+      min-height:120px;
+    }
+    .pill{
+      display:inline-flex;
+      width:max-content;
+      padding:7px 10px;
+      border-radius:999px;
+      background:var(--acc);
+      color:#101508;
+      font-size:12px;
+      font-weight:900;
+      letter-spacing:.08em;
+      text-transform:uppercase;
+    }
+    .logo{
+      font-weight:900;
+      letter-spacing:.18em;
+      font-size:clamp(24px, 4vw, 38px);
+      line-height:1;
+    }
+    .tag{
+      color:var(--mut);
+      max-width:70ch;
+      font-size:13px;
+      line-height:1.45;
+    }
+    .lcd{
+      margin-top:auto;
+      background:#d2ec9a;
+      color:#202a13;
+      border:1px solid rgba(0,0,0,.18);
+      border-radius:16px;
+      padding:14px 16px;
+      font-family:var(--mono);
+      box-shadow:inset 0 2px 8px rgba(0,0,0,.15);
+      display:grid;
+      gap:8px;
+      min-height:118px;
+    }
+    .lcdRow{
+      display:flex;
+      justify-content:space-between;
+      gap:10px;
+      font-size:13px;
+    }
+    .lcdMain{
+      font-weight:800;
+      font-size:18px;
+      letter-spacing:.04em;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+    .io{
+      display:grid;
+      gap:12px;
+      align-content:start;
+    }
+    .btnRow,.smallRow{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+    button{
+      border:none;
+      border-radius:12px;
+      padding:11px 14px;
+      cursor:pointer;
+      color:var(--txt);
+      background:linear-gradient(180deg, #283041, #1b2230);
+      border:1px solid var(--line2);
+      transition:.14s transform ease, .14s filter ease, .14s border-color ease;
+    }
+    button:hover{transform:translateY(-1px)}
+    button.primary{
+      color:#14180a;
+      font-weight:800;
+      border-color:#ddff87;
+      background:linear-gradient(180deg, #ddff6b, #abd62d);
+    }
+    button.secondary{
+      color:#08131c;
+      font-weight:800;
+      border-color:#9de1ff;
+      background:linear-gradient(180deg, #9fe0ff, #62b8ea);
+    }
+    button.warn{
+      color:#1e1203;
+      font-weight:800;
+      border-color:#ffd09a;
+      background:linear-gradient(180deg, #ffc987, #f0a04a);
+    }
+    button.active{
+      outline:2px solid var(--acc);
+      outline-offset:1px;
+    }
+    .ioGrid{
+      display:grid;
+      grid-template-columns:repeat(2, minmax(0,1fr));
+      gap:10px;
+    }
+    .control{
+      display:grid;
+      grid-template-columns:1fr auto;
+      gap:8px;
+      align-items:center;
+      background:rgba(255,255,255,.02);
+      border:1px solid rgba(255,255,255,.055);
+      border-radius:14px;
+      padding:10px 12px;
+      min-height:72px;
+    }
+    .control label{
+      font-size:13px;
+      color:#eff3f8;
+    }
+    .value{
+      color:var(--acc2);
+      font-family:var(--mono);
+      font-size:12px;
+      white-space:nowrap;
+    }
+    .control .wide{
+      grid-column:1 / -1;
+    }
+    input[type="range"]{
+      width:100%;
+      accent-color:var(--acc);
+      cursor:pointer;
+    }
+    select,input[type="file"]{
+      width:100%;
+      border-radius:10px;
+      border:1px solid var(--line2);
+      background:var(--panel2);
+      color:var(--txt);
+      padding:9px 10px;
+      outline:none;
+    }
+    input[type="file"]{padding:7px}
+    .meter{
+      height:10px;
+      border-radius:999px;
+      overflow:hidden;
+      background:rgba(255,255,255,.06);
+      border:1px solid rgba(255,255,255,.06);
+    }
+    .meterFill{
+      width:0%;
+      height:100%;
+      background:linear-gradient(90deg, var(--acc), var(--acc2));
+    }
+    .miniCard{
+      flex:1;
+      min-width:180px;
+      border-radius:14px;
+      padding:12px;
+      border:1px solid rgba(255,255,255,.06);
+      background:rgba(255,255,255,.02);
+    }
+    .miniCard h3{
+      margin:0 0 6px;
+      font-size:13px;
+      letter-spacing:.08em;
+      text-transform:uppercase;
+    }
+    .miniCard p{
+      margin:0;
+      color:var(--mut);
+      font-size:12px;
+      line-height:1.45;
+    }
+    .mainGrid{
+      display:grid;
+      grid-template-columns:repeat(3, minmax(0,1fr));
+      gap:16px;
+    }
+    .panel{
+      padding:16px;
+      display:grid;
+      gap:12px;
+      align-content:start;
+    }
+    .panel h2{
+      margin:0;
+      font-size:16px;
+      letter-spacing:.09em;
+      text-transform:uppercase;
+    }
+    .sub{
+      color:var(--mut);
+      font-size:12px;
+      margin-top:-6px;
+    }
+    .controls{display:grid; gap:10px}
+    .macrobar{
+      padding:16px;
+      display:grid;
+      grid-template-columns:1.18fr .82fr;
+      gap:16px;
+    }
+    .xyWrap{
+      display:grid;
+      grid-template-columns:1fr 190px;
+      gap:14px;
+    }
+    .xyPad{
+      position:relative;
+      min-height:300px;
+      border-radius:18px;
+      border:1px solid var(--line);
+      overflow:hidden;
+      cursor:crosshair;
+      touch-action:none;
+      background:
+        linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.01)),
+        linear-gradient(90deg, rgba(215,255,91,.12), transparent 40%, rgba(135,215,255,.12));
+    }
+    .xyPad::before,.xyPad::after{
+      content:"";
+      position:absolute;
+      inset:0;
+      pointer-events:none;
+      background-image:
+        linear-gradient(rgba(255,255,255,.06) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,.06) 1px, transparent 1px);
+      background-size:25% 25%;
+    }
+    .xyDot{
+      position:absolute;
+      width:22px;height:22px;
+      border-radius:50%;
+      transform:translate(-50%,-50%);
+      border:1px solid rgba(255,255,255,.45);
+      background:radial-gradient(circle at 30% 30%, #fff, #d7ff5b 38%, #55610e 100%);
+      box-shadow:0 0 0 6px rgba(215,255,91,.14), 0 10px 24px rgba(0,0,0,.35);
+      pointer-events:none;
+    }
+    .seqGrid{
+      display:grid;
+      grid-template-columns:repeat(16, minmax(0,1fr));
+      gap:8px;
+      margin-top:2px;
+    }
+    .seqStep{
+      min-height:54px;
+      border-radius:12px;
+      display:grid;
+      place-items:center;
+      background:linear-gradient(180deg, #232b3a, #171d29);
+      border:1px solid var(--line2);
+      font-family:var(--mono);
+      font-size:12px;
+      user-select:none;
+    }
+    .seqStep.active{
+      color:#121707;
+      font-weight:800;
+      border-color:#e5ff9b;
+      background:linear-gradient(180deg, #ddff73, #a9d42f);
+    }
+    .seqStep.play{
+      box-shadow:0 0 0 2px rgba(135,215,255,.9) inset;
+    }
+    .padsWrap{
+      padding:16px;
+      display:grid;
+      gap:12px;
+      align-content:start;
+    }
+    .padsHead{
+      display:flex;
+      justify-content:space-between;
+      gap:12px;
+      align-items:center;
+    }
+    .pads{
+      display:grid;
+      grid-template-columns:repeat(8, minmax(0,1fr));
+      gap:10px;
+    }
+    .pad{
+      min-height:76px;
+      border-radius:16px;
+      display:flex;
+      flex-direction:column;
+      justify-content:center;
+      align-items:center;
+      gap:4px;
+      color:var(--txt);
+      font-weight:800;
+      background:linear-gradient(180deg, #20283a, #171d29);
+      border:1px solid var(--line2);
+    }
+    .pad small{
+      color:var(--mut);
+      font-weight:600;
+    }
+    .pad.active{
+      color:#141909;
+      border-color:#e3ff92;
+      background:linear-gradient(180deg, #ddff71, #a7d12e);
+    }
+    .footerNote{
+      color:var(--mut);
+      font-size:12px;
+      text-align:center;
+      padding:2px 4px 8px;
+    }
+    @media (max-width:1180px){
+      .topbar,.mainGrid,.macrobar{grid-template-columns:1fr}
+    }
+    @media (max-width:760px){
+      .app{padding:12px}
+      .ioGrid{grid-template-columns:1fr}
+      .xyWrap{grid-template-columns:1fr}
+      .pads{grid-template-columns:repeat(4, minmax(0,1fr))}
+      .seqGrid{grid-template-columns:repeat(8, minmax(0,1fr))}
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <section class="topbar">
+      <div class="brand">
+        <div class="pill">Granular insert / playable texture</div>
+        <div class="logo">GRAINSCAPE V2</div>
+        <div class="tag">
+          Resynthèse granulaire musicale temps réel : on garde le groove, on reconstruit des nappes, des échos
+          sync et des textures jouables. Entrée via micro ou fichier audio, avec pads de transposition et modulation harmonique visible.
+        </div>
+        <div class="lcd">
+          <div class="lcdRow"><span>STATE</span><span id="lcdState">IDLE</span></div>
+          <div class="lcdRow"><span>TEMPO</span><span id="lcdTempo">120 BPM</span></div>
+          <div class="lcdRow"><span>SCALE</span><span id="lcdScale">C Minor</span></div>
+          <div class="lcdRow"><span>TEXTURE</span><span id="lcdTexture">Balanced Motion</span></div>
+          <div class="lcdMain" id="lcdMain">Awaiting audio input</div>
+        </div>
+      </div>
+
+      <div class="io">
+        <div class="btnRow">
+          <button id="startAudio" class="primary">Audio On</button>
+          <button id="toggleMic">Mic Input</button>
+          <button id="resynth" class="warn">Resynthesize</button>
+          <button id="freezeBtn">Freeze</button>
+          <button id="panicBtn">Panic</button>
+        </div>
+
+        <div class="ioGrid">
+          <div class="control">
+            <label for="fileInput">Load source file</label>
+            <span class="value" id="fileName">none</span>
+            <input id="fileInput" class="wide" type="file" accept="audio/*,.wav,.mp3,.aif,.aiff,.m4a,.aac,.ogg" />
+          </div>
+          <div class="control">
+            <label for="presetSelect">Preset</label>
+            <span class="value">quick load</span>
+            <select id="presetSelect" class="wide">
+              <option value="custom">Custom</option>
+              <option value="pianoClouds">Lo-fi Piano Clouds</option>
+              <option value="vocalShimmer">Vocal Shimmer Delay</option>
+              <option value="grainEcho">Rhythmic Grain Echo</option>
+              <option value="tapeVerb">Granular Tape Verb</option>
+            </select>
+          </div>
+          <div class="control">
+            <label for="bpm">Tempo</label>
+            <span class="value" id="bpmVal">120 BPM</span>
+            <input id="bpm" class="wide" type="range" min="50" max="180" step="1" value="120" />
+          </div>
+          <div class="control">
+            <label for="masterMix">Output Mix</label>
+            <span class="value" id="masterMixVal">55%</span>
+            <input id="masterMix" class="wide" type="range" min="0" max="100" step="1" value="55" />
+          </div>
+        </div>
+
+        <div class="smallRow">
+          <div class="miniCard">
+            <h3>Input level</h3>
+            <div class="meter"><div id="inputMeter" class="meterFill"></div></div>
+          </div>
+          <div class="miniCard">
+            <h3>Texture level</h3>
+            <div class="meter"><div id="wetMeter" class="meterFill"></div></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="mainGrid">
+      <section class="panel">
+        <h2>Grain</h2>
+        <div class="sub">Capture, placement et suivi du groove</div>
+        <div class="controls">
+          <div class="control"><label for="division">Sync division</label><span class="value" id="divisionVal">1/16</span><select id="division" class="wide"></select></div>
+          <div class="control"><label for="grainSize">Grain size</label><span class="value" id="grainSizeVal">180 ms</span><input id="grainSize" class="wide" type="range" min="25" max="700" step="1" value="180" /></div>
+          <div class="control"><label for="spray">Spray / jitter</label><span class="value" id="sprayVal">22 ms</span><input id="spray" class="wide" type="range" min="0" max="250" step="1" value="22" /></div>
+          <div class="control"><label for="density">Density</label><span class="value" id="densityVal">1.30x</span><input id="density" class="wide" type="range" min="0.25" max="4" step="0.01" value="1.3" /></div>
+          <div class="control"><label for="randPan">Random pan</label><span class="value" id="randPanVal">25%</span><input id="randPan" class="wide" type="range" min="0" max="100" step="1" value="25" /></div>
+          <div class="control"><label for="direction">Direction</label><span class="value" id="directionVal">Forward</span><select id="direction" class="wide"><option value="forward">Forward</option><option value="reverse">Reverse</option><option value="random">Random</option></select></div>
+          <div class="control"><label for="centerMusic">Center around the music</label><span class="value" id="centerMusicVal">62%</span><input id="centerMusic" class="wide" type="range" min="0" max="100" step="1" value="62" /></div>
+        </div>
+      </section>
+
+      <section class="panel">
+        <h2>Delay</h2>
+        <div class="sub">Tempo grain delay, gamme et modulation harmonique</div>
+        <div class="controls">
+          <div class="control"><label for="delayDiv">Delay sync</label><span class="value" id="delayDivVal">1/8D</span><select id="delayDiv" class="wide"></select></div>
+          <div class="control"><label for="feedback">Feedback</label><span class="value" id="feedbackVal">42%</span><input id="feedback" class="wide" type="range" min="0" max="95" step="1" value="42" /></div>
+          <div class="control"><label for="diffusion">Diffusion</label><span class="value" id="diffusionVal">28%</span><input id="diffusion" class="wide" type="range" min="0" max="100" step="1" value="28" /></div>
+          <div class="control">
+            <label for="keySelect">Key / scale</label><span class="value" id="scaleDisplay">C Minor</span>
+            <div class="wide" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+              <select id="keySelect"></select>
+              <select id="scaleSelect"></select>
+            </div>
+          </div>
+          <div class="control"><label for="pitchSpread">Pitch spread</label><span class="value" id="pitchSpreadVal">3 voices</span><input id="pitchSpread" class="wide" type="range" min="1" max="4" step="1" value="3" /></div>
+          <div class="control"><label for="modDepth">Scale modulation depth</label><span class="value" id="modDepthVal">2 steps</span><input id="modDepth" class="wide" type="range" min="0" max="7" step="1" value="2" /></div>
+          <div class="control"><label for="modRate">Modulation rate</label><span class="value" id="modRateVal">1/8</span><select id="modRate" class="wide"></select></div>
+        </div>
+      </section>
+
+      <section class="panel">
+        <h2>Space</h2>
+        <div class="sub">Reverb, granular halo, tilt EQ et freeze</div>
+        <div class="controls">
+          <div class="control"><label for="reverbMode">Mode</label><span class="value" id="reverbModeVal">Normal</span><select id="reverbMode" class="wide"><option value="normal">Normal</option><option value="granular">Granular Verb</option></select></div>
+          <div class="control"><label for="size">Size</label><span class="value" id="sizeVal">56%</span><input id="size" class="wide" type="range" min="5" max="100" step="1" value="56" /></div>
+          <div class="control"><label for="decay">Decay</label><span class="value" id="decayVal">4.8 s</span><input id="decay" class="wide" type="range" min="0.4" max="14" step="0.1" value="4.8" /></div>
+          <div class="control"><label for="color">Color / tilt EQ</label><span class="value" id="colorVal">+8</span><input id="color" class="wide" type="range" min="-50" max="50" step="1" value="8" /></div>
+          <div class="control"><label for="spaceMix">Delay → Space</label><span class="value" id="spaceMixVal">58%</span><input id="spaceMix" class="wide" type="range" min="0" max="100" step="1" value="58" /></div>
+          <div class="control"><label for="freezeAmount">Freeze amount</label><span class="value" id="freezeAmountVal">0%</span><input id="freezeAmount" class="wide" type="range" min="0" max="100" step="1" value="0" /></div>
+        </div>
+      </section>
+    </section>
+
+    <section class="macrobar">
+      <div style="display:grid;gap:14px;">
+        <div class="xyWrap">
+          <div id="xyPad" class="xyPad">
+            <div id="xyDot" class="xyDot"></div>
+          </div>
+          <div style="display:grid;gap:10px;">
+            <div class="miniCard">
+              <h3>X macro</h3>
+              <p>Densité + spray. Gauche : précis. Droite : nuageux.</p>
+            </div>
+            <div class="miniCard">
+              <h3>Y macro</h3>
+              <p>Dry → delay → pad. Plus haut = plus vaste et plus mouillé.</p>
+            </div>
+            <div class="miniCard">
+              <h3>Groove</h3>
+              <p>Le placement suit l'énergie du signal pour rester lié au jeu original.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel" style="padding:14px;">
+          <h2>Scale Step Mod</h2>
+          <div class="sub">Clique sur une case pour choisir le degré de gamme utilisé par le séquenceur harmonique</div>
+          <div id="seqGrid" class="seqGrid"></div>
+        </div>
+      </div>
+
+      <div class="padsWrap">
+        <div class="padsHead">
+          <div>
+            <h2 style="margin:0;font-size:16px;letter-spacing:.09em;text-transform:uppercase;">Texture Pads</h2>
+            <div class="sub" style="margin-top:4px;">Jouer la resynthèse comme un instrument</div>
+          </div>
+          <div class="btnRow">
+            <button id="holdPad">Hold</button>
+          </div>
+        </div>
+        <div id="pads" class="pads"></div>
+      </div>
+    </section>
+
+    <div class="footerNote">
+      Prototype WebAudio autonome. Entrée via micro ou fichier audio. Pour un vrai insert DAW universel, il faudrait ensuite un emballage plugin natif ou un hôte dédié.
+    </div>
+  </div>
+
+  <script>
+    const audio = {
+      ctx:null,
+      master:null, dryGain:null, wetGain:null, inputGain:null,
+      analyserIn:null, analyserWet:null,
+      inputMeterData:null, wetMeterData:null,
+      streamSource:null,
+      mediaEl:null, mediaSource:null,
+      tapNode:null,
+      ringL:null, ringR:null, ringSize:0, writeIndex:0,
+      freezeL:null, freezeR:null, isFrozen:false,
+      transientMap:new Float32Array(512), transientCursor:0,
+      delayIn:null, feedbackGain:null, delayNode:null, diffuser:null,
+      reverbIn:null, convolver:null, tiltLow:null, tiltHigh:null,
+      spaceMixGain:null, directToWet:null,
+      activeVoices:new Set(),
+      schedulerId:null,
+      lastPlayTime:0,
+      modPlayStep:0,
+      nextModTime:0,
+      currentSeqIndex:0,
+      holdPad:false,
+      padSemitone:0,
+      inputMode:'none'
+    };
+
+    const state = {
+      bpm:120,
+      division:'1/16',
+      grainSizeMs:180,
+      sprayMs:22,
+      density:1.3,
+      randPan:0.25,
+      direction:'forward',
+      centerMusic:0.62,
+      delayDiv:'1/8D',
+      feedback:0.42,
+      diffusion:0.28,
+      key:'C',
+      scale:'minor',
+      pitchSpread:3,
+      modDepth:2,
+      modRate:'1/8',
+      modSequence:[0,2,4,2,0,3,4,5,0,2,4,6,5,4,2,0],
+      reverbMode:'normal',
+      size:0.56,
+      decay:4.8,
+      color:8,
+      freezeAmount:0,
+      masterMix:0.55,
+      spaceMix:0.58,
+      xyX:0.42,
+      xyY:0.54,
+      textureName:'Balanced Motion'
+    };
+
+    const scales = {
+      major:[0,2,4,5,7,9,11],
+      minor:[0,2,3,5,7,8,10],
+      pentMajor:[0,2,4,7,9],
+      pentMinor:[0,3,5,7,10],
+      dorian:[0,2,3,5,7,9,10],
+      mixolydian:[0,2,4,5,7,9,10],
+      lydian:[0,2,4,6,7,9,11],
+      phrygian:[0,1,3,5,7,8,10],
+      locrian:[0,1,3,5,6,8,10]
+    };
+    const scaleLabels = {
+      major:'Major', minor:'Minor', pentMajor:'Pent Major', pentMinor:'Pent Minor',
+      dorian:'Dorian', mixolydian:'Mixolydian', lydian:'Lydian', phrygian:'Phrygian', locrian:'Locrian'
+    };
+    const keys = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+    const divisions = ['1/1','1/2','1/2T','1/2D','1/4','1/4T','1/4D','1/8','1/8T','1/8D','1/16','1/16T','1/16D','1/32','1/32T','1/32D','1/64'];
+    const padSteps = [-12,-7,-5,-2,0,2,5,7];
+    const $ = id => document.getElementById(id);
+
+    function divToBeats(div){
+      const dotted = div.endsWith('D');
+      const triplet = div.endsWith('T');
+      const clean = div.replace(/[DT]$/, '');
+      const denom = Number(clean.split('/')[1]);
+      let beats = 4 / denom;
+      if(dotted) beats *= 1.5;
+      if(triplet) beats *= 2/3;
+      return beats;
+    }
+
+    function populateSelects(){
+      divisions.forEach(d=>{
+        $('division').insertAdjacentHTML('beforeend', `<option value="${d}">${d}</option>`);
+        $('delayDiv').insertAdjacentHTML('beforeend', `<option value="${d}">${d}</option>`);
+        $('modRate').insertAdjacentHTML('beforeend', `<option value="${d}">${d}</option>`);
+      });
+      $('division').value = state.division;
+      $('delayDiv').value = state.delayDiv;
+      $('modRate').value = state.modRate;
+
+      keys.forEach(k => $('keySelect').insertAdjacentHTML('beforeend', `<option value="${k}">${k}</option>`));
+      Object.entries(scaleLabels).forEach(([v,l]) => $('scaleSelect').insertAdjacentHTML('beforeend', `<option value="${v}">${l}</option>`));
+      $('keySelect').value = state.key;
+      $('scaleSelect').value = state.scale;
+    }
+
+    function buildPads(){
+      const rootIdx = keys.indexOf(state.key);
+      const notes = padSteps.map(step => quantizeSemitone(step, 0));
+      $('pads').innerHTML = notes.map((semi,i)=>{
+        const keyIdx = (rootIdx + semi + 120) % 12;
+        const octave = 3 + Math.floor((rootIdx + semi + 24) / 12);
+        const label = i === 4 ? 'Root' : (semi > 0 ? '+' + semi : semi) + ' st';
+        return `<button class="pad" data-semi="${semi}"><span>${keys[keyIdx]}${octave}</span><small>${label}</small></button>`;
+      }).join('');
+
+      document.querySelectorAll('.pad').forEach(btn=>{
+        btn.addEventListener('pointerdown', ()=>{
+          if(!audio.holdPad) document.querySelectorAll('.pad').forEach(p=>p.classList.remove('active'));
+          btn.classList.add('active');
+          state.padSemitone = Number(btn.dataset.semi);
+          audio.padSemitone = state.padSemitone;
+          refreshLCD();
+        });
+        ['pointerup','pointerleave'].forEach(evt=>{
+          btn.addEventListener(evt, ()=>{
+            if(!audio.holdPad) btn.classList.remove('active');
+          });
+        });
+      });
+    }
+
+    function buildModGrid(){
+      $('seqGrid').innerHTML = state.modSequence.map((deg, i)=>(
+        `<button class="seqStep${i===0?' play':''}" data-index="${i}" data-degree="${deg}">${deg+1}</button>`
+      )).join('');
+      document.querySelectorAll('.seqStep').forEach(step=>{
+        step.addEventListener('click', ()=>{
+          const idx = Number(step.dataset.index);
+          const current = state.modSequence[idx];
+          const max = Math.min(6, state.modDepth);
+          const next = current >= max ? 0 : current + 1;
+          state.modSequence[idx] = next;
+          renderModGrid();
+        });
+      });
+      renderModGrid();
+    }
+
+    function renderModGrid(){
+      document.querySelectorAll('.seqStep').forEach((step, i)=>{
+        const deg = state.modSequence[i];
+        step.textContent = deg + 1;
+        step.classList.toggle('active', deg > 0);
+        step.classList.toggle('play', i === audio.currentSeqIndex);
+      });
+    }
+
+    function quantizeSemitone(semi, modOffset=0){
+      const scale = scales[state.scale] || scales.minor;
+      const root = keys.indexOf(state.key);
+      const total = semi + root + modOffset;
+      let oct = Math.floor(total / 12);
+      let note = ((total % 12) + 12) % 12;
+      let best = scale[0], dist = 99;
+      for(const s of scale){
+        const d = Math.abs(s - note);
+        if(d < dist){ best = s; dist = d; }
+      }
+      return oct * 12 + best - root;
+    }
+
+    function ensureAudio(){
+      if(audio.ctx) return;
+      const ctx = new (window.AudioContext || window.webkitAudioContext)({ latencyHint:'interactive' });
+      audio.ctx = ctx;
+      audio.ringSize = ctx.sampleRate * 20;
+      audio.ringL = new Float32Array(audio.ringSize);
+      audio.ringR = new Float32Array(audio.ringSize);
+      audio.freezeL = new Float32Array(ctx.sampleRate * 8);
+      audio.freezeR = new Float32Array(ctx.sampleRate * 8);
+
+      audio.inputGain = ctx.createGain();
+      audio.dryGain = ctx.createGain();
+      audio.wetGain = ctx.createGain();
+      audio.master = ctx.createGain();
+
+      audio.delayIn = ctx.createGain();
+      audio.feedbackGain = ctx.createGain();
+      audio.delayNode = ctx.createDelay(4.0);
+      audio.diffuser = ctx.createBiquadFilter();
+      audio.diffuser.type = 'lowpass';
+
+      audio.reverbIn = ctx.createGain();
+      audio.convolver = ctx.createConvolver();
+      audio.tiltLow = ctx.createBiquadFilter();
+      audio.tiltLow.type = 'lowshelf';
+      audio.tiltHigh = ctx.createBiquadFilter();
+      audio.tiltHigh.type = 'highshelf';
+      audio.spaceMixGain = ctx.createGain();
+      audio.directToWet = ctx.createGain();
+
+      audio.analyserIn = ctx.createAnalyser();
+      audio.analyserWet = ctx.createAnalyser();
+      audio.analyserIn.fftSize = 1024;
+      audio.analyserWet.fftSize = 1024;
+      audio.inputMeterData = new Float32Array(audio.analyserIn.fftSize);
+      audio.wetMeterData = new Float32Array(audio.analyserWet.fftSize);
+
+      audio.tapNode = ctx.createScriptProcessor(1024, 2, 2);
+      audio.tapNode.onaudioprocess = e=>{
+        const inL = e.inputBuffer.getChannelData(0);
+        const inR = e.inputBuffer.numberOfChannels > 1 ? e.inputBuffer.getChannelData(1) : inL;
+
+        let energy = 0;
+        let peakDelta = 0;
+        let prev = 0;
+
+        for(let i=0;i<inL.length;i++){
+          const idx = audio.writeIndex;
+          const l = inL[i], r = inR[i];
+          audio.ringL[idx] = l;
+          audio.ringR[idx] = r;
+          audio.writeIndex = (audio.writeIndex + 1) % audio.ringSize;
+
+          const abs = (Math.abs(l) + Math.abs(r)) * 0.5;
+          energy += abs;
+          peakDelta += Math.max(0, abs - prev);
+          prev = abs;
+        }
+
+        const avg = energy / inL.length;
+        const onset = Math.min(1, peakDelta / inL.length * 8);
+        audio.transientMap[audio.transientCursor] = avg * 0.6 + onset * 0.4;
+        audio.transientCursor = (audio.transientCursor + 1) % audio.transientMap.length;
+
+        if(audio.isFrozen){
+          const len = Math.min(audio.freezeL.length, inL.length);
+          const base = (audio.writeIndex - len + audio.ringSize) % audio.ringSize;
+          for(let i=0;i<len;i++){
+            const src = (base + i) % audio.ringSize;
+            audio.freezeL[i] = audio.ringL[src];
+            audio.freezeR[i] = audio.ringR[src];
+          }
+        }
+
+        const outL = e.outputBuffer.getChannelData(0);
+        const outR = e.outputBuffer.getChannelData(1);
+        outL.fill(0);
+        outR.fill(0);
+      };
+
+      audio.inputGain.connect(audio.dryGain);
+      audio.inputGain.connect(audio.analyserIn);
+      audio.inputGain.connect(audio.tapNode);
+      audio.tapNode.connect(ctx.destination);
+
+      audio.dryGain.connect(audio.master);
+      audio.wetGain.connect(audio.analyserWet);
+      audio.wetGain.connect(audio.master);
+      audio.master.connect(ctx.destination);
+
+      audio.delayIn.connect(audio.delayNode);
+      audio.delayNode.connect(audio.diffuser);
+      audio.diffuser.connect(audio.feedbackGain);
+      audio.feedbackGain.connect(audio.delayNode);
+      audio.delayNode.connect(audio.reverbIn);
+      audio.delayNode.connect(audio.spaceMixGain);
+      audio.spaceMixGain.connect(audio.wetGain);
+      audio.reverbIn.connect(audio.tiltLow);
+      audio.tiltLow.connect(audio.tiltHigh);
+      audio.tiltHigh.connect(audio.convolver);
+      audio.convolver.connect(audio.wetGain);
+      audio.directToWet.connect(audio.wetGain);
+
+      updateImpulse();
+      updateDSP();
+      startScheduler();
+      animateMeters();
+    }
+
+    function updateImpulse(){
+      if(!audio.ctx) return;
+      const sr = audio.ctx.sampleRate;
+      const seconds = Math.max(1.2, state.decay * (0.65 + state.size));
+      const len = Math.floor(sr * seconds);
+      const impulse = audio.ctx.createBuffer(2, len, sr);
+
+      for(let c=0;c<2;c++){
+        const d = impulse.getChannelData(c);
+        for(let i=0;i<len;i++){
+          const t = i / len;
+          const env = Math.pow(1 - t, 2.1 - state.size * 1.0);
+          const noise = (Math.random() * 2 - 1);
+          const bloom = state.reverbMode === 'granular'
+            ? Math.sin(i * 0.031) * 0.22 + Math.sin(i * 0.013) * 0.16
+            : 0;
+          d[i] = (noise * 0.8 + bloom) * env;
+        }
+      }
+      audio.convolver.buffer = impulse;
+    }
+
+    function updateDSP(){
+      if(!audio.ctx) return;
+      const now = audio.ctx.currentTime;
+      const beatSec = 60 / state.bpm;
+
+      audio.delayNode.delayTime.setTargetAtTime(divToBeats(state.delayDiv) * beatSec, now, 0.02);
+      audio.feedbackGain.gain.setTargetAtTime(
+        Math.min(0.97, state.feedback + state.freezeAmount * 0.0035),
+        now, 0.02
+      );
+
+      const diffBase = 1850 - state.diffusion * 1100;
+      const diffXY = 600 - state.xyY * 420;
+      audio.diffuser.frequency.setTargetAtTime(Math.max(320, diffBase + diffXY), now, 0.03);
+
+      audio.reverbIn.gain.setTargetAtTime(state.spaceMix, now, 0.02);
+      audio.spaceMixGain.gain.setTargetAtTime(Math.max(0.12, state.spaceMix * 0.72), now, 0.02);
+      audio.directToWet.gain.setTargetAtTime(0.18 + state.xyY * 0.28, now, 0.02);
+
+      audio.dryGain.gain.setTargetAtTime(1 - state.masterMix, now, 0.02);
+      audio.wetGain.gain.setTargetAtTime(state.masterMix, now, 0.02);
+      audio.master.gain.setTargetAtTime(0.92, now, 0.02);
+
+      audio.tiltLow.frequency.value = 320;
+      audio.tiltHigh.frequency.value = 2600;
+      audio.tiltLow.gain.setTargetAtTime(-state.color * 0.32, now, 0.03);
+      audio.tiltHigh.gain.setTargetAtTime(state.color * 0.45, now, 0.03);
+    }
+
+    function getTransientBiasSamples(){
+      if(!audio.ctx) return 0;
+      let best = 0, bestIdx = 0;
+      for(let i=0;i<audio.transientMap.length;i++){
+        if(audio.transientMap[i] > best){
+          best = audio.transientMap[i];
+          bestIdx = i;
+        }
+      }
+      const relative = (audio.transientMap.length - ((audio.transientCursor - bestIdx + audio.transientMap.length) % audio.transientMap.length)) / audio.transientMap.length;
+      return Math.floor(relative * 2.4 * audio.ctx.sampleRate * state.centerMusic);
+    }
+
+    function getCurrentModOffset(now){
+      if(!audio.ctx) return 0;
+      const rateSec = divToBeats(state.modRate) * (60 / state.bpm);
+      if(audio.nextModTime === 0) audio.nextModTime = now + rateSec;
+      while(now >= audio.nextModTime){
+        audio.currentSeqIndex = (audio.currentSeqIndex + 1) % state.modSequence.length;
+        audio.nextModTime += rateSec;
+        renderModGrid();
+      }
+      const scale = scales[state.scale] || scales.minor;
+      const degree = Math.min(state.modSequence[audio.currentSeqIndex], Math.max(0, scale.length - 1), state.modDepth);
+      return (scale[degree] || 0) - scale[0];
+    }
+
+    function scheduleGrain(time){
+      if(!audio.ctx) return;
+      const ctx = audio.ctx;
+      const grainDur = state.grainSizeMs / 1000;
+      const voices = state.pitchSpread;
+      const modOffset = getCurrentModOffset(time);
+      const baseSemi = quantizeSemitone(audio.padSemitone || 0, modOffset);
+
+      const spreadMap = {
+        1:[0],
+        2:[0,7],
+        3:[0,4,7],
+        4:[0,3,7,10]
+      }[voices];
+
+      const reversePick = state.direction === 'random' ? (Math.random() > 0.5) : state.direction === 'reverse';
+      const spraySec = (Math.random() * 2 - 1) * (state.sprayMs / 1000) * (0.25 + state.xyX);
+      const transBias = state.centerMusic > 0.01 ? getTransientBiasSamples() : 0;
+      const readLead = Math.max(1, Math.floor((grainDur + 0.05) * ctx.sampleRate));
+      const randomShift = Math.floor((Math.random() * state.sprayMs / 1000) * ctx.sampleRate);
+      const lookBackSamples = readLead + transBias + randomShift;
+
+      spreadMap.forEach((interval, idx)=>{
+        const semi = quantizeSemitone(baseSemi + interval, 0);
+        const ratio = Math.pow(2, semi / 12);
+        const panJ = (Math.random() * 2 - 1) * state.randPan * (0.45 + state.xyX * 0.8);
+
+        const env = ctx.createGain();
+        const pan = ctx.createStereoPanner();
+        const source = ctx.createBufferSource();
+
+        const durationSamples = Math.max(64, Math.floor(grainDur * ctx.sampleRate));
+        const buf = ctx.createBuffer(2, durationSamples, ctx.sampleRate);
+        const ch0 = buf.getChannelData(0);
+        const ch1 = buf.getChannelData(1);
+
+        const baseIndex = audio.isFrozen
+          ? 0
+          : (audio.writeIndex - lookBackSamples + audio.ringSize) % audio.ringSize;
+
+        for(let i=0;i<durationSamples;i++){
+          const read = reversePick ? (durationSamples - 1 - i) : i;
+          const t = durationSamples > 1 ? i / (durationSamples - 1) : 0;
+          const win = Math.sin(Math.PI * t) ** 2;
+          let l = 0, r = 0;
+
+          if(audio.isFrozen){
+            const fi = Math.min(audio.freezeL.length - 1, read % audio.freezeL.length);
+            l = audio.freezeL[fi];
+            r = audio.freezeR[fi];
+          }else{
+            const src = (baseIndex + read) % audio.ringSize;
+            l = audio.ringL[src];
+            r = audio.ringR[src];
+          }
+
+          ch0[i] = l * win;
+          ch1[i] = r * win;
+        }
+
+        source.buffer = buf;
+        source.playbackRate.value = ratio;
+        pan.pan.value = Math.max(-1, Math.min(1, panJ + (idx - (spreadMap.length - 1) / 2) * 0.12));
+
+        env.gain.setValueAtTime(0.0001, time);
+        env.gain.linearRampToValueAtTime(0.34 / Math.sqrt(spreadMap.length), time + 0.014);
+        env.gain.linearRampToValueAtTime(0.0001, time + grainDur + 0.03);
+
+        source.connect(pan).connect(env);
+        env.connect(audio.delayIn);
+        env.connect(audio.directToWet);
+
+        const startAt = Math.max(ctx.currentTime + 0.002, time + spraySec);
+        const stopAt = startAt + grainDur + 0.08;
+        source.start(startAt);
+        source.stop(stopAt);
+        audio.activeVoices.add(source);
+        source.onended = ()=>audio.activeVoices.delete(source);
+      });
+    }
+
+    function startScheduler(){
+      if(audio.schedulerId) clearInterval(audio.schedulerId);
+      audio.lastPlayTime = audio.ctx ? audio.ctx.currentTime + 0.03 : 0;
+      audio.schedulerId = setInterval(()=>{
+        if(!audio.ctx) return;
+        const now = audio.ctx.currentTime;
+        const interval = divToBeats(state.division) * (60 / state.bpm) / Math.max(0.25, state.density * (0.75 + state.xyX));
+        while(audio.lastPlayTime < now + 0.12){
+          scheduleGrain(audio.lastPlayTime);
+          audio.lastPlayTime += interval;
+        }
+      }, 25);
+    }
+
+    function computeMeter(data){
+      let sum = 0;
+      for(let i=0;i<data.length;i++) sum += data[i] * data[i];
+      return Math.min(1, Math.sqrt(sum / data.length) * 3.4);
+    }
+
+    function animateMeters(){
+      function tick(){
+        if(audio.analyserIn){
+          audio.analyserIn.getFloatTimeDomainData(audio.inputMeterData);
+          audio.analyserWet.getFloatTimeDomainData(audio.wetMeterData);
+          $('inputMeter').style.width = (computeMeter(audio.inputMeterData) * 100).toFixed(1) + '%';
+          $('wetMeter').style.width = (computeMeter(audio.wetMeterData) * 100).toFixed(1) + '%';
+        }
+        requestAnimationFrame(tick);
+      }
+      requestAnimationFrame(tick);
+    }
+
+    async function useMic(){
+      ensureAudio();
+      try{
+        const stream = await navigator.mediaDevices.getUserMedia({
+          audio:{ echoCancellation:false, noiseSuppression:false, autoGainControl:false }
+        });
+        if(audio.streamSource) audio.streamSource.disconnect();
+        audio.streamSource = audio.ctx.createMediaStreamSource(stream);
+        audio.streamSource.connect(audio.inputGain);
+        audio.inputMode = 'mic';
+        $('lcdState').textContent = 'MIC';
+        $('lcdMain').textContent = 'Listening to microphone input';
+      }catch(err){
+        console.error(err);
+        $('lcdMain').textContent = 'Microphone unavailable';
+      }
+    }
+
+    async function useFile(file){
+      ensureAudio();
+      const url = URL.createObjectURL(file);
+      if(!audio.mediaEl){
+        audio.mediaEl = new Audio();
+        audio.mediaEl.loop = true;
+        audio.mediaEl.crossOrigin = 'anonymous';
+        audio.mediaEl.playsInline = true;
+        audio.mediaSource = audio.ctx.createMediaElementSource(audio.mediaEl);
+        audio.mediaSource.connect(audio.inputGain);
+      }
+      audio.mediaEl.src = url;
+      $('fileName').textContent = file.name;
+      await audio.mediaEl.play().catch(()=>{});
+      audio.inputMode = 'file';
+      $('lcdState').textContent = 'FILE';
+      $('lcdMain').textContent = 'Streaming loaded file into granular engine';
+    }
+
+    function panic(){
+      audio.activeVoices.forEach(v=>{ try{ v.stop(); }catch(e){} });
+      audio.activeVoices.clear();
+      if(audio.ctx) audio.lastPlayTime = audio.ctx.currentTime + 0.04;
+    }
+
+    function refreshLCD(){
+      $('lcdTempo').textContent = `${state.bpm} BPM`;
+      $('lcdScale').textContent = `${state.key} ${scaleLabels[state.scale]}`;
+      $('scaleDisplay').textContent = `${state.key} ${scaleLabels[state.scale]}`;
+      $('lcdTexture').textContent = state.textureName;
+      if(audio.inputMode === 'none' && $('lcdState').textContent === 'IDLE') $('lcdMain').textContent = 'Awaiting audio input';
+    }
+
+    function formatValue(id, v){
+      switch(id){
+        case 'bpm': return `${v} BPM`;
+        case 'masterMix': return `${v}%`;
+        case 'grainSize': return `${v} ms`;
+        case 'spray': return `${v} ms`;
+        case 'density': return `${Number(v).toFixed(2)}x`;
+        case 'randPan': return `${v}%`;
+        case 'centerMusic': return `${v}%`;
+        case 'feedback': return `${v}%`;
+        case 'diffusion': return `${v}%`;
+        case 'pitchSpread': return `${v} voices`;
+        case 'modDepth': return `${v} steps`;
+        case 'size': return `${v}%`;
+        case 'decay': return `${Number(v).toFixed(1)} s`;
+        case 'color': return `${Number(v)>0?'+':''}${v}`;
+        case 'spaceMix': return `${v}%`;
+        case 'freezeAmount': return `${v}%`;
+        default: return String(v);
+      }
+    }
+
+    function bindRange(id, fn){
+      const el = $(id);
+      const valEl = $(id + 'Val');
+      const render = ()=>{
+        const raw = el.type === 'range' ? Number(el.value) : el.value;
+        fn(raw);
+        if(valEl) valEl.textContent = formatValue(id, raw);
+        updateDSP();
+        refreshLCD();
+      };
+      el.addEventListener('input', render);
+      render();
+    }
+
+    function setControl(id, value){
+      const el = $(id);
+      if(el) el.value = value;
+    }
+
+    function triggerAllInputs(){
+      ['bpm','masterMix','grainSize','spray','density','randPan','centerMusic','feedback','diffusion','pitchSpread','modDepth','size','decay','color','spaceMix','freezeAmount']
+        .forEach(id => $(id).dispatchEvent(new Event('input')));
+      ['division','direction','delayDiv','keySelect','scaleSelect','modRate','reverbMode']
+        .forEach(id => $(id).dispatchEvent(new Event('change')));
+    }
+
+    function applyPreset(name){
+      const presets = {
+        pianoClouds:{ division:'1/16', grainSize:240, spray:48, density:1.65, randPan:30, direction:'forward', centerMusic:66, delayDiv:'1/8D', feedback:48, diffusion:42, key:'C', scale:'minor', pitchSpread:3, modDepth:3, modRate:'1/4', modSequence:[0,2,4,2,0,3,4,5,0,2,4,6,5,4,2,0], reverbMode:'granular', size:68, decay:8.2, color:-4, spaceMix:68, freezeAmount:0, masterMix:62, xyX:.58, xyY:.74, textureName:'Lo-fi Piano Clouds' },
+        vocalShimmer:{ division:'1/8T', grainSize:170, spray:35, density:1.2, randPan:24, direction:'forward', centerMusic:58, delayDiv:'1/4D', feedback:56, diffusion:34, key:'D', scale:'major', pitchSpread:4, modDepth:4, modRate:'1/8', modSequence:[0,1,2,4,5,4,2,1,0,2,4,5,6,5,4,2], reverbMode:'granular', size:72, decay:9.5, color:14, spaceMix:76, freezeAmount:0, masterMix:70, xyX:.48, xyY:.82, textureName:'Vocal Shimmer Delay' },
+        grainEcho:{ division:'1/16', grainSize:110, spray:14, density:1.9, randPan:18, direction:'random', centerMusic:82, delayDiv:'1/8', feedback:36, diffusion:18, key:'C', scale:'pentMinor', pitchSpread:2, modDepth:2, modRate:'1/16', modSequence:[0,1,2,1,0,1,2,1,0,1,2,1,0,1,2,1], reverbMode:'normal', size:34, decay:2.8, color:6, spaceMix:32, freezeAmount:0, masterMix:52, xyX:.35, xyY:.42, textureName:'Rhythmic Grain Echo' },
+        tapeVerb:{ division:'1/32', grainSize:320, spray:80, density:2.4, randPan:42, direction:'reverse', centerMusic:40, delayDiv:'1/2D', feedback:70, diffusion:55, key:'F', scale:'dorian', pitchSpread:3, modDepth:3, modRate:'1/2', modSequence:[0,2,3,4,5,4,3,2,0,2,4,5,3,2,1,0], reverbMode:'granular', size:88, decay:12.6, color:-10, spaceMix:88, freezeAmount:12, masterMix:78, xyX:.76, xyY:.92, textureName:'Granular Tape Verb' }
+      };
+      const p = presets[name];
+      if(!p) return;
+
+      setControl('division', p.division);
+      setControl('grainSize', p.grainSize);
+      setControl('spray', p.spray);
+      setControl('density', p.density);
+      setControl('randPan', p.randPan);
+      setControl('direction', p.direction);
+      setControl('centerMusic', p.centerMusic);
+      setControl('delayDiv', p.delayDiv);
+      setControl('feedback', p.feedback);
+      setControl('diffusion', p.diffusion);
+      setControl('keySelect', p.key);
+      setControl('scaleSelect', p.scale);
+      setControl('pitchSpread', p.pitchSpread);
+      setControl('modDepth', p.modDepth);
+      setControl('modRate', p.modRate);
+      setControl('reverbMode', p.reverbMode);
+      setControl('size', p.size);
+      setControl('decay', p.decay);
+      setControl('color', p.color);
+      setControl('spaceMix', p.spaceMix);
+      setControl('freezeAmount', p.freezeAmount);
+      setControl('masterMix', p.masterMix);
+
+      state.modSequence = [...p.modSequence];
+      state.xyX = p.xyX;
+      state.xyY = p.xyY;
+      state.textureName = p.textureName;
+
+      updateXYDot();
+      triggerAllInputs();
+      buildPads();
+      buildModGrid();
+      updateImpulse();
+      refreshLCD();
+    }
+
+    function intelligentResynth(){
+      const keepKey = state.key;
+      const keepScale = state.scale;
+      const keepMix = Math.round(state.masterMix * 100);
+      const rand = (a,b)=> a + Math.random() * (b - a);
+
+      setControl('grainSize', Math.round(rand(90, 340)));
+      setControl('spray', Math.round(rand(8, 110)));
+      setControl('density', rand(.8, 2.8).toFixed(2));
+      setControl('randPan', Math.round(rand(8, 48)));
+      setControl('centerMusic', Math.round(rand(40, 90)));
+      setControl('feedback', Math.round(rand(25, 72)));
+      setControl('diffusion', Math.round(rand(10, 62)));
+      setControl('pitchSpread', [2,3,3,4][Math.floor(Math.random()*4)]);
+      setControl('modDepth', Math.floor(rand(1,5)));
+      setControl('modRate', divisions[Math.floor(Math.random()*divisions.length)]);
+      setControl('size', Math.round(rand(30, 90)));
+      setControl('decay', rand(2.4, 11.5).toFixed(1));
+      setControl('color', Math.round(rand(-18, 18)));
+      setControl('spaceMix', Math.round(rand(25, 88)));
+      setControl('direction', ['forward','reverse','random'][Math.floor(Math.random()*3)]);
+      setControl('division', divisions[Math.floor(Math.random()*divisions.length)]);
+      setControl('delayDiv', divisions[Math.floor(Math.random()*divisions.length)]);
+      setControl('reverbMode', Math.random() > .45 ? 'granular' : 'normal');
+      setControl('keySelect', keepKey);
+      setControl('scaleSelect', keepScale);
+      setControl('masterMix', keepMix);
+
+      state.modSequence = Array.from({length:16}, ()=>Math.floor(Math.random() * (Math.max(1, state.modDepth + 1))));
+      state.textureName = ['Soft Drift','Clocked Halo','Glass Bloom','Tape Mirage','Night Pulse'][Math.floor(Math.random()*5)];
+      state.xyX = Math.random() * .85;
+      state.xyY = .3 + Math.random() * .65;
+
+      updateXYDot();
+      triggerAllInputs();
+      buildModGrid();
+      updateImpulse();
+      refreshLCD();
+    }
+
+    function updateXYDot(){
+      $('xyDot').style.left = `${state.xyX * 100}%`;
+      $('xyDot').style.top = `${(1 - state.xyY) * 100}%`;
+    }
+
+    function setupXY(){
+      const pad = $('xyPad');
+      let down = false;
+
+      function apply(e){
+        const r = pad.getBoundingClientRect();
+        const x = Math.max(0, Math.min(1, (e.clientX - r.left) / r.width));
+        const y = Math.max(0, Math.min(1, 1 - (e.clientY - r.top) / r.height));
+        state.xyX = x;
+        state.xyY = y;
+        state.density = 0.55 + x * 2.75;
+        state.sprayMs = Math.round(4 + x * 130);
+        state.masterMix = 0.18 + y * 0.68;
+        state.spaceMix = 0.08 + y * 0.84;
+        setControl('density', state.density.toFixed(2));
+        setControl('spray', state.sprayMs);
+        setControl('masterMix', Math.round(state.masterMix * 100));
+        setControl('spaceMix', Math.round(state.spaceMix * 100));
+        ['density','spray','masterMix','spaceMix'].forEach(id => $(id).dispatchEvent(new Event('input')));
+        updateXYDot();
+      }
+
+      pad.addEventListener('pointerdown', e=>{
+        down = true;
+        pad.setPointerCapture(e.pointerId);
+        apply(e);
+      });
+      pad.addEventListener('pointermove', e=>{ if(down) apply(e); });
+      ['pointerup','pointerleave','pointercancel'].forEach(evt=>{
+        pad.addEventListener(evt, ()=> down = false);
+      });
+
+      updateXYDot();
+    }
+
+    function bindUI(){
+      $('startAudio').addEventListener('click', async ()=>{
+        ensureAudio();
+        await audio.ctx.resume();
+        $('lcdState').textContent = 'READY';
+        $('lcdMain').textContent = 'Audio engine active';
+        $('startAudio').classList.add('active');
+      });
+
+      $('toggleMic').addEventListener('click', useMic);
+      $('fileInput').addEventListener('change', e=>{
+        if(e.target.files && e.target.files[0]) useFile(e.target.files[0]);
+      });
+      $('resynth').addEventListener('click', intelligentResynth);
+
+      $('freezeBtn').addEventListener('click', ()=>{
+        audio.isFrozen = !audio.isFrozen;
+        $('freezeBtn').classList.toggle('active', audio.isFrozen);
+        $('lcdMain').textContent = audio.isFrozen ? 'Frozen texture capture' : 'Live granular capture';
+      });
+
+      $('panicBtn').addEventListener('click', panic);
+
+      $('holdPad').addEventListener('click', ()=>{
+        audio.holdPad = !audio.holdPad;
+        $('holdPad').classList.toggle('active', audio.holdPad);
+      });
+
+      $('presetSelect').addEventListener('change', e => applyPreset(e.target.value));
+
+      bindRange('bpm', v => { state.bpm = v; startScheduler(); });
+      bindRange('masterMix', v => { state.masterMix = v / 100; });
+      bindRange('grainSize', v => { state.grainSizeMs = v; });
+      bindRange('spray', v => { state.sprayMs = v; });
+      bindRange('density', v => { state.density = v; });
+      bindRange('randPan', v => { state.randPan = v / 100; });
+      bindRange('centerMusic', v => { state.centerMusic = v / 100; });
+      bindRange('feedback', v => { state.feedback = v / 100; });
+      bindRange('diffusion', v => { state.diffusion = v / 100; });
+      bindRange('pitchSpread', v => { state.pitchSpread = v; });
+      bindRange('modDepth', v => {
+        state.modDepth = v;
+        state.modSequence = state.modSequence.map(step => Math.min(step, v));
+        renderModGrid();
+      });
+      bindRange('size', v => { state.size = v / 100; updateImpulse(); });
+      bindRange('decay', v => { state.decay = Number(v); updateImpulse(); });
+      bindRange('color', v => { state.color = v; });
+      bindRange('spaceMix', v => { state.spaceMix = v / 100; });
+      bindRange('freezeAmount', v => { state.freezeAmount = v; });
+
+      $('division').addEventListener('change', e => { state.division = e.target.value; $('divisionVal').textContent = e.target.value; startScheduler(); });
+      $('direction').addEventListener('change', e => { state.direction = e.target.value; $('directionVal').textContent = e.target.selectedOptions[0].textContent; });
+      $('delayDiv').addEventListener('change', e => { state.delayDiv = e.target.value; $('delayDivVal').textContent = e.target.value; updateDSP(); });
+      $('keySelect').addEventListener('change', e => { state.key = e.target.value; buildPads(); refreshLCD(); });
+      $('scaleSelect').addEventListener('change', e => { state.scale = e.target.value; buildPads(); refreshLCD(); });
+      $('modRate').addEventListener('change', e => { state.modRate = e.target.value; $('modRateVal').textContent = e.target.value; });
+      $('reverbMode').addEventListener('change', e => { state.reverbMode = e.target.value; $('reverbModeVal').textContent = e.target.selectedOptions[0].textContent; updateImpulse(); });
+    }
+
+    populateSelects();
+    buildPads();
+    buildModGrid();
+    setupXY();
+    bindUI();
+    refreshLCD();
+  </script>
+</body>
+</html>
