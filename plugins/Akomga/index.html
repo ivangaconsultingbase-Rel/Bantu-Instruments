@@ -2,29 +2,25 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="theme-color" content="#0a0a0a">
   <title>LoFi Sampler AK-612</title>
-  
-  <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-  
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-  
+
   <div class="sampler-container">
-    
+
     <!-- Header -->
     <header class="sampler-header">
       <div class="lcd-screen">
         <span class="lcd-title">AKOMGA-612</span>
         <span class="lcd-info">
-          BPM <span id="bpm-display">90</span> · 
+          BPM <span id="bpm-display">90</span> ·
           SWING <span id="swing-display">0</span>%
         </span>
       </div>
@@ -37,7 +33,7 @@
     <section class="pads-section">
       <div class="section-header">
         <h2>Pads</h2>
-        <span class="hint" id="pad-hint">Tap pour jouer · 📁 pour charger</span>
+        <span class="hint" id="pad-hint">Tap pour jouer · 📁 pour charger · 🎙 pour sampler</span>
       </div>
       <div class="section-content">
         <div class="pads-grid" id="pads-grid">
@@ -46,49 +42,54 @@
       </div>
     </section>
 
-<section class="pad-editor" id="pad-editor" hidden>
-  <div class="section-header">
-    <h2>Pad Edit</h2>
-    <div class="pad-editor-meta">
-      <span>PAD <span id="pad-edit-id">1</span></span>
-      <span class="pad-edit-name" id="pad-edit-name">EMPTY</span>
-    </div>
-  </div>
-
-  <div class="section-content">
-    <div class="effects-grid">
-      <div class="effect-control">
-        <div class="effect-label">
-          <label>Pitch</label>
-          <span class="effect-value" id="pad-pitch-val">0 st</span>
-        </div>
-        <div class="slider-container">
-          <div class="slider-fill" id="pad-pitch-fill"></div>
-          <input type="range" id="pad-pitch" min="-24" max="24" value="0" step="1">
+    <!-- Pad Editor -->
+    <section class="pad-editor" id="pad-editor" hidden>
+      <div class="section-header">
+        <h2>Pad Edit</h2>
+        <div class="pad-editor-meta">
+          <span>PAD <span id="pad-edit-id">1</span></span>
+          <span class="pad-edit-name" id="pad-edit-name">EMPTY</span>
         </div>
       </div>
-
-      <div class="effect-control">
-        <div class="effect-label">
-          <label>Volume</label>
-          <span class="effect-value" id="pad-vol-val">80%</span>
-        </div>
-        <div class="slider-container">
-          <div class="slider-fill" id="pad-vol-fill"></div>
-          <input type="range" id="pad-vol" min="0" max="100" value="80" step="1">
+      <div class="section-content">
+        <div class="effects-grid">
+          <div class="effect-control">
+            <div class="effect-label">
+              <label>Pitch</label>
+              <span class="effect-value" id="pad-pitch-val">0 st</span>
+            </div>
+            <div class="slider-container">
+              <div class="slider-fill" id="pad-pitch-fill"></div>
+              <input type="range" id="pad-pitch" min="-24" max="24" value="0" step="1">
+            </div>
+          </div>
+          <div class="effect-control">
+            <div class="effect-label">
+              <label>Volume</label>
+              <span class="effect-value" id="pad-vol-val">80%</span>
+            </div>
+            <div class="slider-container">
+              <div class="slider-fill" id="pad-vol-fill"></div>
+              <input type="range" id="pad-vol" min="0" max="100" value="80" step="1">
+            </div>
+          </div>
         </div>
       </div>
-    </div>
-  </div>
-</section>
-    
+    </section>
+
     <!-- Sequencer Section -->
     <section class="sequencer-section">
       <div class="section-header">
         <h2>Sequencer</h2>
+        <!-- Step count selector -->
+        <div class="step-count-btns">
+          <button class="step-count-btn active" data-steps="16">16</button>
+          <button class="step-count-btn" data-steps="32">32</button>
+          <button class="step-count-btn" data-steps="64">64</button>
+        </div>
       </div>
       <div class="section-content">
-        
+
         <div class="sequencer-controls">
           <div class="transport">
             <button id="play-btn" class="transport-btn">
@@ -96,8 +97,8 @@
               PLAY
             </button>
             <button id="rec-btn" class="transport-btn rec-btn">
-             <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="6"/></svg>
-             REC
+              <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="6"/></svg>
+              REC
             </button>
             <button id="met-btn" class="transport-btn">
               <svg viewBox="0 0 24 24"><path d="M12 3v18"/><path d="M8 7h8"/><path d="M9 21h6"/></svg>
@@ -107,43 +108,48 @@
               <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18" stroke="currentColor" stroke-width="2"/><line x1="6" y1="6" x2="18" y2="18" stroke="currentColor" stroke-width="2"/></svg>
               CLEAR
             </button>
+            <!-- P-LOCK mode toggle -->
+            <button id="plock-btn" class="transport-btn" title="Parameter Lock mode · Clic droit sur un step pour locker">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+              </svg>
+              P-LOCK
+            </button>
           </div>
-          
+
           <div class="tempo-control">
             <label>BPM</label>
             <input type="range" id="bpm" min="60" max="140" value="90">
             <span class="tempo-value" id="bpm-val">90</span>
           </div>
-          
+
           <div class="tempo-control">
             <label>SWING</label>
             <input type="range" id="swing" min="0" max="75" value="0">
             <span class="tempo-value" id="swing-val">0%</span>
           </div>
 
-<div class="tempo-control">
-  <label>HUMAN</label>
-  <input type="range" id="humanize" min="0" max="30" value="6">
-  <span class="tempo-value" id="humanize-val">6%</span>
-</div>
+          <div class="tempo-control">
+            <label>HUMAN</label>
+            <input type="range" id="humanize" min="0" max="30" value="6">
+            <span class="tempo-value" id="humanize-val">6%</span>
+          </div>
 
-<div class="tempo-control">
-  <label>TIMING</label>
-  <input type="range" id="humanize-time" min="0" max="20" value="8">
-  <span class="tempo-value" id="humanize-time-val">8ms</span>
-</div>
-          
+          <div class="tempo-control">
+            <label>TIMING</label>
+            <input type="range" id="humanize-time" min="0" max="20" value="8">
+            <span class="tempo-value" id="humanize-time-val">8ms</span>
+          </div>
         </div>
 
-        <!-- Step numbers -->
-        <div class="seq-header" id="seq-header">
-          <!-- Généré par JS -->
-        </div>
+        <!-- Step numbers header -->
+        <div class="seq-header" id="seq-header"></div>
 
         <div class="sequencer-grid" id="sequencer-grid">
           <!-- Généré par JS -->
         </div>
-        
+
       </div>
     </section>
 
@@ -160,7 +166,6 @@
       </div>
       <div class="section-content">
         <div class="effects-grid">
-          
           <div class="effect-control">
             <div class="effect-label">
               <label>Bit Depth</label>
@@ -171,7 +176,6 @@
               <input type="range" id="bit-depth" min="4" max="16" value="12">
             </div>
           </div>
-
           <div class="effect-control">
             <div class="effect-label">
               <label>Sample Rate</label>
@@ -182,7 +186,6 @@
               <input type="range" id="sample-rate" min="4000" max="44100" value="26040" step="100">
             </div>
           </div>
-
           <div class="effect-control">
             <div class="effect-label">
               <label>Filter</label>
@@ -193,7 +196,6 @@
               <input type="range" id="filter-cutoff" min="200" max="12000" value="5500">
             </div>
           </div>
-
           <div class="effect-control">
             <div class="effect-label">
               <label>Drive</label>
@@ -204,7 +206,6 @@
               <input type="range" id="drive" min="0" max="100" value="25">
             </div>
           </div>
-
           <div class="effect-control">
             <div class="effect-label">
               <label>Vinyl</label>
@@ -215,7 +216,6 @@
               <input type="range" id="vinyl-noise" min="0" max="100" value="15">
             </div>
           </div>
-
           <div class="effect-control">
             <div class="effect-label">
               <label>Compress</label>
@@ -226,16 +226,44 @@
               <input type="range" id="compression" min="0" max="100" value="50">
             </div>
           </div>
-
         </div>
       </div>
     </section>
-    
+
     <!-- Footer -->
     <footer class="sampler-footer">
-      <p>Clavier: Q W E / A S D · Espace: Play/Stop</p>
+      <p>Clavier: Q W E / A S D · Espace: Play/Stop · Clic droit sur step: P-Lock</p>
     </footer>
 
+  </div><!-- /sampler-container -->
+
+  <!-- ═══ PARAM LOCK POPUP ═══ -->
+  <div id="param-lock-popup" class="param-lock-popup" hidden>
+    <div class="plp-header">
+      <span id="plp-label">P-LOCK · PAD 1 · STEP 1</span>
+      <button id="plp-close" class="plp-close-btn" type="button">✕</button>
+    </div>
+    <div class="plp-body">
+
+      <!-- Pitch Lock -->
+      <div class="plp-param-row">
+        <div class="plp-param-header">
+          <label class="plp-toggle-label">
+            <input type="checkbox" id="plp-pitch-on">
+            <span>PITCH LOCK</span>
+          </label>
+          <span class="effect-value" id="plp-pitch-val">— st</span>
+        </div>
+        <div class="slider-container plp-slider">
+          <div class="slider-fill" id="plp-pitch-fill"></div>
+          <input type="range" id="plp-pitch" min="-24" max="24" value="0" step="1" disabled>
+        </div>
+      </div>
+
+    </div>
+    <div class="plp-footer">
+      <button id="plp-clear-step" class="plp-clear-btn" type="button">Effacer locks du step</button>
+    </div>
   </div>
 
   <script type="module" src="js/main.js"></script>
