@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
-<title>GIMUNTU FIFTHS GROOVE — V2</title>
+<title>GIMUNTU FIFTHS GROOVE — V3</title>
 
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
@@ -21,7 +21,6 @@
   --ink-dim:#55606e;
   --red:#d93535;
   --red-hi:#f04444;
-  --red-dim:rgba(217,53,53,.18);
   --grn:#2ec98a;
   --grn-dim:rgba(46,201,138,.14);
   --grn-border:rgba(46,201,138,.45);
@@ -150,7 +149,7 @@ input[type=range]::-moz-range-thumb{
 
 .step{
   position:relative;
-  aspect-ratio:1/1.18;
+  aspect-ratio:1/1.22;
   border-radius:var(--r-sm);
   border:1px solid rgba(255,255,255,.08);
   background:var(--s2);
@@ -169,10 +168,7 @@ input[type=range]::-moz-range-thumb{
   content:"";position:absolute;top:0;left:0;right:0;height:3px;
   background:var(--grn);opacity:0;transition:opacity .08s;
 }
-.step-num{
-  position:absolute;top:4px;left:5px;
-  font-size:7.5px;color:rgba(255,255,255,.18);
-}
+.step-num{position:absolute;top:4px;left:5px;font-size:7.5px;color:rgba(255,255,255,.18)}
 .step-pos{
   position:absolute;top:4px;right:4px;
   font-size:7px;color:rgba(255,255,255,.16);
@@ -190,8 +186,8 @@ input[type=range]::-moz-range-thumb{
   background:rgba(0,0,0,.22);color:rgba(220,228,240,.55);line-height:1.2;
 }
 .step-locks{
-  font-size:7px;letter-spacing:.04em;color:rgba(220,228,240,.45);
-  line-height:1.15;text-align:center;padding:0 4px;
+  font-size:6.7px;letter-spacing:.03em;color:rgba(220,228,240,.48);
+  line-height:1.15;text-align:center;padding:0 3px;
 }
 .step.beat1::after{
   content:"";position:absolute;bottom:4px;right:5px;
@@ -228,7 +224,6 @@ input[type=range]::-moz-range-thumb{
 
 .circle-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:5px}
 @media(min-width:480px){.circle-grid{grid-template-columns:repeat(12,1fr)}}
-
 .note-btn{
   appearance:none;min-height:44px;border-radius:var(--r-sm);
   border:1px solid rgba(255,255,255,.09);background:var(--s2);color:var(--ink);
@@ -286,7 +281,7 @@ input[type=range]::-moz-range-thumb{
     <button id="btnBack" class="btn sm">←</button>
     <div>
       <div class="brand-name">GIMUNTU 5th GROOVE</div>
-      <div class="brand-sub">V2 · Locks · Voicings · Bass Generator</div>
+      <div class="brand-sub">V3 · Ratchet · Strum · Locks · Voicings · Bass</div>
     </div>
     <div class="transport-btns">
       <button id="btnAudio" class="btn grn sm">AUDIO</button>
@@ -326,7 +321,7 @@ input[type=range]::-moz-range-thumb{
       <div class="step-editor">
         <div class="step-editor-head">
           <div class="step-editor-title">Step Edit</div>
-          <div class="step-editor-meta" id="stepMeta">STEP 1 · VEL 0.75 · GATE 0.78 · INV 0</div>
+          <div class="step-editor-meta" id="stepMeta">STEP 1</div>
         </div>
 
         <div class="ctrls">
@@ -345,6 +340,14 @@ input[type=range]::-moz-range-thumb{
           <div class="ctrl">
             <div class="ctrl-head"><span class="ctrl-lbl">Step Oct</span><span class="ctrl-val" id="vStepOct">2</span></div>
             <input id="rStepOct" type="range" min="2" max="5" step="1" value="2"/>
+          </div>
+          <div class="ctrl">
+            <div class="ctrl-head"><span class="ctrl-lbl">Ratchet</span><span class="ctrl-val" id="vStepRat">1x</span></div>
+            <input id="rStepRat" type="range" min="1" max="4" step="1" value="1"/>
+          </div>
+          <div class="ctrl">
+            <div class="ctrl-head"><span class="ctrl-lbl">Strum</span><span class="ctrl-val" id="vStepStrum">0ms</span></div>
+            <input id="rStepStrum" type="range" min="0" max="0.06" step="0.002" value="0"/>
           </div>
         </div>
 
@@ -372,7 +375,6 @@ input[type=range]::-moz-range-thumb{
           <div class="ctrl-head"><span class="ctrl-lbl">Human</span><span class="ctrl-val" id="vHuman">0.010s</span></div>
           <input id="rHuman" type="range" min="0" max="0.03" step="0.001" value="0.010"/>
         </div>
-
         <div class="ctrl">
           <div class="ctrl-head"><span class="ctrl-lbl">Met Vol</span><span class="ctrl-val" id="vMet">0.35</span></div>
           <input id="rMet" type="range" min="0" max="1" step="0.01" value="0.35"/>
@@ -489,8 +491,8 @@ input[type=range]::-moz-range-thumb{
   </div>
 
   <div class="hint">
-    NOUVEAUTÉS : voicings CLOSE / OPEN / DROP2 · step locks VEL/GATE/INV/OCT · bass generator<br/>
-    STEP : tap = on/off + select · drag ↕ = circle pos · drag ↔ = chord type
+    NOUVEAU : ratchet par step + strum par step<br/>
+    RATCHET = répétitions rythmiques dans le pas · STRUM = notes de l’accord décalées dans le temps
   </div>
 
 </div>
@@ -598,7 +600,9 @@ const S={
     vel:0.75,
     gate:0.78,
     inv:0,
-    oct:2
+    oct:2,
+    rat:1,
+    strum:0
   })),
 
   scenes:Array.from({length:8},()=>null),
@@ -836,12 +840,23 @@ function triggerNote(freq,t,holdUntil,vel,relTime){
   const stopT=h+r+.08;
   carrier.stop(stopT);mod.stop(stopT);ov.stop(stopT);noise.stop(stopT);
 }
-function playChord(midiNotes,t,holdUntil,velocity){
+
+function playChordVoiced(midiNotes,t,holdUntil,velocity,strumSec=0){
   const v=S.vibe;
   toneLP.frequency.setTargetAtTime(5200+(1-v)*3500+800,t,.03);
   applyVibe();
-  const vel=clamp(velocity,.05,1),rel=S.release*(.75+S.vibe*.75);
-  midiNotes.forEach((m,idx)=>triggerNote(midiToHz(m),t,holdUntil,vel*(idx===0?1:.86),rel));
+
+  const vel=clamp(velocity,.05,1);
+  const rel=S.release*(.75+S.vibe*.75);
+  const sorted=midiNotes.slice().sort((a,b)=>a-b);
+
+  sorted.forEach((m,idx)=>{
+    const dt = idx * strumSec;
+    const nt = t + dt;
+    const nh = Math.max(nt + 0.03, holdUntil);
+    const noteVel = vel * (idx===0 ? 1 : 0.86);
+    triggerNote(midiToHz(m), nt, nh, noteVel, rel);
+  });
 }
 
 function triggerBassNote(freq,t,len,vel){
@@ -949,6 +964,7 @@ function getChord(si){
   }
   return {rootPC,pos,type};
 }
+
 function highlightStep(si,chord){
   const eS=document.getElementById("kStep"); if(eS) eS.textContent=si+1;
   const eC=document.getElementById("kChord"); if(eC) eC.textContent=pcToName(chord.rootPC)+chord.type;
@@ -958,6 +974,13 @@ function highlightStep(si,chord){
     const i=parseInt(el.dataset.step,10);
     el.classList.toggle("play", i===si && si>=start && si<end);
   });
+}
+
+function scheduleOneHit(chord, st, hitTime, hitLen, hitVel, strumSec){
+  const notes=buildChordMidi(chord.rootPC, chord.type, st.oct ?? S.octave, S.spread, st.inv ?? 0, S.voicing);
+  duckReverb(hitTime);
+  playChordVoiced(notes, hitTime, hitTime + hitLen, hitVel, strumSec);
+  playBass(chord.rootPC, hitTime, hitTime + hitLen, st);
 }
 
 function scheduleStep(si,time){
@@ -979,17 +1002,21 @@ function scheduleStep(si,time){
   const vel=clamp(baseVel * st.vel, .05, 1);
 
   const chord=getChord(si);
-  const octave=st.oct ?? S.octave;
   const gateMul=st.gate ?? S.gate;
-  const inv=st.inv ?? 0;
-
-  const notes=buildChordMidi(chord.rootPC,chord.type,octave,S.spread,inv,S.voicing);
-  const holdUntil=t + d * clamp(gateMul,0.10,1.25);
+  const rat=Math.max(1, Math.round(st.rat || 1));
+  const strumSec=st.strum || 0;
 
   highlightStep(si,chord);
-  duckReverb(t);
-  playChord(notes,t,holdUntil,vel);
-  playBass(chord.rootPC,t,holdUntil,st);
+
+  const hitSpacing = d / rat;
+  const hitLenBase = d * clamp(gateMul,0.10,1.25);
+  const hitLen = Math.min(hitLenBase / Math.max(1, rat*0.82), hitSpacing * 0.95);
+
+  for(let r=0;r<rat;r++){
+    const rt = t + r*hitSpacing;
+    const rv = vel * (r===0 ? 1 : (0.92 - r*0.08));
+    scheduleOneHit(chord, st, rt, Math.max(0.04, hitLen), clamp(rv,0.04,1), strumSec);
+  }
 }
 
 function scheduler(){
@@ -1041,12 +1068,16 @@ function refreshStepEditor(){
   set("vStepGate", st.gate.toFixed(2));
   set("vStepInv", st.inv);
   set("vStepOct", st.oct);
-  set("stepMeta", `STEP ${i+1} · VEL ${st.vel.toFixed(2)} · GATE ${st.gate.toFixed(2)} · INV ${st.inv}`);
+  set("vStepRat", st.rat + "x");
+  set("vStepStrum", Math.round(st.strum*1000) + "ms");
+  set("stepMeta", `STEP ${i+1} · VEL ${st.vel.toFixed(2)} · GATE ${st.gate.toFixed(2)} · INV ${st.inv} · RAT ${st.rat}x`);
 
   syncRange("rStepVel", st.vel);
   syncRange("rStepGate", st.gate);
   syncRange("rStepInv", st.inv);
   syncRange("rStepOct", st.oct);
+  syncRange("rStepRat", st.rat);
+  syncRange("rStepStrum", st.strum);
 }
 function refreshDisplay(){
   set("vBpm",S.bpm);
@@ -1162,7 +1193,7 @@ function renderSteps(){
       '<span class="step-pos">'+lab.pos+'</span>'+
       '<span class="step-chord">'+lab.rootHTML+'</span>'+
       '<span class="step-qual">'+lab.qual+'</span>'+
-      '<div class="step-locks">V'+Math.round(st.vel*99)+' G'+st.gate.toFixed(2)+' I'+st.inv+'</div>';
+      '<div class="step-locks">V'+Math.round(st.vel*99)+' G'+st.gate.toFixed(2)+' I'+st.inv+' R'+st.rat+' S'+Math.round(st.strum*1000)+'</div>';
 
     el.addEventListener("click",()=>{
       ensureAudio();
@@ -1187,7 +1218,7 @@ function snapshot(){
     voicing:S.voicing,bassOn:S.bassOn,bassStyle:S.bassStyle,bassLevel:S.bassLevel,bassRelease:S.bassRelease,
     selectedStep:S.selectedStep,
     steps:S.steps.map(s=>({
-      on:s.on,pos:s.pos,type:s.type,vel:s.vel,gate:s.gate,inv:s.inv,oct:s.oct
+      on:s.on,pos:s.pos,type:s.type,vel:s.vel,gate:s.gate,inv:s.inv,oct:s.oct,rat:s.rat,strum:s.strum
     }))
   };
 }
@@ -1219,7 +1250,9 @@ function applySnapshot(s){
     vel:typeof x.vel==="number" ? x.vel : 0.75,
     gate:typeof x.gate==="number" ? x.gate : 0.78,
     inv:typeof x.inv==="number" ? x.inv : 0,
-    oct:typeof x.oct==="number" ? x.oct : 2
+    oct:typeof x.oct==="number" ? x.oct : 2,
+    rat:typeof x.rat==="number" ? x.rat : 1,
+    strum:typeof x.strum==="number" ? x.strum : 0
   }));
 
   const map={
@@ -1357,6 +1390,16 @@ initRange("rStepOct",v=>{
   renderSteps();
   refreshStepEditor();
 });
+initRange("rStepRat",v=>{
+  S.steps[S.selectedStep].rat=Math.round(v);
+  renderSteps();
+  refreshStepEditor();
+});
+initRange("rStepStrum",v=>{
+  S.steps[S.selectedStep].strum=v;
+  renderSteps();
+  refreshStepEditor();
+});
 
 document.querySelectorAll("[data-preset]").forEach(btn=>{
   btn.addEventListener("click",()=>{
@@ -1444,6 +1487,8 @@ document.getElementById("btnRand").addEventListener("click",()=>{
     st.gate=clamp(0.55+Math.random()*0.45,0.15,1.20);
     st.inv=Math.floor(Math.random()*3);
     st.oct=2+Math.floor(Math.random()*3);
+    st.rat=1+Math.floor(Math.random()*4);
+    st.strum=Math.random()<.45 ? 0 : (Math.random()*0.042);
   }
   renderSteps();
   refreshStepEditor();
@@ -1459,6 +1504,8 @@ document.getElementById("btnClear").addEventListener("click",()=>{
     S.steps[i].gate=0.78;
     S.steps[i].inv=0;
     S.steps[i].oct=2;
+    S.steps[i].rat=1;
+    S.steps[i].strum=0;
   }
   renderSteps();
   refreshStepEditor();
@@ -1496,7 +1543,8 @@ upBass();
 [
   "rVol","rBpm","rSwing","rHuman","rGate","rMet",
   "rAcc","rSpread","rDrive","rOct","rStab","rVibe","rRel",
-  "rStepVel","rStepGate","rStepInv","rStepOct","rBassLvl","rBassRel"
+  "rStepVel","rStepGate","rStepInv","rStepOct","rStepRat","rStepStrum",
+  "rBassLvl","rBassRel"
 ].forEach(id=>{
   const el=document.getElementById(id);
   if(el) setRangePct(el);
