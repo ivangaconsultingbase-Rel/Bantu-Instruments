@@ -191,8 +191,9 @@ input[type=range]::-moz-range-thumb{
 /* ── CONTROL SLIDERS ── */
 .ctrls{ display:grid; grid-template-columns:1fr 1fr; gap:6px; }
 @media(min-width:480px){ .ctrls{ grid-template-columns:repeat(4,1fr); } }
-.ctrls.col3{ grid-template-columns:repeat(3,1fr); }
-@media(min-width:480px){ .ctrls.col3{ grid-template-columns:repeat(6,1fr); } }
+.ctrls.col3{ grid-template-columns:repeat(2,1fr); }
+@media(min-width:420px){ .ctrls.col3{ grid-template-columns:repeat(3,1fr); } }
+@media(min-width:520px){ .ctrls.col3{ grid-template-columns:repeat(6,1fr); } }
 .ctrl{ background:rgba(0,0,0,.22); border:1px solid var(--border); border-radius:var(--r-sm); padding:8px 8px 10px; }
 .ctrl-head{ display:flex; justify-content:space-between; align-items:baseline; gap:4px; margin-bottom:7px; }
 .ctrl-lbl{ font-size:8.5px; letter-spacing:.18em; color:var(--ink-dim); text-transform:uppercase; }
