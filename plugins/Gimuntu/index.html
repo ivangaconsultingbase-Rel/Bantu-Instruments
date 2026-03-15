@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-
 <html lang="fr">
 <head>
 <meta charset="UTF-8"/>
@@ -7,234 +6,1075 @@
 <meta name="color-scheme" content="dark"/>
 <meta name="theme-color" content="#090b0f"/>
 <title>GIMUNTU FIFTHS GROOVE MK2</title>
+
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
 
 :root{
-color-scheme: dark;
-–bg:#090b0f; –s0:#0d1018; –s1:#111420; –s2:#161a26; –s3:#1b2030;
-–border:rgba(255,255,255,.07); –border2:rgba(255,255,255,.13);
-–ink:#dce4f0; –ink-mid:#8b96a8; –ink-dim:#55606e;
-–red:#d93535; –red-hi:#f04444; –red-dim:rgba(217,53,53,.18);
-–grn:#2ec98a; –grn-dim:rgba(46,201,138,.14); –grn-border:rgba(46,201,138,.45);
-–amb:#e8b84b; –amb-dim:rgba(232,184,75,.13);
-–blu:#4a9eff; –blu-dim:rgba(74,158,255,.12);
-–pur:#a472f0; –pur-dim:rgba(164,114,240,.12);
-–r:10px; –r-sm:8px; –r-xs:6px;
-–mono:‘Share Tech Mono’,ui-monospace,monospace;
-–sh:0 8px 28px rgba(0,0,0,.55);
+  color-scheme: dark;
+
+  --bg:#090b0f;
+  --s0:#0d1018;
+  --s1:#111420;
+  --s2:#161a26;
+  --s3:#1b2030;
+
+  --border:rgba(255,255,255,.07);
+  --border2:rgba(255,255,255,.13);
+
+  --ink:#dce4f0;
+  --ink-mid:#8b96a8;
+  --ink-dim:#55606e;
+
+  --red:#d93535;
+  --red-hi:#f04444;
+  --red-dim:rgba(217,53,53,.18);
+
+  --grn:#2ec98a;
+  --grn-dim:rgba(46,201,138,.14);
+  --grn-border:rgba(46,201,138,.45);
+
+  --amb:#e8b84b;
+  --amb-dim:rgba(232,184,75,.13);
+
+  --blu:#4a9eff;
+  --blu-dim:rgba(74,158,255,.12);
+
+  --pur:#a472f0;
+  --pur-dim:rgba(164,114,240,.12);
+
+  --r:12px;
+  --r-sm:9px;
+  --r-xs:7px;
+
+  --mono:'Share Tech Mono', ui-monospace, monospace;
+  --sh:0 10px 28px rgba(0,0,0,.45);
 }
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
-html,body{height:100%;background:#090b0f;}
+
+*,
+*::before,
+*::after{
+  box-sizing:border-box;
+  margin:0;
+  padding:0;
+}
+
+html,body{
+  height:100%;
+  background:#090b0f;
+}
+
 body{
-font-family:var(–mono); background:var(–bg);
-background-image:
-radial-gradient(ellipse 600px 400px at 70% -60px,rgba(217,53,53,.07),transparent 55%),
-radial-gradient(ellipse 400px 600px at -5% 40%,rgba(217,53,53,.04),transparent 55%);
-color:var(–ink); min-height:100dvh;
-padding:calc(env(safe-area-inset-top,0px) + 10px) calc(env(safe-area-inset-right,0px) + 12px) calc(env(safe-area-inset-bottom,0px) + 24px) calc(env(safe-area-inset-left,0px) + 12px);
--webkit-tap-highlight-color:transparent; touch-action:manipulation;
-user-select:none; overscroll-behavior:none;
+  font-family:var(--mono);
+  background:var(--bg);
+  background-image:
+    radial-gradient(ellipse 700px 420px at 70% -60px, rgba(217,53,53,.07), transparent 55%),
+    radial-gradient(ellipse 420px 620px at -5% 40%, rgba(217,53,53,.04), transparent 55%);
+  color:var(--ink);
+  min-height:100dvh;
+  padding:
+    calc(env(safe-area-inset-top,0px) + 10px)
+    calc(env(safe-area-inset-right,0px) + 12px)
+    calc(env(safe-area-inset-bottom,0px) + 24px)
+    calc(env(safe-area-inset-left,0px) + 12px);
+  -webkit-tap-highlight-color:transparent;
+  touch-action:manipulation;
+  user-select:none;
+  overscroll-behavior:none;
 }
-.shell{max-width:680px;margin:0 auto;display:flex;flex-direction:column;gap:8px;}
 
-/* ── TOPBAR ── */
-.topbar{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:10px;padding:6px 0 8px;border-bottom:1px solid var(–border);margin-bottom:2px;}
-.brand-name{font-size:13px;letter-spacing:.22em;font-weight:700;text-transform:uppercase;white-space:nowrap;}
-.brand-sub{font-size:8.5px;letter-spacing:.07em;color:var(–ink-dim);margin-top:2px;display:none;}
-@media(min-width:480px){.brand-sub{display:block;}}
-.transport-btns{display:flex;gap:6px;align-items:center;flex-wrap:wrap;}
+.shell{
+  width:min(100%, 760px);
+  margin:0 auto;
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+}
 
-/* ── VOL STRIP ── */
-.vol-strip{display:flex;align-items:center;gap:10px;background:var(–s1);border:1px solid var(–border);border-radius:var(–r-sm);padding:8px 12px;}
-.vol-strip-label{font-size:9px;letter-spacing:.22em;color:var(–ink-dim);flex-shrink:0;text-transform:uppercase;}
-.vol-strip-icon{font-size:12px;flex-shrink:0;color:var(–ink-mid);}
-.vol-strip-val{font-size:11px;font-weight:700;color:var(–ink);flex-shrink:0;min-width:32px;text-align:right;}
+/* TOPBAR */
+.topbar{
+  display:grid;
+  grid-template-columns:auto 1fr auto;
+  align-items:center;
+  gap:10px;
+  padding:8px 0 10px;
+  border-bottom:1px solid var(--border);
+  margin-bottom:2px;
+}
 
-/* ── RANGE ── */
-input[type=range]{-webkit-appearance:none;appearance:none;flex:1;height:4px;border-radius:999px;outline:none;cursor:pointer;background:linear-gradient(to right,var(–red) 0%,var(–red) var(–pct,50%),rgba(255,255,255,.10) var(–pct,50%),rgba(255,255,255,.10) 100%);-webkit-tap-highlight-color:transparent;}
-input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;border-radius:50%;background:#dde4f0;border:2px solid rgba(217,53,53,.6);box-shadow:0 2px 8px rgba(0,0,0,.5);cursor:pointer;}
-input[type=range]::-moz-range-thumb{width:16px;height:16px;border-radius:50%;background:#dde4f0;border:2px solid rgba(217,53,53,.6);box-shadow:0 2px 8px rgba(0,0,0,.5);cursor:pointer;}
+.brand-name{
+  font-size:13px;
+  letter-spacing:.18em;
+  font-weight:700;
+  text-transform:uppercase;
+  white-space:nowrap;
+}
 
-/* ── PILLS ── */
-.pills{display:flex;gap:5px;flex-wrap:wrap;align-items:center;}
-.pill{padding:4px 8px;border-radius:999px;border:1px solid var(–border);background:rgba(0,0,0,.25);font-size:9.5px;color:var(–ink-mid);white-space:nowrap;line-height:1.2;}
-.pill strong{color:var(–ink);font-weight:700;}
-.pill.hot{border-color:rgba(217,53,53,.45);background:rgba(217,53,53,.08);}
-.pill.hot strong{color:var(–red-hi);}
-.pill.blu{border-color:rgba(74,158,255,.45);background:var(–blu-dim);}
-.pill.blu strong{color:var(–blu);}
-.pill.eng{border-color:rgba(74,158,255,.35);background:rgba(74,158,255,.08);}
-.pill.eng strong{color:var(–blu);}
+.brand-sub{
+  font-size:8.5px;
+  letter-spacing:.08em;
+  color:var(--ink-dim);
+  margin-top:3px;
+  display:none;
+}
 
-/* ── TABS ── */
-.tabs{display:flex;gap:4px;padding:4px;background:var(–s0);border:1px solid var(–border);border-radius:var(–r-sm);}
-.tab{flex:1;padding:10px 6px;border:none;background:transparent;color:var(–ink-dim);font-family:var(–mono);font-size:9px;letter-spacing:.14em;text-transform:uppercase;cursor:pointer;border-radius:var(–r-xs);transition:all .12s;}
-.tab:hover{background:rgba(255,255,255,.03);}
-.tab.active{background:rgba(217,53,53,.12);color:var(–red-hi);border:1px solid rgba(217,53,53,.35);}
+@media (min-width:520px){
+  .brand-sub{display:block;}
+}
+
+.transport-btns{
+  display:flex;
+  gap:6px;
+  align-items:center;
+  flex-wrap:wrap;
+  justify-content:flex-end;
+}
+
+/* MASTER STRIP */
+.vol-strip{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  background:linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,.01));
+  border:1px solid var(--border);
+  border-radius:var(--r-sm);
+  padding:9px 12px;
+}
+
+.vol-strip-label{
+  font-size:9px;
+  letter-spacing:.22em;
+  color:var(--ink-dim);
+  flex-shrink:0;
+  text-transform:uppercase;
+}
+
+.vol-strip-icon{
+  font-size:12px;
+  flex-shrink:0;
+  color:var(--ink-mid);
+}
+
+.vol-strip-val{
+  font-size:11px;
+  font-weight:700;
+  color:var(--ink);
+  flex-shrink:0;
+  min-width:34px;
+  text-align:right;
+}
+
+/* RANGE */
+input[type=range]{
+  -webkit-appearance:none;
+  appearance:none;
+  flex:1;
+  height:4px;
+  border-radius:999px;
+  outline:none;
+  cursor:pointer;
+  background:
+    linear-gradient(
+      to right,
+      var(--red) 0%,
+      var(--red) var(--pct,50%),
+      rgba(255,255,255,.10) var(--pct,50%),
+      rgba(255,255,255,.10) 100%
+    );
+  -webkit-tap-highlight-color:transparent;
+}
+
+input[type=range]::-webkit-slider-thumb{
+  -webkit-appearance:none;
+  width:16px;
+  height:16px;
+  border-radius:50%;
+  background:#dde4f0;
+  border:2px solid rgba(217,53,53,.6);
+  box-shadow:0 2px 8px rgba(0,0,0,.5);
+  cursor:pointer;
+}
+
+input[type=range]::-moz-range-thumb{
+  width:16px;
+  height:16px;
+  border-radius:50%;
+  background:#dde4f0;
+  border:2px solid rgba(217,53,53,.6);
+  box-shadow:0 2px 8px rgba(0,0,0,.5);
+  cursor:pointer;
+}
+
+/* PILLS */
+.pills{
+  display:flex;
+  gap:6px;
+  flex-wrap:wrap;
+  align-items:center;
+}
+
+.pill{
+  padding:5px 8px;
+  border-radius:999px;
+  border:1px solid var(--border);
+  background:rgba(255,255,255,.03);
+  font-size:9px;
+  color:var(--ink-mid);
+  white-space:nowrap;
+  line-height:1.2;
+}
+
+.pill strong{
+  color:var(--ink);
+  font-weight:700;
+}
+
+.pill.hot{
+  border-color:rgba(217,53,53,.45);
+  background:rgba(217,53,53,.08);
+}
+
+.pill.hot strong{color:var(--red-hi);}
+
+.pill.blu{
+  border-color:rgba(74,158,255,.45);
+  background:var(--blu-dim);
+}
+
+.pill.blu strong{color:var(--blu);}
+
+.pill.eng{
+  border-color:rgba(74,158,255,.35);
+  background:rgba(74,158,255,.08);
+}
+
+.pill.eng strong{color:var(--blu);}
+
+/* TABS */
+.tabs{
+  display:flex;
+  gap:4px;
+  padding:4px;
+  background:var(--s0);
+  border:1px solid var(--border);
+  border-radius:var(--r-sm);
+  position:sticky;
+  top:6px;
+  z-index:20;
+  backdrop-filter:blur(8px);
+}
+
+.tab{
+  flex:1;
+  min-height:40px;
+  padding:10px 6px;
+  border:none;
+  background:transparent;
+  color:var(--ink-dim);
+  font-family:var(--mono);
+  font-size:9px;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  cursor:pointer;
+  border-radius:var(--r-xs);
+  transition:all .12s;
+}
+
+.tab:hover{
+  background:rgba(255,255,255,.03);
+}
+
+.tab.active{
+  background:rgba(217,53,53,.12);
+  color:var(--red-hi);
+  border:1px solid rgba(217,53,53,.35);
+}
+
 .tab-content{display:none;}
 .tab-content.active{display:block;}
 
-/* ── CARD ── */
-.card{background:var(–s1);border:1px solid var(–border);border-radius:var(–r);box-shadow:var(–sh);position:relative;}
-.card::before{content:””;position:absolute;top:0;left:0;right:0;height:2px;border-radius:var(–r) var(–r) 0 0;background:linear-gradient(90deg,transparent 0%,transparent 6%,rgba(217,53,53,.7) 6%,rgba(217,53,53,.7) 16%,transparent 16%);pointer-events:none;}
-.card-body{padding:12px;}
+/* CARD */
+.card{
+  background:linear-gradient(180deg, rgba(255,255,255,.02), rgba(255,255,255,.01));
+  border:1px solid var(--border);
+  border-radius:var(--r);
+  box-shadow:var(--sh);
+  position:relative;
+  overflow:hidden;
+}
 
-/* ── SECTION ── */
-.sec{font-size:9px;letter-spacing:.22em;text-transform:uppercase;color:var(–red);margin-bottom:8px;display:flex;align-items:center;gap:8px;}
-.sec::after{content:””;flex:1;height:1px;background:linear-gradient(90deg,rgba(217,53,53,.3),transparent);}
-.sec.blu{color:var(–blu);}
-.sec.blu::after{background:linear-gradient(90deg,rgba(74,158,255,.3),transparent);}
-.sec.pur{color:var(–pur);}
-.sec.pur::after{background:linear-gradient(90deg,rgba(164,114,240,.3),transparent);}
-.sec.grn{color:var(–grn);}
-.sec.grn::after{background:linear-gradient(90deg,rgba(46,201,138,.3),transparent);}
+.card::before{
+  content:"";
+  position:absolute;
+  top:0;
+  left:0;
+  right:0;
+  height:2px;
+  background:
+    linear-gradient(
+      90deg,
+      transparent 0%,
+      transparent 6%,
+      rgba(217,53,53,.7) 6%,
+      rgba(217,53,53,.7) 16%,
+      transparent 16%
+    );
+  pointer-events:none;
+}
 
-/* ── BUTTONS ── */
-.btn{appearance:none;border:1px solid var(–border2);background:rgba(255,255,255,.04);color:var(–ink);border-radius:var(–r-sm);font-family:var(–mono);font-size:10.5px;letter-spacing:.10em;font-weight:700;cursor:pointer;height:40px;padding:0 12px;display:inline-flex;align-items:center;justify-content:center;gap:5px;white-space:nowrap;transition:transform .07s,background .12s,border-color .12s,box-shadow .12s;-webkit-tap-highlight-color:transparent;}
+.card-body{
+  padding:12px;
+}
+
+/* SECTION */
+.sec{
+  font-size:9px;
+  letter-spacing:.22em;
+  text-transform:uppercase;
+  color:var(--red);
+  margin-bottom:8px;
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+
+.sec::after{
+  content:"";
+  flex:1;
+  height:1px;
+  background:linear-gradient(90deg, rgba(217,53,53,.3), transparent);
+}
+
+.sec.blu{color:var(--blu);}
+.sec.blu::after{background:linear-gradient(90deg, rgba(74,158,255,.3), transparent);}
+.sec.pur{color:var(--pur);}
+.sec.pur::after{background:linear-gradient(90deg, rgba(164,114,240,.3), transparent);}
+.sec.grn{color:var(--grn);}
+.sec.grn::after{background:linear-gradient(90deg, rgba(46,201,138,.3), transparent);}
+
+/* BUTTONS */
+.btn{
+  appearance:none;
+  border:1px solid var(--border2);
+  background:rgba(255,255,255,.04);
+  color:var(--ink);
+  border-radius:var(--r-sm);
+  font-family:var(--mono);
+  font-size:10px;
+  letter-spacing:.10em;
+  font-weight:700;
+  cursor:pointer;
+  min-height:40px;
+  padding:0 12px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:5px;
+  white-space:nowrap;
+  transition:transform .07s, background .12s, border-color .12s, box-shadow .12s;
+  -webkit-tap-highlight-color:transparent;
+}
+
 .btn:active{transform:translateY(1px);}
-.btn.red{border-color:rgba(217,53,53,.5);background:rgba(217,53,53,.10);color:var(–red-hi);}
-.btn.grn{border-color:var(–grn-border);background:var(–grn-dim);color:var(–grn);}
-.btn.amb{border-color:rgba(232,184,75,.4);background:var(–amb-dim);color:var(–amb);}
-.btn.blu{border-color:rgba(74,158,255,.4);background:var(–blu-dim);color:var(–blu);}
-.btn.pur{border-color:rgba(164,114,240,.4);background:var(–pur-dim);color:var(–pur);}
-.btn.sm{height:36px;font-size:9.5px;padding:0 9px;}
-.btn.xs{height:32px;font-size:9px;padding:0 7px;border-radius:var(–r-xs);}
-.btn.playing,.btn.active{border-color:var(–red-hi);background:rgba(217,53,53,.20);box-shadow:0 0 0 2px rgba(217,53,53,.14) inset;color:#fff;}
-.btn.grn.active{border-color:var(–grn);background:rgba(46,201,138,.20);box-shadow:0 0 0 2px rgba(46,201,138,.14) inset;color:#fff;}
-.btn.blu.active{border-color:var(–blu);background:rgba(74,158,255,.20);box-shadow:0 0 0 2px rgba(74,158,255,.14) inset;color:#fff;}
-.btn.pur.active{border-color:var(–pur);background:rgba(164,114,240,.20);box-shadow:0 0 0 2px rgba(164,114,240,.14) inset;color:#fff;}
 
-/* ── ENGINE GRID ── */
-.engine-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:5px;margin-bottom:4px;}
-@media(min-width:400px){.engine-grid{grid-template-columns:repeat(4,1fr);}}
-.btn-engine{height:38px;font-size:9px;letter-spacing:.10em;padding:0 6px;}
-.btn-engine.active{border-color:var(–blu);background:rgba(74,158,255,.16);color:#fff;box-shadow:0 0 0 2px rgba(74,158,255,.10) inset;}
+.btn.red{
+  border-color:rgba(217,53,53,.5);
+  background:rgba(217,53,53,.10);
+  color:var(--red-hi);
+}
 
-/* ── BASS STYLE ── */
-.bass-style-row{display:grid;grid-template-columns:repeat(2,1fr);gap:5px;margin-bottom:8px;}
-@media(min-width:400px){.bass-style-row{grid-template-columns:repeat(4,1fr);}}
-.btn-bass{height:34px;font-size:8.5px;letter-spacing:.09em;padding:0 4px;}
-.btn-bass.active{border-color:var(–grn);background:rgba(46,201,138,.16);color:#fff;}
+.btn.grn{
+  border-color:var(--grn-border);
+  background:var(--grn-dim);
+  color:var(--grn);
+}
 
-/* ── STRUM DIR ── */
-.strum-row{display:flex;gap:5px;align-items:center;}
-.strum-label{font-size:8.5px;color:var(–ink-dim);letter-spacing:.18em;text-transform:uppercase;flex-shrink:0;}
-.btn-sdir{flex:1;height:30px;font-size:8.5px;padding:0 4px;border-radius:var(–r-xs);}
-.btn-sdir.active{border-color:var(–amb);background:rgba(232,184,75,.16);color:var(–amb);}
+.btn.amb{
+  border-color:rgba(232,184,75,.4);
+  background:var(--amb-dim);
+  color:var(--amb);
+}
 
-/* ── INV ROW ── */
-.inv-row{display:flex;gap:5px;align-items:center;flex-wrap:wrap;}
-.inv-label{font-size:8px;color:var(–ink-dim);letter-spacing:.18em;text-transform:uppercase;flex-shrink:0;}
-.btn-inv{height:30px;font-size:8.5px;padding:0 8px;border-radius:var(–r-xs);}
-.btn-inv.active{border-color:var(–amb);background:rgba(232,184,75,.16);color:var(–amb);}
+.btn.blu{
+  border-color:rgba(74,158,255,.4);
+  background:var(--blu-dim);
+  color:var(--blu);
+}
 
-/* ── VL INDICATOR ── */
-.vl-indicator{display:flex;align-items:center;gap:8px;padding:8px 12px;background:rgba(74,158,255,.06);border:1px solid rgba(74,158,255,.2);border-radius:var(–r-xs);margin-bottom:10px;}
-.vl-dot{width:8px;height:8px;border-radius:50%;background:var(–blu);animation:pulse 1.5s infinite;flex-shrink:0;}
-@keyframes pulse{0%,100%{opacity:.4;}50%{opacity:1;}}
-.vl-text{font-size:8.5px;color:var(–blu);letter-spacing:.08em;text-transform:uppercase;flex:1;}
+.btn.pur{
+  border-color:rgba(164,114,240,.4);
+  background:var(--pur-dim);
+  color:var(--pur);
+}
 
-/* ── CTRL SLIDERS ── */
-.ctrls{display:grid;grid-template-columns:1fr 1fr;gap:6px;}
-@media(min-width:480px){.ctrls{grid-template-columns:repeat(4,1fr);}}
-.ctrls.col3{grid-template-columns:repeat(2,1fr);}
-@media(min-width:420px){.ctrls.col3{grid-template-columns:repeat(3,1fr);}}
-@media(min-width:520px){.ctrls.col3{grid-template-columns:repeat(6,1fr);}}
-.ctrl{background:rgba(0,0,0,.22);border:1px solid var(–border);border-radius:var(–r-sm);padding:8px 8px 10px;}
-.ctrl-head{display:flex;justify-content:space-between;align-items:baseline;gap:4px;margin-bottom:7px;}
-.ctrl-lbl{font-size:8.5px;letter-spacing:.18em;color:var(–ink-dim);text-transform:uppercase;}
-.ctrl-val{font-size:10.5px;color:var(–ink);font-weight:700;}
+.btn.sm{
+  min-height:36px;
+  font-size:9px;
+  padding:0 9px;
+}
 
-/* ── STEPS ── */
-.steps-grid{display:grid;grid-template-columns:repeat(8,1fr);gap:5px;}
-@media(min-width:520px){.steps-grid{grid-template-columns:repeat(16,1fr);}}
-.step{position:relative;aspect-ratio:1/1.18;border-radius:var(–r-sm);border:1px solid rgba(255,255,255,.08);background:var(–s2);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;cursor:pointer;touch-action:none;overflow:hidden;transition:background .08s,border-color .08s,box-shadow .08s,transform .06s;-webkit-tap-highlight-color:transparent;}
-.step::before{content:””;position:absolute;top:0;left:0;right:0;height:3px;background:var(–grn);opacity:0;transition:opacity .08s;}
-.step-num{position:absolute;top:3px;left:4px;font-size:7px;color:rgba(255,255,255,.18);}
-.step-pos{position:absolute;top:3px;right:3px;font-size:6.5px;color:rgba(255,255,255,.16);background:rgba(0,0,0,.28);padding:1px 3px;border-radius:999px;border:1px solid rgba(255,255,255,.06);line-height:1.2;}
-.step-inv{position:absolute;bottom:3px;left:4px;font-size:6px;color:rgba(74,158,255,.5);letter-spacing:.05em;}
-.step-lock{position:absolute;bottom:3px;right:4px;font-size:7px;color:rgba(232,184,75,.6);}
-.step-chord{font-size:13px;font-weight:900;letter-spacing:.02em;line-height:1;color:var(–ink-dim);text-shadow:0 1px 0 rgba(0,0,0,.35);}
-.step-chord .acc{font-size:.75em;vertical-align:top;opacity:.95;}
-.step-qual{font-size:8px;letter-spacing:.08em;text-transform:uppercase;padding:1px 5px;border-radius:999px;border:1px solid rgba(255,255,255,.10);background:rgba(0,0,0,.22);color:rgba(220,228,240,.55);line-height:1.2;}
-.step.beat1::after{content:””;position:absolute;bottom:12px;right:4px;width:4px;height:4px;border-radius:50%;background:rgba(217,53,53,.55);}
-.step.on{border-color:rgba(46,201,138,.45);background:rgba(46,201,138,.06);}
+.btn.xs{
+  min-height:31px;
+  font-size:8.5px;
+  padding:0 7px;
+  border-radius:var(--r-xs);
+}
+
+.btn.playing,
+.btn.active{
+  border-color:var(--red-hi);
+  background:rgba(217,53,53,.20);
+  box-shadow:0 0 0 2px rgba(217,53,53,.14) inset;
+  color:#fff;
+}
+
+.btn.grn.active{
+  border-color:var(--grn);
+  background:rgba(46,201,138,.20);
+  box-shadow:0 0 0 2px rgba(46,201,138,.14) inset;
+  color:#fff;
+}
+
+.btn.blu.active{
+  border-color:var(--blu);
+  background:rgba(74,158,255,.20);
+  box-shadow:0 0 0 2px rgba(74,158,255,.14) inset;
+  color:#fff;
+}
+
+.btn.pur.active{
+  border-color:var(--pur);
+  background:rgba(164,114,240,.20);
+  box-shadow:0 0 0 2px rgba(164,114,240,.14) inset;
+  color:#fff;
+}
+
+/* ENGINE GRID */
+.engine-grid{
+  display:grid;
+  grid-template-columns:repeat(2, 1fr);
+  gap:6px;
+  margin-bottom:4px;
+}
+
+@media (min-width:400px){
+  .engine-grid{grid-template-columns:repeat(4, 1fr);}
+}
+
+.btn-engine{
+  min-height:38px;
+  font-size:8.5px;
+  letter-spacing:.10em;
+  padding:0 6px;
+}
+
+.btn-engine.active{
+  border-color:var(--blu);
+  background:rgba(74,158,255,.16);
+  color:#fff;
+  box-shadow:0 0 0 2px rgba(74,158,255,.10) inset;
+}
+
+/* BASS STYLE */
+.bass-style-row{
+  display:grid;
+  grid-template-columns:repeat(2,1fr);
+  gap:6px;
+  margin-bottom:8px;
+}
+
+@media (min-width:400px){
+  .bass-style-row{grid-template-columns:repeat(4,1fr);}
+}
+
+.btn-bass{
+  min-height:34px;
+  font-size:8px;
+  letter-spacing:.09em;
+  padding:0 4px;
+}
+
+.btn-bass.active{
+  border-color:var(--grn);
+  background:rgba(46,201,138,.16);
+  color:#fff;
+}
+
+/* STRUM / INV */
+.strum-row,
+.inv-row{
+  display:flex;
+  gap:5px;
+  align-items:center;
+  flex-wrap:wrap;
+}
+
+.strum-label,
+.inv-label{
+  font-size:8px;
+  color:var(--ink-dim);
+  letter-spacing:.18em;
+  text-transform:uppercase;
+  flex-shrink:0;
+}
+
+.btn-sdir,
+.btn-inv{
+  min-height:30px;
+  font-size:8px;
+  padding:0 8px;
+  border-radius:var(--r-xs);
+}
+
+.btn-sdir.active,
+.btn-inv.active{
+  border-color:var(--amb);
+  background:rgba(232,184,75,.16);
+  color:var(--amb);
+}
+
+/* VL */
+.vl-indicator{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  padding:8px 12px;
+  background:rgba(74,158,255,.06);
+  border:1px solid rgba(74,158,255,.2);
+  border-radius:var(--r-xs);
+  margin-bottom:10px;
+}
+
+.vl-dot{
+  width:8px;
+  height:8px;
+  border-radius:50%;
+  background:var(--blu);
+  animation:pulse 1.5s infinite;
+  flex-shrink:0;
+}
+
+@keyframes pulse{
+  0%,100%{opacity:.4;}
+  50%{opacity:1;}
+}
+
+.vl-text{
+  font-size:8px;
+  color:var(--blu);
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  flex:1;
+}
+
+/* CTRLS */
+.ctrls{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:6px;
+}
+
+@media (min-width:560px){
+  .ctrls{grid-template-columns:repeat(3,1fr);}
+}
+
+@media (min-width:760px){
+  .ctrls{grid-template-columns:repeat(4,1fr);}
+}
+
+.ctrls.col3{
+  grid-template-columns:repeat(2,1fr);
+}
+
+@media (min-width:540px){
+  .ctrls.col3{grid-template-columns:repeat(3,1fr);}
+}
+
+@media (min-width:760px){
+  .ctrls.col3{grid-template-columns:repeat(6,1fr);}
+}
+
+.ctrl{
+  background:rgba(0,0,0,.20);
+  border:1px solid var(--border);
+  border-radius:var(--r-sm);
+  padding:8px 8px 10px;
+}
+
+.ctrl-head{
+  display:flex;
+  justify-content:space-between;
+  align-items:baseline;
+  gap:4px;
+  margin-bottom:7px;
+}
+
+.ctrl-lbl{
+  font-size:8px;
+  letter-spacing:.18em;
+  color:var(--ink-dim);
+  text-transform:uppercase;
+}
+
+.ctrl-val{
+  font-size:10px;
+  color:var(--ink);
+  font-weight:700;
+}
+
+/* STEPS */
+.steps-grid{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:6px;
+}
+
+@media (min-width:420px){
+  .steps-grid{grid-template-columns:repeat(8,1fr);}
+}
+
+@media (min-width:720px){
+  .steps-grid{grid-template-columns:repeat(16,1fr);}
+}
+
+.step{
+  position:relative;
+  min-height:72px;
+  aspect-ratio:1/1.08;
+  border-radius:var(--r-sm);
+  border:1px solid rgba(255,255,255,.08);
+  background:var(--s2);
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:2px;
+  cursor:pointer;
+  touch-action:none;
+  overflow:hidden;
+  transition:background .08s, border-color .08s, box-shadow .08s, transform .06s;
+  -webkit-tap-highlight-color:transparent;
+}
+
+.step::before{
+  content:"";
+  position:absolute;
+  top:0;
+  left:0;
+  right:0;
+  height:3px;
+  background:var(--grn);
+  opacity:0;
+  transition:opacity .08s;
+}
+
+.step-num{
+  position:absolute;
+  top:4px;
+  left:5px;
+  font-size:7px;
+  color:rgba(255,255,255,.20);
+}
+
+.step-pos{
+  position:absolute;
+  top:4px;
+  right:4px;
+  font-size:6px;
+  color:rgba(255,255,255,.18);
+  background:rgba(0,0,0,.28);
+  padding:1px 3px;
+  border-radius:999px;
+  border:1px solid rgba(255,255,255,.06);
+  line-height:1.2;
+}
+
+.step-inv{
+  position:absolute;
+  bottom:4px;
+  left:4px;
+  font-size:6px;
+  color:rgba(74,158,255,.58);
+  letter-spacing:.05em;
+}
+
+.step-lock{
+  position:absolute;
+  bottom:4px;
+  right:4px;
+  font-size:7px;
+  color:rgba(232,184,75,.65);
+}
+
+.step-chord{
+  font-size:14px;
+  font-weight:900;
+  letter-spacing:.02em;
+  line-height:1;
+  color:var(--ink-dim);
+  text-shadow:0 1px 0 rgba(0,0,0,.35);
+}
+
+.step-chord .acc{
+  font-size:.75em;
+  vertical-align:top;
+  opacity:.95;
+}
+
+.step-qual{
+  font-size:7px;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  padding:1px 5px;
+  border-radius:999px;
+  border:1px solid rgba(255,255,255,.10);
+  background:rgba(0,0,0,.22);
+  color:rgba(220,228,240,.55);
+  line-height:1.2;
+}
+
+.step.beat1::after{
+  content:"";
+  position:absolute;
+  bottom:13px;
+  right:4px;
+  width:4px;
+  height:4px;
+  border-radius:50%;
+  background:rgba(217,53,53,.55);
+}
+
+.step.on{
+  border-color:rgba(46,201,138,.45);
+  background:rgba(46,201,138,.06);
+}
+
 .step.on::before{opacity:.85;}
-.step.on .step-chord{color:var(–grn);}
-.step.on .step-qual{border-color:rgba(46,201,138,.45);background:rgba(46,201,138,.10);color:rgba(46,201,138,.85);}
-.step.on .step-pos{color:rgba(46,201,138,.40);border-color:rgba(46,201,138,.22);}
-.step.on .step-inv{color:rgba(74,158,255,.7);}
-.step.has-locks{border-color:rgba(232,184,75,.35);}
-.step.on.has-locks{border-color:rgba(46,201,138,.5);box-shadow:0 0 0 1px rgba(232,184,75,.2) inset;}
-.step.play{border-color:rgba(217,53,53,.95);background:rgba(217,53,53,.15);box-shadow:0 0 0 2px rgba(217,53,53,.15) inset,0 0 14px rgba(217,53,53,.12);transform:scale(.96);}
-.step.play::before{background:var(–red-hi);opacity:1;}
-.step.play .step-chord{color:#fff;}
-.step.play .step-qual{border-color:rgba(255,140,140,.45);background:rgba(217,53,53,.22);color:#fff;}
-.step.play .step-pos{color:rgba(255,170,170,.55);border-color:rgba(255,140,140,.25);}
 
-/* ── CIRCLE ── */
-.circle-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:5px;}
-@media(min-width:480px){.circle-grid{grid-template-columns:repeat(12,1fr);}}
-.note-btn{appearance:none;min-height:44px;border-radius:var(–r-sm);border:1px solid rgba(255,255,255,.09);background:var(–s2);color:var(–ink);font-family:var(–mono);font-size:11.5px;font-weight:700;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;transition:background .10s,border-color .10s;-webkit-tap-highlight-color:transparent;}
-.note-btn small{font-size:7.5px;color:var(–ink-dim);letter-spacing:.06em;font-weight:400;}
-.note-btn.sel{border-color:rgba(217,53,53,.8);background:rgba(217,53,53,.12);color:#fff;}
+.step.on .step-chord{color:var(--grn);}
+
+.step.on .step-qual{
+  border-color:rgba(46,201,138,.45);
+  background:rgba(46,201,138,.10);
+  color:rgba(46,201,138,.85);
+}
+
+.step.on .step-pos{
+  color:rgba(46,201,138,.40);
+  border-color:rgba(46,201,138,.22);
+}
+
+.step.on .step-inv{color:rgba(74,158,255,.7);}
+
+.step.has-locks{border-color:rgba(232,184,75,.35);}
+
+.step.on.has-locks{
+  border-color:rgba(46,201,138,.5);
+  box-shadow:0 0 0 1px rgba(232,184,75,.2) inset;
+}
+
+.step.play{
+  border-color:rgba(217,53,53,.95);
+  background:rgba(217,53,53,.15);
+  box-shadow:0 0 0 2px rgba(217,53,53,.15) inset, 0 0 14px rgba(217,53,53,.12);
+  transform:scale(.96);
+}
+
+.step.play::before{
+  background:var(--red-hi);
+  opacity:1;
+}
+
+.step.play .step-chord{color:#fff;}
+
+.step.play .step-qual{
+  border-color:rgba(255,140,140,.45);
+  background:rgba(217,53,53,.22);
+  color:#fff;
+}
+
+.step.play .step-pos{
+  color:rgba(255,170,170,.55);
+  border-color:rgba(255,140,140,.25);
+}
+
+/* CIRCLE */
+.circle-grid{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:6px;
+}
+
+@media (min-width:520px){
+  .circle-grid{grid-template-columns:repeat(6,1fr);}
+}
+
+@media (min-width:760px){
+  .circle-grid{grid-template-columns:repeat(12,1fr);}
+}
+
+.note-btn{
+  appearance:none;
+  min-height:44px;
+  border-radius:var(--r-sm);
+  border:1px solid rgba(255,255,255,.09);
+  background:var(--s2);
+  color:var(--ink);
+  font-family:var(--mono);
+  font-size:11px;
+  font-weight:700;
+  cursor:pointer;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:1px;
+  transition:background .10s,border-color .10s;
+  -webkit-tap-highlight-color:transparent;
+}
+
+.note-btn small{
+  font-size:7px;
+  color:var(--ink-dim);
+  letter-spacing:.06em;
+  font-weight:400;
+}
+
+.note-btn.sel{
+  border-color:rgba(217,53,53,.8);
+  background:rgba(217,53,53,.12);
+  color:#fff;
+}
+
 .note-btn.sel small{color:rgba(255,160,160,.7);}
 
-/* ── SCENES ── */
-.scenes-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;}
-@media(min-width:480px){.scenes-grid{grid-template-columns:repeat(8,1fr);}}
-.scene-btn{appearance:none;height:38px;border-radius:var(–r-xs);border:1px solid var(–border);background:var(–s2);color:var(–ink-dim);font-family:var(–mono);font-size:10px;font-weight:700;letter-spacing:.08em;cursor:pointer;transition:background .10s,border-color .10s,color .10s;}
-.scene-btn.active{border-color:rgba(217,53,53,.75);background:rgba(217,53,53,.12);color:var(–ink);box-shadow:0 0 0 2px rgba(217,53,53,.12) inset;}
+/* SCENES */
+.scenes-grid{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:6px;
+}
 
-/* ── PRESET ── */
-.preset-row{display:flex;gap:5px;flex-wrap:wrap;}
-.btn-preset{flex:1;min-width:80px;}
-.btn-preset.active{border-color:rgba(217,53,53,.8);background:rgba(217,53,53,.16);color:#fff;}
+@media (min-width:520px){
+  .scenes-grid{grid-template-columns:repeat(8,1fr);}
+}
 
-/* ── ACTION ROW ── */
-.action-row{display:flex;gap:5px;flex-wrap:wrap;}
+.scene-btn{
+  appearance:none;
+  min-height:38px;
+  border-radius:var(--r-xs);
+  border:1px solid var(--border);
+  background:var(--s2);
+  color:var(--ink-dim);
+  font-family:var(--mono);
+  font-size:10px;
+  font-weight:700;
+  letter-spacing:.08em;
+  cursor:pointer;
+  transition:background .10s,border-color .10s,color .10s;
+}
 
-/* ── HINT ── */
-.hint{font-size:8.5px;color:var(–ink-dim);letter-spacing:.05em;line-height:1.55;padding:8px;border:1px solid var(–border);border-radius:var(–r-xs);background:rgba(0,0,0,.12);}
+.scene-btn.active{
+  border-color:rgba(217,53,53,.75);
+  background:rgba(217,53,53,.12);
+  color:var(--ink);
+  box-shadow:0 0 0 2px rgba(217,53,53,.12) inset;
+}
 
-/* ── MODAL ── */
-.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);display:none;align-items:center;justify-content:center;z-index:1000;padding:16px;backdrop-filter:blur(4px);}
+/* PRESET / ACTION */
+.preset-row,
+.action-row{
+  display:flex;
+  gap:6px;
+  flex-wrap:wrap;
+}
+
+.btn-preset{
+  flex:1;
+  min-width:88px;
+}
+
+.btn-preset.active{
+  border-color:rgba(217,53,53,.8);
+  background:rgba(217,53,53,.16);
+  color:#fff;
+}
+
+/* HINT */
+.hint{
+  font-size:8px;
+  color:var(--ink-dim);
+  letter-spacing:.04em;
+  line-height:1.6;
+  padding:8px;
+  border:1px solid var(--border);
+  border-radius:var(--r-xs);
+  background:rgba(0,0,0,.12);
+}
+
+/* MODAL */
+.modal-overlay{
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.75);
+  display:none;
+  align-items:center;
+  justify-content:center;
+  z-index:1000;
+  padding:16px;
+  backdrop-filter:blur(4px);
+}
+
 .modal-overlay.open{display:flex;}
-.modal{background:var(–s1);border:1px solid var(–border2);border-radius:var(–r);max-width:420px;width:100%;max-height:85vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.6);}
-.modal-header{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid var(–border);position:sticky;top:0;background:var(–s1);z-index:1;}
-.modal-title{font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(–red);}
-.modal-close{appearance:none;border:none;background:transparent;color:var(–ink-dim);font-size:18px;cursor:pointer;width:32px;height:32px;display:flex;align-items:center;justify-content:center;border-radius:var(–r-xs);transition:background .1s;}
+
+.modal{
+  background:var(--s1);
+  border:1px solid var(--border2);
+  border-radius:var(--r);
+  max-width:420px;
+  width:100%;
+  max-height:85vh;
+  overflow-y:auto;
+  box-shadow:0 20px 60px rgba(0,0,0,.6);
+}
+
+.modal-header{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:14px 16px;
+  border-bottom:1px solid var(--border);
+  position:sticky;
+  top:0;
+  background:var(--s1);
+  z-index:1;
+}
+
+.modal-title{
+  font-size:11px;
+  letter-spacing:.18em;
+  text-transform:uppercase;
+  color:var(--red);
+}
+
+.modal-close{
+  appearance:none;
+  border:none;
+  background:transparent;
+  color:var(--ink-dim);
+  font-size:18px;
+  cursor:pointer;
+  width:32px;
+  height:32px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  border-radius:var(--r-xs);
+  transition:background .1s;
+}
+
 .modal-close:hover{background:rgba(255,255,255,.06);}
+
 .modal-body{padding:16px;}
+
 .modal-section{margin-bottom:16px;}
 .modal-section:last-child{margin-bottom:0;}
-.modal-row{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
+
+.modal-row{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  margin-bottom:10px;
+}
+
 .modal-row:last-child{margin-bottom:0;}
-.modal-label{font-size:9px;letter-spacing:.15em;text-transform:uppercase;color:var(–ink-dim);min-width:68px;}
-.modal-value{font-size:10px;font-weight:700;color:var(–ink);min-width:45px;text-align:right;}
+
+.modal-label{
+  font-size:9px;
+  letter-spacing:.15em;
+  text-transform:uppercase;
+  color:var(--ink-dim);
+  min-width:68px;
+}
+
+.modal-value{
+  font-size:10px;
+  font-weight:700;
+  color:var(--ink);
+  min-width:45px;
+  text-align:right;
+}
+
 .modal-row input[type=range]{flex:1;}
-.inv-btns{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;}
-@media(min-width:360px){.inv-btns{grid-template-columns:repeat(4,1fr);}}
-@media(min-width:400px){.inv-btns{grid-template-columns:repeat(7,1fr);}}
-.inv-btn{appearance:none;padding:8px 4px;border:1px solid var(–border);background:var(–s2);color:var(–ink-dim);font-family:var(–mono);font-size:8px;letter-spacing:.06em;text-transform:uppercase;border-radius:var(–r-xs);cursor:pointer;transition:all .1s;}
-.inv-btn.active{border-color:rgba(74,158,255,.6);background:var(–blu-dim);color:var(–blu);}
-.modal-footer{display:flex;gap:8px;padding:12px 16px;border-top:1px solid var(–border);position:sticky;bottom:0;background:var(–s1);}
+
+.inv-btns{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:5px;
+}
+
+@media (min-width:360px){
+  .inv-btns{grid-template-columns:repeat(4,1fr);}
+}
+
+@media (min-width:420px){
+  .inv-btns{grid-template-columns:repeat(7,1fr);}
+}
+
+.inv-btn{
+  appearance:none;
+  padding:8px 4px;
+  border:1px solid var(--border);
+  background:var(--s2);
+  color:var(--ink-dim);
+  font-family:var(--mono);
+  font-size:8px;
+  letter-spacing:.06em;
+  text-transform:uppercase;
+  border-radius:var(--r-xs);
+  cursor:pointer;
+  transition:all .1s;
+}
+
+.inv-btn.active{
+  border-color:rgba(74,158,255,.6);
+  background:var(--blu-dim);
+  color:var(--blu);
+}
+
+.modal-footer{
+  display:flex;
+  gap:8px;
+  padding:12px 16px;
+  border-top:1px solid var(--border);
+  position:sticky;
+  bottom:0;
+  background:var(--s1);
+}
+
 .modal-footer .btn{flex:1;}
 
-/* ── UTILS ── */
-.mt-sm{margin-top:5px;} .mt-xs{margin-top:3px;}
+/* UTILS */
+.mt-sm{margin-top:6px;}
+.mt-xs{margin-top:4px;}
 .mb-sm{margin-bottom:8px;}
-.divider{height:1px;background:var(–border);margin:10px 0;}
-::-webkit-scrollbar{width:3px;}
-::-webkit-scrollbar-thumb{background:rgba(255,255,255,.09);border-radius:999px;}
-</style>
 
+.divider{
+  height:1px;
+  background:var(--border);
+  margin:10px 0;
+}
+
+::-webkit-scrollbar{width:3px;}
+::-webkit-scrollbar-thumb{
+  background:rgba(255,255,255,.09);
+  border-radius:999px;
+}
+</style>
 </head>
+
 <body>
 <div class="shell">
-
-  <!-- TOPBAR -->
 
   <div class="topbar">
     <button id="btnBack" class="btn sm">←</button>
@@ -250,16 +1090,12 @@ input[type=range]::-moz-range-thumb{width:16px;height:16px;border-radius:50%;bac
     </div>
   </div>
 
-  <!-- MASTER VOLUME -->
-
   <div class="vol-strip">
     <span class="vol-strip-icon">🔊</span>
     <span class="vol-strip-label">Master</span>
     <input id="rVol" type="range" min="0" max="1" step="0.01" value="0.80"/>
     <span class="vol-strip-val" id="vVol">80%</span>
   </div>
-
-  <!-- PILLS -->
 
   <div class="pills">
     <div class="pill">BPM <strong id="kBpm">60</strong></div>
@@ -271,8 +1107,6 @@ input[type=range]::-moz-range-thumb{width:16px;height:16px;border-radius:50%;bac
     <div class="pill hot">Step <strong id="kStep">—</strong> · <strong id="kChord">—</strong></div>
   </div>
 
-  <!-- TABS -->
-
   <div class="tabs">
     <button class="tab active" data-tab="seq">Sequencer</button>
     <button class="tab" data-tab="sound">Sound</button>
@@ -280,232 +1114,219 @@ input[type=range]::-moz-range-thumb{width:16px;height:16px;border-radius:50%;bac
     <button class="tab" data-tab="scenes">Scenes</button>
   </div>
 
-  <!-- ═══ TAB: SEQUENCER ═══ -->
-
   <div id="tabSeq" class="tab-content active">
     <div class="card">
       <div class="card-body">
 
-```
-    <!-- VL Indicator -->
-    <div class="vl-indicator" id="vlIndicator">
-      <div class="vl-dot"></div>
-      <span class="vl-text">Voice Leading Active</span>
-      <button id="btnVLToggle" class="btn xs blu active" style="margin-left:auto;">ON</button>
-    </div>
+        <div class="vl-indicator" id="vlIndicator">
+          <div class="vl-dot"></div>
+          <span class="vl-text">Voice Leading Active</span>
+          <button id="btnVLToggle" class="btn xs blu active" style="margin-left:auto;">ON</button>
+        </div>
 
-    <div id="stepsGrid" class="steps-grid"></div>
-    <div class="divider"></div>
+        <div id="stepsGrid" class="steps-grid"></div>
+        <div class="divider"></div>
 
-    <div class="ctrls">
-      <div class="ctrl">
-        <div class="ctrl-head"><span class="ctrl-lbl">BPM</span><span class="ctrl-val" id="vBpm">60</span></div>
-        <input id="rBpm" type="range" min="30" max="170" value="60"/>
+        <div class="ctrls">
+          <div class="ctrl">
+            <div class="ctrl-head"><span class="ctrl-lbl">BPM</span><span class="ctrl-val" id="vBpm">60</span></div>
+            <input id="rBpm" type="range" min="30" max="170" value="60"/>
+          </div>
+          <div class="ctrl">
+            <div class="ctrl-head"><span class="ctrl-lbl">Swing</span><span class="ctrl-val" id="vSwing">0.54</span></div>
+            <input id="rSwing" type="range" min="0.50" max="0.66" step="0.01" value="0.54"/>
+          </div>
+          <div class="ctrl">
+            <div class="ctrl-head"><span class="ctrl-lbl">Gate</span><span class="ctrl-val" id="vGate">0.78</span></div>
+            <input id="rGate" type="range" min="0.20" max="1.10" step="0.01" value="0.78"/>
+          </div>
+          <div class="ctrl">
+            <div class="ctrl-head"><span class="ctrl-lbl">Human</span><span class="ctrl-val" id="vHuman">0.010s</span></div>
+            <input id="rHuman" type="range" min="0" max="0.03" step="0.001" value="0.010"/>
+          </div>
+          <div class="ctrl">
+            <div class="ctrl-head"><span class="ctrl-lbl">Met Vol</span><span class="ctrl-val" id="vMet">0.35</span></div>
+            <input id="rMet" type="range" min="0" max="1" step="0.01" value="0.35"/>
+          </div>
+          <div class="ctrl">
+            <div class="ctrl-head"><span class="ctrl-lbl">Strum</span><span class="ctrl-val" id="vStrum">0ms</span></div>
+            <input id="rStrum" type="range" min="0" max="80" step="1" value="0"/>
+          </div>
+        </div>
+
+        <div class="mt-sm"></div>
+        <div class="action-row">
+          <button id="btnPage" class="btn sm">PAGE A</button>
+          <button id="btnHold" class="btn sm">HOLD</button>
+          <button id="btnFill" class="btn sm">FILL</button>
+          <button id="btnHome" class="btn sm amb">HOME</button>
+          <button id="btnRotL" class="btn sm">⟲ -1</button>
+          <button id="btnRotR" class="btn sm">⟳ +1</button>
+          <button id="btnRand" class="btn sm">RAND</button>
+          <button id="btnClear" class="btn xs">CLR</button>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="inv-row">
+          <span class="inv-label">INV:</span>
+          <button class="btn xs btn-inv active" data-inv="-1">AUTO</button>
+          <button class="btn xs btn-inv" data-inv="0">ROOT</button>
+          <button class="btn xs btn-inv" data-inv="1">1ST</button>
+          <button class="btn xs btn-inv" data-inv="2">2ND</button>
+          <button class="btn xs btn-inv" data-inv="3">3RD</button>
+          <button class="btn xs btn-inv" data-inv="4">D2</button>
+        </div>
+
+        <div class="mt-xs strum-row">
+          <span class="strum-label">Strum:</span>
+          <button class="btn-sdir btn xs active" data-sdir="up">UP</button>
+          <button class="btn-sdir btn xs" data-sdir="down">DN</button>
+          <button class="btn-sdir btn xs" data-sdir="random">RND</button>
+        </div>
+
+        <div class="mt-sm"></div>
+        <div class="hint">
+          TAP=on/off · DOUBLE-TAP or LONG-PRESS=step locks · DRAG ↕=pos · DRAG ↔=chord type<br/>
+          KEYBOARD: SPACE=play · R/E=rotate · M=met · V=voice lead · ESC=close modal
+        </div>
+
       </div>
-      <div class="ctrl">
-        <div class="ctrl-head"><span class="ctrl-lbl">Swing</span><span class="ctrl-val" id="vSwing">0.54</span></div>
-        <input id="rSwing" type="range" min="0.50" max="0.66" step="0.01" value="0.54"/>
-      </div>
-      <div class="ctrl">
-        <div class="ctrl-head"><span class="ctrl-lbl">Gate</span><span class="ctrl-val" id="vGate">0.78</span></div>
-        <input id="rGate" type="range" min="0.20" max="1.10" step="0.01" value="0.78"/>
-      </div>
-      <div class="ctrl">
-        <div class="ctrl-head"><span class="ctrl-lbl">Human</span><span class="ctrl-val" id="vHuman">0.010s</span></div>
-        <input id="rHuman" type="range" min="0" max="0.03" step="0.001" value="0.010"/>
-      </div>
-      <div class="ctrl">
-        <div class="ctrl-head"><span class="ctrl-lbl">Met Vol</span><span class="ctrl-val" id="vMet">0.35</span></div>
-        <input id="rMet" type="range" min="0" max="1" step="0.01" value="0.35"/>
-      </div>
-      <div class="ctrl">
-        <div class="ctrl-head"><span class="ctrl-lbl">Strum</span><span class="ctrl-val" id="vStrum">0ms</span></div>
-        <input id="rStrum" type="range" min="0" max="80" step="1" value="0"/>
-      </div>
-    </div>
-
-    <div class="mt-sm"></div>
-    <div class="action-row">
-      <button id="btnPage"  class="btn sm">PAGE A</button>
-      <button id="btnHold"  class="btn sm">HOLD</button>
-      <button id="btnFill"  class="btn sm">FILL</button>
-      <button id="btnHome"  class="btn sm amb">HOME</button>
-      <button id="btnRotL"  class="btn sm">⟲ -1</button>
-      <button id="btnRotR"  class="btn sm">⟳ +1</button>
-      <button id="btnRand"  class="btn sm">RAND</button>
-      <button id="btnClear" class="btn xs">CLR</button>
-    </div>
-
-    <div class="divider"></div>
-
-    <!-- Global inversion + VL -->
-    <div class="inv-row">
-      <span class="inv-label">INV:</span>
-      <button class="btn xs btn-inv active" data-inv="-1">AUTO</button>
-      <button class="btn xs btn-inv" data-inv="0">ROOT</button>
-      <button class="btn xs btn-inv" data-inv="1">1ST</button>
-      <button class="btn xs btn-inv" data-inv="2">2ND</button>
-      <button class="btn xs btn-inv" data-inv="3">3RD</button>
-      <button class="btn xs btn-inv" data-inv="drop2">D2</button>
-    </div>
-
-    <div class="mt-xs strum-row">
-      <span class="strum-label">Strum:</span>
-      <button class="btn-sdir btn xs active" data-sdir="up">UP</button>
-      <button class="btn-sdir btn xs" data-sdir="down">DN</button>
-      <button class="btn-sdir btn xs" data-sdir="random">RND</button>
-    </div>
-
-    <div class="mt-sm"></div>
-    <div class="hint">
-      TAP=on/off · DOUBLE-TAP or LONG-PRESS=step locks · DRAG ↕=pos · DRAG ↔=chord type<br/>
-      KEYBOARD: SPACE=play · R/E=rotate · M=met · V=voice lead · ESC=close modal
     </div>
   </div>
-</div>
-```
-
-  </div>
-
-  <!-- ═══ TAB: SOUND ═══ -->
 
   <div id="tabSound" class="tab-content">
     <div class="card">
       <div class="card-body">
 
-```
-    <div class="sec">Preset</div>
-    <div class="preset-row mb-sm">
-      <button class="btn sm btn-preset active" data-preset="neosoul">NEO-SOUL</button>
-      <button class="btn sm btn-preset" data-preset="house">HOUSE</button>
-      <button class="btn sm btn-preset" data-preset="jazz">JAZZ</button>
-    </div>
-
-    <div class="sec blu">Engine</div>
-    <div class="engine-grid mb-sm">
-      <button class="btn btn-engine active" data-engine="warmKeys">WARM KEYS</button>
-      <button class="btn btn-engine" data-engine="tapePad">TAPE PAD</button>
-      <button class="btn btn-engine" data-engine="pluck">PLUCK</button>
-      <button class="btn btn-engine" data-engine="organ">ORGAN</button>
-    </div>
-
-    <div class="sec">Shape</div>
-    <div class="ctrls mb-sm">
-      <div class="ctrl">
-        <div class="ctrl-head"><span class="ctrl-lbl">Vibe</span><span class="ctrl-val" id="vVibe">0.62</span></div>
-        <input id="rVibe" type="range" min="0" max="1" step="0.01" value="0.62"/>
-      </div>
-      <div class="ctrl">
-        <div class="ctrl-head"><span class="ctrl-lbl">Spread</span><span class="ctrl-val" id="vSpread">0.50</span></div>
-        <input id="rSpread" type="range" min="0" max="1" step="0.01" value="0.50"/>
-      </div>
-      <div class="ctrl">
-        <div class="ctrl-head"><span class="ctrl-lbl">Drive</span><span class="ctrl-val" id="vDrive">0.00</span></div>
-        <input id="rDrive" type="range" min="0" max="0.80" step="0.01" value="0.00"/>
-      </div>
-      <div class="ctrl">
-        <div class="ctrl-head"><span class="ctrl-lbl">Release</span><span class="ctrl-val" id="vRel">0.35s</span></div>
-        <input id="rRel" type="range" min="0.05" max="1.80" step="0.01" value="0.35"/>
-      </div>
-      <div class="ctrl">
-        <div class="ctrl-head"><span class="ctrl-lbl">Accent</span><span class="ctrl-val" id="vAcc">0.35</span></div>
-        <input id="rAcc" type="range" min="0" max="0.80" step="0.01" value="0.35"/>
-      </div>
-      <div class="ctrl">
-        <div class="ctrl-head"><span class="ctrl-lbl">Octave</span><span class="ctrl-val" id="vOct">2</span></div>
-        <input id="rOct" type="range" min="2" max="5" step="1" value="2"/>
-      </div>
-      <div class="ctrl">
-        <div class="ctrl-head"><span class="ctrl-lbl">Stability</span><span class="ctrl-val" id="vStab">0.70</span></div>
-        <input id="rStab" type="range" min="0" max="1" step="0.01" value="0.70"/>
-      </div>
-      <div class="ctrl">
-        <div class="ctrl-head"><span class="ctrl-lbl">VL Smooth</span><span class="ctrl-val" id="vVLSmooth">0.80</span></div>
-        <input id="rVLSmooth" type="range" min="0" max="1" step="0.01" value="0.80"/>
-      </div>
-    </div>
-
-    <div class="sec blu">Timbre</div>
-    <div class="ctrls col3 mb-sm">
-      <div class="ctrl">
-        <div class="ctrl-head"><span class="ctrl-lbl">Tone</span><span class="ctrl-val" id="vTone">0.65</span></div>
-        <input id="rTone" type="range" min="0" max="1" step="0.01" value="0.65"/>
-      </div>
-      <div class="ctrl">
-        <div class="ctrl-head"><span class="ctrl-lbl">Body</span><span class="ctrl-val" id="vBody">0.55</span></div>
-        <input id="rBody" type="range" min="0" max="1" step="0.01" value="0.55"/>
-      </div>
-      <div class="ctrl">
-        <div class="ctrl-head"><span class="ctrl-lbl">FM Amt</span><span class="ctrl-val" id="vFmAmt">0.55</span></div>
-        <input id="rFmAmt" type="range" min="0" max="1" step="0.01" value="0.55"/>
-      </div>
-      <div class="ctrl">
-        <div class="ctrl-head"><span class="ctrl-lbl">Atk Noise</span><span class="ctrl-val" id="vAtkNoise">0.40</span></div>
-        <input id="rAtkNoise" type="range" min="0" max="1" step="0.01" value="0.40"/>
-      </div>
-      <div class="ctrl">
-        <div class="ctrl-head"><span class="ctrl-lbl">Chorus</span><span class="ctrl-val" id="vChorusAmt">0.28</span></div>
-        <input id="rChorusAmt" type="range" min="0" max="1" step="0.01" value="0.28"/>
-      </div>
-      <div class="ctrl">
-        <div class="ctrl-head"><span class="ctrl-lbl">Reverb</span><span class="ctrl-val" id="vReverbAmt">0.22</span></div>
-        <input id="rReverbAmt" type="range" min="0" max="1" step="0.01" value="0.22"/>
-      </div>
-    </div>
-
-    <div class="sec pur">Analog Character</div>
-    <div class="ctrls mb-sm">
-      <div class="ctrl">
-        <div class="ctrl-head"><span class="ctrl-lbl">Wow/Fltr</span><span class="ctrl-val" id="vWow">0.00</span></div>
-        <input id="rWow" type="range" min="0" max="1" step="0.01" value="0.00"/>
-      </div>
-      <div class="ctrl">
-        <div class="ctrl-head"><span class="ctrl-lbl">Drift</span><span class="ctrl-val" id="vDrift">0.00</span></div>
-        <input id="rDrift" type="range" min="0" max="1" step="0.01" value="0.00"/>
-      </div>
-      <div class="ctrl">
-        <div class="ctrl-head"><span class="ctrl-lbl">Vinyl Hiss</span><span class="ctrl-val" id="vVinyl">0.00</span></div>
-        <input id="rVinyl" type="range" min="0" max="1" step="0.01" value="0.00"/>
-      </div>
-      <div class="ctrl">
-        <div class="ctrl-head"><span class="ctrl-lbl">Bit Crush</span><span class="ctrl-val" id="vBitCrush">0.00</span></div>
-        <input id="rBitCrush" type="range" min="0" max="1" step="0.01" value="0.00"/>
-      </div>
-    </div>
-
-    <div class="sec grn">Bass Generator
-      <button id="btnBassOn" class="btn xs" style="margin-left:6px">BASS OFF</button>
-    </div>
-    <div id="bassSection">
-      <div class="bass-style-row">
-        <button class="btn btn-bass active" data-bstyle="root">ROOT</button>
-        <button class="btn btn-bass" data-bstyle="root5">ROOT+5</button>
-        <button class="btn btn-bass" data-bstyle="octave">OCT BOUNCE</button>
-        <button class="btn btn-bass" data-bstyle="pump">PUMP</button>
-      </div>
-      <div class="ctrls col3">
-        <div class="ctrl">
-          <div class="ctrl-head"><span class="ctrl-lbl">Bass Oct</span><span class="ctrl-val" id="vBassOct">1</span></div>
-          <input id="rBassOct" type="range" min="0" max="3" step="1" value="1"/>
+        <div class="sec">Preset</div>
+        <div class="preset-row mb-sm">
+          <button class="btn sm btn-preset active" data-preset="neosoul">NEO-SOUL</button>
+          <button class="btn sm btn-preset" data-preset="house">HOUSE</button>
+          <button class="btn sm btn-preset" data-preset="jazz">JAZZ</button>
         </div>
-        <div class="ctrl">
-          <div class="ctrl-head"><span class="ctrl-lbl">Bass Tone</span><span class="ctrl-val" id="vBassTone">0.40</span></div>
-          <input id="rBassTone" type="range" min="0" max="1" step="0.01" value="0.40"/>
+
+        <div class="sec blu">Engine</div>
+        <div class="engine-grid mb-sm">
+          <button class="btn btn-engine active" data-engine="warmKeys">WARM KEYS</button>
+          <button class="btn btn-engine" data-engine="tapePad">TAPE PAD</button>
+          <button class="btn btn-engine" data-engine="pluck">PLUCK</button>
+          <button class="btn btn-engine" data-engine="organ">ORGAN</button>
         </div>
-        <div class="ctrl">
-          <div class="ctrl-head"><span class="ctrl-lbl">Bass Gate</span><span class="ctrl-val" id="vBassGate">0.75</span></div>
-          <input id="rBassGate" type="range" min="0.10" max="1.10" step="0.01" value="0.75"/>
+
+        <div class="sec">Shape</div>
+        <div class="ctrls mb-sm">
+          <div class="ctrl">
+            <div class="ctrl-head"><span class="ctrl-lbl">Vibe</span><span class="ctrl-val" id="vVibe">0.62</span></div>
+            <input id="rVibe" type="range" min="0" max="1" step="0.01" value="0.62"/>
+          </div>
+          <div class="ctrl">
+            <div class="ctrl-head"><span class="ctrl-lbl">Spread</span><span class="ctrl-val" id="vSpread">0.50</span></div>
+            <input id="rSpread" type="range" min="0" max="1" step="0.01" value="0.50"/>
+          </div>
+          <div class="ctrl">
+            <div class="ctrl-head"><span class="ctrl-lbl">Drive</span><span class="ctrl-val" id="vDrive">0.00</span></div>
+            <input id="rDrive" type="range" min="0" max="0.80" step="0.01" value="0.00"/>
+          </div>
+          <div class="ctrl">
+            <div class="ctrl-head"><span class="ctrl-lbl">Release</span><span class="ctrl-val" id="vRel">0.35s</span></div>
+            <input id="rRel" type="range" min="0.05" max="1.80" step="0.01" value="0.35"/>
+          </div>
+          <div class="ctrl">
+            <div class="ctrl-head"><span class="ctrl-lbl">Accent</span><span class="ctrl-val" id="vAcc">0.35</span></div>
+            <input id="rAcc" type="range" min="0" max="0.80" step="0.01" value="0.35"/>
+          </div>
+          <div class="ctrl">
+            <div class="ctrl-head"><span class="ctrl-lbl">Octave</span><span class="ctrl-val" id="vOct">2</span></div>
+            <input id="rOct" type="range" min="2" max="5" step="1" value="2"/>
+          </div>
+          <div class="ctrl">
+            <div class="ctrl-head"><span class="ctrl-lbl">Stability</span><span class="ctrl-val" id="vStab">0.70</span></div>
+            <input id="rStab" type="range" min="0" max="1" step="0.01" value="0.70"/>
+          </div>
+          <div class="ctrl">
+            <div class="ctrl-head"><span class="ctrl-lbl">VL Smooth</span><span class="ctrl-val" id="vVLSmooth">0.80</span></div>
+            <input id="rVLSmooth" type="range" min="0" max="1" step="0.01" value="0.80"/>
+          </div>
         </div>
+
+        <div class="sec blu">Timbre</div>
+        <div class="ctrls col3 mb-sm">
+          <div class="ctrl">
+            <div class="ctrl-head"><span class="ctrl-lbl">Tone</span><span class="ctrl-val" id="vTone">0.65</span></div>
+            <input id="rTone" type="range" min="0" max="1" step="0.01" value="0.65"/>
+          </div>
+          <div class="ctrl">
+            <div class="ctrl-head"><span class="ctrl-lbl">Body</span><span class="ctrl-val" id="vBody">0.55</span></div>
+            <input id="rBody" type="range" min="0" max="1" step="0.01" value="0.55"/>
+          </div>
+          <div class="ctrl">
+            <div class="ctrl-head"><span class="ctrl-lbl">FM Amt</span><span class="ctrl-val" id="vFmAmt">0.55</span></div>
+            <input id="rFmAmt" type="range" min="0" max="1" step="0.01" value="0.55"/>
+          </div>
+          <div class="ctrl">
+            <div class="ctrl-head"><span class="ctrl-lbl">Atk Noise</span><span class="ctrl-val" id="vAtkNoise">0.40</span></div>
+            <input id="rAtkNoise" type="range" min="0" max="1" step="0.01" value="0.40"/>
+          </div>
+          <div class="ctrl">
+            <div class="ctrl-head"><span class="ctrl-lbl">Chorus</span><span class="ctrl-val" id="vChorusAmt">0.28</span></div>
+            <input id="rChorusAmt" type="range" min="0" max="1" step="0.01" value="0.28"/>
+          </div>
+          <div class="ctrl">
+            <div class="ctrl-head"><span class="ctrl-lbl">Reverb</span><span class="ctrl-val" id="vReverbAmt">0.22</span></div>
+            <input id="rReverbAmt" type="range" min="0" max="1" step="0.01" value="0.22"/>
+          </div>
+        </div>
+
+        <div class="sec pur">Analog Character</div>
+        <div class="ctrls mb-sm">
+          <div class="ctrl">
+            <div class="ctrl-head"><span class="ctrl-lbl">Wow/Fltr</span><span class="ctrl-val" id="vWow">0.00</span></div>
+            <input id="rWow" type="range" min="0" max="1" step="0.01" value="0.00"/>
+          </div>
+          <div class="ctrl">
+            <div class="ctrl-head"><span class="ctrl-lbl">Drift</span><span class="ctrl-val" id="vDrift">0.00</span></div>
+            <input id="rDrift" type="range" min="0" max="1" step="0.01" value="0.00"/>
+          </div>
+          <div class="ctrl">
+            <div class="ctrl-head"><span class="ctrl-lbl">Vinyl Hiss</span><span class="ctrl-val" id="vVinyl">0.00</span></div>
+            <input id="rVinyl" type="range" min="0" max="1" step="0.01" value="0.00"/>
+          </div>
+          <div class="ctrl">
+            <div class="ctrl-head"><span class="ctrl-lbl">Bit Crush</span><span class="ctrl-val" id="vBitCrush">0.00</span></div>
+            <input id="rBitCrush" type="range" min="0" max="1" step="0.01" value="0.00"/>
+          </div>
+        </div>
+
+        <div class="sec grn">Bass Generator
+          <button id="btnBassOn" class="btn xs" style="margin-left:6px">BASS OFF</button>
+        </div>
+        <div id="bassSection">
+          <div class="bass-style-row">
+            <button class="btn btn-bass active" data-bstyle="root">ROOT</button>
+            <button class="btn btn-bass" data-bstyle="root5">ROOT+5</button>
+            <button class="btn btn-bass" data-bstyle="octave">OCT BOUNCE</button>
+            <button class="btn btn-bass" data-bstyle="pump">PUMP</button>
+          </div>
+          <div class="ctrls col3">
+            <div class="ctrl">
+              <div class="ctrl-head"><span class="ctrl-lbl">Bass Oct</span><span class="ctrl-val" id="vBassOct">1</span></div>
+              <input id="rBassOct" type="range" min="0" max="3" step="1" value="1"/>
+            </div>
+            <div class="ctrl">
+              <div class="ctrl-head"><span class="ctrl-lbl">Bass Tone</span><span class="ctrl-val" id="vBassTone">0.40</span></div>
+              <input id="rBassTone" type="range" min="0" max="1" step="0.01" value="0.40"/>
+            </div>
+            <div class="ctrl">
+              <div class="ctrl-head"><span class="ctrl-lbl">Bass Gate</span><span class="ctrl-val" id="vBassGate">0.75</span></div>
+              <input id="rBassGate" type="range" min="0.10" max="1.10" step="0.01" value="0.75"/>
+            </div>
+          </div>
+        </div>
+
       </div>
     </div>
-
   </div>
-</div>
-```
-
-  </div>
-
-  <!-- ═══ TAB: CIRCLE ═══ -->
 
   <div id="tabCircle" class="tab-content">
     <div class="card">
@@ -516,8 +1337,6 @@ input[type=range]::-moz-range-thumb{width:16px;height:16px;border-radius:50%;bac
     </div>
   </div>
 
-  <!-- ═══ TAB: SCENES ═══ -->
-
   <div id="tabScenes" class="tab-content">
     <div class="card">
       <div class="card-body">
@@ -527,9 +1346,7 @@ input[type=range]::-moz-range-thumb{width:16px;height:16px;border-radius:50%;bac
     </div>
   </div>
 
-</div><!-- /.shell -->
-
-<!-- ═══ MODAL: Step Parameter Locks ═══ -->
+</div>
 
 <div class="modal-overlay" id="modalOverlay">
   <div class="modal">
@@ -988,7 +1805,7 @@ function metTick(time,accent){
 }
 
 /* ═══════════════════════════════════════════
-   CHORD PLAYBACK (strum + voice lead)
+   CHORD PLAYBACK
 ═══════════════════════════════════════════ */
 function playChord(midiNotes,t,holdUntil,velocity){
   if(!AC) return;
@@ -1148,7 +1965,7 @@ function openModal(stepIdx){
   var st=S.steps[stepIdx];
   document.getElementById("modalStepNum").textContent=stepIdx+1;
   var invVal=st.inv!==null?st.inv:-1;
-  document.querySelectorAll("#modalInvBtns .inv-btn").forEach(function(btn){btn.classList.toggle("active",parseInt(btn.dataset.inv)===invVal);});
+  document.querySelectorAll("#modalInvBtns .inv-btn").forEach(function(btn){btn.classList.toggle("active",parseInt(btn.dataset.inv,10)===invVal);});
   var mVel=document.getElementById("mVel"),mGate=document.getElementById("mGate"),mOct=document.getElementById("mOct"),mSpread=document.getElementById("mSpread"),mMicro=document.getElementById("mMicro");
   mVel.value=st.vel!==null?st.vel:.80;
   mGate.value=st.gate!==null?st.gate:S.gate;
@@ -1164,7 +1981,7 @@ function closeModal(){document.getElementById("modalOverlay").classList.remove("
 function updateModalValues(){
   document.getElementById("mVelVal").textContent=parseFloat(document.getElementById("mVel").value).toFixed(2);
   document.getElementById("mGateVal").textContent=parseFloat(document.getElementById("mGate").value).toFixed(2);
-  document.getElementById("mOctVal").textContent=parseInt(document.getElementById("mOct").value);
+  document.getElementById("mOctVal").textContent=parseInt(document.getElementById("mOct").value,10);
   document.getElementById("mSpreadVal").textContent=parseFloat(document.getElementById("mSpread").value).toFixed(2);
   document.getElementById("mMicroVal").textContent=parseFloat(document.getElementById("mMicro").value).toFixed(3);
 }
@@ -1173,11 +1990,11 @@ function applyModalLocks(){
   if(modalStepIdx===null) return;
   var st=S.steps[modalStepIdx];
   var activeInv=document.querySelector("#modalInvBtns .inv-btn.active");
-  var invVal=activeInv?parseInt(activeInv.dataset.inv):-1;
+  var invVal=activeInv?parseInt(activeInv.dataset.inv,10):-1;
   st.inv=invVal===-1?null:invVal;
   st.vel=parseFloat(document.getElementById("mVel").value);
   st.gate=parseFloat(document.getElementById("mGate").value);
-  st.oct=parseInt(document.getElementById("mOct").value);
+  st.oct=parseInt(document.getElementById("mOct").value,10);
   st.spread=parseFloat(document.getElementById("mSpread").value);
   st.micro=parseFloat(document.getElementById("mMicro").value);
   if(Math.abs(st.vel-.80)<.01) st.vel=null;
@@ -1398,7 +2215,7 @@ document.querySelectorAll(".btn-inv[data-inv]").forEach(function(btn){
   btn.addEventListener("click",function(){
     document.querySelectorAll(".btn-inv[data-inv]").forEach(function(b){b.classList.remove("active");});
     btn.classList.add("active");
-    var v=btn.dataset.inv; S.globalInv=(v==="drop2"||v==="open")?v:parseInt(v,10);
+    S.globalInv=parseInt(btn.dataset.inv,10);
     renderSteps();
   });
 });
@@ -1462,6 +2279,5 @@ refreshDisplay();
 
 }());
 </script>
-
 </body>
 </html>
