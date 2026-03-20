@@ -31,7 +31,11 @@
   --morph:#d98cff;
   --morph-dim:#4b2b57;
   --morph2:#8fc6ff;
+  --lub:#ff9d57;
+  --lub-dim:#5a3420;
+  --lub2:#ffd27a;
 }
+
 
 body {
   font-family:'Space Mono', monospace;
@@ -335,6 +339,70 @@ body {
 .footer-center { color:#4ecdc4; }
 
 @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.4} }
+
+
+.lubadh-section {
+  background:#1b1612;
+  border-top:2px solid var(--lub-dim);
+  border-bottom:1px solid #333333;
+}
+.lubadh-header {
+  display:flex; align-items:center; justify-content:space-between;
+  padding:10px 20px; background:#16110d; border-bottom:1px solid #34261c; cursor:pointer;
+}
+.lubadh-header-left, .lubadh-header-right { display:flex; align-items:center; gap:10px; }
+.lubadh-title { font-size:10px; font-weight:700; letter-spacing:3px; text-transform:uppercase; color:var(--lub); }
+.lubadh-subtitle { font-size:8px; color:rgba(255,157,87,0.45); letter-spacing:2px; }
+.lubadh-toggle {
+  padding:5px 14px; background:rgba(255,157,87,0.06); border:1px solid var(--lub-dim); border-radius:3px;
+  color:rgba(255,157,87,0.55); font-family:inherit; font-size:9px; font-weight:700; letter-spacing:2px;
+  cursor:pointer; appearance:none; transition:all .15s;
+}
+.lubadh-toggle.on { background:rgba(255,157,87,0.18); border-color:var(--lub); color:var(--lub); box-shadow:0 0 12px rgba(255,157,87,.2); }
+.lubadh-chevron { font-size:10px; color:rgba(255,157,87,0.4); transition:transform .2s; user-select:none; }
+.lubadh-chevron.open { transform:rotate(180deg); }
+.lubadh-body { overflow:hidden; max-height:0; transition:max-height .3s ease; }
+.lubadh-body.open { max-height:1400px; }
+.lubadh-controls { display:flex; flex-wrap:wrap; border-top:1px solid #2a2018; }
+.lubadh-group {
+  background:#15110e; padding:14px 16px; width:33.333%; min-width:200px; flex:1;
+  border-right:1px solid #2a2018; border-bottom:1px solid #2a2018;
+}
+.lubadh-group-label {
+  display:block; font-size:8px; color:rgba(255,157,87,0.45); letter-spacing:2px; margin-bottom:12px; padding-bottom:7px;
+  border-bottom:1px solid #2a2018; text-transform:uppercase;
+}
+.lubadh-enc-row { display:flex; justify-content:space-around; gap:4px; margin-bottom:8px; }
+.lubadh-enc-wrap { display:flex; flex-direction:column; align-items:center; gap:4px; flex:1; }
+.lubadh-encoder { border-color:#433024; touch-action:none; cursor:ns-resize; }
+.lubadh-encoder:hover { border-color:var(--lub-dim)!important; }
+.lubadh-encoder .encoder-indicator { background:var(--lub); box-shadow:0 0 4px var(--lub); }
+.lubadh-encoder-label { font-size:8px; color:rgba(255,157,87,0.55); letter-spacing:1px; }
+.lubadh-encoder-val { font-size:8px; color:var(--lub2); letter-spacing:.5px; }
+.lubadh-btns, .lubadh-mini-row { display:flex; gap:6px; flex-wrap:wrap; }
+.lubadh-btn, .lubadh-mini-btn {
+  padding:7px 10px; background:#1f1813; border:1px solid #34261c; border-radius:4px;
+  color:rgba(255,157,87,0.55); font-family:inherit; font-size:8px; font-weight:700; letter-spacing:1px;
+  cursor:pointer; appearance:none; transition:all .12s;
+}
+.lubadh-btn:hover, .lubadh-mini-btn:hover { background:#2a2018; color:var(--lub2); }
+.lubadh-btn.active, .lubadh-mini-btn.active { background:rgba(255,157,87,.16); border-color:var(--lub); color:var(--lub2); box-shadow:0 0 10px rgba(255,157,87,.12); }
+.lubadh-display { background:#0d0b09; border:1px solid #34261c; border-radius:4px; padding:10px; }
+.lubadh-display-label { display:flex; align-items:center; justify-content:space-between; margin-bottom:6px; font-size:8px; color:rgba(255,157,87,.45); letter-spacing:1.6px; }
+.lubadh-display-sub { color:var(--lub2); }
+#lubadhScope { width:100%; height:auto; display:block; background:#090705; border-radius:3px; border:1px solid #241b15; }
+.lubadh-status-box { display:flex; gap:6px; flex-wrap:wrap; margin-top:10px; }
+.lubadh-chip { padding:4px 7px; border:1px solid #34261c; border-radius:999px; font-size:8px; color:rgba(255,157,87,.6); background:#110d0a; }
+.lubadh-chip span { color:var(--lub2); }
+@media screen and (max-width: 600px) {
+  .lubadh-header { padding:10px 14px; }
+  .lubadh-title { font-size:9px; letter-spacing:2px; }
+  .lubadh-subtitle { display:none; }
+  .lubadh-body.open { max-height:none; }
+  .lubadh-controls { flex-direction:column; }
+  .lubadh-group { width:100%; min-width:0; padding:12px 14px; border-right:none; }
+  .lubadh-enc-wrap { flex:1; max-width:72px; }
+}
 
 @media screen and (max-width: 600px) {
   body { padding:0; }
@@ -714,6 +782,68 @@ body {
     </div>
   </section>
 
+  
+  <section class="lubadh-section">
+    <div class="lubadh-header" id="lubadh-header">
+      <div class="lubadh-header-left">
+        <span class="lubadh-title">LÚBADH TAPE ENGINE</span>
+        <span class="lubadh-subtitle">DUAL DECK · EVOLVING LOOPS</span>
+      </div>
+      <div class="lubadh-header-right">
+        <button class="lubadh-toggle" id="lubadh-toggle" onclick="event.stopPropagation(); toggleLubadh()">OFF</button>
+        <span class="lubadh-chevron" id="lubadh-chevron">▾</span>
+      </div>
+    </div>
+    <div class="lubadh-body" id="lubadh-body">
+      <div class="lubadh-controls">
+        <div class="lubadh-group">
+          <span class="lubadh-group-label">DECK A · B</span>
+          <div class="lubadh-enc-row">
+            <div class="lubadh-enc-wrap"><div class="encoder lubadh-encoder" id="lenc-speedA"><div class="encoder-ring"></div><div class="encoder-indicator"></div></div><span class="lubadh-encoder-label">A SPD</span><span class="lubadh-encoder-val" id="lv-speedA">1.00×</span></div>
+            <div class="lubadh-enc-wrap"><div class="encoder lubadh-encoder" id="lenc-speedB"><div class="encoder-ring"></div><div class="encoder-indicator"></div></div><span class="lubadh-encoder-label">B SPD</span><span class="lubadh-encoder-val" id="lv-speedB">0.75×</span></div>
+            <div class="lubadh-enc-wrap"><div class="encoder lubadh-encoder" id="lenc-offset"><div class="encoder-ring"></div><div class="encoder-indicator"></div></div><span class="lubadh-encoder-label">OFFSET</span><span class="lubadh-encoder-val" id="lv-offset">18%</span></div>
+            <div class="lubadh-enc-wrap"><div class="encoder lubadh-encoder" id="lenc-level"><div class="encoder-ring"></div><div class="encoder-indicator"></div></div><span class="lubadh-encoder-label">LEVEL</span><span class="lubadh-encoder-val" id="lv-level">0.00</span></div>
+          </div>
+          <div class="lubadh-mini-row" style="margin-top:8px;">
+            <button class="lubadh-mini-btn active" id="lub-link-ab">A → B</button>
+            <button class="lubadh-mini-btn" id="lub-link-ba">B → A</button>
+            <button class="lubadh-mini-btn" id="lub-hold">HOLD</button>
+          </div>
+        </div>
+        <div class="lubadh-group">
+          <span class="lubadh-group-label">TAPE AGE · DUB</span>
+          <div class="lubadh-enc-row">
+            <div class="lubadh-enc-wrap"><div class="encoder lubadh-encoder" id="lenc-cross"><div class="encoder-ring"></div><div class="encoder-indicator"></div></div><span class="lubadh-encoder-label">CROSS</span><span class="lubadh-encoder-val" id="lv-cross">28%</span></div>
+            <div class="lubadh-enc-wrap"><div class="encoder lubadh-encoder" id="lenc-degrade"><div class="encoder-ring"></div><div class="encoder-indicator"></div></div><span class="lubadh-encoder-label">WEAR</span><span class="lubadh-encoder-val" id="lv-degrade">22%</span></div>
+            <div class="lubadh-enc-wrap"><div class="encoder lubadh-encoder" id="lenc-wow"><div class="encoder-ring"></div><div class="encoder-indicator"></div></div><span class="lubadh-encoder-label">WOW</span><span class="lubadh-encoder-val" id="lv-wow">18%</span></div>
+            <div class="lubadh-enc-wrap"><div class="encoder lubadh-encoder" id="lenc-dub"><div class="encoder-ring"></div><div class="encoder-indicator"></div></div><span class="lubadh-encoder-label">DUB</span><span class="lubadh-encoder-val" id="lv-dub">24%</span></div>
+          </div>
+          <div class="lubadh-mini-row" style="margin-top:8px;">
+            <button class="lubadh-mini-btn" id="lub-preset-clean">CLEAN</button>
+            <button class="lubadh-mini-btn" id="lub-preset-worn">WORN</button>
+            <button class="lubadh-mini-btn" id="lub-reset">RESET LOOPS</button>
+          </div>
+        </div>
+        <div class="lubadh-group">
+          <span class="lubadh-group-label">PERFORMANCE</span>
+          <div class="lubadh-display">
+            <div class="lubadh-display-label"><span>DUAL REEL VIEW</span><span class="lubadh-display-sub" id="lubadh-meta">NO SOURCE</span></div>
+            <canvas id="lubadhScope" width="320" height="90"></canvas>
+          </div>
+          <div class="lubadh-btns" style="margin-top:10px;">
+            <button class="lubadh-btn" id="lubadh-play">PLAY</button>
+            <button class="lubadh-btn" id="lubadh-stop">STOP</button>
+          </div>
+          <div class="lubadh-status-box">
+            <div class="lubadh-chip">A POS <span id="lub-pos-a">0%</span></div>
+            <div class="lubadh-chip">B POS <span id="lub-pos-b">0%</span></div>
+            <div class="lubadh-chip">STATE <span id="lub-state">IDLE</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
   <footer class="footer">
     <div><span id="voices-count">0</span> VOICES</div>
     <div class="footer-center"><span id="status-text">READY</span></div>
@@ -731,6 +861,9 @@ var granNode = null;
 var morphEngine = null;
 var morphSeqLink = false, morphSeqAutoStarted = false, morphLockWrite = false, morphLockSuspend = false;
 var morphLocks = new Array(seqMaxSteps).fill(null);
+var lubadhEngine = null;
+var lubEnabled = false, lubLinkAB = true, lubLinkBA = false, lubHold = false;
+var lubEncState = {}, lubActiveDrag = null;
 
 var params = { masterVolume:0.7, tapeLength:8, startJitter:30, wow:35, flutter:25, tapeAge:40, mechanicalNoise:20, brightness:60, saturation:30, attack:40, release:50, driftPerKey:25 };
 var ensembleVoices=1, speedMode=1.0, playMode='poly', chordType='major', chordMap={};
@@ -935,11 +1068,11 @@ function morphSeqPilot(stepIndex, note){
 
 // ---------- AUDIO / BANKS ----------
 function makeSaturation(amount){ var ws=audioCtx.createWaveShaper(), N=8192, curve=new Float32Array(N); for(var i=0;i<N;i++){ var x=(i*2)/N-1; curve[i]=Math.tanh(x*(1+amount*3))*(1-amount*0.1); } ws.curve=curve; ws.oversample='2x'; return ws; }
-function initAudio(cb){ if(audioCtx){ if(audioCtx.state==='suspended') audioCtx.resume().then(function(){ if(cb) cb(); }); else if(cb) cb(); return; } audioCtx=new AC(); masterGain=audioCtx.createGain(); masterGain.gain.value=params.masterVolume; analyser=audioCtx.createAnalyser(); analyser.fftSize=256; masterSat=makeSaturation(0.2); masterEQ=audioCtx.createBiquadFilter(); masterEQ.type='lowshelf'; masterEQ.frequency.value=300; masterEQ.gain.value=2; masterGain.connect(masterSat); masterSat.connect(masterEQ); initGranBuffers(audioCtx.sampleRate); granNode=audioCtx.createScriptProcessor(2048,2,2); granNode.onaudioprocess=granProcess; morphEngine=new MorphageneEngine(audioCtx, masterGain); masterEQ.connect(granNode); granNode.connect(analyser); analyser.connect(audioCtx.destination); isReady=true; setLed('led-audio','active'); status('AUDIO OK'); startMeter(); if(audioCtx.state==='suspended') audioCtx.resume().then(function(){ if(cb) cb(); }); else if(cb) cb(); }
+function initAudio(cb){ if(audioCtx){ if(audioCtx.state==='suspended') audioCtx.resume().then(function(){ if(cb) cb(); }); else if(cb) cb(); return; } audioCtx=new AC(); masterGain=audioCtx.createGain(); masterGain.gain.value=params.masterVolume; analyser=audioCtx.createAnalyser(); analyser.fftSize=256; masterSat=makeSaturation(0.2); masterEQ=audioCtx.createBiquadFilter(); masterEQ.type='lowshelf'; masterEQ.frequency.value=300; masterEQ.gain.value=2; masterGain.connect(masterSat); masterSat.connect(masterEQ); initGranBuffers(audioCtx.sampleRate); granNode=audioCtx.createScriptProcessor(2048,2,2); granNode.onaudioprocess=granProcess; morphEngine=new MorphageneEngine(audioCtx, masterGain); lubadhEngine=new LubadhEngine(audioCtx, masterGain); masterEQ.connect(granNode); granNode.connect(analyser); analyser.connect(audioCtx.destination); isReady=true; setLed('led-audio','active'); status('AUDIO OK'); startMeter(); if(audioCtx.state==='suspended') audioCtx.resume().then(function(){ if(cb) cb(); }); else if(cb) cb(); }
 function applyOverrides(ov){ Object.keys(ov).forEach(function(k){ params[k]=ov[k]; syncEncoder(k); }); }
 function updateBankBtns(){ qsa('.bank-btn').forEach(function(b){ b.classList.toggle('active', b.dataset.bank===currentBank); }); var lbl=el('custom-label'); if(lbl) lbl.classList.toggle('active', currentBank==='custom'); }
 function updateDisplay(){ var name=currentBank?banks[currentBank].name:'---'; setText('bank-name', name); setText('sample-name', sourceBuffer?name:'NO FILE'); }
-function onSampleLoaded(buf, bankName, bankId){ sourceBuffer=buf; currentBank=bankId; if(bankName && banks.custom && bankId==='custom') banks.custom.name=bankName; generateTapes(); updateBankBtns(); updateDisplay(); if(morphEngine){ morphEngine.setReelBuffer(sourceBuffer); morphEngine.createEqualSplices(Math.round((morphEncState['menc-splices']&&morphEncState['menc-splices'].val)||8)); } updateMorphReadouts(); drawMorphScope(); status('READY'); }
+function onSampleLoaded(buf, bankName, bankId){ sourceBuffer=buf; currentBank=bankId; if(bankName && banks.custom && bankId==='custom') banks.custom.name=bankName; generateTapes(); updateBankBtns(); updateDisplay(); if(morphEngine){ morphEngine.setReelBuffer(sourceBuffer); morphEngine.createEqualSplices(Math.round((morphEncState['menc-splices']&&morphEncState['menc-splices'].val)||8)); } if(lubadhEngine){ lubadhEngine.setSourceBuffer(sourceBuffer); } updateMorphReadouts(); drawMorphScope(); updateLubadhMeta(); drawLubadhScope(); status('READY'); }
 function loadBank(bankId){ var bank=banks[bankId]; if(!bank||!bank.file) return; var btn=qs('[data-bank="'+bankId+'"]'); if(btn) btn.classList.add('loading'); status('LOADING...'); initAudio(function(){ fetch(bank.file).then(function(r){ if(!r.ok) throw new Error('HTTP '+r.status); return r.arrayBuffer(); }).then(function(ab){ audioCtx.decodeAudioData(ab,function(buf){ applyOverrides(bank.ov); onSampleLoaded(buf, bank.name, bankId); if(btn) btn.classList.remove('loading'); }, function(){ status('DECODE ERR'); if(btn) btn.classList.remove('loading'); }); }).catch(function(){ status('LOAD ERR'); if(btn) btn.classList.remove('loading'); }); }); }
 function loadCustom(file){ var lbl=el('custom-label'); if(lbl) lbl.classList.add('loading'); status('LOADING...'); initAudio(function(){ var reader=new FileReader(); reader.onload=function(e){ audioCtx.decodeAudioData(e.target.result,function(buf){ onSampleLoaded(buf, file.name.slice(0,12).toUpperCase(), 'custom'); if(lbl) lbl.classList.remove('loading'); }, function(){ status('DECODE ERR'); if(lbl) lbl.classList.remove('loading'); }); }; reader.onerror=function(){ status('READ ERR'); if(lbl) lbl.classList.remove('loading'); }; reader.readAsArrayBuffer(file); }); }
 
@@ -999,7 +1132,7 @@ function setupSeq(){ el('seq-rec').addEventListener('click',seqToggleRec); el('s
 function setupMIDI(){ if(!navigator.requestMIDIAccess){ setText('midi-status','NO MIDI'); return; } navigator.requestMIDIAccess().then(function(ma){ function connect(port){ port.onmidimessage=function(e){ var st=e.data[0], note=e.data[1], vel=e.data[2], cmd=st&0xf0; setLed('led-midi','warning'); setTimeout(function(){ setLed('led-midi',null); },100); if(cmd===0x90&&vel>0){ initAudio(function(){ playNote(note,vel/127); }); } else if(cmd===0x80||(cmd===0x90&&vel===0)){ stopNote(note); } }; setLed('led-midi','active'); setText('midi-status','MIDI ON'); } ma.inputs.forEach(connect); ma.onstatechange=function(e){ if(e.port.type==='input'&&e.port.state==='connected') connect(e.port); }; }).catch(function(){ setText('midi-status','MIDI ERR'); }); }
 function setupGranHeader(){ var hdr=el('gran-header'); if(!hdr) return; hdr.addEventListener('click',function(){ el('gran-body').classList.toggle('open'); el('gran-chevron').classList.toggle('open', el('gran-body').classList.contains('open')); }); el('gran-toggle').addEventListener('click',function(e){ e.stopPropagation(); toggleGranFX(); }); el('gran-freeze-btn').addEventListener('click',toggleGranFreeze); el('gran-sync-btn').addEventListener('click',toggleGranSync); el('gdir-fwd').addEventListener('click',function(){ setGranDir('fwd'); }); el('gdir-rev').addEventListener('click',function(){ setGranDir('rev'); }); el('gdir-rnd').addEventListener('click',function(){ setGranDir('rnd'); }); el('gp-clouds').addEventListener('click',function(){ loadGranPreset('clouds'); }); el('gp-shimmer').addEventListener('click',function(){ loadGranPreset('shimmer'); }); el('gp-echo').addEventListener('click',function(){ loadGranPreset('echo'); }); el('gp-verb').addEventListener('click',function(){ loadGranPreset('verb'); }); }
 function setupMorphHeader(){ var hdr=el('morph-header'); if(!hdr) return; hdr.addEventListener('click',function(){ el('morph-body').classList.toggle('open'); el('morph-chevron').classList.toggle('open', el('morph-body').classList.contains('open')); }); el('morph-toggle').addEventListener('click',function(e){ e.stopPropagation(); initAudio(function(){ toggleMorphEngine(); }); }); el('mdir-fwd').addEventListener('click',function(){ setMorphDirection('fwd'); }); el('mdir-rev').addEventListener('click',function(){ setMorphDirection('rev'); }); el('mdir-rnd').addEventListener('click',function(){ setMorphDirection('rnd'); }); el('morph-build-equal').addEventListener('click',function(){ if(!ensureMorphSourceLoaded()) return; morphEngine.createEqualSplices(Math.round(morphEncState['menc-splices'].val||8)); setMorphSpliceActionState('equal'); updateMorphReadouts(); drawMorphScope(); status('MORPH EQUAL SPLICES'); maybeCaptureMorphLock(); }); el('morph-build-transient').addEventListener('click',function(){ if(!ensureMorphSourceLoaded()) return; var sp=detectTransientSplices(sourceBuffer,0.18,0.12); morphEngine.setSplices(sp.length?sp:[{start:0,end:sourceBuffer.duration}]); setMorphSpliceActionState('transient'); updateMorphReadouts(); drawMorphScope(); status('MORPH TRANSIENT SPLICES'); maybeCaptureMorphLock(); }); el('morph-prev').addEventListener('click',function(){ if(morphEngine) morphEngine.prevSplice(); pulseMorphButton('morph-prev'); updateMorphReadouts(); drawMorphScope(); maybeCaptureMorphLock(); }); el('morph-next').addEventListener('click',function(){ if(morphEngine) morphEngine.nextSplice(); pulseMorphButton('morph-next'); updateMorphReadouts(); drawMorphScope(); maybeCaptureMorphLock(); }); el('morph-play').addEventListener('click',function(){ initAudio(function(){ if(!ensureMorphSourceLoaded()) return; if(!el('morph-toggle').classList.contains('on')) toggleMorphEngine(); morphEngine.start(); updateMorphTransportUI(); status('MORPH PLAY'); }); }); el('morph-stop').addEventListener('click',function(){ if(morphEngine) morphEngine.stop(); updateMorphTransportUI(); status('MORPH STOP'); }); el('morph-seq-link').addEventListener('click',function(){ setMorphSeqLink(!morphSeqLink); updateMorphTransportUI(); }); el('morph-lock').addEventListener('click',function(){ setMorphLockWrite(!morphLockWrite); }); el('morph-preset-pad').addEventListener('click',function(){ loadMorphPreset('pad'); }); el('morph-preset-glitch').addEventListener('click',function(){ loadMorphPreset('glitch'); }); el('morph-preset-cloud').addEventListener('click',function(){ loadMorphPreset('cloud'); }); }
-function startMeter(){ var bar=el('tape-fill'); if(!bar) return; function tick(){ var maxPct=0; Object.keys(activeVoices).forEach(function(n){ var grp=activeVoices[n], v=grp.voices[0]; if(v&&v.startTime!==null){ var elapsed=audioCtx.currentTime-v.startTime, dur=params.tapeLength*(v.tape?v.tape.lenFactor:1), p=Math.min(100,(elapsed/dur)*100); if(p>maxPct) maxPct=p; } }); bar.style.width=maxPct+'%'; tickGranActivity(); tickMorphActivity(); requestAnimationFrame(tick); } tick(); }
+function startMeter(){ var bar=el('tape-fill'); if(!bar) return; function tick(){ var maxPct=0; Object.keys(activeVoices).forEach(function(n){ var grp=activeVoices[n], v=grp.voices[0]; if(v&&v.startTime!==null){ var elapsed=audioCtx.currentTime-v.startTime, dur=params.tapeLength*(v.tape?v.tape.lenFactor:1), p=Math.min(100,(elapsed/dur)*100); if(p>maxPct) maxPct=p; } }); bar.style.width=maxPct+'%'; tickGranActivity(); tickMorphActivity(); updateLubadhReadouts(); if(lubadhEngine && lubadhEngine.isRunning){ drawLubadhScope(); } requestAnimationFrame(tick); } tick(); }
 
 document.addEventListener('DOMContentLoaded', function(){
   buildKeyboard();
