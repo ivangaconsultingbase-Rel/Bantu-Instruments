@@ -819,7 +819,7 @@ body {
   <section class="lubadh-section">
     <div class="lubadh-header" id="lubadh-header">
       <div class="lubadh-header-left">
-        <span class="lubadh-title">LÚBADH TAPE ENGINE</span>
+        <span class="lubadh-title">TAPE ENGINE</span>
         <span class="lubadh-subtitle">DUAL DECK · EVOLVING LOOPS</span>
       </div>
       <div class="lubadh-header-right">
@@ -1154,7 +1154,7 @@ function refreshLubadhFromTap(restartPlayback){
     lubadhEngine.start();
     updateLubadhReadouts();
   }
-  status('LÚBADH PRINTED INTERNAL AUDIO');
+  status('TAPE PRINTED INTERNAL AUDIO');
   return true;
 }
 
@@ -1507,10 +1507,10 @@ function toggleLubadh(){
   setLubadhToggle(!lubEnabled);
   if (lubEnabled) {
     lubadhEngine.start();
-    status('LÚBADH ON');
+    status('TAPE ON');
   } else {
     lubadhEngine.stop();
-    status('LÚBADH OFF');
+    status('TAPE OFF');
   }
   updateLubadhReadouts();
   drawLubadhScope();
@@ -1580,12 +1580,12 @@ function setupLubadhSection(){
     }, {passive:false});
   });
   var bind = function(id, fn){ var b = el(id); if (b) b.addEventListener('click', fn); };
-  bind('lubadh-play', function(){ initAudio(function(){ if(!sourceBuffer){ status('LOAD SAMPLE FIRST'); return; } if(!lubEnabled) setLubadhToggle(true); if(lubadhEngine){ lubadhEngine.start(); if(lubLiveDub) performLiveLubDub(); updateLubadhReadouts(); drawLubadhScope(); status('LÚBADH PLAY'); } }); });
-  bind('lubadh-stop', function(){ if(lubadhEngine){ lubadhEngine.stop(); updateLubadhReadouts(); drawLubadhScope(); status('LÚBADH STOP'); } });
+  bind('lubadh-play', function(){ initAudio(function(){ if(!sourceBuffer){ status('LOAD SAMPLE FIRST'); return; } if(!lubEnabled) setLubadhToggle(true); if(lubadhEngine){ lubadhEngine.start(); if(lubLiveDub) performLiveLubDub(); updateLubadhReadouts(); drawLubadhScope(); status('TAPE PLAY'); } }); });
+  bind('lubadh-stop', function(){ if(lubadhEngine){ lubadhEngine.stop(); updateLubadhReadouts(); drawLubadhScope(); status('TAPE STOP'); } });
   bind('lubadh-print', function(){ initAudio(function(){ refreshLubadhFromTap(true); }); });
-  bind('lubadh-auto-print', function(){ lubAutoPrint = !lubAutoPrint; setLubButtonState('lubadh-auto-print', lubAutoPrint); status(lubAutoPrint ? 'LÚBADH AUTO PRINT' : 'LÚBADH AUTO PRINT OFF'); });
-  bind('lubadh-live-dub', function(){ setLubLiveDub(!lubLiveDub); status(lubLiveDub ? 'LÚBADH LIVE DUB' : 'LÚBADH LIVE DUB OFF'); });
-  bind('lubadh-dub-target', function(){ cycleLubDubTarget(); status('LÚBADH DUB TARGET ' + lubDubTarget.toUpperCase()); });
+  bind('lubadh-auto-print', function(){ lubAutoPrint = !lubAutoPrint; setLubButtonState('lubadh-auto-print', lubAutoPrint); status(lubAutoPrint ? 'TAPE AUTO PRINT' : 'TAPE AUTO PRINT OFF'); });
+  bind('lubadh-live-dub', function(){ setLubLiveDub(!lubLiveDub); status(lubLiveDub ? 'TAPE LIVE DUB' : 'TAPE LIVE DUB OFF'); });
+  bind('lubadh-dub-target', function(){ cycleLubDubTarget(); status('TAPE DUB TARGET ' + lubDubTarget.toUpperCase()); });
   bind('lub-link-ab', function(){ lubLinkAB = !lubLinkAB; setLubButtonState('lub-link-ab', lubLinkAB); if(lubadhEngine) lubadhEngine._applyParams(); });
   bind('lub-link-ba', function(){ lubLinkBA = !lubLinkBA; setLubButtonState('lub-link-ba', lubLinkBA); if(lubadhEngine) lubadhEngine._applyParams(); });
   bind('lub-hold', function(){ lubHold = !lubHold; setLubButtonState('lub-hold', lubHold); if(lubadhEngine){ if(lubHold){ lubadhEngine.deckA.holdPos = lubadhEngine.deckA.pos; lubadhEngine.deckB.holdPos = lubadhEngine.deckB.pos; } lubadhEngine._updateRates(lubHold); updateLubadhReadouts(); drawLubadhScope(); } });
@@ -1597,7 +1597,7 @@ function setupLubadhSection(){
     setLubKnob('lenc-speedA',92); setLubKnob('lenc-speedB',63); setLubKnob('lenc-offset',26); setLubKnob('lenc-cross',44); setLubKnob('lenc-degrade',52); setLubKnob('lenc-wow',34); setLubKnob('lenc-dub',42); setLubKnob('lenc-level',48);
     setLubButtonState('lub-preset-clean', false); setLubButtonState('lub-preset-worn', true);
   });
-  bind('lub-reset', function(){ if(lubadhEngine){ lubadhEngine.reset(); status('LÚBADH RESET'); } });
+  bind('lub-reset', function(){ if(lubadhEngine){ lubadhEngine.reset(); status('TAPE RESET'); } });
   setLubButtonState('lub-link-ab', lubLinkAB);
   setLubButtonState('lub-link-ba', lubLinkBA);
   setLubButtonState('lub-hold', lubHold);
