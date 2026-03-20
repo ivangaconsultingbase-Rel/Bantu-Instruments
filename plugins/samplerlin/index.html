@@ -856,8 +856,9 @@ body {
   </footer>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.12.10/dist/umd/ffmpeg.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@ffmpeg/util@0.12.1/dist/umd/index.js"></script>
+<script src="[unpkg.com](https://unpkg.com/@ffmpeg/ffmpeg@0.12.10/dist/umd/ffmpeg.js)"></script>
+<script src="[unpkg.com](https://unpkg.com/@ffmpeg/util@0.12.1/dist/umd/index.js)"></script>
+
 <script>
 'use strict';
 (function(){
@@ -1586,70 +1587,155 @@ function applyOverrides(ov){ Object.keys(ov).forEach(function(k){ params[k]=ov[k
 function updateBankBtns(){ qsa('.bank-btn').forEach(function(b){ b.classList.toggle('active', b.dataset.bank===currentBank); }); var lbl=el('custom-label'); if(lbl) lbl.classList.toggle('active', currentBank==='custom'); }
 function updateDisplay(){ var name=currentBank?banks[currentBank].name:'---'; setText('bank-name', name); setText('sample-name', sourceBuffer?name:'NO FILE'); }
 function getFileExt(name){ var m=(name||'').toLowerCase().match(/\.([a-z0-9]+)$/); return m?m[1]:'bin'; }
-function isProbablyVideoFile(file){ var type=(file&&file.type||'').toLowerCase(); var name=(file&&file.name||'').toLowerCase(); return type.indexOf('video/')===0 || /\.(mov|mp4|m4v|webm|avi|mkv)$/i.test(name); }
-async function ensureFFmpeg(){
-  if(ffmpegInstance) return ffmpegInstance;
-  if(ffmpegLoadPromise) return ffmpegLoadPromise;
-  ffmpegLoadPromise=(async function(){
-    var ffmpegNS = window.FFmpegWASM || window.FFmpeg || null;
-    var utilNS = window.FFmpegUtil || window.FFmpeg || null;
-    if(!ffmpegNS || !utilNS) throw new Error('FFmpeg WASM unavailable');
-    var FFmpeg = ffmpegNS.FFmpeg;
-    var toBlobURL = utilNS.toBlobURL;
-    if(typeof FFmpeg !== 'function' || typeof toBlobURL !== 'function') throw new Error('FFmpeg API unavailable');
-    ffmpegInstance = new FFmpeg();
-    await ffmpegInstance.load({
-      coreURL: await toBlobURL('https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.6/dist/umd/ffmpeg-core.js','text/javascript'),
-      wasmURL: await toBlobURL('https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.6/dist/umd/ffmpeg-core.wasm','application/wasm')
-    });
+function isProbablyVideoFile(file) {
+  if (!file) return false;
+  
+  const type = (file.type || '').toLowerCase();
+  const name = (file.name || '').toLowerCase();
+  
+  // Vérifier le MIME type
+  if (type.startsWith('video/')) return true;
+  
+  // Vérifier les extensions communes
+  const videoExts = ['.mov', '.mp4', '.m4v', '.webm', '.avi', '.mkv', '.wmv', '.flv', '.3gp'];
+  return videoExts.some(ext => name.endsWith(ext));
+}
+// ---------- FFMPEG VIDEO IMPORT ----------
+var ffmpegInstance = null;
+var ffmpegLoading = false;
+
+async function ensureFFmpeg() {
+  if (ffmpegInstance && ffmpegInstance.loaded) return ffmpegInstance;
+  if (ffmpegLoading) {
+    // Attendre que le chargement en cours se termine
+    while (ffmpegLoading) {
+      await new Promise(r => setTimeout(r, 100));
+    }
     return ffmpegInstance;
-  })();
-  return ffmpegLoadPromise;
-}
-async function extractAudioBufferFromVideoFile(file){
-  if(!audioCtx) throw new Error('Audio context not ready');
-  var ffmpeg = await ensureFFmpeg();
-  var fetchFile = (window.FFmpegUtil && window.FFmpegUtil.fetchFile) || (window.FFmpeg && window.FFmpeg.fetchFile);
-  if(typeof fetchFile !== 'function') throw new Error('FFmpeg fetchFile unavailable');
-  var ext = getFileExt(file.name);
-  var inputName = 'input.' + ext;
-  var outputName = 'output.wav';
-  status('VIDEO → WAV...');
-  setText('sample-name','CONVERTING...');
-  await ffmpeg.writeFile(inputName, await fetchFile(file));
+  }
+  
+  ffmpegLoading = true;
+  status('LOADING FFMPEG...');
+  
   try {
-    await ffmpeg.exec(['-i', inputName, '-vn', '-acodec', 'pcm_s16le', '-ac', '2', '-ar', String(audioCtx.sampleRate || 48000), outputName]);
-    var data = await ffmpeg.readFile(outputName);
-    var bytes = data instanceof Uint8Array ? data : new Uint8Array(data.buffer || data);
-    var ab = bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength);
-    return await audioCtx.decodeAudioData(ab);
+    const { FFmpeg } = FFmpegWASM;
+    const { toBlobURL, fetchFile } = FFmpegUtil;
+    
+    ffmpegInstance = new FFmpeg();
+    
+    // Charger avec les URLs correctes
+    const baseURL = '[unpkg.com](https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd)';
+    
+    await ffmpegInstance.load({
+      coreURL: await toBlobURL(`${baseURL}/ffmpeg-core.js`, 'text/javascript'),
+      wasmURL: await toBlobURL(`${baseURL}/ffmpeg-core.wasm`, 'application/wasm'),
+    });
+    
+    ffmpegInstance.loaded = true;
+    status('FFMPEG READY');
+    return ffmpegInstance;
+    
+  } catch (err) {
+    console.error('FFmpeg load error:', err);
+    ffmpegInstance = null;
+    throw new Error('FFmpeg unavailable: ' + (err.message || err));
   } finally {
-    try { await ffmpeg.deleteFile(inputName); } catch(e){}
-    try { await ffmpeg.deleteFile(outputName); } catch(e){}
+    ffmpegLoading = false;
   }
 }
-async function decodeAudioFile(file){
-  var ab = await file.arrayBuffer();
-  return await audioCtx.decodeAudioData(ab);
-}
-async function loadCustomAsync(file){
-  var lbl=el('custom-label'); if(lbl) lbl.classList.add('loading');
-  status(isProbablyVideoFile(file)?'IMPORT VIDEO...':'LOADING...');
+
+async function extractAudioBufferFromVideoFile(file) {
+  if (!audioCtx) throw new Error('Audio context not ready');
+  
+  const ffmpeg = await ensureFFmpeg();
+  const { fetchFile } = FFmpegUtil;
+  
+  const ext = getFileExt(file.name) || 'mov';
+  const inputName = 'input.' + ext;
+  const outputName = 'output.wav';
+  
+  status('EXTRACTING AUDIO...');
+  setText('sample-name', 'CONVERTING...');
+  
   try {
-    await new Promise(function(resolve){ initAudio(resolve); });
-    var buf = isProbablyVideoFile(file) ? await extractAudioBufferFromVideoFile(file) : await decodeAudioFile(file);
-    onSampleLoaded(buf, file.name.slice(0,12).toUpperCase(), 'custom');
-    status(isProbablyVideoFile(file)?'VIDEO IMPORT OK':'READY');
-  } catch(err) {
-    console.error(err);
-    var msg = isProbablyVideoFile(file) ? ('VIDEO ERR') : ('DECODE ERR');
-    status(msg);
-    var detail = (err && err.message) ? err.message : String(err);
-    console.warn('Import error detail:', detail);
+    // Écrire le fichier d'entrée
+    const fileData = await fetchFile(file);
+    await ffmpeg.writeFile(inputName, fileData);
+    
+    // Convertir en WAV
+    await ffmpeg.exec([
+      '-i', inputName,
+      '-vn',                    // Pas de vidéo
+      '-acodec', 'pcm_s16le',   // PCM 16-bit
+      '-ac', '2',               // Stéréo
+      '-ar', String(audioCtx.sampleRate || 48000),
+      '-y',                     // Écraser si existe
+      outputName
+    ]);
+    
+    // Lire le résultat
+    const outputData = await ffmpeg.readFile(outputName);
+    
+    // Convertir en ArrayBuffer
+    let arrayBuffer;
+    if (outputData instanceof Uint8Array) {
+      arrayBuffer = outputData.buffer.slice(
+        outputData.byteOffset,
+        outputData.byteOffset + outputData.byteLength
+      );
+    } else {
+      arrayBuffer = outputData;
+    }
+    
+    // Décoder l'audio
+    const audioBuffer = await audioCtx.decodeAudioData(arrayBuffer);
+    
+    status('CONVERSION OK');
+    return audioBuffer;
+    
   } finally {
-    if(lbl) lbl.classList.remove('loading');
+    // Nettoyage
+    try { await ffmpeg.deleteFile(inputName); } catch (e) {}
+    try { await ffmpeg.deleteFile(outputName); } catch (e) {}
   }
 }
+
+async function loadCustomAsync(file) {
+  const lbl = el('custom-label');
+  if (lbl) lbl.classList.add('loading');
+  
+  const isVideo = isProbablyVideoFile(file);
+  status(isVideo ? 'IMPORTING VIDEO...' : 'LOADING...');
+  
+  try {
+    // Initialiser l'audio
+    await new Promise(resolve => initAudio(resolve));
+    
+    let buf;
+    if (isVideo) {
+      buf = await extractAudioBufferFromVideoFile(file);
+    } else {
+      buf = await decodeAudioFile(file);
+    }
+    
+    const name = file.name.replace(/\.[^.]+$/, '').slice(0, 12).toUpperCase();
+    onSampleLoaded(buf, name, 'custom');
+    status('READY');
+    
+  } catch (err) {
+    console.error('Import error:', err);
+    status(isVideo ? 'VIDEO ERROR' : 'LOAD ERROR');
+    setText('sample-name', 'ERROR');
+    
+    // Afficher plus de détails en console
+    if (err.message) {
+      console.warn('Details:', err.message);
+    }
+  } finally {
+    if (lbl) lbl.classList.remove('loading');
+  }
+}
+
 function onSampleLoaded(buf, bankName, bankId){ sourceBuffer=buf; currentBank=bankId; if(bankName && banks.custom && bankId==='custom') banks.custom.name=bankName; generateTapes(); updateBankBtns(); updateDisplay(); if(morphEngine){ morphEngine.setReelBuffer(sourceBuffer); morphEngine.createEqualSplices(Math.round((morphEncState['menc-splices']&&morphEncState['menc-splices'].val)||8)); } if(lubadhEngine){ lubadhEngine.setSourceBuffer(sourceBuffer); } updateMorphReadouts(); drawMorphScope(); updateLubadhMeta(); drawLubadhScope(); status('READY'); }
 function loadBank(bankId){ var bank=banks[bankId]; if(!bank||!bank.file) return; var btn=qs('[data-bank="'+bankId+'"]'); if(btn) btn.classList.add('loading'); status('LOADING...'); initAudio(function(){ fetch(bank.file).then(function(r){ if(!r.ok) throw new Error('HTTP '+r.status); return r.arrayBuffer(); }).then(function(ab){ audioCtx.decodeAudioData(ab,function(buf){ applyOverrides(bank.ov); onSampleLoaded(buf, bank.name, bankId); if(btn) btn.classList.remove('loading'); }, function(){ status('DECODE ERR'); if(btn) btn.classList.remove('loading'); }); }).catch(function(){ status('LOAD ERR'); if(btn) btn.classList.remove('loading'); }); }); }
 function loadCustom(file){ loadCustomAsync(file); }
