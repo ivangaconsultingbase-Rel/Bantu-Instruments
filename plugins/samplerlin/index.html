@@ -833,11 +833,16 @@ body {
           <div class="lubadh-btns" style="margin-top:10px;">
             <button class="lubadh-btn" id="lubadh-play">PLAY</button>
             <button class="lubadh-btn" id="lubadh-stop">STOP</button>
+            <button class="lubadh-btn" id="lubadh-print">PRINT OUT</button>
+            <button class="lubadh-btn" id="lubadh-auto-print">AUTO PRINT</button>
+            <button class="lubadh-btn" id="lubadh-live-dub">LIVE DUB</button>
+            <button class="lubadh-btn" id="lubadh-dub-target">DUB BOTH</button>
           </div>
           <div class="lubadh-status-box">
             <div class="lubadh-chip">A POS <span id="lub-pos-a">0%</span></div>
             <div class="lubadh-chip">B POS <span id="lub-pos-b">0%</span></div>
             <div class="lubadh-chip">STATE <span id="lub-state">IDLE</span></div>
+            <div class="lubadh-chip">DUB <span id="lub-dub-state">OFF</span></div>
           </div>
         </div>
       </div>
@@ -862,6 +867,9 @@ var morphEngine = null;
 var morphSeqLink = false, morphSeqAutoStarted = false, morphLockWrite = false, morphLockSuspend = false;
 var lubadhEngine = null;
 var lubEnabled = false, lubLinkAB = true, lubLinkBA = false, lubHold = false;
+var lubAutoPrint = false;
+var lubLiveDub = false, lubDubTarget = 'both', lubDubTimer = null, lubDubIntervalMs = 1400;
+var lubTapNode = null, lubTapL = null, lubTapR = null, lubTapSize = 0, lubTapWrite = 0, lubTapHasSignal = false;
 var lubEncState = {}, lubActiveDrag = null;
 
 var params = { masterVolume:0.7, tapeLength:8, startJitter:30, wow:35, flutter:25, tapeAge:40, mechanicalNoise:20, brightness:60, saturation:30, attack:40, release:50, driftPerKey:25 };
@@ -1066,6 +1074,114 @@ function morphSeqPilot(stepIndex, note){
   drawMorphScope();
 }
 
+
+
+function initLubTap(sr){
+  lubTapSize = Math.max(1, Math.floor(sr * 4));
+  lubTapL = new Float32Array(lubTapSize);
+  lubTapR = new Float32Array(lubTapSize);
+  lubTapWrite = 0;
+  lubTapHasSignal = false;
+}
+function lubTapProcess(e){
+  if(!lubTapL || !lubTapR) return;
+  var inL = e.inputBuffer.getChannelData(0);
+  var inR = e.inputBuffer.numberOfChannels>1 ? e.inputBuffer.getChannelData(1) : inL;
+  for(var i=0;i<inL.length;i++){
+    lubTapL[lubTapWrite] = inL[i] || 0;
+    lubTapR[lubTapWrite] = inR[i] || 0;
+    if(!lubTapHasSignal && (Math.abs(inL[i])>0.0005 || Math.abs(inR[i])>0.0005)) lubTapHasSignal = true;
+    lubTapWrite = (lubTapWrite + 1) % lubTapSize;
+  }
+}
+function captureLubTapToBuffer(){
+  if(!audioCtx || !lubTapL || !lubTapHasSignal) return null;
+  var out = audioCtx.createBuffer(2, lubTapSize, audioCtx.sampleRate);
+  var outL = out.getChannelData(0), outR = out.getChannelData(1);
+  var idx = lubTapWrite;
+  for(var i=0;i<lubTapSize;i++){
+    outL[i] = lubTapL[idx];
+    outR[i] = lubTapR[idx];
+    idx = (idx + 1) % lubTapSize;
+  }
+  return out;
+}
+function refreshLubadhFromTap(restartPlayback){
+  var buf = captureLubTapToBuffer();
+  if(!buf || !lubadhEngine) { status('NO INTERNAL AUDIO TO PRINT'); return false; }
+  lubadhEngine.setSourceBuffer(buf);
+  updateLubadhMeta();
+  drawLubadhScope();
+  if(restartPlayback){
+    if(!lubEnabled) setLubadhToggle(true);
+    lubadhEngine.start();
+    updateLubadhReadouts();
+  }
+  status('TAPE PRINTED INTERNAL AUDIO');
+  return true;
+}
+
+function cloneBufferWithContext(ctx, buffer){
+  var out = ctx.createBuffer(buffer.numberOfChannels, buffer.length, buffer.sampleRate);
+  for(var ch=0; ch<buffer.numberOfChannels; ch++) out.getChannelData(ch).set(buffer.getChannelData(ch));
+  return out;
+}
+function mergeBufferIntoBase(baseBuffer, addBuffer, mix, insertNorm){
+  if(!audioCtx || !baseBuffer || !addBuffer) return baseBuffer;
+  var out = cloneBufferWithContext(audioCtx, baseBuffer);
+  var channels = Math.min(out.numberOfChannels, addBuffer.numberOfChannels);
+  var baseLen = out.length;
+  var insertFrame = Math.floor(clamp(insertNorm||0,0,0.999) * baseLen);
+  for(var ch=0; ch<channels; ch++){
+    var outData = out.getChannelData(ch), inData = addBuffer.getChannelData(ch);
+    for(var i=0; i<inData.length && (insertFrame+i)<baseLen; i++){
+      var idx = insertFrame + i;
+      outData[idx] = clamp(outData[idx] * (1-mix) + inData[i] * mix, -1, 1);
+    }
+  }
+  return out;
+}
+function performLiveLubDub(){
+  if(!lubLiveDub || !lubadhEngine || !lubadhEngine.sourceBuffer) return false;
+  var tapBuf = captureLubTapToBuffer();
+  if(!tapBuf) return false;
+  var base = lubadhEngine.sourceBuffer;
+  var mixed = null;
+  var target = lubDubTarget || 'both';
+  if(target==='a'){
+    mixed = mergeBufferIntoBase(base, tapBuf, 0.22, 0);
+  } else if(target==='b'){
+    mixed = mergeBufferIntoBase(base, tapBuf, 0.22, lubadhEngine.deckB.offset || 0.18);
+  } else {
+    mixed = mergeBufferIntoBase(base, tapBuf, 0.16, 0);
+    mixed = mergeBufferIntoBase(mixed, tapBuf, 0.16, lubadhEngine.deckB.offset || 0.18);
+  }
+  lubadhEngine.setSourceBuffer(mixed);
+  updateLubadhMeta();
+  drawLubadhScope();
+  setText('lub-dub-state', target.toUpperCase());
+  return true;
+}
+function setLubLiveDub(on){
+  lubLiveDub = !!on;
+  if(lubDubTimer){ clearInterval(lubDubTimer); lubDubTimer = null; }
+  if(lubLiveDub){
+    lubDubTimer = setInterval(function(){
+      if(lubEnabled && lubadhEngine && lubadhEngine.isRunning) performLiveLubDub();
+    }, lubDubIntervalMs);
+  }
+  setLubButtonState('lubadh-live-dub', lubLiveDub);
+  var liveBtn = el('lubadh-live-dub');
+  if(liveBtn) liveBtn.textContent = lubLiveDub ? 'LIVE DUB ON' : 'LIVE DUB';
+  setText('lub-dub-state', lubLiveDub ? (lubDubTarget||'both').toUpperCase() : 'OFF');
+}
+function cycleLubDubTarget(){
+  lubDubTarget = lubDubTarget==='both' ? 'a' : (lubDubTarget==='a' ? 'b' : 'both');
+  var b = el('lubadh-dub-target');
+  if(b) b.textContent = lubDubTarget==='both' ? 'DUB BOTH' : (lubDubTarget==='a' ? 'DUB A' : 'DUB B');
+  setLubButtonState('lubadh-dub-target', true);
+  setText('lub-dub-state', lubLiveDub ? lubDubTarget.toUpperCase() : 'OFF');
+}
 
 // ---------- LÚBADH SAFE ENGINE ----------
 
@@ -1281,7 +1397,9 @@ LubadhEngine.prototype.tick = function(){
   }
 };
 function updateLubadhMeta(){
-  var txt = sourceBuffer ? ((sourceBuffer.duration||0).toFixed(2)+'s SOURCE') : 'NO SOURCE';
+  var src = (lubadhEngine && lubadhEngine.sourceBuffer) ? lubadhEngine.sourceBuffer : sourceBuffer;
+  var tag = (lubadhEngine && lubadhEngine.sourceBuffer && src !== sourceBuffer) ? 'PRINT' : 'SOURCE';
+  var txt = src ? ((src.duration||0).toFixed(2)+'s '+tag) : 'NO SOURCE';
   setText('lubadh-meta', txt);
 }
 function updateLubadhReadouts(){
@@ -1352,10 +1470,10 @@ function toggleLubadh(){
   setLubadhToggle(!lubEnabled);
   if (lubEnabled) {
     lubadhEngine.start();
-    status('LÚBADH ON');
+    status('TAPE ON');
   } else {
     lubadhEngine.stop();
-    status('LÚBADH OFF');
+    status('TAPE OFF');
   }
   updateLubadhReadouts();
   drawLubadhScope();
@@ -1425,8 +1543,12 @@ function setupLubadhSection(){
     }, {passive:false});
   });
   var bind = function(id, fn){ var b = el(id); if (b) b.addEventListener('click', fn); };
-  bind('lubadh-play', function(){ initAudio(function(){ if(!sourceBuffer){ status('LOAD SAMPLE FIRST'); return; } if(!lubEnabled) setLubadhToggle(true); if(lubadhEngine){ lubadhEngine.start(); updateLubadhReadouts(); drawLubadhScope(); status('LÚBADH PLAY'); } }); });
-  bind('lubadh-stop', function(){ if(lubadhEngine){ lubadhEngine.stop(); updateLubadhReadouts(); drawLubadhScope(); status('LÚBADH STOP'); } });
+  bind('lubadh-play', function(){ initAudio(function(){ if(!sourceBuffer){ status('LOAD SAMPLE FIRST'); return; } if(!lubEnabled) setLubadhToggle(true); if(lubadhEngine){ lubadhEngine.start(); if(lubLiveDub) performLiveLubDub(); updateLubadhReadouts(); drawLubadhScope(); status('TAPE PLAY'); } }); });
+  bind('lubadh-stop', function(){ if(lubadhEngine){ lubadhEngine.stop(); updateLubadhReadouts(); drawLubadhScope(); status('TAPE STOP'); } });
+  bind('lubadh-print', function(){ initAudio(function(){ refreshLubadhFromTap(true); }); });
+  bind('lubadh-auto-print', function(){ lubAutoPrint = !lubAutoPrint; setLubButtonState('lubadh-auto-print', lubAutoPrint); status(lubAutoPrint ? 'TAPE AUTO PRINT' : 'TAPE AUTO PRINT OFF'); });
+  bind('lubadh-live-dub', function(){ setLubLiveDub(!lubLiveDub); status(lubLiveDub ? 'TAPE LIVE DUB' : 'TAPE LIVE DUB OFF'); });
+  bind('lubadh-dub-target', function(){ cycleLubDubTarget(); status('TAPE DUB TARGET ' + lubDubTarget.toUpperCase()); });
   bind('lub-link-ab', function(){ lubLinkAB = !lubLinkAB; setLubButtonState('lub-link-ab', lubLinkAB); if(lubadhEngine) lubadhEngine._applyParams(); });
   bind('lub-link-ba', function(){ lubLinkBA = !lubLinkBA; setLubButtonState('lub-link-ba', lubLinkBA); if(lubadhEngine) lubadhEngine._applyParams(); });
   bind('lub-hold', function(){ lubHold = !lubHold; setLubButtonState('lub-hold', lubHold); if(lubadhEngine){ if(lubHold){ lubadhEngine.deckA.holdPos = lubadhEngine.deckA.pos; lubadhEngine.deckB.holdPos = lubadhEngine.deckB.pos; } lubadhEngine._updateRates(lubHold); updateLubadhReadouts(); drawLubadhScope(); } });
@@ -1438,10 +1560,16 @@ function setupLubadhSection(){
     setLubKnob('lenc-speedA',92); setLubKnob('lenc-speedB',63); setLubKnob('lenc-offset',26); setLubKnob('lenc-cross',44); setLubKnob('lenc-degrade',52); setLubKnob('lenc-wow',34); setLubKnob('lenc-dub',42); setLubKnob('lenc-level',48);
     setLubButtonState('lub-preset-clean', false); setLubButtonState('lub-preset-worn', true);
   });
-  bind('lub-reset', function(){ if(lubadhEngine){ lubadhEngine.reset(); status('LÚBADH RESET'); } });
+  bind('lub-reset', function(){ if(lubadhEngine){ lubadhEngine.reset(); status('TAPE RESET'); } });
   setLubButtonState('lub-link-ab', lubLinkAB);
   setLubButtonState('lub-link-ba', lubLinkBA);
   setLubButtonState('lub-hold', lubHold);
+  setLubButtonState('lubadh-auto-print', lubAutoPrint);
+  setLubButtonState('lubadh-live-dub', lubLiveDub);
+  var liveDubBtn = el('lubadh-live-dub'); if(liveDubBtn) liveDubBtn.textContent = 'LIVE DUB';
+  setLubButtonState('lubadh-dub-target', true);
+  var dubTargetBtn = el('lubadh-dub-target'); if(dubTargetBtn) dubTargetBtn.textContent = 'DUB BOTH';
+  setText('lub-dub-state', 'OFF');
   setLubButtonState('lub-preset-clean', true);
   setLubButtonState('lub-preset-worn', false);
   updateLubadhMeta();
@@ -1450,7 +1578,7 @@ function setupLubadhSection(){
 }
 // ---------- AUDIO / BANKS ----------
 function makeSaturation(amount){ var ws=audioCtx.createWaveShaper(), N=8192, curve=new Float32Array(N); for(var i=0;i<N;i++){ var x=(i*2)/N-1; curve[i]=Math.tanh(x*(1+amount*3))*(1-amount*0.1); } ws.curve=curve; ws.oversample='2x'; return ws; }
-function initAudio(cb){ if(audioCtx){ if(audioCtx.state==='suspended') audioCtx.resume().then(function(){ if(cb) cb(); }); else if(cb) cb(); return; } audioCtx=new AC(); masterGain=audioCtx.createGain(); masterGain.gain.value=params.masterVolume; analyser=audioCtx.createAnalyser(); analyser.fftSize=256; masterSat=makeSaturation(0.2); masterEQ=audioCtx.createBiquadFilter(); masterEQ.type='lowshelf'; masterEQ.frequency.value=300; masterEQ.gain.value=2; masterGain.connect(masterSat); masterSat.connect(masterEQ); initGranBuffers(audioCtx.sampleRate); granNode=audioCtx.createScriptProcessor(2048,2,2); granNode.onaudioprocess=granProcess; morphEngine=new MorphageneEngine(audioCtx, masterGain); lubadhEngine=(typeof LubadhEngine==='function')?new LubadhEngine(audioCtx, masterGain):null; masterEQ.connect(granNode); granNode.connect(analyser); analyser.connect(audioCtx.destination); isReady=true; setLed('led-audio','active'); status('AUDIO OK'); startMeter(); if(audioCtx.state==='suspended') audioCtx.resume().then(function(){ if(cb) cb(); }); else if(cb) cb(); }
+function initAudio(cb){ if(audioCtx){ if(audioCtx.state==='suspended') audioCtx.resume().then(function(){ if(cb) cb(); }); else if(cb) cb(); return; } audioCtx=new AC(); masterGain=audioCtx.createGain(); masterGain.gain.value=params.masterVolume; analyser=audioCtx.createAnalyser(); analyser.fftSize=256; masterSat=makeSaturation(0.2); masterEQ=audioCtx.createBiquadFilter(); masterEQ.type='lowshelf'; masterEQ.frequency.value=300; masterEQ.gain.value=2; masterGain.connect(masterSat); masterSat.connect(masterEQ); initGranBuffers(audioCtx.sampleRate); initLubTap(audioCtx.sampleRate); granNode=audioCtx.createScriptProcessor(2048,2,2); granNode.onaudioprocess=granProcess; lubTapNode=audioCtx.createScriptProcessor(2048,2,2); lubTapNode.onaudioprocess=lubTapProcess; morphEngine=new MorphageneEngine(audioCtx, masterGain); lubadhEngine=(typeof LubadhEngine==='function')?new LubadhEngine(audioCtx, masterGain):null; masterEQ.connect(granNode); masterEQ.connect(lubTapNode); var lubTapMute=audioCtx.createGain(); lubTapMute.gain.value=0; lubTapNode.connect(lubTapMute); lubTapMute.connect(audioCtx.destination); granNode.connect(analyser); analyser.connect(audioCtx.destination); isReady=true; setLed('led-audio','active'); status('AUDIO OK'); startMeter(); if(audioCtx.state==='suspended') audioCtx.resume().then(function(){ if(cb) cb(); }); else if(cb) cb(); }
 function applyOverrides(ov){ Object.keys(ov).forEach(function(k){ params[k]=ov[k]; syncEncoder(k); }); }
 function updateBankBtns(){ qsa('.bank-btn').forEach(function(b){ b.classList.toggle('active', b.dataset.bank===currentBank); }); var lbl=el('custom-label'); if(lbl) lbl.classList.toggle('active', currentBank==='custom'); }
 function updateDisplay(){ var name=currentBank?banks[currentBank].name:'---'; setText('bank-name', name); setText('sample-name', sourceBuffer?name:'NO FILE'); }
@@ -1493,7 +1621,7 @@ function seqRecord(note){ seqSteps[seqCursor]=note; seqCursor=(seqCursor+1)%seqS
 function seqToggleRec(){ seqRecording=!seqRecording; if(seqRecording){ seqCursor=0; if(seqPlaying) seqStopPlay(); } var btn=el('seq-rec'); if(btn) btn.classList.toggle('rec-on', seqRecording); seqRefreshGrid(); }
 function seqTick(){ if(seqLastNote!==null){ killVoices(seqLastNote); seqLastNote=null; } var stepIdx=seqPlayHead; var note=seqSteps[stepIdx]; if(note!==null&&note!==undefined){ playEnsemble(note,0.8,false); seqLastNote=note; } morphSeqPilot(stepIdx, note); seqRefreshGrid(); seqPlayHead=(seqPlayHead+1)%seqStepCount; }
 function seqStartPlay(){ if(!isReady||!sourceBuffer){ status('NO SAMPLE'); return; } seqPlaying=true; seqPlayHead=0; if(seqRecording){ seqRecording=false; var r=el('seq-rec'); if(r) r.classList.remove('rec-on'); } var btn=el('seq-play'); if(btn){ btn.classList.add('active'); btn.textContent='■ STOP'; } if(morphSeqLink && morphEngine && ensureMorphSourceLoaded()){ var toggle=el('morph-toggle'); if(toggle && toggle.classList.contains('on') && !morphEngine.isPlaying){ morphEngine.start(); morphSeqAutoStarted=true; updateMorphTransportUI(); } } seqTick(); seqTimer=setInterval(seqTick,(60/seqBPM)*1000); updateGranBPMSync(); }
-function seqStopPlay(){ seqPlaying=false; if(seqTimer){ clearInterval(seqTimer); seqTimer=null; } if(seqLastNote!==null){ killVoices(seqLastNote); seqLastNote=null; } if(morphSeqAutoStarted && morphEngine){ morphEngine.stop(); morphSeqAutoStarted=false; updateMorphTransportUI(); } var btn=el('seq-play'); if(btn){ btn.classList.remove('active'); btn.textContent='▶ PLAY'; } seqRefreshGrid(); }
+function seqStopPlay(){ seqPlaying=false; if(seqTimer){ clearInterval(seqTimer); seqTimer=null; } if(seqLastNote!==null){ killVoices(seqLastNote); seqLastNote=null; } if(morphSeqAutoStarted && morphEngine){ morphEngine.stop(); morphSeqAutoStarted=false; updateMorphTransportUI(); } var btn=el('seq-play'); if(btn){ btn.classList.remove('active'); btn.textContent='▶ PLAY'; } seqRefreshGrid(); if(lubAutoPrint){ refreshLubadhFromTap(false); } }
 function seqTogglePlay(){ if(seqPlaying) seqStopPlay(); else seqStartPlay(); }
 function seqClear(){ seqStopPlay(); seqSteps=new Array(seqMaxSteps).fill(null); morphLocks=new Array(seqMaxSteps).fill(null); seqCursor=0; seqPlayHead=0; seqBuildGrid(); }
 function seqSetBPM(bpm){ seqBPM=clamp(bpm,30,300); setText('seq-bpm-val',seqBPM); if(seqPlaying){ seqStopPlay(); seqStartPlay(); } updateGranBPMSync(); }
