@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>SAMPLErLIN MK2 + GRAN + MORPH</title>
+  <title>SAMPLErLIN MK2 + GRAN + MORPH + LÚBADH</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
   <style>
@@ -458,7 +458,7 @@ body {
   <header class="header">
     <div class="brand">
       <span class="brand-name">SAMPLErLIN</span>
-      <span class="brand-version">MK2 + GRAN + MORPH</span>
+      <span class="brand-version">MK2 + GRAN + MORPH + LUB</span>
     </div>
     <div class="screen">
       <div class="screen-row"><span class="screen-label">BANK</span><span class="screen-value" id="bank-name">---</span></div>
@@ -860,7 +860,6 @@ var sourceBuffer = null, virtualTapes = {}, activeVoices = {}, isReady = false;
 var granNode = null;
 var morphEngine = null;
 var morphSeqLink = false, morphSeqAutoStarted = false, morphLockWrite = false, morphLockSuspend = false;
-var morphLocks = new Array(seqMaxSteps).fill(null);
 var lubadhEngine = null;
 var lubEnabled = false, lubLinkAB = true, lubLinkBA = false, lubHold = false;
 var lubEncState = {}, lubActiveDrag = null;
@@ -871,6 +870,7 @@ var droneNote=null, arpPattern='up', arpBPM=120, arpOctaves=1;
 var arpHeld=[], arpCurrentNote=null, arpIndex=0, arpDirection=1, arpTimer=null;
 var seqMaxSteps=16, seqStepCount=8, seqSteps=new Array(16).fill(null);
 var seqCursor=0, seqPlayHead=0, seqBPM=120, seqRecording=false, seqPlaying=false, seqTimer=null, seqLastNote=null;
+var morphLocks = new Array(seqMaxSteps).fill(null);
 var baseOctave=4, noteMin=24, noteMax=108, currentBank=null;
 
 var banks = {
@@ -1066,9 +1066,391 @@ function morphSeqPilot(stepIndex, note){
   drawMorphScope();
 }
 
+
+// ---------- LÚBADH SAFE ENGINE ----------
+
+function lubMakeSaturation(ctx, amount){
+  var ws = ctx.createWaveShaper(), N = 4096, curve = new Float32Array(N);
+  for(var i=0;i<N;i++){
+    var x = (i*2)/N - 1;
+    curve[i] = Math.tanh(x * (1 + amount * 4));
+  }
+  ws.curve = curve;
+  ws.oversample = '2x';
+  return ws;
+}
+function LubadhEngine(ctx, outputNode){
+  this.ctx = ctx;
+  this.output = outputNode;
+  this.outputGain = ctx.createGain();
+  this.outputGain.gain.value = 0;
+  this.outputGain.connect(outputNode);
+  this.sourceBuffer = null;
+  this.isRunning = false;
+  this.deckA = {speed:1.0, offset:0.0, pos:0, holdPos:0};
+  this.deckB = {speed:0.75, offset:0.18, pos:0.18, holdPos:0.18};
+  this.params = {cross:0.28, degrade:0.22, wow:0.18, dub:0.24, level:0.36};
+  this.startedAt = 0;
+  this.holdStartedAt = 0;
+  this.nodes = null;
+  this.modTimer = null;
+  this.holdLatched = false;
+}
+LubadhEngine.prototype.setSourceBuffer = function(buffer){
+  this.sourceBuffer = buffer || null;
+  this.deckA.pos = 0;
+  this.deckB.pos = clamp(this.deckB.offset || 0.18, 0, 0.99);
+  this.deckA.holdPos = this.deckA.pos;
+  this.deckB.holdPos = this.deckB.pos;
+  if(this.isRunning){
+    this.stop(true);
+    this.start();
+  }
+  updateLubadhMeta();
+  drawLubadhScope();
+};
+LubadhEngine.prototype._buildDeck = function(which, speed, offsetSec, panVal){
+  var src = this.ctx.createBufferSource();
+  src.buffer = this.sourceBuffer;
+  src.loop = true;
+  src.loopStart = 0;
+  src.loopEnd = this.sourceBuffer.duration;
+  src.playbackRate.value = speed;
+
+  var filter = this.ctx.createBiquadFilter();
+  filter.type = 'lowpass';
+  filter.Q.value = 0.55;
+
+  var sat = lubMakeSaturation(this.ctx, this.params.degrade * 0.8 + this.params.dub * 0.3);
+  var gain = this.ctx.createGain();
+  var panner = typeof this.ctx.createStereoPanner === 'function' ? this.ctx.createStereoPanner() : null;
+  if(panner) panner.pan.value = panVal;
+
+  src.connect(filter);
+  filter.connect(sat);
+  sat.connect(gain);
+  if(panner){ gain.connect(panner); panner.connect(this.outputGain); }
+  else { gain.connect(this.outputGain); }
+
+  src.start(0, offsetSec);
+  return {src:src, filter:filter, sat:sat, gain:gain, panner:panner};
+};
+LubadhEngine.prototype._clearNodes = function(){
+  if(!this.nodes) return;
+  ['A','B'].forEach(function(k){
+    var d = this.nodes[k];
+    if(!d) return;
+    try{ d.src.stop(); }catch(e){}
+    try{ d.src.disconnect(); }catch(e){}
+    try{ d.filter.disconnect(); }catch(e){}
+    try{ d.sat.disconnect(); }catch(e){}
+    try{ d.gain.disconnect(); }catch(e){}
+    try{ if(d.panner) d.panner.disconnect(); }catch(e){}
+  }, this);
+  ['delayAB','delayBA','fbAB','fbBA','sendAB','sendBA','wetAB','wetBA'].forEach(function(k){
+    try{ if(this.nodes[k]) this.nodes[k].disconnect(); }catch(e){}
+  }, this);
+  this.nodes = null;
+};
+LubadhEngine.prototype._applyParams = function(){
+  if(!this.nodes) return;
+  var dur = this.sourceBuffer ? Math.max(0.15, this.sourceBuffer.duration) : 1;
+  var degrade = clamp(this.params.degrade, 0, 1);
+  var cross = clamp(this.params.cross, 0, 1);
+  var dub = clamp(this.params.dub, 0, 1);
+  var level = clamp(this.params.level, 0, 1);
+
+  var lpf = 14000 - degrade * 11800;
+  this.nodes.A.filter.frequency.setTargetAtTime(lpf, this.ctx.currentTime, 0.04);
+  this.nodes.B.filter.frequency.setTargetAtTime(lpf * 0.92, this.ctx.currentTime, 0.04);
+
+  var deckLevel = 0.28 + level * 0.72;
+  this.nodes.A.gain.gain.setTargetAtTime(deckLevel * (0.88 - cross * 0.12), this.ctx.currentTime, 0.04);
+  this.nodes.B.gain.gain.setTargetAtTime(deckLevel * (0.82 - cross * 0.08), this.ctx.currentTime, 0.04);
+  this.outputGain.gain.setTargetAtTime(level, this.ctx.currentTime, 0.04);
+
+  if(this.nodes.A.panner) this.nodes.A.panner.pan.setTargetAtTime(-0.28 + cross * 0.18, this.ctx.currentTime, 0.04);
+  if(this.nodes.B.panner) this.nodes.B.panner.pan.setTargetAtTime(0.28 - cross * 0.18, this.ctx.currentTime, 0.04);
+
+  var delayABTime = clamp(0.08 + dur * (0.08 + this.deckB.offset * 0.35), 0.06, 0.9);
+  var delayBATime = clamp(0.11 + dur * (0.06 + (1 - this.deckB.offset) * 0.22), 0.06, 0.95);
+  this.nodes.delayAB.delayTime.setTargetAtTime(delayABTime, this.ctx.currentTime, 0.05);
+  this.nodes.delayBA.delayTime.setTargetAtTime(delayBATime, this.ctx.currentTime, 0.05);
+
+  this.nodes.sendAB.gain.setTargetAtTime((lubLinkAB ? 1 : 0) * (0.05 + dub * (0.22 + cross * 0.38)), this.ctx.currentTime, 0.04);
+  this.nodes.sendBA.gain.setTargetAtTime((lubLinkBA ? 1 : 0) * (0.05 + dub * (0.22 + cross * 0.38)), this.ctx.currentTime, 0.04);
+  this.nodes.fbAB.gain.setTargetAtTime(0.08 + dub * 0.62, this.ctx.currentTime, 0.04);
+  this.nodes.fbBA.gain.setTargetAtTime(0.08 + dub * 0.62, this.ctx.currentTime, 0.04);
+  this.nodes.wetAB.gain.setTargetAtTime(0.04 + dub * 0.38, this.ctx.currentTime, 0.04);
+  this.nodes.wetBA.gain.setTargetAtTime(0.04 + dub * 0.38, this.ctx.currentTime, 0.04);
+};
+LubadhEngine.prototype._updateRates = function(forceHold){
+  if(!this.nodes) return;
+  var t = Math.max(0, this.ctx.currentTime - this.startedAt);
+  var wow = clamp(this.params.wow, 0, 1);
+  var holdNow = forceHold || lubHold;
+  if(holdNow){
+    this.nodes.A.src.playbackRate.setTargetAtTime(0.0001, this.ctx.currentTime, 0.03);
+    this.nodes.B.src.playbackRate.setTargetAtTime(0.0001, this.ctx.currentTime, 0.03);
+    return;
+  }
+  var wowA = Math.sin(t * 0.7) * wow * 0.09 + Math.sin(t * 2.1) * wow * 0.018;
+  var wowB = Math.sin(t * 0.95 + 1.1) * wow * 0.08 + Math.sin(t * 1.7 + 0.4) * wow * 0.02;
+  this.nodes.A.src.playbackRate.setTargetAtTime(Math.max(0.05, this.deckA.speed + wowA), this.ctx.currentTime, 0.05);
+  this.nodes.B.src.playbackRate.setTargetAtTime(Math.max(0.05, this.deckB.speed + wowB), this.ctx.currentTime, 0.05);
+};
+LubadhEngine.prototype.start = function(){
+  if (!this.sourceBuffer) { status('LOAD SAMPLE FIRST'); return; }
+  this.stop(true);
+  this.isRunning = true;
+  this.startedAt = this.ctx.currentTime;
+  this.holdStartedAt = this.startedAt;
+  this.deckA.pos = 0;
+  this.deckB.pos = clamp(this.deckB.offset || 0.18, 0, 0.99);
+  this.deckA.holdPos = this.deckA.pos;
+  this.deckB.holdPos = this.deckB.pos;
+
+  var offsetA = 0;
+  var offsetB = clamp(this.deckB.offset, 0, 0.99) * this.sourceBuffer.duration;
+  this.nodes = {};
+  this.nodes.A = this._buildDeck('A', this.deckA.speed, offsetA, -0.28);
+  this.nodes.B = this._buildDeck('B', this.deckB.speed, offsetB, 0.28);
+
+  this.nodes.delayAB = this.ctx.createDelay(1.2);
+  this.nodes.delayBA = this.ctx.createDelay(1.2);
+  this.nodes.fbAB = this.ctx.createGain();
+  this.nodes.fbBA = this.ctx.createGain();
+  this.nodes.sendAB = this.ctx.createGain();
+  this.nodes.sendBA = this.ctx.createGain();
+  this.nodes.wetAB = this.ctx.createGain();
+  this.nodes.wetBA = this.ctx.createGain();
+
+  this.nodes.A.filter.connect(this.nodes.sendAB);
+  this.nodes.sendAB.connect(this.nodes.delayAB);
+  this.nodes.delayAB.connect(this.nodes.fbAB);
+  this.nodes.fbAB.connect(this.nodes.delayAB);
+  this.nodes.delayAB.connect(this.nodes.wetAB);
+  this.nodes.wetAB.connect(this.outputGain);
+
+  this.nodes.B.filter.connect(this.nodes.sendBA);
+  this.nodes.sendBA.connect(this.nodes.delayBA);
+  this.nodes.delayBA.connect(this.nodes.fbBA);
+  this.nodes.fbBA.connect(this.nodes.delayBA);
+  this.nodes.delayBA.connect(this.nodes.wetBA);
+  this.nodes.wetBA.connect(this.outputGain);
+
+  this._applyParams();
+  this._updateRates(false);
+
+  var self = this;
+  this.modTimer = setInterval(function(){
+    if(!self.isRunning) return;
+    self._applyParams();
+    self._updateRates(false);
+  }, 90);
+
+  setText('lub-state','PLAY');
+};
+LubadhEngine.prototype.stop = function(silent){
+  this.isRunning = false;
+  if(this.modTimer){ clearInterval(this.modTimer); this.modTimer = null; }
+  this._clearNodes();
+  if(!silent) setText('lub-state','IDLE');
+};
+LubadhEngine.prototype.reset = function(){
+  this.deckA.pos = 0;
+  this.deckB.pos = clamp(this.deckB.offset || 0.18, 0, 0.99);
+  this.deckA.holdPos = this.deckA.pos;
+  this.deckB.holdPos = this.deckB.pos;
+  if(this.isRunning) this.start();
+  updateLubadhReadouts();
+  drawLubadhScope();
+};
+LubadhEngine.prototype.tick = function(){
+  if (!this.sourceBuffer || !this.ctx) return;
+  var dur = Math.max(0.01, this.sourceBuffer.duration || 0.01);
+  if(this.isRunning && !lubHold){
+    var t = Math.max(0, this.ctx.currentTime - this.startedAt);
+    this.deckA.pos = ((t * this.deckA.speed) / dur) % 1;
+    this.deckB.pos = (this.deckB.offset + ((t * this.deckB.speed) / dur)) % 1;
+    this.deckA.holdPos = this.deckA.pos;
+    this.deckB.holdPos = this.deckB.pos;
+  } else {
+    this.deckA.pos = this.deckA.holdPos || 0;
+    this.deckB.pos = this.deckB.holdPos || clamp(this.deckB.offset || 0.18, 0, 0.99);
+  }
+};
+function updateLubadhMeta(){
+  var txt = sourceBuffer ? ((sourceBuffer.duration||0).toFixed(2)+'s SOURCE') : 'NO SOURCE';
+  setText('lubadh-meta', txt);
+}
+function updateLubadhReadouts(){
+  if (lubadhEngine && typeof lubadhEngine.tick === 'function') lubadhEngine.tick();
+  if (!lubadhEngine) {
+    setText('lub-pos-a','0%'); setText('lub-pos-b','0%'); setText('lub-state','IDLE'); return;
+  }
+  setText('lub-pos-a', Math.round((lubadhEngine.deckA.pos||0)*100)+'%');
+  setText('lub-pos-b', Math.round((lubadhEngine.deckB.pos||0)*100)+'%');
+  setText('lub-state', lubadhEngine.isRunning ? (lubHold ? 'HOLD' : 'PLAY') : 'IDLE');
+}
+function drawLubadhScope(){
+  var c = el('lubadhScope');
+  if (!c) return;
+  var ctx2 = c.getContext('2d');
+  var w = c.width, h = c.height;
+  ctx2.clearRect(0,0,w,h);
+  ctx2.fillStyle = '#090705';
+  ctx2.fillRect(0,0,w,h);
+  ctx2.strokeStyle = 'rgba(255,157,87,0.08)';
+  for (var gx=0; gx<=4; gx++){ ctx2.beginPath(); ctx2.moveTo((gx*w/4)+0.5,0); ctx2.lineTo((gx*w/4)+0.5,h); ctx2.stroke(); }
+  for (var gy=0; gy<=2; gy++){ ctx2.beginPath(); ctx2.moveTo(0,(gy*h/2)+0.5); ctx2.lineTo(w,(gy*h/2)+0.5); ctx2.stroke(); }
+  if (!sourceBuffer) {
+    ctx2.fillStyle='rgba(255,157,87,0.45)';
+    ctx2.font='10px Space Mono, monospace';
+    ctx2.fillText('LOAD SAMPLE',10,18);
+    return;
+  }
+  var data = sourceBuffer.getChannelData(0);
+  var step = Math.max(1, Math.floor(data.length / w));
+  ctx2.beginPath();
+  ctx2.strokeStyle='rgba(255,210,122,0.8)';
+  for (var x=0; x<w; x++){
+    var idx = x*step, mn = 1, mx = -1;
+    for (var k=0; k<step && (idx+k)<data.length; k++){
+      var s = data[idx+k];
+      if (s<mn) mn=s;
+      if (s>mx) mx=s;
+    }
+    var y1=(1-mx)*0.5*h, y2=(1-mn)*0.5*h;
+    ctx2.moveTo(x+0.5,y1); ctx2.lineTo(x+0.5,y2);
+  }
+  ctx2.stroke();
+  if (lubadhEngine){
+    var xa = (lubadhEngine.deckA.pos||0) * w;
+    var xb = (lubadhEngine.deckB.pos||0) * w;
+    ctx2.fillStyle='rgba(255,157,87,0.08)';
+    ctx2.fillRect(0,0,xa,h);
+    ctx2.fillStyle='rgba(255,210,122,0.06)';
+    ctx2.fillRect(Math.max(0,xb-6),0,12,h);
+    ctx2.strokeStyle='rgba(255,157,87,0.95)';
+    ctx2.lineWidth=2;
+    ctx2.beginPath(); ctx2.moveTo(xa,0); ctx2.lineTo(xa,h); ctx2.stroke();
+    ctx2.strokeStyle='rgba(255,210,122,0.95)';
+    ctx2.beginPath(); ctx2.moveTo(xb,0); ctx2.lineTo(xb,h); ctx2.stroke();
+  }
+}
+function setLubadhToggle(on){
+  lubEnabled = !!on;
+  var b = el('lubadh-toggle');
+  if (b){
+    b.textContent = lubEnabled ? 'ON' : 'OFF';
+    b.classList.toggle('on', lubEnabled);
+  }
+}
+function toggleLubadh(){
+  if (!lubadhEngine || !sourceBuffer) { status('LOAD SAMPLE FIRST'); return; }
+  setLubadhToggle(!lubEnabled);
+  if (lubEnabled) {
+    lubadhEngine.start();
+    status('LÚBADH ON');
+  } else {
+    lubadhEngine.stop();
+    status('LÚBADH OFF');
+  }
+  updateLubadhReadouts();
+  drawLubadhScope();
+}
+window.toggleLubadh = toggleLubadh;
+function setLubButtonState(id, on){
+  var b = el(id);
+  if (b) b.classList.toggle('active', !!on);
+}
+var lubEncDefs = {
+  'lenc-speedA': {min:25,max:200,def:100,valId:'lv-speedA',display:function(v){return (v/100).toFixed(2)+'×';},onChange:function(v){ if(lubadhEngine){ lubadhEngine.deckA.speed=v/100; if(lubadhEngine.isRunning) lubadhEngine._updateRates(false); } }},
+  'lenc-speedB': {min:25,max:200,def:75,valId:'lv-speedB',display:function(v){return (v/100).toFixed(2)+'×';},onChange:function(v){ if(lubadhEngine){ lubadhEngine.deckB.speed=v/100; if(lubadhEngine.isRunning) lubadhEngine._updateRates(false); } }},
+  'lenc-offset': {min:0,max:95,def:18,valId:'lv-offset',display:function(v){return Math.round(v)+'%';},onChange:function(v){ if(lubadhEngine){ lubadhEngine.deckB.offset=v/100; if(!lubadhEngine.isRunning) lubadhEngine.deckB.pos=v/100; else lubadhEngine.start(); } }},
+  'lenc-level': {min:0,max:100,def:36,valId:'lv-level',display:function(v){return (v/100).toFixed(2);},onChange:function(v){ if(lubadhEngine){ lubadhEngine.params.level=v/100; lubadhEngine._applyParams(); } }},
+  'lenc-cross': {min:0,max:100,def:28,valId:'lv-cross',display:function(v){return Math.round(v)+'%';},onChange:function(v){ if(lubadhEngine){ lubadhEngine.params.cross=v/100; lubadhEngine._applyParams(); } }},
+  'lenc-degrade': {min:0,max:100,def:22,valId:'lv-degrade',display:function(v){return Math.round(v)+'%';},onChange:function(v){ if(lubadhEngine){ lubadhEngine.params.degrade=v/100; lubadhEngine._applyParams(); } }},
+  'lenc-wow': {min:0,max:100,def:18,valId:'lv-wow',display:function(v){return Math.round(v)+'%';},onChange:function(v){ if(lubadhEngine){ lubadhEngine.params.wow=v/100; } }},
+  'lenc-dub': {min:0,max:100,def:24,valId:'lv-dub',display:function(v){return Math.round(v)+'%';},onChange:function(v){ if(lubadhEngine){ lubadhEngine.params.dub=v/100; lubadhEngine._applyParams(); } }}
+};
+function setLubKnob(id, val){
+  var def = lubEncDefs[id]; if (!def) return;
+  val = clamp(val, def.min, def.max);
+  lubEncState[id] = {val:val};
+  var enc = el(id); if (enc) setEncoderAngle(enc, val, def.min, def.max);
+  setText(def.valId, def.display(val));
+  def.onChange(val);
+  updateLubadhReadouts();
+  drawLubadhScope();
+}
+function lubDragMove(e){
+  if (!lubActiveDrag) return;
+  var id = lubActiveDrag.id, def = lubEncDefs[id];
+  if (!def) return;
+  var cy = e.touches ? e.touches[0].clientY : e.clientY;
+  var dy = lubActiveDrag.startY - cy;
+  setLubKnob(id, lubActiveDrag.startVal + (dy/120)*(def.max-def.min));
+  e.preventDefault();
+}
+function lubDragEnd(){ lubActiveDrag = null; }
+document.addEventListener('mousemove', lubDragMove);
+document.addEventListener('touchmove', lubDragMove, {passive:false});
+document.addEventListener('mouseup', lubDragEnd);
+document.addEventListener('touchend', lubDragEnd);
+document.addEventListener('touchcancel', lubDragEnd);
+function setupLubadhSection(){
+  var hdr = el('lubadh-header');
+  if (hdr) hdr.addEventListener('click', function(){
+    var body = el('lubadh-body'), chev = el('lubadh-chevron');
+    if (!body) return;
+    body.classList.toggle('open');
+    if (chev) chev.classList.toggle('open', body.classList.contains('open'));
+  });
+  Object.keys(lubEncDefs).forEach(function(id){
+    var def = lubEncDefs[id], enc = el(id); if (!enc) return;
+    setLubKnob(id, def.def);
+    function onStart(e){
+      var cy = e.touches ? e.touches[0].clientY : e.clientY;
+      lubActiveDrag = {id:id, startY:cy, startVal:(lubEncState[id]||{val:def.def}).val};
+      e.preventDefault(); e.stopPropagation();
+    }
+    enc.addEventListener('mousedown', onStart);
+    enc.addEventListener('touchstart', onStart, {passive:false});
+    enc.addEventListener('dblclick', function(){ setLubKnob(id, def.def); });
+    enc.addEventListener('wheel', function(e){
+      e.preventDefault();
+      setLubKnob(id, (lubEncState[id]||{val:def.def}).val + (-e.deltaY/300)*(def.max-def.min));
+    }, {passive:false});
+  });
+  var bind = function(id, fn){ var b = el(id); if (b) b.addEventListener('click', fn); };
+  bind('lubadh-play', function(){ initAudio(function(){ if(!sourceBuffer){ status('LOAD SAMPLE FIRST'); return; } if(!lubEnabled) setLubadhToggle(true); if(lubadhEngine){ lubadhEngine.start(); updateLubadhReadouts(); drawLubadhScope(); status('LÚBADH PLAY'); } }); });
+  bind('lubadh-stop', function(){ if(lubadhEngine){ lubadhEngine.stop(); updateLubadhReadouts(); drawLubadhScope(); status('LÚBADH STOP'); } });
+  bind('lub-link-ab', function(){ lubLinkAB = !lubLinkAB; setLubButtonState('lub-link-ab', lubLinkAB); if(lubadhEngine) lubadhEngine._applyParams(); });
+  bind('lub-link-ba', function(){ lubLinkBA = !lubLinkBA; setLubButtonState('lub-link-ba', lubLinkBA); if(lubadhEngine) lubadhEngine._applyParams(); });
+  bind('lub-hold', function(){ lubHold = !lubHold; setLubButtonState('lub-hold', lubHold); if(lubadhEngine){ if(lubHold){ lubadhEngine.deckA.holdPos = lubadhEngine.deckA.pos; lubadhEngine.deckB.holdPos = lubadhEngine.deckB.pos; } lubadhEngine._updateRates(lubHold); updateLubadhReadouts(); drawLubadhScope(); } });
+  bind('lub-preset-clean', function(){
+    setLubKnob('lenc-speedA',100); setLubKnob('lenc-speedB',75); setLubKnob('lenc-offset',18); setLubKnob('lenc-cross',18); setLubKnob('lenc-degrade',10); setLubKnob('lenc-wow',10); setLubKnob('lenc-dub',14); setLubKnob('lenc-level',34);
+    setLubButtonState('lub-preset-clean', true); setLubButtonState('lub-preset-worn', false);
+  });
+  bind('lub-preset-worn', function(){
+    setLubKnob('lenc-speedA',92); setLubKnob('lenc-speedB',63); setLubKnob('lenc-offset',26); setLubKnob('lenc-cross',44); setLubKnob('lenc-degrade',52); setLubKnob('lenc-wow',34); setLubKnob('lenc-dub',42); setLubKnob('lenc-level',48);
+    setLubButtonState('lub-preset-clean', false); setLubButtonState('lub-preset-worn', true);
+  });
+  bind('lub-reset', function(){ if(lubadhEngine){ lubadhEngine.reset(); status('LÚBADH RESET'); } });
+  setLubButtonState('lub-link-ab', lubLinkAB);
+  setLubButtonState('lub-link-ba', lubLinkBA);
+  setLubButtonState('lub-hold', lubHold);
+  setLubButtonState('lub-preset-clean', true);
+  setLubButtonState('lub-preset-worn', false);
+  updateLubadhMeta();
+  updateLubadhReadouts();
+  drawLubadhScope();
+}
 // ---------- AUDIO / BANKS ----------
 function makeSaturation(amount){ var ws=audioCtx.createWaveShaper(), N=8192, curve=new Float32Array(N); for(var i=0;i<N;i++){ var x=(i*2)/N-1; curve[i]=Math.tanh(x*(1+amount*3))*(1-amount*0.1); } ws.curve=curve; ws.oversample='2x'; return ws; }
-function initAudio(cb){ if(audioCtx){ if(audioCtx.state==='suspended') audioCtx.resume().then(function(){ if(cb) cb(); }); else if(cb) cb(); return; } audioCtx=new AC(); masterGain=audioCtx.createGain(); masterGain.gain.value=params.masterVolume; analyser=audioCtx.createAnalyser(); analyser.fftSize=256; masterSat=makeSaturation(0.2); masterEQ=audioCtx.createBiquadFilter(); masterEQ.type='lowshelf'; masterEQ.frequency.value=300; masterEQ.gain.value=2; masterGain.connect(masterSat); masterSat.connect(masterEQ); initGranBuffers(audioCtx.sampleRate); granNode=audioCtx.createScriptProcessor(2048,2,2); granNode.onaudioprocess=granProcess; morphEngine=new MorphageneEngine(audioCtx, masterGain); lubadhEngine=new LubadhEngine(audioCtx, masterGain); masterEQ.connect(granNode); granNode.connect(analyser); analyser.connect(audioCtx.destination); isReady=true; setLed('led-audio','active'); status('AUDIO OK'); startMeter(); if(audioCtx.state==='suspended') audioCtx.resume().then(function(){ if(cb) cb(); }); else if(cb) cb(); }
+function initAudio(cb){ if(audioCtx){ if(audioCtx.state==='suspended') audioCtx.resume().then(function(){ if(cb) cb(); }); else if(cb) cb(); return; } audioCtx=new AC(); masterGain=audioCtx.createGain(); masterGain.gain.value=params.masterVolume; analyser=audioCtx.createAnalyser(); analyser.fftSize=256; masterSat=makeSaturation(0.2); masterEQ=audioCtx.createBiquadFilter(); masterEQ.type='lowshelf'; masterEQ.frequency.value=300; masterEQ.gain.value=2; masterGain.connect(masterSat); masterSat.connect(masterEQ); initGranBuffers(audioCtx.sampleRate); granNode=audioCtx.createScriptProcessor(2048,2,2); granNode.onaudioprocess=granProcess; morphEngine=new MorphageneEngine(audioCtx, masterGain); lubadhEngine=(typeof LubadhEngine==='function')?new LubadhEngine(audioCtx, masterGain):null; masterEQ.connect(granNode); granNode.connect(analyser); analyser.connect(audioCtx.destination); isReady=true; setLed('led-audio','active'); status('AUDIO OK'); startMeter(); if(audioCtx.state==='suspended') audioCtx.resume().then(function(){ if(cb) cb(); }); else if(cb) cb(); }
 function applyOverrides(ov){ Object.keys(ov).forEach(function(k){ params[k]=ov[k]; syncEncoder(k); }); }
 function updateBankBtns(){ qsa('.bank-btn').forEach(function(b){ b.classList.toggle('active', b.dataset.bank===currentBank); }); var lbl=el('custom-label'); if(lbl) lbl.classList.toggle('active', currentBank==='custom'); }
 function updateDisplay(){ var name=currentBank?banks[currentBank].name:'---'; setText('bank-name', name); setText('sample-name', sourceBuffer?name:'NO FILE'); }
@@ -1148,13 +1530,14 @@ document.addEventListener('DOMContentLoaded', function(){
   setupMIDI();
   setupGranHeader();
   setupMorphHeader();
+  setupLubadhSection();
   setupXY();
   updateDisplay();
   updateModeDisplay();
   setMorphSeqLink(false);
   setMorphLockWrite(false);
   setMorphSpliceActionState('equal');
-  setTimeout(function(){ el('gran-body').classList.add('open'); el('gran-chevron').classList.add('open'); el('morph-body').classList.add('open'); el('morph-chevron').classList.add('open'); loadMorphPreset('pad'); },100);
+  setTimeout(function(){ el('gran-body').classList.add('open'); el('gran-chevron').classList.add('open'); el('morph-body').classList.add('open'); el('morph-chevron').classList.add('open'); if(el('lubadh-body')) el('lubadh-body').classList.add('open'); if(el('lubadh-chevron')) el('lubadh-chevron').classList.add('open'); loadMorphPreset('pad'); },100);
 });
 })();
 </script>
