@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>SAMPLErLIN MK2 + GRAN + MORPH + VIDEO + LÚBADH</title>
+  <title>SAMPLErLIN MK2 + GRAN + MORPH + VIDEO</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
   <style>
@@ -97,6 +97,26 @@ body {
 .bank-icon { font-size:16px; }
 .bank-label { font-weight:700; }
 #file-input { display:none; }
+
+
+.video-import-section {
+  display:flex; gap:8px; padding:12px 20px;
+  background:#222222; border-bottom:1px solid #333333; flex-wrap:wrap; align-items:center;
+}
+.video-btn {
+  padding:8px 10px; background:#2d2d2d; border:1px solid #333333; border-radius:6px;
+  color:#666666; font-family:inherit; font-size:8px; font-weight:700; letter-spacing:1px;
+  cursor:pointer; appearance:none; transition:all .15s;
+}
+.video-btn:hover, .video-btn:active { background:#353535; color:#f0f0f0; }
+.video-btn.active { background:#8fc6ff22; border-color:#8fc6ff; color:#8fc6ff; box-shadow:0 0 10px rgba(143,198,255,.16); }
+.video-btn.rec-on { background:#ff6b6b; border-color:#ff6b6b; color:#fff; box-shadow:0 0 10px rgba(255,107,107,.16); }
+.video-status {
+  min-width:120px; padding:8px 10px; background:#151515; border:1px solid #333333; border-radius:6px;
+  color:#8fc6ff; font-size:8px; letter-spacing:1px; text-transform:uppercase;
+}
+#video-file-input { display:none; }
+#video-preview { display:none; width:100%; max-height:160px; background:#000; }
 
 .controls { display:flex; flex-wrap:wrap; border-top:1px solid #333333; }
 .control-group {
@@ -414,6 +434,9 @@ body {
   .status-leds { position:absolute; top:14px; right:14px; }
   .banks { padding:10px 12px; gap:6px; }
   .bank-btn, .custom-label { min-width:calc(50% - 3px); padding:10px 6px; font-size:8px; }
+  .video-import-section { padding:10px 12px; gap:6px; }
+  .video-btn { font-size:8px; padding:8px 8px; }
+  .video-status { width:100%; min-width:0; }
   .bank-icon { font-size:14px; }
   .controls, .gran-controls, .morph-controls { flex-direction:column; }
   .control-group, .gran-group, .morph-group { width:100%; min-width:0; padding:12px 14px; border-right:none; }
@@ -458,7 +481,7 @@ body {
   <header class="header">
     <div class="brand">
       <span class="brand-name">SAMPLErLIN</span>
-      <span class="brand-version">MK2 + GRAN + MORPH + LUB</span>
+      <span class="brand-version">MK2 + GRAN + MORPH + VIDEO</span>
     </div>
     <div class="screen">
       <div class="screen-row"><span class="screen-label">BANK</span><span class="screen-value" id="bank-name">---</span></div>
@@ -479,7 +502,17 @@ body {
     <button class="bank-btn" data-bank="flute"><span class="bank-icon">◇</span><span class="bank-label">FLUTE</span></button>
     <button class="bank-btn" data-bank="piano"><span class="bank-icon">▢</span><span class="bank-label">PIANO</span></button>
     <label class="custom-label" id="custom-label" for="file-input"><span class="bank-icon">+</span><span class="bank-label">CUSTOM</span></label>
-    <input type="file" id="file-input" accept=".wav,.wave,.mp3,.aif,.aiff,.m4a,.ogg,.flac,.mov,.mp4,.m4v,.webm,.avi,video/*,audio/*">
+    <input type="file" id="file-input" accept=".wav,.wave,.mp3,.aif,.aiff,.m4a,.ogg,.flac,audio/*">
+  </section>
+
+  <section class="video-import-section">
+    <label class="video-btn" for="video-file-input" id="video-import-btn">IMPORT VIDEO</label>
+    <input type="file" id="video-file-input" accept="video/*,.mov,.mp4,.m4v,.webm">
+    <button class="video-btn" id="video-play-btn">PLAY VID</button>
+    <button class="video-btn" id="video-rec-btn">REC VID</button>
+    <button class="video-btn" id="video-stop-btn">STOP VID</button>
+    <div class="video-status" id="video-status">NO VIDEO</div>
+    <video id="video-preview" playsinline muted></video>
   </section>
 
   <section class="controls">
@@ -856,9 +889,6 @@ body {
   </footer>
 </div>
 
-<script src="[unpkg.com](https://unpkg.com/@ffmpeg/ffmpeg@0.12.10/dist/umd/ffmpeg.js)"></script>
-<script src="[unpkg.com](https://unpkg.com/@ffmpeg/util@0.12.1/dist/umd/index.js)"></script>
-
 <script>
 'use strict';
 (function(){
@@ -869,12 +899,16 @@ var granNode = null;
 var morphEngine = null;
 var morphSeqLink = false, morphSeqAutoStarted = false, morphLockWrite = false, morphLockSuspend = false;
 var lubadhEngine = null;
-var ffmpegInstance = null, ffmpegLoadPromise = null;
 var lubEnabled = false, lubLinkAB = true, lubLinkBA = false, lubHold = false;
 var lubAutoPrint = false;
 var lubLiveDub = false, lubDubTarget = 'both', lubDubTimer = null, lubDubIntervalMs = 1400;
 var lubTapNode = null, lubTapL = null, lubTapR = null, lubTapSize = 0, lubTapWrite = 0, lubTapHasSignal = false;
 var lubEncState = {}, lubActiveDrag = null;
+
+var videoSampler = {
+  file:null, objectUrl:null, el:null, sourceNode:null, gainNode:null, tapNode:null, nullGain:null,
+  recording:false, leftChunks:[], rightChunks:[], sampleRate:44100, rendered:false
+};
 
 var params = { masterVolume:0.7, tapeLength:8, startJitter:30, wow:35, flutter:25, tapeAge:40, mechanicalNoise:20, brightness:60, saturation:30, attack:40, release:50, driftPerKey:25 };
 var ensembleVoices=1, speedMode=1.0, playMode='poly', chordType='major', chordMap={};
@@ -1077,7 +1111,6 @@ function morphSeqPilot(stepIndex, note){
   updateMorphReadouts();
   drawMorphScope();
 }
-
 
 
 function initLubTap(sr){
@@ -1586,159 +1619,11 @@ function initAudio(cb){ if(audioCtx){ if(audioCtx.state==='suspended') audioCtx.
 function applyOverrides(ov){ Object.keys(ov).forEach(function(k){ params[k]=ov[k]; syncEncoder(k); }); }
 function updateBankBtns(){ qsa('.bank-btn').forEach(function(b){ b.classList.toggle('active', b.dataset.bank===currentBank); }); var lbl=el('custom-label'); if(lbl) lbl.classList.toggle('active', currentBank==='custom'); }
 function updateDisplay(){ var name=currentBank?banks[currentBank].name:'---'; setText('bank-name', name); setText('sample-name', sourceBuffer?name:'NO FILE'); }
-function getFileExt(name){ var m=(name||'').toLowerCase().match(/\.([a-z0-9]+)$/); return m?m[1]:'bin'; }
-function isProbablyVideoFile(file) {
-  if (!file) return false;
-  
-  const type = (file.type || '').toLowerCase();
-  const name = (file.name || '').toLowerCase();
-  
-  // Vérifier le MIME type
-  if (type.startsWith('video/')) return true;
-  
-  // Vérifier les extensions communes
-  const videoExts = ['.mov', '.mp4', '.m4v', '.webm', '.avi', '.mkv', '.wmv', '.flv', '.3gp'];
-  return videoExts.some(ext => name.endsWith(ext));
-}
-// ---------- FFMPEG VIDEO IMPORT ----------
-var ffmpegInstance = null;
-var ffmpegLoading = false;
-
-async function ensureFFmpeg() {
-  if (ffmpegInstance && ffmpegInstance.loaded) return ffmpegInstance;
-  if (ffmpegLoading) {
-    // Attendre que le chargement en cours se termine
-    while (ffmpegLoading) {
-      await new Promise(r => setTimeout(r, 100));
-    }
-    return ffmpegInstance;
-  }
-  
-  ffmpegLoading = true;
-  status('LOADING FFMPEG...');
-  
-  try {
-    const { FFmpeg } = FFmpegWASM;
-    const { toBlobURL, fetchFile } = FFmpegUtil;
-    
-    ffmpegInstance = new FFmpeg();
-    
-    // Charger avec les URLs correctes
-    const baseURL = '[unpkg.com](https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd)';
-    
-    await ffmpegInstance.load({
-      coreURL: await toBlobURL(`${baseURL}/ffmpeg-core.js`, 'text/javascript'),
-      wasmURL: await toBlobURL(`${baseURL}/ffmpeg-core.wasm`, 'application/wasm'),
-    });
-    
-    ffmpegInstance.loaded = true;
-    status('FFMPEG READY');
-    return ffmpegInstance;
-    
-  } catch (err) {
-    console.error('FFmpeg load error:', err);
-    ffmpegInstance = null;
-    throw new Error('FFmpeg unavailable: ' + (err.message || err));
-  } finally {
-    ffmpegLoading = false;
-  }
-}
-
-async function extractAudioBufferFromVideoFile(file) {
-  if (!audioCtx) throw new Error('Audio context not ready');
-  
-  const ffmpeg = await ensureFFmpeg();
-  const { fetchFile } = FFmpegUtil;
-  
-  const ext = getFileExt(file.name) || 'mov';
-  const inputName = 'input.' + ext;
-  const outputName = 'output.wav';
-  
-  status('EXTRACTING AUDIO...');
-  setText('sample-name', 'CONVERTING...');
-  
-  try {
-    // Écrire le fichier d'entrée
-    const fileData = await fetchFile(file);
-    await ffmpeg.writeFile(inputName, fileData);
-    
-    // Convertir en WAV
-    await ffmpeg.exec([
-      '-i', inputName,
-      '-vn',                    // Pas de vidéo
-      '-acodec', 'pcm_s16le',   // PCM 16-bit
-      '-ac', '2',               // Stéréo
-      '-ar', String(audioCtx.sampleRate || 48000),
-      '-y',                     // Écraser si existe
-      outputName
-    ]);
-    
-    // Lire le résultat
-    const outputData = await ffmpeg.readFile(outputName);
-    
-    // Convertir en ArrayBuffer
-    let arrayBuffer;
-    if (outputData instanceof Uint8Array) {
-      arrayBuffer = outputData.buffer.slice(
-        outputData.byteOffset,
-        outputData.byteOffset + outputData.byteLength
-      );
-    } else {
-      arrayBuffer = outputData;
-    }
-    
-    // Décoder l'audio
-    const audioBuffer = await audioCtx.decodeAudioData(arrayBuffer);
-    
-    status('CONVERSION OK');
-    return audioBuffer;
-    
-  } finally {
-    // Nettoyage
-    try { await ffmpeg.deleteFile(inputName); } catch (e) {}
-    try { await ffmpeg.deleteFile(outputName); } catch (e) {}
-  }
-}
-
-async function loadCustomAsync(file) {
-  const lbl = el('custom-label');
-  if (lbl) lbl.classList.add('loading');
-  
-  const isVideo = isProbablyVideoFile(file);
-  status(isVideo ? 'IMPORTING VIDEO...' : 'LOADING...');
-  
-  try {
-    // Initialiser l'audio
-    await new Promise(resolve => initAudio(resolve));
-    
-    let buf;
-    if (isVideo) {
-      buf = await extractAudioBufferFromVideoFile(file);
-    } else {
-      buf = await decodeAudioFile(file);
-    }
-    
-    const name = file.name.replace(/\.[^.]+$/, '').slice(0, 12).toUpperCase();
-    onSampleLoaded(buf, name, 'custom');
-    status('READY');
-    
-  } catch (err) {
-    console.error('Import error:', err);
-    status(isVideo ? 'VIDEO ERROR' : 'LOAD ERROR');
-    setText('sample-name', 'ERROR');
-    
-    // Afficher plus de détails en console
-    if (err.message) {
-      console.warn('Details:', err.message);
-    }
-  } finally {
-    if (lbl) lbl.classList.remove('loading');
-  }
-}
-
 function onSampleLoaded(buf, bankName, bankId){ sourceBuffer=buf; currentBank=bankId; if(bankName && banks.custom && bankId==='custom') banks.custom.name=bankName; generateTapes(); updateBankBtns(); updateDisplay(); if(morphEngine){ morphEngine.setReelBuffer(sourceBuffer); morphEngine.createEqualSplices(Math.round((morphEncState['menc-splices']&&morphEncState['menc-splices'].val)||8)); } if(lubadhEngine){ lubadhEngine.setSourceBuffer(sourceBuffer); } updateMorphReadouts(); drawMorphScope(); updateLubadhMeta(); drawLubadhScope(); status('READY'); }
 function loadBank(bankId){ var bank=banks[bankId]; if(!bank||!bank.file) return; var btn=qs('[data-bank="'+bankId+'"]'); if(btn) btn.classList.add('loading'); status('LOADING...'); initAudio(function(){ fetch(bank.file).then(function(r){ if(!r.ok) throw new Error('HTTP '+r.status); return r.arrayBuffer(); }).then(function(ab){ audioCtx.decodeAudioData(ab,function(buf){ applyOverrides(bank.ov); onSampleLoaded(buf, bank.name, bankId); if(btn) btn.classList.remove('loading'); }, function(){ status('DECODE ERR'); if(btn) btn.classList.remove('loading'); }); }).catch(function(){ status('LOAD ERR'); if(btn) btn.classList.remove('loading'); }); }); }
-function loadCustom(file){ loadCustomAsync(file); }
+function loadCustom(file){ var lbl=el('custom-label'); if(lbl) lbl.classList.add('loading'); status('LOADING...'); initAudio(function(){ var reader=new FileReader(); reader.onload=function(e){ audioCtx.decodeAudioData(e.target.result,function(buf){ onSampleLoaded(buf, file.name.slice(0,12).toUpperCase(), 'custom'); if(lbl) lbl.classList.remove('loading'); }, function(){ status('DECODE ERR'); if(lbl) lbl.classList.remove('loading'); }); }; reader.onerror=function(){ status('READ ERR'); if(lbl) lbl.classList.remove('loading'); }; reader.readAsArrayBuffer(file); }); }
+
+// ---------- TAPE SAMPLER ----------
 function generateTapes(){ virtualTapes={}; var root=baseOctave*12+12; for(var n=noteMin;n<=noteMax;n++) makeTape(n,n-root); }
 function makeTape(note,semitones){ var rate=Math.pow(2,semitones/12), drift=params.driftPerKey/100, zp=(note-noteMin)/(noteMax-noteMin), isLow=zp<0.33, isHi=zp>0.66; virtualTapes[note]={ note:note, rate:rate*(1+(Math.random()-.5)*drift*0.02), filterFreq:2000+(Math.random()-.5)*drift*400+(isLow?-600:isHi?200:0), noiseLevel:(0.02+Math.random()*drift*0.3)*(isHi?1.5:1), instability:isLow?1.3:isHi?0.8:1, lenFactor:isHi?0.85:1, attVar:0.01+Math.random()*0.03, pan:(note-60)/48 }; }
 function detunings(){ if(ensembleVoices===2) return [-0.10,0.10]; if(ensembleVoices===3) return [-0.14,0,0.14]; return [0]; }
@@ -1773,7 +1658,7 @@ function seqRecord(note){ seqSteps[seqCursor]=note; seqCursor=(seqCursor+1)%seqS
 function seqToggleRec(){ seqRecording=!seqRecording; if(seqRecording){ seqCursor=0; if(seqPlaying) seqStopPlay(); } var btn=el('seq-rec'); if(btn) btn.classList.toggle('rec-on', seqRecording); seqRefreshGrid(); }
 function seqTick(){ if(seqLastNote!==null){ killVoices(seqLastNote); seqLastNote=null; } var stepIdx=seqPlayHead; var note=seqSteps[stepIdx]; if(note!==null&&note!==undefined){ playEnsemble(note,0.8,false); seqLastNote=note; } morphSeqPilot(stepIdx, note); seqRefreshGrid(); seqPlayHead=(seqPlayHead+1)%seqStepCount; }
 function seqStartPlay(){ if(!isReady||!sourceBuffer){ status('NO SAMPLE'); return; } seqPlaying=true; seqPlayHead=0; if(seqRecording){ seqRecording=false; var r=el('seq-rec'); if(r) r.classList.remove('rec-on'); } var btn=el('seq-play'); if(btn){ btn.classList.add('active'); btn.textContent='■ STOP'; } if(morphSeqLink && morphEngine && ensureMorphSourceLoaded()){ var toggle=el('morph-toggle'); if(toggle && toggle.classList.contains('on') && !morphEngine.isPlaying){ morphEngine.start(); morphSeqAutoStarted=true; updateMorphTransportUI(); } } seqTick(); seqTimer=setInterval(seqTick,(60/seqBPM)*1000); updateGranBPMSync(); }
-function seqStopPlay(){ seqPlaying=false; if(seqTimer){ clearInterval(seqTimer); seqTimer=null; } if(seqLastNote!==null){ killVoices(seqLastNote); seqLastNote=null; } if(morphSeqAutoStarted && morphEngine){ morphEngine.stop(); morphSeqAutoStarted=false; updateMorphTransportUI(); } var btn=el('seq-play'); if(btn){ btn.classList.remove('active'); btn.textContent='▶ PLAY'; } seqRefreshGrid(); if(lubAutoPrint){ refreshLubadhFromTap(false); } }
+function seqStopPlay(){ seqPlaying=false; if(seqTimer){ clearInterval(seqTimer); seqTimer=null; } if(seqLastNote!==null){ killVoices(seqLastNote); seqLastNote=null; } if(morphSeqAutoStarted && morphEngine){ morphEngine.stop(); morphSeqAutoStarted=false; updateMorphTransportUI(); } if(lubAutoPrint && lubTapHasSignal){ refreshLubadhFromTap(false); } var btn=el('seq-play'); if(btn){ btn.classList.remove('active'); btn.textContent='▶ PLAY'; } seqRefreshGrid(); }
 function seqTogglePlay(){ if(seqPlaying) seqStopPlay(); else seqStartPlay(); }
 function seqClear(){ seqStopPlay(); seqSteps=new Array(seqMaxSteps).fill(null); morphLocks=new Array(seqMaxSteps).fill(null); seqCursor=0; seqPlayHead=0; seqBuildGrid(); }
 function seqSetBPM(bpm){ seqBPM=clamp(bpm,30,300); setText('seq-bpm-val',seqBPM); if(seqPlaying){ seqStopPlay(); seqStartPlay(); } updateGranBPMSync(); }
@@ -1785,7 +1670,7 @@ function syncEncoder(param){ var enc=qs('.encoder[data-param="'+param+'"]'); if(
 function onParamChange(param,val){ if(param==='masterVolume'&&masterGain) masterGain.gain.setTargetAtTime(val,audioCtx.currentTime,0.05); qsa('.preset-btn').forEach(function(b){ b.classList.remove('active'); }); }
 function setupEncoders(){ qsa('.encoder[data-param]').forEach(function(enc){ var param=enc.dataset.param, min=parseFloat(enc.dataset.min), max=parseFloat(enc.dataset.max), init=parseFloat(enc.dataset.value); params[param]=init; setEncoderAngle(enc, init, min, max); var drag=false, startY=0, startVal=0; function onStart(e){ drag=true; startY=e.touches?e.touches[0].clientY:e.clientY; startVal=params[param]; e.preventDefault(); } function onMove(e){ if(!drag) return; var cy=e.touches?e.touches[0].clientY:e.clientY; var v=clamp(startVal+((startY-cy)/150)*(max-min), min, max); params[param]=v; setEncoderAngle(enc,v,min,max); onParamChange(param,v); e.preventDefault(); } function onEnd(){ drag=false; } enc.addEventListener('mousedown',onStart); enc.addEventListener('touchstart',onStart,{passive:false}); document.addEventListener('mousemove',onMove); document.addEventListener('touchmove',onMove,{passive:false}); document.addEventListener('mouseup',onEnd); document.addEventListener('touchend',onEnd); enc.addEventListener('dblclick',function(){ params[param]=init; setEncoderAngle(enc,init,min,max); onParamChange(param,init); }); }); }
 function setupPresets(){ qsa('.preset-btn').forEach(function(btn){ btn.addEventListener('click',function(){ var p=presets[btn.dataset.preset]; if(!p) return; Object.keys(p).forEach(function(k){ params[k]=p[k]; syncEncoder(k); onParamChange(k,p[k]); }); activateGroup('.preset-btn',btn); if(sourceBuffer) generateTapes(); status(btn.dataset.preset.toUpperCase()); }); }); }
-function setupBanks(){ qsa('.bank-btn').forEach(function(btn){ btn.addEventListener('click',function(){ loadBank(btn.dataset.bank); }); }); var fi=el('file-input'); if(fi) fi.addEventListener('change',function(e){ if(e.target.files&&e.target.files.length) loadCustom(e.target.files[0]); e.target.value=''; }); }
+function setupBanks(){ qsa('.bank-btn').forEach(function(btn){ btn.addEventListener('click',function(){ loadBank(btn.dataset.bank); }); }); var fi=el('file-input'); if(fi) fi.addEventListener('change',function(e){ if(e.target.files&&e.target.files.length) loadCustom(e.target.files[0]); }); }
 function setupOctave(){ el('oct-up').addEventListener('click',function(){ changeOctave(1); }); el('oct-down').addEventListener('click',function(){ changeOctave(-1); }); }
 function setupComputerKeys(){ var held={}; document.addEventListener('keydown',function(e){ if(e.repeat||e.target.tagName==='INPUT'||e.target.tagName==='SELECT') return; var kd=null; for(var i=0;i<keyLayout.length;i++){ if(keyLayout[i].code===e.code){ kd=keyLayout[i]; break; } } if(kd&&!held[e.code]){ e.preventDefault(); held[e.code]=true; var note=baseOctave*12+kd.note; initAudio(function(){ playNote(note,0.8); }); if(playMode!=='arp'&&playMode!=='drone'){ var k=qs('.key[data-code="'+e.code+'"]'); if(k) k.classList.add('active'); } } if(e.code==='ArrowUp'||e.code==='ArrowRight'){ e.preventDefault(); changeOctave(1); } if(e.code==='ArrowDown'||e.code==='ArrowLeft'){ e.preventDefault(); changeOctave(-1); } }); document.addEventListener('keyup',function(e){ delete held[e.code]; var kd=null; for(var i=0;i<keyLayout.length;i++){ if(keyLayout[i].code===e.code){ kd=keyLayout[i]; break; } } if(kd){ var note=baseOctave*12+kd.note; stopNote(note); var k=qs('.key[data-code="'+e.code+'"]'); if(k) k.classList.remove('active'); } }); }
 function setupModeControls(){ qsa('[data-ensemble]').forEach(function(btn){ btn.addEventListener('click',function(){ ensembleVoices=parseInt(btn.dataset.ensemble,10); activateGroup('[data-ensemble]',btn); updateModeDisplay(); }); }); qsa('[data-speed]').forEach(function(btn){ btn.addEventListener('click',function(){ speedMode=parseFloat(btn.dataset.speed); activateGroup('[data-speed]',btn); updateModeDisplay(); }); }); qsa('[data-playmode]').forEach(function(btn){ btn.addEventListener('click',function(){ var prev=playMode; playMode=btn.dataset.playmode; activateGroup('[data-playmode]',btn); if(prev==='arp'&&playMode!=='arp') arpStop(); if(prev==='drone'&&playMode!=='drone'&&droneNote!==null){ killVoices(droneNote); setKeyClass(droneNote,false,'drone-held'); droneNote=null; setDisplay('drone-info','none'); } var ar=el('arp-row'), cg=el('chord-type-group'); if(ar) ar.classList.toggle('visible', playMode==='arp'); if(cg) cg.style.display=playMode==='chord'?'flex':'none'; if(playMode!=='drone') setDisplay('drone-info','none'); if(playMode!=='arp') setDisplay('arp-info','none'); updateModeDisplay(); status(playMode.toUpperCase()); }); }); qsa('[data-chordtype]').forEach(function(btn){ btn.addEventListener('click',function(){ chordType=btn.dataset.chordtype; activateGroup('[data-chordtype]',btn); }); }); qsa('[data-arpmode]').forEach(function(btn){ btn.addEventListener('click',function(){ arpPattern=btn.dataset.arpmode; arpIndex=0; arpDirection=1; activateGroup('[data-arpmode]',btn); }); }); qsa('[data-arpoct]').forEach(function(btn){ btn.addEventListener('click',function(){ arpOctaves=parseInt(btn.dataset.arpoct,10); activateGroup('[data-arpoct]',btn); }); }); el('arp-bpm-up').addEventListener('click',function(){ setArpBPM(arpBPM+5); }); el('arp-bpm-down').addEventListener('click',function(){ setArpBPM(arpBPM-5); }); }
