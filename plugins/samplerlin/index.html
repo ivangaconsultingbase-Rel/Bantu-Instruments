@@ -361,6 +361,7 @@ body {
 @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.4} }
 
 
+
 .lubadh-section {
   background:#1b1612;
   border-top:2px solid var(--lub-dim);
@@ -505,14 +506,21 @@ body {
     <input type="file" id="file-input" accept=".wav,.wave,.mp3,.aif,.aiff,.m4a,.ogg,.flac,audio/*">
   </section>
 
+  <!-- =====================================================================
+       VIDEO IMPORT — iOS Safari fix:
+       · accept inclut video/quicktime (MIME type .mov sur iOS)
+       · label for= déclenche le picker sans JS .click() (bloqué sur iOS)
+       · webkit-playsinline + playsinline sur l'élément video
+  ====================================================================== -->
   <section class="video-import-section">
     <label class="video-btn" for="video-file-input" id="video-import-btn">IMPORT VIDEO</label>
-    <input type="file" id="video-file-input" accept="video/*,.mov,.mp4,.m4v,.webm">
+    <input type="file" id="video-file-input"
+           accept="video/mp4,video/quicktime,video/x-m4v,video/webm,video/ogg,.mov,.mp4,.m4v,.webm,.ogv">
     <button class="video-btn" id="video-play-btn">PLAY VID</button>
     <button class="video-btn" id="video-rec-btn">REC VID</button>
     <button class="video-btn" id="video-stop-btn">STOP VID</button>
     <div class="video-status" id="video-status">NO VIDEO</div>
-    <video id="video-preview" playsinline muted></video>
+    <video id="video-preview" playsinline webkit-playsinline muted></video>
   </section>
 
   <section class="controls">
@@ -1613,6 +1621,163 @@ function setupLubadhSection(){
   updateLubadhReadouts();
   drawLubadhScope();
 }
+
+// ==========================================================================
+// VIDEO SECTION — iOS Safari compatible
+// Fixes:
+//   1. accept="video/quicktime,..." — iOS Safari identifie les .mov par ce MIME
+//   2. URL.createObjectURL() + video.src + video.load() — chemin standard iOS
+//   3. video.play() wrappé dans initAudio() pour débloquer l'AudioContext
+//   4. Pas de .click() programmé sur l'input (bloqué iOS) — on utilise <label for=>
+// ==========================================================================
+function setupVideoSection(){
+  var fileInput  = el('video-file-input');
+  var videoEl    = el('video-preview');
+  var statusEl   = el('video-status');
+  var importBtn  = el('video-import-btn');
+  var playBtn    = el('video-play-btn');
+  var recBtn     = el('video-rec-btn');
+  var stopBtn    = el('video-stop-btn');
+
+  if(!fileInput || !videoEl) return;
+
+  videoSampler.el = videoEl;
+
+  // -- Chargement du fichier -------------------------------------------------
+  fileInput.addEventListener('change', function(e){
+    var file = e.target.files && e.target.files[0];
+    if(!file) return;
+
+    // Révoquer l'ancienne URL objet pour libérer la mémoire
+    if(videoSampler.objectUrl){
+      URL.revokeObjectURL(videoSampler.objectUrl);
+      videoSampler.objectUrl = null;
+    }
+
+    videoSampler.file = file;
+    videoSampler.rendered = false;
+    videoSampler.recording = false;
+    if(recBtn) recBtn.classList.remove('rec-on');
+
+    var objUrl = URL.createObjectURL(file);
+    videoSampler.objectUrl = objUrl;
+
+    // Sur iOS il faut assigner .src (pas .srcObject) puis appeler .load()
+    videoEl.src = objUrl;
+    videoEl.load();           // ← indispensable sur iOS Safari
+    videoEl.style.display = 'block';
+
+    // Afficher le nom tronqué
+    var name = file.name.length > 20 ? file.name.slice(0, 20) + '…' : file.name;
+    if(statusEl) statusEl.textContent = name;
+    if(importBtn) importBtn.classList.add('active');
+
+    status('VIDEO LOADED');
+
+    // Résoudre le focus iOS : on réinitialise la valeur pour pouvoir
+    // recharger le même fichier si besoin
+    fileInput.value = '';
+  });
+
+  // -- Lecture ---------------------------------------------------------------
+  if(playBtn){
+    playBtn.addEventListener('click', function(){
+      if(!videoSampler.objectUrl){ status('NO VIDEO'); return; }
+      // initAudio() sur chaque interaction utilisateur pour débloquer l'AC sur iOS
+      initAudio(function(){
+        // S'assurer que le src est toujours défini après resume
+        if(!videoEl.src || videoEl.src === window.location.href){
+          videoEl.src = videoSampler.objectUrl;
+          videoEl.load();
+        }
+        var p = videoEl.play();
+        if(p && typeof p.then === 'function'){
+          p.then(function(){
+            playBtn.classList.add('active');
+            if(stopBtn) stopBtn.classList.remove('active');
+            status('VIDEO PLAY');
+          }).catch(function(err){
+            // Sur iOS la promesse peut rejeter si aucune interaction récente
+            status('PLAY ERR');
+            console.warn('video play error:', err);
+          });
+        } else {
+          // Navigateurs sans promesse (très vieux)
+          playBtn.classList.add('active');
+          status('VIDEO PLAY');
+        }
+      });
+    });
+  }
+
+  // -- Enregistrement (toggle) -----------------------------------------------
+  if(recBtn){
+    recBtn.addEventListener('click', function(){
+      if(!videoSampler.objectUrl){ status('NO VIDEO'); return; }
+      initAudio(function(){
+        videoSampler.recording = !videoSampler.recording;
+        recBtn.classList.toggle('rec-on', videoSampler.recording);
+        if(videoSampler.recording){
+          videoEl.currentTime = 0;
+          if(!videoEl.src || videoEl.src === window.location.href){
+            videoEl.src = videoSampler.objectUrl;
+            videoEl.load();
+          }
+          var p = videoEl.play();
+          if(p && typeof p.then === 'function'){
+            p.then(function(){
+              if(playBtn) playBtn.classList.add('active');
+            }).catch(function(err){
+              console.warn('video rec play error:', err);
+            });
+          } else {
+            if(playBtn) playBtn.classList.add('active');
+          }
+          status('REC VID');
+        } else {
+          videoEl.pause();
+          if(playBtn) playBtn.classList.remove('active');
+          status('REC STOP');
+        }
+      });
+    });
+  }
+
+  // -- Stop ------------------------------------------------------------------
+  if(stopBtn){
+    stopBtn.addEventListener('click', function(){
+      videoEl.pause();
+      // Remettre à zéro sans recharger (évite un bug iOS qui vide le src)
+      try{ videoEl.currentTime = 0; }catch(e){}
+      if(playBtn) playBtn.classList.remove('active');
+      if(recBtn){ recBtn.classList.remove('rec-on'); videoSampler.recording = false; }
+      stopBtn.classList.add('active');
+      setTimeout(function(){ stopBtn.classList.remove('active'); }, 300);
+      status('VIDEO STOP');
+    });
+  }
+
+  // -- Événements vidéo pour feedback visuel --------------------------------
+  videoEl.addEventListener('ended', function(){
+    if(playBtn) playBtn.classList.remove('active');
+    if(recBtn && videoSampler.recording){
+      recBtn.classList.remove('rec-on');
+      videoSampler.recording = false;
+    }
+    status('VIDEO END');
+  });
+
+  videoEl.addEventListener('error', function(){
+    var code = videoEl.error ? videoEl.error.code : '?';
+    if(statusEl) statusEl.textContent = 'ERROR ' + code;
+    status('VIDEO ERR ' + code);
+    console.warn('video error code:', code);
+  });
+}
+// ==========================================================================
+// FIN VIDEO SECTION
+// ==========================================================================
+
 // ---------- AUDIO / BANKS ----------
 function makeSaturation(amount){ var ws=audioCtx.createWaveShaper(), N=8192, curve=new Float32Array(N); for(var i=0;i<N;i++){ var x=(i*2)/N-1; curve[i]=Math.tanh(x*(1+amount*3))*(1-amount*0.1); } ws.curve=curve; ws.oversample='2x'; return ws; }
 function initAudio(cb){ if(audioCtx){ if(audioCtx.state==='suspended') audioCtx.resume().then(function(){ if(cb) cb(); }); else if(cb) cb(); return; } audioCtx=new AC(); masterGain=audioCtx.createGain(); masterGain.gain.value=params.masterVolume; analyser=audioCtx.createAnalyser(); analyser.fftSize=256; masterSat=makeSaturation(0.2); masterEQ=audioCtx.createBiquadFilter(); masterEQ.type='lowshelf'; masterEQ.frequency.value=300; masterEQ.gain.value=2; masterGain.connect(masterSat); masterSat.connect(masterEQ); initGranBuffers(audioCtx.sampleRate); initLubTap(audioCtx.sampleRate); granNode=audioCtx.createScriptProcessor(2048,2,2); granNode.onaudioprocess=granProcess; lubTapNode=audioCtx.createScriptProcessor(2048,2,2); lubTapNode.onaudioprocess=lubTapProcess; morphEngine=new MorphageneEngine(audioCtx, masterGain); lubadhEngine=(typeof LubadhEngine==='function')?new LubadhEngine(audioCtx, masterGain):null; masterEQ.connect(granNode); masterEQ.connect(lubTapNode); var lubTapMute=audioCtx.createGain(); lubTapMute.gain.value=0; lubTapNode.connect(lubTapMute); lubTapMute.connect(audioCtx.destination); granNode.connect(analyser); analyser.connect(audioCtx.destination); isReady=true; setLed('led-audio','active'); status('AUDIO OK'); startMeter(); if(audioCtx.state==='suspended') audioCtx.resume().then(function(){ if(cb) cb(); }); else if(cb) cb(); }
@@ -1696,6 +1861,7 @@ document.addEventListener('DOMContentLoaded', function(){
   setupGranHeader();
   setupMorphHeader();
   setupLubadhSection();
+  setupVideoSection();   // ← ajout : initialise les contrôles vidéo
   setupXY();
   updateDisplay();
   updateModeDisplay();
