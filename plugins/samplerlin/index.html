@@ -116,6 +116,17 @@ color:#8fc6ff; font-size:8px; letter-spacing:1px; text-transform:uppercase;
 }
 #video-file-input { display:none; }
 #video-preview { display:none; width:100%; max-height:160px; background:#000; }
+#video-trim-section {
+display:none; width:100%; flex-direction:column; gap:8px;
+background:#1a1a1a; border:1px solid #333; border-radius:6px; padding:10px; box-sizing:border-box;
+}
+#video-waveform {
+width:100%; height:72px; display:block; cursor:col-resize;
+border-radius:4px; background:#111; touch-action:none;
+}
+.video-trim-row { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+.video-trim-info { font-size:7px; letter-spacing:1px; color:#666; flex:1; min-width:80px; }
+.video-trim-info span { color:#8fc6ff; }
 
 .controls { display:flex; flex-wrap:wrap; border-top:1px solid #333333; }
 .control-group {
@@ -512,6 +523,15 @@ body { padding:0; }
     <button class="video-btn" id="video-stop-btn">STOP VID</button>
     <div class="video-status" id="video-status">NO VIDEO</div>
     <video id="video-preview" playsinline webkit-playsinline muted></video>
+    <div id="video-trim-section">
+      <canvas id="video-waveform"></canvas>
+      <div class="video-trim-row">
+        <div class="video-trim-info">START <span id="trim-start-val">0.000s</span></div>
+        <div class="video-trim-info">END <span id="trim-end-val">0.000s</span></div>
+        <div class="video-trim-info">DUR <span id="trim-dur-val">0.000s</span></div>
+        <button class="video-btn active" id="video-use-btn">✔ USE SAMPLE</button>
+      </div>
+    </div>
   </section>
 
   <section class="controls">
@@ -1561,7 +1581,147 @@ function setupVideoSection(){
   var recBtn=el('video-rec-btn');
   var stopBtn=el('video-stop-btn');
   var statusEl=el('video-status');
+  var trimSection=el('video-trim-section');
+  var waveCanvas=el('video-waveform');
+  var useBtn=el('video-use-btn');
   if(!videoEl||!fileInput) return;
+
+  // ── trim state ───────────────────────────────────────────────
+  var trimBuf=null;          // full captured AudioBuffer
+  var trimStart=0;           // normalised 0..1
+  var trimEnd=1;             // normalised 0..1
+  var dragHandle=null;       // 'start' | 'end' | null
+  var HANDLE_PX=10;          // hit zone half-width
+
+  // ── waveform drawing ─────────────────────────────────────────
+  function drawWaveform(){
+    if(!waveCanvas||!trimBuf) return;
+    var W=waveCanvas.offsetWidth||waveCanvas.parentElement.offsetWidth||300;
+    var H=72;
+    waveCanvas.width=W; waveCanvas.height=H;
+    var ctx2=waveCanvas.getContext('2d');
+    ctx2.clearRect(0,0,W,H);
+
+    // background
+    ctx2.fillStyle='#111'; ctx2.fillRect(0,0,W,H);
+
+    // shaded trim region
+    var sx=Math.round(trimStart*W), ex=Math.round(trimEnd*W);
+    ctx2.fillStyle='rgba(143,198,255,0.07)';
+    ctx2.fillRect(sx,0,ex-sx,H);
+
+    // waveform (mono mix, downsampled)
+    var data=trimBuf.getChannelData(0);
+    var total=data.length;
+    ctx2.strokeStyle='#3a5a7a'; ctx2.lineWidth=1;
+    ctx2.beginPath();
+    for(var x=0;x<W;x++){
+      var s=Math.floor(x/W*total), e2=Math.floor((x+1)/W*total)||s+1;
+      var mn=0,mx=0;
+      for(var i=s;i<e2;i++){ if(data[i]<mn) mn=data[i]; if(data[i]>mx) mx=data[i]; }
+      var y1=H/2-mx*(H/2-2), y2=H/2-mn*(H/2-2);
+      if(x===0) ctx2.moveTo(x,y1); else ctx2.lineTo(x,y1);
+      ctx2.lineTo(x,y2);
+    }
+    ctx2.stroke();
+
+    // coloured region waveform
+    ctx2.strokeStyle='#5898c8'; ctx2.lineWidth=1;
+    ctx2.beginPath();
+    for(var x=sx;x<=ex;x++){
+      var s=Math.floor(x/W*total), e2=Math.floor((x+1)/W*total)||s+1;
+      var mn=0,mx=0;
+      for(var i=s;i<e2;i++){ if(data[i]<mn) mn=data[i]; if(data[i]>mx) mx=data[i]; }
+      var y1=H/2-mx*(H/2-2), y2=H/2-mn*(H/2-2);
+      if(x===sx) ctx2.moveTo(x,y1); else ctx2.lineTo(x,y1);
+      ctx2.lineTo(x,y2);
+    }
+    ctx2.stroke();
+
+    // start handle
+    ctx2.fillStyle='#ff9944'; ctx2.fillRect(sx-1,0,2,H);
+    ctx2.fillStyle='rgba(255,153,68,0.9)'; ctx2.fillRect(sx-1,0,8,12);
+    ctx2.fillStyle='#111'; ctx2.font='bold 7px monospace';
+    ctx2.fillText('S',sx+1,10);
+
+    // end handle
+    ctx2.fillStyle='#44cc88'; ctx2.fillRect(ex-1,0,2,H);
+    ctx2.fillStyle='rgba(68,204,136,0.9)'; ctx2.fillRect(ex-9,0,8,12);
+    ctx2.fillStyle='#111'; ctx2.fillText('E',ex-8,10);
+
+    // time readouts
+    var dur=trimBuf.duration;
+    setText('trim-start-val',(trimStart*dur).toFixed(3)+'s');
+    setText('trim-end-val',(trimEnd*dur).toFixed(3)+'s');
+    setText('trim-dur-val',((trimEnd-trimStart)*dur).toFixed(3)+'s');
+  }
+
+  function showTrimUI(buf){
+    trimBuf=buf; trimStart=0; trimEnd=1;
+    trimSection.style.display='flex';
+    setTimeout(drawWaveform,50); // let layout settle first
+  }
+
+  // ── drag logic (mouse + touch) ────────────────────────────────
+  function canvasX(e){
+    var r=waveCanvas.getBoundingClientRect();
+    var cx=(e.touches?e.touches[0].clientX:e.clientX)-r.left;
+    return Math.max(0,Math.min(1,cx/r.width));
+  }
+  function nearHandle(nx){
+    var W=waveCanvas.getBoundingClientRect().width||300;
+    var px=nx*W;
+    var ds=Math.abs(px-trimStart*W), de=Math.abs(px-trimEnd*W);
+    if(ds<=HANDLE_PX&&ds<=de) return 'start';
+    if(de<=HANDLE_PX) return 'end';
+    return null;
+  }
+  function onDragStart(e){
+    if(!trimBuf) return;
+    var nx=canvasX(e);
+    dragHandle=nearHandle(nx);
+    if(!dragHandle){
+      // click in region → move nearest handle
+      dragHandle=(Math.abs(nx-trimStart)<Math.abs(nx-trimEnd))?'start':'end';
+    }
+    e.preventDefault();
+    onDragMove(e);
+  }
+  function onDragMove(e){
+    if(!dragHandle) return;
+    e.preventDefault();
+    var nx=canvasX(e);
+    if(dragHandle==='start') trimStart=Math.min(nx, trimEnd-0.01);
+    else                     trimEnd=Math.max(nx, trimStart+0.01);
+    trimStart=Math.max(0,trimStart); trimEnd=Math.min(1,trimEnd);
+    drawWaveform();
+  }
+  function onDragEnd(){ dragHandle=null; }
+  waveCanvas.addEventListener('mousedown',onDragStart);
+  waveCanvas.addEventListener('touchstart',onDragStart,{passive:false});
+  window.addEventListener('mousemove',function(e){ if(dragHandle) onDragMove(e); });
+  window.addEventListener('touchmove',function(e){ if(dragHandle) onDragMove(e); },{passive:false});
+  window.addEventListener('mouseup',onDragEnd);
+  window.addEventListener('touchend',onDragEnd);
+
+  // ── USE SAMPLE ────────────────────────────────────────────────
+  useBtn.addEventListener('click',function(){
+    if(!trimBuf) return;
+    var sr=trimBuf.sampleRate;
+    var startSample=Math.floor(trimStart*trimBuf.length);
+    var endSample=Math.ceil(trimEnd*trimBuf.length);
+    var len=endSample-startSample;
+    if(len<2){ statusEl.textContent='TOO SHORT'; return; }
+    var out=audioCtx.createBuffer(trimBuf.numberOfChannels,len,sr);
+    for(var ch=0;ch<trimBuf.numberOfChannels;ch++){
+      var src=trimBuf.getChannelData(ch).subarray(startSample,endSample);
+      out.getChannelData(ch).set(src);
+    }
+    var name=videoSampler.file?videoSampler.file.name.slice(0,12).toUpperCase():'VIDEO';
+    onSampleLoaded(out,name,'custom');
+    statusEl.textContent='SAMPLED: '+name;
+    trimSection.style.display='none';
+  });
 
   // ── file import ──────────────────────────────────────────────
   fileInput.addEventListener('change',function(){
@@ -1573,14 +1733,15 @@ function setupVideoSection(){
     videoSampler.recording=false;
     recBtn.classList.remove('rec-on');
     playBtn.classList.remove('active');
+    trimSection.style.display='none';
     videoEl.src=videoSampler.objectUrl;
-    videoEl.load(); // required on iOS
+    videoEl.load();
     videoEl.style.display='block';
     statusEl.textContent=file.name.slice(0,20).toUpperCase();
     fileInput.value='';
   });
 
-  // ── Web Audio tap: create once per video element ─────────────
+  // ── Web Audio tap ─────────────────────────────────────────────
   function ensureVideoNodes(){
     if(videoSampler.sourceNode) return true;
     if(!audioCtx) return false;
@@ -1589,7 +1750,6 @@ function setupVideoSection(){
       videoSampler.sourceNode=src;
       var gain=audioCtx.createGain(); gain.gain.value=1;
       videoSampler.gainNode=gain;
-      // ScriptProcessorNode for PCM capture (best iOS Safari compat)
       var tap=audioCtx.createScriptProcessor(4096,2,2);
       videoSampler.tapNode=tap;
       tap.onaudioprocess=function(e){
@@ -1600,9 +1760,7 @@ function setupVideoSection(){
         videoSampler.rightChunks.push(new Float32Array(inR));
         videoSampler.sampleRate=audioCtx.sampleRate;
       };
-      // src → gain → destination  (playback through speakers)
       src.connect(gain); gain.connect(audioCtx.destination);
-      // src → tap → silentGain    (capture branch, no extra output)
       src.connect(tap);
       var silent=audioCtx.createGain(); silent.gain.value=0;
       silent.connect(audioCtx.destination);
@@ -1615,7 +1773,7 @@ function setupVideoSection(){
     }
   }
 
-  // ── assemble Float32 chunks → AudioBuffer → custom sample ───
+  // ── assemble chunks → AudioBuffer, then show trim UI ─────────
   function renderRecording(){
     var sr=videoSampler.sampleRate;
     var L=videoSampler.leftChunks, R=videoSampler.rightChunks;
@@ -1627,9 +1785,8 @@ function setupVideoSection(){
     for(var i=0;i<L.length;i++){ outL.set(L[i],off); outR.set(R[i],off); off+=L[i].length; }
     videoSampler.leftChunks=[]; videoSampler.rightChunks=[];
     videoSampler.rendered=true;
-    var name=videoSampler.file?videoSampler.file.name.slice(0,12).toUpperCase():'VIDEO';
-    onSampleLoaded(buf,name,'custom');
-    statusEl.textContent='SAMPLED: '+name;
+    statusEl.textContent='TRIM & USE';
+    showTrimUI(buf);
   }
 
   function safePlay(){
@@ -1637,7 +1794,7 @@ function setupVideoSection(){
     if(p&&p.catch) p.catch(function(){ statusEl.textContent='PLAY ERR'; });
   }
 
-  // ── PLAY ────────────────────────────────────────────────────
+  // ── PLAY ─────────────────────────────────────────────────────
   playBtn.addEventListener('click',function(){
     if(!videoSampler.file){ statusEl.textContent='NO VIDEO'; return; }
     initAudio(function(){
@@ -1651,7 +1808,7 @@ function setupVideoSection(){
     });
   });
 
-  // ── REC VID ─────────────────────────────────────────────────
+  // ── REC VID ──────────────────────────────────────────────────
   recBtn.addEventListener('click',function(){
     if(!videoSampler.file){ statusEl.textContent='NO VIDEO'; return; }
     initAudio(function(){
@@ -1661,6 +1818,7 @@ function setupVideoSection(){
         videoSampler.rightChunks=[];
         videoSampler.recording=true;
         videoSampler.rendered=false;
+        trimSection.style.display='none';
         recBtn.classList.add('rec-on');
         playBtn.classList.remove('active');
         statusEl.textContent='● RECORDING...';
@@ -1670,7 +1828,7 @@ function setupVideoSection(){
     });
   });
 
-  // ── STOP ────────────────────────────────────────────────────
+  // ── STOP ─────────────────────────────────────────────────────
   stopBtn.addEventListener('click',function(){
     videoEl.pause();
     videoEl.currentTime=0;
@@ -1684,7 +1842,7 @@ function setupVideoSection(){
     }
   });
 
-  // ── auto-stop / auto-sample when video ends ─────────────────
+  // ── video ended ───────────────────────────────────────────────
   videoEl.addEventListener('ended',function(){
     playBtn.classList.remove('active');
     recBtn.classList.remove('rec-on');
@@ -1699,6 +1857,9 @@ function setupVideoSection(){
   videoEl.addEventListener('error',function(){
     statusEl.textContent='VIDEO ERR '+(videoEl.error?videoEl.error.code:'');
   });
+
+  // redraw on window resize
+  window.addEventListener('resize',function(){ if(trimBuf) drawWaveform(); });
 }
 
 function setupLubadhSection(){
