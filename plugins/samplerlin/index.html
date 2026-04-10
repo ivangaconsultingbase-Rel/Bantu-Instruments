@@ -56,7 +56,7 @@ body{font-family:'Space Mono',monospace;background:#111;min-height:100vh;
 .tab.on{color:var(--accent);border-bottom-color:var(--accent);}
 .tdot{width:5px;height:5px;border-radius:50%;display:none;flex-shrink:0;}
 .tdot.vis{display:block;}
-.tdot.cg{background:var(--gran);box-shadow:0 0 4px var(--gran);}
+.tdot.cgr{background:var(--gran);box-shadow:0 0 4px var(--gran);}
 .tdot.cm{background:var(--morph);box-shadow:0 0 4px var(--morph);}
 .tdot.cl{background:var(--lub);box-shadow:0 0 4px var(--lub);}
 
@@ -828,7 +828,7 @@ function setupTabs(){
 }
 function updateTabDots(){
   var gd=el('tdot-gran'),md=el('tdot-morph'),td=el('tdot-tape');
-  if(gd){gd.className='tdot'+(granEnabled?' vis cg':'');}
+  if(gd){gd.className='tdot'+(granEnabled?' vis cgr':'');}
   if(md){var on=el('morph-toggle')&&el('morph-toggle').classList.contains('on');md.className='tdot'+(on?' vis cm':'');}
   if(td){td.className='tdot'+(lubEnabled?' vis cl':'');}
 }
