@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <title>DR-4 PRO — Drum Machine + FX + Master Finish</title>
+  <title>DR-4 PRO V2.5 — Drum Machine + P-Locks</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Exo+2:wght@300;500;700&display=swap" rel="stylesheet">
   <style>
@@ -20,36 +20,27 @@
       --text:#c9d4df;
       --muted:#70869a;
       --dim:#354655;
-      --black:#030506;
 
       --orange:#ff7c00;
       --orange2:#ff5000;
-      --orange3:#ff9d45;
-      --orange-g:rgba(255,124,0,.12);
-
+      --orange3:#ffb067;
       --green:#00e87a;
-      --green-g:rgba(0,232,122,.35);
-
       --red:#ff4b30;
-      --red-g:rgba(255,75,48,.28);
-
-      --tape-col:#e8b86d;
-      --bit-col:#5ad4ff;
-      --sherman-col:#c060ff;
-      --master-col:#7dffa1;
+      --blue:#5ad4ff;
+      --violet:#c060ff;
+      --gold:#e8b86d;
+      --master:#7dffa1;
 
       --mono:'Share Tech Mono','Courier New',monospace;
       --ui:'Exo 2',system-ui,sans-serif;
 
-      --r:8px;
-      --r2:12px;
       --shadow:
         0 0 0 1px rgba(255,255,255,.03) inset,
         0 30px 80px rgba(0,0,0,.65);
     }
 
-    *{ box-sizing:border-box; }
-    html,body{ height:100%; margin:0; }
+    *{box-sizing:border-box}
+    html,body{height:100%;margin:0}
     body{
       min-height:100%;
       background:
@@ -64,12 +55,7 @@
       content:"";
       position:fixed; inset:0;
       pointer-events:none;
-      background:
-        repeating-linear-gradient(
-          0deg,
-          transparent 0 2px,
-          rgba(255,255,255,.015) 2px 4px
-        );
+      background:repeating-linear-gradient(0deg,transparent 0 2px,rgba(255,255,255,.015) 2px 4px);
       opacity:.4;
     }
 
@@ -83,15 +69,12 @@
 
     .machine{
       width:100%;
-      max-width:1460px;
+      max-width:1520px;
       border:1px solid var(--border2);
       border-radius:18px;
       overflow:hidden;
-      background:
-        linear-gradient(180deg,#131a24,#0b1017);
-      box-shadow:
-        var(--shadow),
-        0 0 80px rgba(255,80,0,.04);
+      background:linear-gradient(180deg,#131a24,#0b1017);
+      box-shadow:var(--shadow), 0 0 80px rgba(255,80,0,.04);
     }
 
     .topbar{
@@ -103,44 +86,16 @@
       background:linear-gradient(180deg,#182030,#101823);
       border-bottom:1px solid var(--border);
     }
+    .brand{display:flex;flex-direction:column;gap:3px;min-width:190px}
+    .brand-logo{font:700 38px/1 var(--mono);letter-spacing:-.05em;color:#e7f1ff}
+    .brand-logo span{color:var(--orange)}
+    .brand-sub{font:700 10px/1 var(--mono);letter-spacing:.22em;color:var(--orange)}
+    .brand-sub2{font:400 9px/1 var(--mono);letter-spacing:.14em;color:var(--muted)}
 
-    .brand{
-      display:flex;
-      flex-direction:column;
-      gap:3px;
-      min-width:170px;
-    }
-    .brand-logo{
-      font:700 38px/1 var(--mono);
-      letter-spacing:-.05em;
-      color:#e7f1ff;
-    }
-    .brand-logo span{ color:var(--orange); }
-    .brand-sub{
-      font:700 10px/1 var(--mono);
-      letter-spacing:.22em;
-      color:var(--orange);
-    }
-    .brand-sub2{
-      font:400 9px/1 var(--mono);
-      letter-spacing:.14em;
-      color:var(--muted);
-    }
-
-    .transport-strip{
-      display:flex;
-      gap:12px;
-      align-items:flex-end;
-      flex-wrap:wrap;
-    }
-    .transport-group{
-      display:flex;
-      gap:8px;
-    }
+    .transport-strip{display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap}
+    .transport-group{display:flex;gap:8px}
     .transport-btn{
-      min-width:92px;
-      min-height:42px;
-      border-radius:8px;
+      min-width:92px;min-height:42px;border-radius:8px;
       border:1px solid var(--border2);
       background:linear-gradient(180deg,#151b24,#0d1218);
       color:var(--text);
@@ -149,862 +104,361 @@
       cursor:pointer;
       transition:.14s ease;
     }
-    .transport-btn:hover{ border-color:var(--orange); }
+    .transport-btn:hover{border-color:var(--orange)}
     .play-btn{
       background:linear-gradient(180deg,#1a3a22,#10251a);
       color:var(--green);
       border-color:rgba(0,232,122,.28);
     }
-    .play-btn.active,
-    .play-btn:hover{
-      box-shadow:0 0 14px rgba(0,232,122,.18);
-    }
-    .stop-btn{
-      color:var(--muted);
-      background:linear-gradient(180deg,#1d1916,#13110f);
-    }
-    .stop-btn:hover{ color:var(--text); }
+    .play-btn.active,.play-btn:hover{box-shadow:0 0 14px rgba(0,232,122,.18)}
+    .stop-btn{color:var(--muted);background:linear-gradient(180deg,#1d1916,#13110f)}
+    .stop-btn:hover{color:var(--text)}
 
-    .field{
-      display:flex;
-      flex-direction:column;
-      gap:5px;
-      min-width:96px;
-    }
-    .field.wide{ min-width:170px; }
-    .field-label{
-      font:700 10px/1 var(--mono);
-      letter-spacing:.16em;
-      color:var(--muted);
-    }
-    .readout{
-      font:700 11px/1 var(--mono);
-      color:var(--orange);
-    }
+    .field{display:flex;flex-direction:column;gap:5px;min-width:96px}
+    .field-label{font:700 10px/1 var(--mono);letter-spacing:.16em;color:var(--muted)}
+    .readout{font:700 11px/1 var(--mono);color:var(--orange)}
 
-    .bpm-wrap{
-      display:flex;
-      align-items:center;
-      gap:5px;
-    }
+    .bpm-wrap{display:flex;align-items:center;gap:5px}
     .bpm-adj{
-      width:24px; height:24px;
-      border:1px solid var(--border2);
-      border-radius:4px;
-      background:#131922;
-      color:var(--text);
-      font:700 14px/1 var(--mono);
-      cursor:pointer;
+      width:24px;height:24px;border:1px solid var(--border2);border-radius:4px;
+      background:#131922;color:var(--text);font:700 14px/1 var(--mono);cursor:pointer;
     }
-    .bpm-adj:hover{ color:var(--orange); border-color:var(--orange); }
+    .bpm-adj:hover{color:var(--orange);border-color:var(--orange)}
     .bpm-num{
-      width:58px; height:30px;
-      border-radius:8px;
-      border:1px solid var(--border2);
-      background:#0b1016;
-      color:var(--orange);
-      text-align:center;
-      font:700 16px/1 var(--mono);
-      outline:none;
-      -moz-appearance:textfield;
+      width:58px;height:30px;border-radius:8px;border:1px solid var(--border2);
+      background:#0b1016;color:var(--orange);text-align:center;
+      font:700 16px/1 var(--mono);outline:none;-moz-appearance:textfield;
     }
-    .bpm-num::-webkit-inner-spin-button{ display:none; }
+    .bpm-num::-webkit-inner-spin-button{display:none}
 
     input[type=range]{
-      -webkit-appearance:none;
-      appearance:none;
-      width:100%;
-      height:5px;
-      border-radius:999px;
+      -webkit-appearance:none;appearance:none;
+      width:100%;height:5px;border-radius:999px;
       background:linear-gradient(90deg,var(--orange2),var(--orange));
-      outline:none;
-      cursor:pointer;
+      outline:none;cursor:pointer;
     }
     input[type=range]::-webkit-slider-thumb{
-      -webkit-appearance:none;
-      appearance:none;
-      width:15px; height:15px;
-      border-radius:50%;
-      background:#f4f7fb;
-      border:2px solid var(--orange);
+      -webkit-appearance:none;appearance:none;
+      width:15px;height:15px;border-radius:50%;
+      background:#f4f7fb;border:2px solid var(--orange);
       box-shadow:0 0 8px rgba(255,124,0,.35);
     }
     input[type=range]::-moz-range-thumb{
-      width:15px; height:15px;
-      border-radius:50%;
-      background:#f4f7fb;
-      border:2px solid var(--orange);
+      width:15px;height:15px;border-radius:50%;
+      background:#f4f7fb;border:2px solid var(--orange);
       box-shadow:0 0 8px rgba(255,124,0,.35);
     }
 
     .audio-btn{
-      min-height:44px;
-      padding:0 18px;
-      border-radius:12px;
+      min-height:44px;padding:0 18px;border-radius:12px;
       border:1px solid rgba(255,124,0,.35);
       background:linear-gradient(180deg,#1f1a14,#14110d);
       color:var(--orange);
-      font:700 11px/1 var(--mono);
-      letter-spacing:.14em;
-      display:flex;
-      align-items:center;
-      gap:8px;
-      cursor:pointer;
-      transition:.14s ease;
-      white-space:nowrap;
+      font:700 11px/1 var(--mono);letter-spacing:.14em;
+      display:flex;align-items:center;gap:8px;cursor:pointer;
+      transition:.14s ease;white-space:nowrap;
     }
-    .audio-btn:hover,
-    .audio-btn.active{
-      box-shadow:0 0 14px rgba(255,124,0,.18);
-    }
+    .audio-btn:hover,.audio-btn.active{box-shadow:0 0 14px rgba(255,124,0,.18)}
     .audio-dot{
-      width:10px; height:10px;
-      border-radius:50%;
-      background:#331900;
-      border:1px solid var(--orange2);
-      box-shadow:0 0 6px rgba(255,80,0,.2);
-      transition:.2s ease;
-      flex-shrink:0;
+      width:10px;height:10px;border-radius:50%;background:#331900;
+      border:1px solid var(--orange2);box-shadow:0 0 6px rgba(255,80,0,.2);
+      transition:.2s ease;flex-shrink:0;
     }
     .audio-btn.active .audio-dot{
-      background:var(--green);
-      border-color:var(--green);
-      box-shadow:0 0 12px rgba(0,232,122,.45);
+      background:var(--green);border-color:var(--green);box-shadow:0 0 12px rgba(0,232,122,.45);
     }
 
     .nav-tabs{
-      display:flex;
-      gap:8px;
-      padding:12px 16px;
+      display:flex;gap:8px;padding:12px 16px;
       background:linear-gradient(180deg,#101722,#0d141e);
-      border-bottom:1px solid var(--border);
-      overflow:auto;
+      border-bottom:1px solid var(--border);overflow:auto;
     }
     .tab-btn{
-      min-height:38px;
-      padding:0 14px;
-      border-radius:10px;
-      border:1px solid var(--border2);
-      background:linear-gradient(180deg,#171f29,#101720);
-      color:var(--muted);
-      font:700 11px/1 var(--mono);
-      letter-spacing:.14em;
-      cursor:pointer;
-      transition:.14s ease;
-      flex:0 0 auto;
+      min-height:38px;padding:0 14px;border-radius:10px;border:1px solid var(--border2);
+      background:linear-gradient(180deg,#171f29,#101720);color:var(--muted);
+      font:700 11px/1 var(--mono);letter-spacing:.14em;
+      cursor:pointer;transition:.14s ease;flex:0 0 auto;
     }
-    .tab-btn:hover{
-      color:var(--text);
-      border-color:var(--orange);
-    }
+    .tab-btn:hover{color:var(--text);border-color:var(--orange)}
     .tab-btn.active{
-      color:var(--orange);
-      border-color:rgba(255,124,0,.45);
+      color:var(--orange);border-color:rgba(255,124,0,.45);
       box-shadow:0 0 0 1px rgba(255,124,0,.18) inset;
       background:linear-gradient(180deg,#1c2430,#121924);
     }
 
-    .page{
-      display:none;
-      padding:16px;
-      gap:14px;
-    }
-    .page.active{
-      display:grid;
-    }
+    .page{display:none;padding:16px;gap:14px}
+    .page.active{display:grid}
 
     .card{
       background:linear-gradient(180deg,#121821,#0d1218);
       border:1px solid var(--border);
-      border-radius:14px;
-      overflow:hidden;
+      border-radius:14px;overflow:hidden;
       box-shadow:0 10px 24px rgba(0,0,0,.18);
     }
     .card-head{
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:12px;
-      padding:10px 14px;
-      background:linear-gradient(180deg,#1a2230,#121a26);
+      display:flex;align-items:center;justify-content:space-between;gap:12px;
+      padding:10px 14px;background:linear-gradient(180deg,#1a2230,#121a26);
       border-bottom:1px solid var(--border);
     }
-    .card-title{
-      font:700 12px/1 var(--mono);
-      letter-spacing:.14em;
-      color:var(--text);
-    }
-    .card-sub{
-      font:400 9px/1 var(--mono);
-      letter-spacing:.1em;
-      color:var(--muted);
-      margin-top:3px;
-    }
-    .card-body{
-      padding:14px;
-    }
-
-    /* PAGE SEQ */
-    #page-seq{
-      grid-template-columns:1.5fr .9fr;
-      align-items:start;
-    }
-
-    .tracks-stack{
-      display:flex;
-      flex-direction:column;
-      gap:10px;
-    }
-
-    .track{
-      background:linear-gradient(180deg,#12181e,#0e1420);
-      border:1px solid var(--border);
-      border-radius:12px;
-      overflow:hidden;
-      transition:.14s ease;
-    }
-    .track.selected{ border-color:var(--orange); box-shadow:0 0 0 1px rgba(255,124,0,.14) inset; }
-    .track.muted .steps-row{ opacity:.3; }
-
-    .track-header{
-      display:flex;
-      align-items:center;
-      gap:10px;
-      padding:9px 12px;
-      background:linear-gradient(180deg,#182030,#12182a);
-      border-bottom:1px solid var(--border);
-      cursor:pointer;
-      user-select:none;
-    }
-    .track-header:hover{
-      background:linear-gradient(180deg,#1d2636,#151f2f);
-    }
-    .track-info{
-      display:flex;
-      flex-direction:column;
-      gap:2px;
-      min-width:142px;
-    }
-    .track-name{
-      font:700 22px/1 var(--mono);
-      letter-spacing:-.02em;
-    }
-    .track-full-name{
-      font:500 10px/1 var(--ui);
-      letter-spacing:.1em;
-      color:var(--muted);
-      text-transform:uppercase;
-    }
-    .track-model-name{
-      font:400 9px/1 var(--mono);
-      color:#395063;
-    }
-
-    .track-tools{
-      display:flex;
-      align-items:center;
-      gap:8px;
-      margin-left:auto;
-      flex-wrap:wrap;
-      justify-content:flex-end;
-    }
+    .card-title{font:700 12px/1 var(--mono);letter-spacing:.14em;color:var(--text)}
+    .card-sub{font:400 9px/1 var(--mono);letter-spacing:.1em;color:var(--muted);margin-top:3px}
+    .card-body{padding:14px}
 
     .mini-btn{
-      width:32px; height:32px;
-      border-radius:50%;
-      border:1px solid var(--border2);
-      background:#0d1218;
-      color:var(--muted);
-      font:700 10px/1 var(--mono);
-      cursor:pointer;
-      transition:.12s ease;
-      flex-shrink:0;
+      min-height:30px;padding:0 10px;border-radius:8px;border:1px solid var(--border2);
+      background:#0d1218;color:var(--muted);
+      font:700 10px/1 var(--mono);cursor:pointer;transition:.12s ease;
     }
-    .mini-btn:hover{ border-color:var(--orange); color:var(--orange); }
-    .preview-btn:hover{ border-color:var(--green); color:var(--green); }
+    .mini-btn:hover{border-color:var(--orange);color:var(--orange)}
+    .mini-btn.red:hover{color:#ff8b7a;border-color:rgba(255,75,48,.45)}
+    .mini-btn.blue:hover{color:var(--blue);border-color:rgba(90,212,255,.45)}
 
-    .track-stat{
-      display:flex;
-      flex-direction:column;
-      gap:3px;
-      min-width:72px;
+    #page-seq{grid-template-columns:1.45fr .95fr;align-items:start}
+    .tracks-stack{display:flex;flex-direction:column;gap:10px}
+    .track{
+      background:linear-gradient(180deg,#12181e,#0e1420);
+      border:1px solid var(--border);border-radius:12px;overflow:hidden;transition:.14s ease;
     }
-    .track-stat-label{
-      font:700 8px/1 var(--mono);
-      color:#3e5368;
-      letter-spacing:.12em;
-    }
-    .track-stat-value{
-      font:700 12px/1 var(--mono);
-      color:var(--orange3);
-    }
+    .track.selected{border-color:var(--orange);box-shadow:0 0 0 1px rgba(255,124,0,.14) inset}
+    .track.muted .steps-row{opacity:.32}
+    .track.soloed{box-shadow:0 0 0 1px rgba(0,232,122,.18) inset}
 
-    .track-vol-wrap{
-      min-width:120px;
-      display:flex;
-      flex-direction:column;
-      gap:3px;
+    .track-header{
+      display:flex;align-items:center;gap:10px;padding:9px 12px;
+      background:linear-gradient(180deg,#182030,#12182a);
+      border-bottom:1px solid var(--border);cursor:pointer;user-select:none;
     }
-    .track-vol-wrap .track-stat-label{ color:#44607c; }
-    .track-vol::-webkit-slider-thumb{
-      border-color:#8ca5ba;
-      box-shadow:none;
+    .track-info{display:flex;flex-direction:column;gap:2px;min-width:142px}
+    .track-name{font:700 22px/1 var(--mono);letter-spacing:-.02em}
+    .track-full-name{font:500 10px/1 var(--ui);letter-spacing:.1em;color:var(--muted);text-transform:uppercase}
+    .track-model-name{font:400 9px/1 var(--mono);color:#395063}
+    .track-tools{display:flex;align-items:center;gap:8px;margin-left:auto;flex-wrap:wrap;justify-content:flex-end}
+    .icon-btn{
+      width:32px;height:32px;border-radius:50%;
+      border:1px solid var(--border2);background:#0d1218;color:var(--muted);
+      font:700 10px/1 var(--mono);cursor:pointer;transition:.12s ease;
+      display:flex;align-items:center;justify-content:center;flex-shrink:0;
     }
+    .icon-btn:hover{border-color:var(--orange);color:var(--orange)}
+    .icon-btn.preview:hover{border-color:rgba(0,232,122,.45);color:var(--green)}
+    .icon-btn.muted{color:#ffab8f;border-color:rgba(255,75,48,.42)}
+    .icon-btn.soloed{color:var(--green);border-color:rgba(0,232,122,.42)}
+    .track-stat{display:flex;flex-direction:column;gap:3px;min-width:66px}
+    .track-stat-label{font:700 8px/1 var(--mono);color:#3e5368;letter-spacing:.12em}
+    .track-stat-value{font:700 12px/1 var(--mono);color:var(--orange3)}
+    .track-vol-wrap{min-width:120px;display:flex;flex-direction:column;gap:3px}
 
-    .steps-row{
-      display:grid;
-      grid-template-columns:repeat(16,1fr);
-      gap:5px;
-      padding:10px 12px 12px;
-    }
+    .steps-row{display:grid;grid-template-columns:repeat(16,1fr);gap:5px;padding:10px 12px 12px}
     .step-btn{
-      position:relative;
-      height:58px;
-      border-radius:6px;
-      border:1px solid #2a1207;
+      position:relative;height:58px;border-radius:6px;border:1px solid #2a1207;
       background:linear-gradient(180deg,#160900,#0e0500);
-      cursor:pointer;
-      overflow:hidden;
-      display:flex;
-      justify-content:center;
-      align-items:flex-end;
+      cursor:pointer;overflow:hidden;display:flex;justify-content:center;align-items:flex-end;
       padding-bottom:5px;
-      touch-action:manipulation;
     }
     .step-btn::before{
-      content:"";
-      position:absolute;
-      top:7px;
-      left:50%;
-      transform:translateX(-50%);
-      width:12px; height:12px;
-      border-radius:50%;
-      background:#250d00;
-      border:1px solid #321200;
-      box-shadow:inset 0 1px 2px rgba(0,0,0,.45);
-      transition:.07s ease;
+      content:"";position:absolute;top:7px;left:50%;transform:translateX(-50%);
+      width:12px;height:12px;border-radius:50%;background:#250d00;border:1px solid #321200;
+      box-shadow:inset 0 1px 2px rgba(0,0,0,.45);transition:.07s ease;
     }
-    .step-btn .step-num{
-      font:700 8px/1 var(--mono);
-      color:var(--muted);
-    }
-    .step-btn:nth-child(4n+1){ border-left-color:#344555; }
-    .step-btn:nth-child(8n+1){ border-left:2px solid #3c5165; }
-
-    .step-btn.on{
-      background:linear-gradient(180deg,#1b0b00,#120600);
-      border-color:#4d1800;
-    }
-    .step-btn.on::before{
-      background:var(--orange2);
-      box-shadow:0 0 8px rgba(255,56,0,.5), 0 0 18px rgba(255,56,0,.25);
-    }
+    .step-btn .step-num{font:700 8px/1 var(--mono);color:var(--muted)}
+    .step-btn:nth-child(4n+1){border-left-color:#344555}
+    .step-btn:nth-child(8n+1){border-left:2px solid #3c5165}
+    .step-btn.on{background:linear-gradient(180deg,#1b0b00,#120600);border-color:#4d1800}
+    .step-btn.on::before{background:var(--orange2);box-shadow:0 0 8px rgba(255,56,0,.5),0 0 18px rgba(255,56,0,.25)}
     .step-btn.accent::after{
-      content:"";
-      position:absolute;
-      top:23px;
-      left:50%;
-      transform:translateX(-50%);
-      width:4px; height:4px;
-      border-radius:50%;
-      background:#ffc070;
-      box-shadow:0 0 6px rgba(255,170,90,.65);
+      content:"";position:absolute;top:23px;left:50%;transform:translateX(-50%);
+      width:4px;height:4px;border-radius:50%;background:#ffc070;box-shadow:0 0 6px rgba(255,170,90,.65);
     }
-    .step-btn.on.accent::before{
-      background:#ff8b00;
-      box-shadow:0 0 8px rgba(255,139,0,.7), 0 0 18px rgba(255,139,0,.35);
-    }
-    .step-btn.playing{
-      border-color:rgba(0,232,122,.65)!important;
-    }
-    .step-btn.playing::before{
-      background:var(--green)!important;
-      box-shadow:0 0 9px rgba(0,232,122,.45), 0 0 20px rgba(0,232,122,.2)!important;
-    }
+    .step-btn.on.accent::before{background:#ff8b00;box-shadow:0 0 8px rgba(255,139,0,.7),0 0 18px rgba(255,139,0,.35)}
+    .step-btn.playing{border-color:rgba(0,232,122,.65)!important}
+    .step-btn.playing::before{background:var(--green)!important;box-shadow:0 0 9px rgba(0,232,122,.45),0 0 20px rgba(0,232,122,.2)!important}
+    .step-btn.has-data .step-num{color:#dce7f1}
+    .step-btn.has-lock{box-shadow:inset 0 0 0 1px rgba(90,212,255,.18)}
+    .step-btn.has-lock .step-num{color:var(--blue)}
 
-    .seq-side{
-      display:grid;
-      gap:14px;
-    }
-
+    .seq-side{display:grid;gap:14px}
     .lcd{
-      padding:14px;
-      background:linear-gradient(180deg,#0d1915,#0a1310);
-      border:1px solid rgba(0,232,122,.18);
-      border-radius:12px;
+      padding:14px;background:linear-gradient(180deg,#0d1915,#0a1310);
+      border:1px solid rgba(0,232,122,.18);border-radius:12px;
       box-shadow:0 0 0 1px rgba(255,255,255,.03) inset;
     }
-    .lcd-title{
-      font:700 10px/1 var(--mono);
-      letter-spacing:.18em;
-      color:#7ecf9a;
-      margin-bottom:10px;
+    .lcd-title{font:700 10px/1 var(--mono);letter-spacing:.18em;color:#7ecf9a;margin-bottom:10px}
+    .lcd-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px 12px}
+    .lcd-cell{background:rgba(0,0,0,.18);border:1px solid rgba(126,207,154,.1);border-radius:8px;padding:8px 10px}
+    .lcd-k{font:700 8px/1 var(--mono);letter-spacing:.14em;color:#5d9172;margin-bottom:4px}
+    .lcd-v{font:700 15px/1 var(--mono);color:#ccffe0}
+    .pattern-row{display:flex;gap:8px;flex-wrap:wrap}
+    .pattern-btn{
+      min-width:44px;height:36px;border-radius:10px;border:1px solid var(--border2);
+      background:linear-gradient(180deg,#171f29,#101720);color:var(--muted);
+      font:700 12px/1 var(--mono);cursor:pointer;
     }
-    .lcd-grid{
-      display:grid;
-      grid-template-columns:1fr 1fr;
-      gap:8px 12px;
-    }
-    .lcd-cell{
-      background:rgba(0,0,0,.18);
-      border:1px solid rgba(126,207,154,.1);
-      border-radius:8px;
-      padding:8px 10px;
-    }
-    .lcd-k{
-      font:700 8px/1 var(--mono);
-      letter-spacing:.14em;
-      color:#5d9172;
-      margin-bottom:4px;
-    }
-    .lcd-v{
-      font:700 15px/1 var(--mono);
-      color:#ccffe0;
-    }
+    .pattern-btn.active{color:var(--orange);border-color:rgba(255,124,0,.45);box-shadow:0 0 0 1px rgba(255,124,0,.18) inset}
+    .action-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+    .hint-block{padding:12px 14px;border-top:1px solid var(--border);color:var(--muted);font:400 10px/1.5 var(--mono);letter-spacing:.08em}
 
-    .hint-block{
-      padding:12px 14px;
-      border-top:1px solid var(--border);
-      color:var(--muted);
-      font:400 10px/1.5 var(--mono);
-      letter-spacing:.08em;
+    #page-step{grid-template-columns:1.15fr .85fr;align-items:start}
+    .step-editor-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+    .step-big{
+      min-height:116px;border-radius:14px;border:1px solid var(--border2);
+      background:linear-gradient(180deg,#171100,#0f0a00);
+      display:flex;flex-direction:column;justify-content:center;align-items:center;gap:8px;
+      box-shadow:inset 0 0 0 1px rgba(255,255,255,.03);
     }
+    .step-big.on{border-color:#5c1f00;background:linear-gradient(180deg,#221000,#120800)}
+    .step-big .big-index{font:700 34px/1 var(--mono);color:#eff7ff}
+    .step-big .big-state{font:700 11px/1 var(--mono);letter-spacing:.18em;color:var(--orange3)}
+    .form-grid{display:grid;gap:12px}
+    .form-row{display:flex;flex-direction:column;gap:5px}
+    .form-label{font:700 10px/1 var(--mono);letter-spacing:.14em;color:var(--muted)}
+    .form-read{font:700 11px/1 var(--mono);color:var(--orange3)}
+    .step-mini-grid{display:grid;grid-template-columns:repeat(8,1fr);gap:6px}
+    .step-mini{
+      height:36px;border-radius:8px;border:1px solid var(--border2);
+      background:#111722;color:var(--muted);font:700 10px/1 var(--mono);cursor:pointer;
+    }
+    .step-mini.active{color:var(--orange);border-color:rgba(255,124,0,.45)}
+    .step-mini.has-note{box-shadow:0 0 0 1px rgba(255,255,255,.03) inset}
+    .step-mini.has-lock{color:var(--blue);border-color:rgba(90,212,255,.35)}
 
-    /* PAGE SYNTH */
-    #page-synth{
-      grid-template-columns:1.1fr 1fr;
-      align-items:start;
+    .lock-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    .lock-card{
+      border:1px solid var(--border);border-radius:12px;padding:12px;
+      background:linear-gradient(180deg,#101823,#0c1219);
     }
+    .lock-title{font:700 9px/1 var(--mono);letter-spacing:.16em;color:var(--blue);margin-bottom:8px}
+    .lock-toggle-row{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px}
+    .lock-toggle{
+      min-height:28px;padding:0 10px;border-radius:8px;border:1px solid var(--border2);
+      background:#0d1218;color:var(--muted);font:700 10px/1 var(--mono);cursor:pointer;
+    }
+    .lock-toggle.active{color:var(--blue);border-color:rgba(90,212,255,.45);box-shadow:0 0 0 1px rgba(90,212,255,.14) inset}
 
-    .params-panel{
-      background:linear-gradient(170deg,#12181e,#0e141a);
-      border:1px solid var(--border);
-      border-radius:14px;
-      overflow:hidden;
-    }
+    #page-synth{grid-template-columns:1.1fr 1fr;align-items:start}
+    .params-panel{background:linear-gradient(170deg,#12181e,#0e141a);border:1px solid var(--border);border-radius:14px;overflow:hidden}
     .params-header{
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:12px;
-      padding:10px 16px;
-      background:linear-gradient(180deg,#1a2430,#131c28);
+      display:flex;align-items:center;justify-content:space-between;gap:12px;
+      padding:10px 16px;background:linear-gradient(180deg,#1a2430,#131c28);
       border-bottom:1px solid var(--border);
     }
-    .params-left{
-      display:flex;
-      align-items:center;
-      gap:12px;
-      min-width:0;
-    }
+    .params-left{display:flex;align-items:center;gap:12px;min-width:0}
     .params-track-badge{
-      width:42px; height:42px;
-      border-radius:50%;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      font:700 18px/1 var(--mono);
-      border:2px solid currentColor;
-      flex-shrink:0;
+      width:42px;height:42px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+      font:700 18px/1 var(--mono);border:2px solid currentColor;flex-shrink:0;
     }
-    .params-track-name{
-      font:700 14px/1 var(--mono);
-      letter-spacing:.12em;
-      color:var(--text);
-    }
-    .params-model{
-      font:400 11px/1.35 var(--mono);
-      color:var(--muted);
-      margin-top:4px;
-    }
+    .params-track-name{font:700 14px/1 var(--mono);letter-spacing:.12em;color:var(--text)}
+    .params-model{font:400 11px/1.35 var(--mono);color:var(--muted);margin-top:4px}
     .preview-mini-btn{
-      min-height:34px;
-      padding:0 14px;
-      border-radius:8px;
-      border:1px solid rgba(0,232,122,.25);
-      background:#0a1812;
-      color:var(--green);
-      font:700 10px/1 var(--mono);
-      letter-spacing:.12em;
-      cursor:pointer;
+      min-height:34px;padding:0 14px;border-radius:8px;border:1px solid rgba(0,232,122,.25);
+      background:#0a1812;color:var(--green);font:700 10px/1 var(--mono);letter-spacing:.12em;cursor:pointer;
     }
+    .params-body{display:grid;grid-template-columns:1fr 1fr;gap:14px;padding:14px 16px}
+    .pgroup{display:flex;flex-direction:column;gap:9px;min-width:0}
+    .pgroup-label{font:700 9px/1 var(--mono);letter-spacing:.18em;color:var(--orange);padding-bottom:5px;border-bottom:1px solid rgba(255,124,0,.16)}
+    .prow{display:flex;flex-direction:column;gap:4px}
+    .prow-inner{display:flex;align-items:center;gap:8px}
+    .prow-label{font:700 9px/1 var(--mono);letter-spacing:.12em;color:var(--muted);min-width:56px;flex-shrink:0}
+    .prow-slider{flex:1}
+    .prow-readout{min-width:68px;text-align:right;font:700 10px/1 var(--mono);color:var(--orange3)}
 
-    .params-body{
-      display:grid;
-      grid-template-columns:1fr 1fr;
-      gap:14px;
-      padding:14px 16px;
+    .curve-panel{display:grid;gap:12px;align-content:start}
+    .curve-card{background:linear-gradient(180deg,#111923,#0b1219);border:1px solid var(--border);border-radius:14px;padding:14px}
+    #envCanvas,#bitScope,#shermanScope,#masterScope{
+      display:block;width:100%;max-width:100%;height:auto;border:1px solid var(--border2);border-radius:8px;background:#070c10;
     }
-    .pgroup{
-      display:flex;
-      flex-direction:column;
-      gap:9px;
-      min-width:0;
-    }
-    .pgroup-label{
-      font:700 9px/1 var(--mono);
-      letter-spacing:.18em;
-      color:var(--orange);
-      padding-bottom:5px;
-      border-bottom:1px solid rgba(255,124,0,.16);
-    }
-    .prow{
-      display:flex;
-      flex-direction:column;
-      gap:4px;
-    }
-    .prow-inner{
-      display:flex;
-      align-items:center;
-      gap:8px;
-    }
-    .prow-label{
-      font:700 9px/1 var(--mono);
-      letter-spacing:.12em;
-      color:var(--muted);
-      min-width:56px;
-      flex-shrink:0;
-    }
-    .prow-slider{ flex:1; }
-    .prow-readout{
-      min-width:64px;
-      text-align:right;
-      font:700 10px/1 var(--mono);
-      color:var(--orange3);
-    }
-
-    .curve-panel{
-      display:grid;
-      gap:12px;
-      align-content:start;
-    }
-    .curve-card{
-      background:linear-gradient(180deg,#111923,#0b1219);
-      border:1px solid var(--border);
-      border-radius:14px;
-      padding:14px;
-    }
-    #envCanvas{
-      display:block;
-      width:100%;
-      max-width:100%;
-      height:auto;
-      border:1px solid var(--border2);
-      border-radius:8px;
-      background:#070c10;
-    }
-    .curve-labels{
-      display:flex;
-      justify-content:space-between;
-      font:700 8px/1 var(--mono);
-      color:#355060;
-      letter-spacing:.08em;
-      margin-top:6px;
-    }
-
-    .track-quick-grid{
-      display:grid;
-      grid-template-columns:1fr 1fr;
-      gap:10px;
-    }
+    .curve-labels{display:flex;justify-content:space-between;font:700 8px/1 var(--mono);color:#355060;letter-spacing:.08em;margin-top:6px}
+    .track-quick-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
     .track-quick{
-      border:1px solid var(--border);
-      background:linear-gradient(180deg,#121922,#0d131a);
-      border-radius:10px;
-      padding:10px;
-      cursor:pointer;
-      transition:.14s ease;
+      border:1px solid var(--border);background:linear-gradient(180deg,#121922,#0d131a);
+      border-radius:10px;padding:10px;cursor:pointer;transition:.14s ease;
     }
-    .track-quick:hover{ border-color:var(--orange); }
-    .track-quick.active{
-      border-color:var(--orange);
-      box-shadow:0 0 0 1px rgba(255,124,0,.14) inset;
-    }
-    .track-quick-name{
-      font:700 18px/1 var(--mono);
-    }
-    .track-quick-sub{
-      font:400 9px/1.35 var(--mono);
-      color:var(--muted);
-      margin-top:5px;
-    }
+    .track-quick:hover{border-color:var(--orange)}
+    .track-quick.active{border-color:var(--orange);box-shadow:0 0 0 1px rgba(255,124,0,.14) inset}
+    .track-quick-name{font:700 18px/1 var(--mono)}
+    .track-quick-sub{font:400 9px/1.35 var(--mono);color:var(--muted);margin-top:5px}
 
-    /* PAGE FX + MIX */
-    #page-fx,
-    #page-mix{
-      grid-template-columns:1fr;
-    }
-
-    .fx-rack{
-      background:linear-gradient(180deg,#0e1420,#0a1018);
-      border:1px solid var(--border2);
-      border-radius:14px;
-      overflow:hidden;
-    }
-    .fx-rack-label{
-      padding:9px 16px;
-      font:700 9px/1 var(--mono);
-      letter-spacing:.18em;
-      color:var(--muted);
-      background:linear-gradient(180deg,#151e2c,#10182a);
-      border-bottom:1px solid var(--border);
-    }
-    .fx-grid{
-      display:grid;
-      grid-template-columns:1fr 1fr;
-      gap:12px;
-      padding:12px;
-    }
-
-    .fx-unit{
-      border:1px solid var(--border);
-      border-radius:12px;
-      overflow:hidden;
-      background:linear-gradient(180deg,#121922,#0d141c);
-      transition:.18s ease;
-    }
-    .fx-unit.fx-active{ box-shadow:0 0 0 1px rgba(255,255,255,.06) inset; }
-
+    #page-fx,#page-mix{grid-template-columns:1fr}
+    .fx-rack{background:linear-gradient(180deg,#0e1420,#0a1018);border:1px solid var(--border2);border-radius:14px;overflow:hidden}
+    .fx-rack-label{padding:9px 16px;font:700 9px/1 var(--mono);letter-spacing:.18em;color:var(--muted);background:linear-gradient(180deg,#151e2c,#10182a);border-bottom:1px solid var(--border)}
+    .fx-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:12px}
+    .fx-unit{border:1px solid var(--border);border-radius:12px;overflow:hidden;background:linear-gradient(180deg,#121922,#0d141c);transition:.18s ease}
+    .fx-unit.fx-active{box-shadow:0 0 0 1px rgba(255,255,255,.06) inset}
     .fx-unit-header{
-      display:flex;
-      align-items:center;
-      gap:10px;
-      padding:10px 14px;
-      border-bottom:1px solid var(--border);
-      background:linear-gradient(180deg,#18212c,#101822);
-      flex-wrap:wrap;
+      display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid var(--border);
+      background:linear-gradient(180deg,#18212c,#101822);flex-wrap:wrap;
     }
     .fx-bypass-btn{
-      width:28px; height:28px;
-      border-radius:50%;
-      border:1px solid var(--border2);
-      background:#0c1218;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      cursor:pointer;
-      flex-shrink:0;
+      width:28px;height:28px;border-radius:50%;border:1px solid var(--border2);
+      background:#0c1218;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;
     }
-    .fx-led{
-      width:10px; height:10px;
-      border-radius:50%;
-      background:#180c00;
-      border:1px solid #301a00;
-      transition:.2s ease;
-    }
-    .fx-led.active{
-      background:var(--green);
-      border-color:rgba(0,232,122,.6);
-      box-shadow:0 0 8px rgba(0,232,122,.4);
-    }
-    .fx-titles{ flex:1; min-width:140px; }
-    .fx-unit-title{
-      font:700 13px/1 var(--mono);
-      letter-spacing:.1em;
-    }
-    .fx-unit-sub{
-      font:400 9px/1 var(--mono);
-      letter-spacing:.1em;
-      color:var(--muted);
-      margin-top:3px;
-    }
-    .fx-unit-body{ padding:12px 14px 14px; }
-
-    .fx-row{
-      display:flex;
-      gap:12px;
-      flex-wrap:wrap;
-      align-items:flex-end;
-    }
-    .fx-knob-wrap{
-      display:flex;
-      flex-direction:column;
-      gap:4px;
-      min-width:66px;
-      flex:1 1 90px;
-    }
-    .fx-knob-wrap.wide{ flex-basis:140px; }
-    .fx-knob-wrap.xl{ flex-basis:170px; }
-    .fx-knob-label{
-      font:700 8px/1 var(--mono);
-      letter-spacing:.14em;
-      color:var(--muted);
-    }
-    .fx-readout{
-      font:700 10px/1 var(--mono);
-      letter-spacing:.06em;
-    }
-
-    #fxTapeUnit .fx-unit-title,
-    #fxTapeUnit .fx-readout{ color:var(--tape-col); }
-    #fxTapeUnit input[type=range]{ background:linear-gradient(90deg,#9a6c2d,var(--tape-col)); }
-    #fxTapeUnit input[type=range]::-webkit-slider-thumb{ border-color:var(--tape-col); box-shadow:0 0 8px rgba(232,184,109,.3); }
-
-    #fxBitUnit .fx-unit-title,
-    #fxBitUnit .fx-readout{ color:var(--bit-col); }
-    #fxBitUnit input[type=range]{ background:linear-gradient(90deg,#236f9b,var(--bit-col)); }
-    #fxBitUnit input[type=range]::-webkit-slider-thumb{ border-color:var(--bit-col); box-shadow:0 0 8px rgba(90,212,255,.3); }
-
-    #fxShermanUnit .fx-unit-title,
-    #fxShermanUnit .fx-readout{ color:var(--sherman-col); }
-    #fxShermanUnit input[type=range]{ background:linear-gradient(90deg,#6534ab,var(--sherman-col)); }
-    #fxShermanUnit input[type=range]::-webkit-slider-thumb{ border-color:var(--sherman-col); box-shadow:0 0 8px rgba(192,96,255,.3); }
-
-    #fxMasterUnit .fx-unit-title,
-    #fxMasterUnit .fx-readout{ color:var(--master-col); }
-    #fxMasterUnit input[type=range]{ background:linear-gradient(90deg,#2e9e58,var(--master-col)); }
-    #fxMasterUnit input[type=range]::-webkit-slider-thumb{ border-color:var(--master-col); box-shadow:0 0 8px rgba(125,255,161,.28); }
-
-    #bitScope,
-    #shermanScope,
-    #masterScope{
-      display:block;
-      width:100%;
-      max-width:100%;
-      border:1px solid var(--border2);
-      border-radius:6px;
-      background:#080d14;
-    }
-
-    .sherman-mode-btns{
-      display:flex;
-      gap:5px;
-      flex-wrap:wrap;
-    }
+    .fx-led{width:10px;height:10px;border-radius:50%;background:#180c00;border:1px solid #301a00;transition:.2s ease}
+    .fx-led.active{background:var(--green);border-color:rgba(0,232,122,.6);box-shadow:0 0 8px rgba(0,232,122,.4)}
+    .fx-titles{flex:1;min-width:140px}
+    .fx-unit-title{font:700 13px/1 var(--mono);letter-spacing:.1em}
+    .fx-unit-sub{font:400 9px/1 var(--mono);letter-spacing:.1em;color:var(--muted);margin-top:3px}
+    .fx-unit-body{padding:12px 14px 14px}
+    .fx-row{display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end}
+    .fx-knob-wrap{display:flex;flex-direction:column;gap:4px;min-width:66px;flex:1 1 90px}
+    .fx-knob-wrap.wide{flex-basis:140px}
+    .fx-knob-wrap.xl{flex-basis:170px}
+    .fx-knob-label{font:700 8px/1 var(--mono);letter-spacing:.14em;color:var(--muted)}
+    .fx-readout{font:700 10px/1 var(--mono);letter-spacing:.06em}
+    #fxTapeUnit .fx-unit-title,#fxTapeUnit .fx-readout{color:var(--gold)}
+    #fxTapeUnit input[type=range]{background:linear-gradient(90deg,#9a6c2d,var(--gold))}
+    #fxBitUnit .fx-unit-title,#fxBitUnit .fx-readout{color:var(--blue)}
+    #fxBitUnit input[type=range]{background:linear-gradient(90deg,#236f9b,var(--blue))}
+    #fxShermanUnit .fx-unit-title,#fxShermanUnit .fx-readout{color:var(--violet)}
+    #fxShermanUnit input[type=range]{background:linear-gradient(90deg,#6534ab,var(--violet))}
+    #fxMasterUnit .fx-unit-title,#fxMasterUnit .fx-readout{color:var(--master)}
+    #fxMasterUnit input[type=range]{background:linear-gradient(90deg,#2e9e58,var(--master))}
+    .sherman-mode-btns{display:flex;gap:5px;flex-wrap:wrap}
     .mode-btn{
-      min-height:28px;
-      padding:0 10px;
-      border-radius:5px;
-      border:1px solid var(--border2);
-      background:#0d1220;
-      color:var(--muted);
-      font:700 10px/1 var(--mono);
-      cursor:pointer;
+      min-height:28px;padding:0 10px;border-radius:5px;border:1px solid var(--border2);
+      background:#0d1220;color:var(--muted);font:700 10px/1 var(--mono);cursor:pointer;
     }
-    .mode-btn.active{
-      color:var(--sherman-col);
-      border-color:rgba(192,96,255,.5);
-      background:rgba(192,96,255,.12);
-    }
+    .mode-btn.active{color:var(--violet);border-color:rgba(192,96,255,.5);background:rgba(192,96,255,.12)}
+    .scope-wrap{display:flex;align-items:center;gap:10px;margin-top:10px;flex-wrap:wrap}
+    .scope-caption{display:flex;align-items:center;gap:6px;color:var(--muted);font:700 9px/1 var(--mono);letter-spacing:.12em}
+    .scope-dot{width:8px;height:8px;border-radius:50%;background:var(--muted);border:1px solid var(--border2)}
+    .scope-dot.osc{background:#ff4444;border-color:#ff0000;box-shadow:0 0 10px rgba(255,0,0,.6);animation:pulse .5s ease-in-out infinite}
 
-    .scope-wrap{
-      display:flex;
-      align-items:center;
-      gap:10px;
-      margin-top:10px;
-      flex-wrap:wrap;
-    }
-    .scope-caption{
-      display:flex;
-      align-items:center;
-      gap:6px;
-      color:var(--muted);
-      font:700 9px/1 var(--mono);
-      letter-spacing:.12em;
-    }
-    .scope-dot{
-      width:8px; height:8px;
-      border-radius:50%;
-      background:var(--muted);
-      border:1px solid var(--border2);
-    }
-    .scope-dot.osc{
-      background:#ff4444;
-      border-color:#ff0000;
-      box-shadow:0 0 10px rgba(255,0,0,.6);
-      animation: pulse .5s ease-in-out infinite;
-    }
-    @keyframes pulse{
-      0%,100%{ transform:scale(1); }
-      50%{ transform:scale(1.45); }
-    }
-
-    .mix-grid{
-      display:grid;
-      grid-template-columns:1fr 1fr;
-      gap:14px;
-    }
-
-    .meter-wrap{
-      display:grid;
-      gap:10px;
-    }
-    .meter{
-      height:12px;
-      border-radius:999px;
-      overflow:hidden;
-      border:1px solid var(--border2);
-      background:#091017;
-      position:relative;
-    }
+    .mix-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+    .meter-wrap{display:grid;gap:10px}
+    .meter{height:12px;border-radius:999px;overflow:hidden;border:1px solid var(--border2);background:#091017;position:relative}
     .meter-fill{
-      position:absolute;
-      inset:0 auto 0 0;
-      width:0%;
+      position:absolute;inset:0 auto 0 0;width:0%;
       background:linear-gradient(90deg,#29b86b,#a8ff4e,#ffac2f,#ff4a2a);
-      box-shadow:0 0 14px rgba(255,160,60,.18);
-      transition:width .04s linear;
+      box-shadow:0 0 14px rgba(255,160,60,.18);transition:width .04s linear;
     }
-    .meter-labels{
-      display:flex;
-      justify-content:space-between;
-      font:700 9px/1 var(--mono);
-      color:var(--muted);
-    }
+    .meter-labels{display:flex;justify-content:space-between;font:700 9px/1 var(--mono);color:var(--muted)}
+    .master-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+    .mini-note{color:var(--muted);font:400 10px/1.55 var(--mono);letter-spacing:.04em}
+    .footer-hint{padding:10px 18px 14px;border-top:1px solid var(--border);text-align:center;color:var(--muted);font:400 10px/1.5 var(--mono);letter-spacing:.08em}
 
-    .master-grid{
-      display:grid;
-      grid-template-columns:repeat(2,minmax(0,1fr));
-      gap:12px;
-    }
-
-    .mini-note{
-      color:var(--muted);
-      font:400 10px/1.55 var(--mono);
-      letter-spacing:.04em;
-    }
-
-    .footer-hint{
-      padding:10px 18px 14px;
-      border-top:1px solid var(--border);
-      text-align:center;
-      color:var(--muted);
-      font:400 10px/1.5 var(--mono);
-      letter-spacing:.08em;
-    }
-
-    ::-webkit-scrollbar{ width:6px; height:6px; }
-    ::-webkit-scrollbar-track{ background:#070b10; }
-    ::-webkit-scrollbar-thumb{ background:var(--border3); border-radius:999px; }
+    @keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.45)}}
 
     @media (max-width:1180px){
-      #page-seq,
-      #page-synth{ grid-template-columns:1fr; }
-      .fx-grid,
-      .mix-grid{ grid-template-columns:1fr; }
+      #page-seq,#page-step,#page-synth{grid-template-columns:1fr}
+      .fx-grid,.mix-grid{grid-template-columns:1fr}
     }
-
     @media (max-width:820px){
-      .topbar{ grid-template-columns:1fr; }
-      .params-body{ grid-template-columns:1fr; }
-      .master-grid,
-      .track-quick-grid{ grid-template-columns:1fr; }
-      .steps-row{ grid-template-columns:repeat(8,1fr); }
-      .step-btn{ height:50px; }
+      .topbar{grid-template-columns:1fr}
+      .params-body,.step-editor-grid,.lock-grid{grid-template-columns:1fr}
+      .master-grid,.track-quick-grid,.action-grid{grid-template-columns:1fr}
+      .steps-row{grid-template-columns:repeat(8,1fr)}
+      .step-btn{height:50px}
+      .step-mini-grid{grid-template-columns:repeat(4,1fr)}
     }
-
     @media (max-width:540px){
-      #app{ padding:10px; }
-      .machine{ border-radius:14px; }
-      .topbar{ padding:14px; }
-      .nav-tabs{ padding:10px; }
-      .page{ padding:10px; }
-      .card-body, .fx-unit-body{ padding:12px; }
-      .track-header{ align-items:flex-start; flex-direction:column; }
-      .track-tools{ width:100%; margin-left:0; justify-content:flex-start; }
-      .transport-strip{ gap:10px; }
-      .field.wide{ min-width:100%; }
-      .steps-row{ gap:4px; }
+      #app{padding:10px}
+      .machine{border-radius:14px}
+      .topbar{padding:14px}
+      .nav-tabs{padding:10px}
+      .page{padding:10px}
+      .card-body,.fx-unit-body{padding:12px}
+      .track-header{align-items:flex-start;flex-direction:column}
+      .track-tools{width:100%;margin-left:0;justify-content:flex-start}
+      .steps-row{gap:4px}
     }
   </style>
 </head>
@@ -1014,9 +468,9 @@
 
     <div class="topbar">
       <div class="brand">
-        <div class="brand-logo">DR<span>4</span> PRO</div>
+        <div class="brand-logo">DR<span>4</span> PRO V2.5</div>
         <div class="brand-sub">DRUM MACHINE</div>
-        <div class="brand-sub2">4 Tracks · DR-Style Models · FX Rack · Master Finish</div>
+        <div class="brand-sub2">Probability · Microtiming · Pattern Memory · Parameter Locks</div>
       </div>
 
       <div class="transport-strip">
@@ -1055,12 +509,12 @@
 
     <div class="nav-tabs">
       <button class="tab-btn active" data-tab="seq">SEQ</button>
+      <button class="tab-btn" data-tab="step">STEP</button>
       <button class="tab-btn" data-tab="synth">SYNTH</button>
       <button class="tab-btn" data-tab="fx">FX</button>
       <button class="tab-btn" data-tab="mix">MIX</button>
     </div>
 
-    <!-- PAGE SEQ -->
     <section class="page active" id="page-seq">
       <div class="tracks-stack" id="tracksSection"></div>
 
@@ -1068,66 +522,161 @@
         <div class="card">
           <div class="card-head">
             <div>
-              <div class="card-title">PATTERN STATUS</div>
-              <div class="card-sub">Vue rapide de la piste sélectionnée</div>
+              <div class="card-title">SEQUENCER MONITOR</div>
+              <div class="card-sub">Pattern courant et piste sélectionnée</div>
             </div>
           </div>
           <div class="card-body">
             <div class="lcd">
-              <div class="lcd-title">SEQUENCER MONITOR</div>
+              <div class="lcd-title">PATTERN STATUS</div>
               <div class="lcd-grid">
-                <div class="lcd-cell">
-                  <div class="lcd-k">TRACK</div>
-                  <div class="lcd-v" id="lcdTrack">BD</div>
-                </div>
-                <div class="lcd-cell">
-                  <div class="lcd-k">MODEL</div>
-                  <div class="lcd-v" id="lcdModel">Drive BD</div>
-                </div>
-                <div class="lcd-cell">
-                  <div class="lcd-k">ACTIVE STEPS</div>
-                  <div class="lcd-v" id="lcdSteps">0</div>
-                </div>
-                <div class="lcd-cell">
-                  <div class="lcd-k">ACCENTS</div>
-                  <div class="lcd-v" id="lcdAccents">0</div>
-                </div>
-                <div class="lcd-cell">
-                  <div class="lcd-k">TRACK VOL</div>
-                  <div class="lcd-v" id="lcdVol">82%</div>
-                </div>
-                <div class="lcd-cell">
-                  <div class="lcd-k">PLAYHEAD</div>
-                  <div class="lcd-v" id="lcdPlayhead">--</div>
-                </div>
+                <div class="lcd-cell"><div class="lcd-k">PATTERN</div><div class="lcd-v" id="lcdPattern">1</div></div>
+                <div class="lcd-cell"><div class="lcd-k">TRACK</div><div class="lcd-v" id="lcdTrack">BD</div></div>
+                <div class="lcd-cell"><div class="lcd-k">MODEL</div><div class="lcd-v" id="lcdModel">Drive BD</div></div>
+                <div class="lcd-cell"><div class="lcd-k">PLAYHEAD</div><div class="lcd-v" id="lcdPlayhead">--</div></div>
+                <div class="lcd-cell"><div class="lcd-k">ACTIVE STEPS</div><div class="lcd-v" id="lcdSteps">0</div></div>
+                <div class="lcd-cell"><div class="lcd-k">ACCENTS</div><div class="lcd-v" id="lcdAccents">0</div></div>
+                <div class="lcd-cell"><div class="lcd-k">TRACK VOL</div><div class="lcd-v" id="lcdVol">82%</div></div>
+                <div class="lcd-cell"><div class="lcd-k">LOCKS</div><div class="lcd-v" id="lcdLocks">0</div></div>
               </div>
             </div>
-          </div>
-          <div class="hint-block">
-            ESPACE = play/stop · clic = on/off step · SHIFT+clic ou clic-droit = accent · clic sur l’en-tête piste = sélectionner · P = preview piste sélectionnée
           </div>
         </div>
 
         <div class="card">
           <div class="card-head">
             <div>
-              <div class="card-title">WORKFLOW</div>
-              <div class="card-sub">Navigation plus ergonomique</div>
+              <div class="card-title">PATTERN MEMORY</div>
+              <div class="card-sub">4 patterns rappelables instantanément</div>
             </div>
           </div>
           <div class="card-body">
-            <div class="mini-note">
-              <strong style="color:var(--orange3)">SEQ</strong> pour programmer rapidement.<br><br>
-              <strong style="color:var(--orange3)">SYNTH</strong> pour éditer en profondeur le moteur de la piste sélectionnée.<br><br>
-              <strong style="color:var(--orange3)">FX</strong> pour façonner le caractère global avec Tape, Crush, Sherman et Master Finish.<br><br>
-              <strong style="color:var(--orange3)">MIX</strong> pour surveiller le niveau global et le rendu final.
+            <div class="pattern-row">
+              <button class="pattern-btn active" data-pattern="0">1</button>
+              <button class="pattern-btn" data-pattern="1">2</button>
+              <button class="pattern-btn" data-pattern="2">3</button>
+              <button class="pattern-btn" data-pattern="3">4</button>
             </div>
+            <div style="margin-top:12px" class="action-grid">
+              <button id="copyTrackBtn" class="mini-btn blue">COPY TRACK</button>
+              <button id="pasteTrackBtn" class="mini-btn blue">PASTE TRACK</button>
+              <button id="clearTrackBtn" class="mini-btn red">CLEAR TRACK</button>
+              <button id="randomTrackBtn" class="mini-btn">RANDOMIZE TRACK</button>
+            </div>
+          </div>
+          <div class="hint-block">
+            Clic = on/off · SHIFT+clic ou clic droit = accent · double-clic = ouvrir STEP · les steps en bleu portent des locks.
           </div>
         </div>
       </div>
     </section>
 
-    <!-- PAGE SYNTH -->
+    <section class="page" id="page-step">
+      <div class="card">
+        <div class="card-head">
+          <div>
+            <div class="card-title">STEP EDITOR</div>
+            <div class="card-sub">Probability · Microtiming · Parameter Locks</div>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="step-editor-grid">
+            <div>
+              <div class="step-big" id="stepBig">
+                <div class="big-index" id="stepBigIndex">01</div>
+                <div class="big-state" id="stepBigState">OFF</div>
+              </div>
+
+              <div style="margin-top:12px" class="form-grid">
+                <button id="toggleStepMainBtn" class="mini-btn">TOGGLE STEP</button>
+                <button id="toggleAccentMainBtn" class="mini-btn">TOGGLE ACCENT</button>
+              </div>
+            </div>
+
+            <div class="form-grid">
+              <div class="form-row">
+                <label class="form-label">PROBABILITY</label>
+                <input id="stepProb" type="range" min="0" max="1" step="0.01" value="1">
+                <div class="form-read" id="stepProbOut">100%</div>
+              </div>
+
+              <div class="form-row">
+                <label class="form-label">MICROTIMING</label>
+                <input id="stepMicro" type="range" min="-1" max="1" step="0.01" value="0">
+                <div class="form-read" id="stepMicroOut">0 ms</div>
+              </div>
+
+              <div class="form-row">
+                <label class="form-label">EDIT TARGET</label>
+                <div class="form-read" id="stepTargetOut">BD · Step 1</div>
+              </div>
+            </div>
+          </div>
+
+          <div style="margin-top:16px">
+            <div class="pgroup-label">STEP SELECT</div>
+            <div class="step-mini-grid" id="stepMiniGrid"></div>
+          </div>
+
+          <div style="margin-top:16px">
+            <div class="pgroup-label">PARAMETER LOCKS</div>
+            <div class="lock-grid">
+              <div class="lock-card">
+                <div class="lock-title">PITCH LOCK</div>
+                <div class="lock-toggle-row">
+                  <button class="lock-toggle" id="lockPitchToggle">OFF</button>
+                  <div class="form-read" id="lockPitchOut">—</div>
+                </div>
+                <input id="lockPitch" type="range" min="0" max="1" step="0.01" value="0.5">
+              </div>
+
+              <div class="lock-card">
+                <div class="lock-title">DECAY LOCK</div>
+                <div class="lock-toggle-row">
+                  <button class="lock-toggle" id="lockDecayToggle">OFF</button>
+                  <div class="form-read" id="lockDecayOut">—</div>
+                </div>
+                <input id="lockDecay" type="range" min="0" max="1" step="0.01" value="0.5">
+              </div>
+
+              <div class="lock-card">
+                <div class="lock-title">MODEL T LOCK</div>
+                <div class="lock-toggle-row">
+                  <button class="lock-toggle" id="lockToneToggle">OFF</button>
+                  <div class="form-read" id="lockToneOut">—</div>
+                </div>
+                <input id="lockTone" type="range" min="0" max="1" step="0.01" value="0.5">
+              </div>
+
+              <div class="lock-card">
+                <div class="lock-title">SHERMAN MIX LOCK</div>
+                <div class="lock-toggle-row">
+                  <button class="lock-toggle" id="lockShermanToggle">OFF</button>
+                  <div class="form-read" id="lockShermanOut">—</div>
+                </div>
+                <input id="lockSherman" type="range" min="0" max="1" step="0.01" value="1">
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head">
+          <div>
+            <div class="card-title">LOCK NOTES</div>
+            <div class="card-sub">Les locks sont joués uniquement sur le step</div>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="mini-note">
+            Un <strong style="color:var(--blue)">parameter lock</strong> surcharge temporairement la valeur piste au moment du step, puis la machine revient au réglage global.<br><br>
+            Ici, les locks les plus rentables sont fournis pour garder le plugin stable et musical : <strong>pitch</strong>, <strong>decay</strong>, <strong>model T</strong> et <strong>Sherman mix</strong>.
+          </div>
+        </div>
+      </div>
+    </section>
+
     <section class="page" id="page-synth">
       <div class="params-panel">
         <div class="params-header">
@@ -1154,7 +703,7 @@
             <div class="prow" id="paramRow_pcrv"></div>
           </div>
           <div class="pgroup">
-            <div class="pgroup-label" id="modelGroupLabel">MODEL PARAMS</div>
+            <div class="pgroup-label">MODEL PARAMS</div>
             <div class="prow" id="paramRow_x"></div>
             <div class="prow" id="paramRow_y"></div>
             <div class="prow" id="paramRow_z"></div>
@@ -1178,7 +727,6 @@
       </div>
     </section>
 
-    <!-- PAGE FX -->
     <section class="page" id="page-fx">
       <div class="fx-rack">
         <div class="fx-rack-label">GLOBAL FX CHAIN → TAPE SAT · BIT/SR CRUSH · SHERMAN FILTERBANK · MASTER FINISH</div>
@@ -1186,7 +734,7 @@
 
           <div class="fx-unit" id="fxTapeUnit">
             <div class="fx-unit-header">
-              <button class="fx-bypass-btn" id="tapeBypass" title="Active/Bypass"><span class="fx-led" id="tapeLed"></span></button>
+              <button class="fx-bypass-btn" id="tapeBypass"><span class="fx-led" id="tapeLed"></span></button>
               <div class="fx-titles">
                 <div class="fx-unit-title">TAPE SAT</div>
                 <div class="fx-unit-sub">Harmonics · Wow · Flutter · Tone</div>
@@ -1194,38 +742,18 @@
             </div>
             <div class="fx-unit-body">
               <div class="fx-row">
-                <div class="fx-knob-wrap">
-                  <label class="fx-knob-label">DRIVE</label>
-                  <input type="range" id="tapeDrive" min="0" max="1" step="0.01" value="0">
-                  <div class="fx-readout" id="tapeDriveOut">0%</div>
-                </div>
-                <div class="fx-knob-wrap">
-                  <label class="fx-knob-label">SAT</label>
-                  <input type="range" id="tapeSat" min="0" max="1" step="0.01" value="0">
-                  <div class="fx-readout" id="tapeSatOut">0%</div>
-                </div>
-                <div class="fx-knob-wrap">
-                  <label class="fx-knob-label">WOW</label>
-                  <input type="range" id="tapeWow" min="0" max="1" step="0.01" value="0">
-                  <div class="fx-readout" id="tapeWowOut">0%</div>
-                </div>
-                <div class="fx-knob-wrap">
-                  <label class="fx-knob-label">FLUTTER</label>
-                  <input type="range" id="tapeFlutter" min="0" max="1" step="0.01" value="0">
-                  <div class="fx-readout" id="tapeFlutterOut">0%</div>
-                </div>
-                <div class="fx-knob-wrap">
-                  <label class="fx-knob-label">TONE</label>
-                  <input type="range" id="tapeTone" min="0" max="1" step="0.01" value="0.6">
-                  <div class="fx-readout" id="tapeToneOut">—</div>
-                </div>
+                <div class="fx-knob-wrap"><label class="fx-knob-label">DRIVE</label><input type="range" id="tapeDrive" min="0" max="1" step="0.01" value="0"><div class="fx-readout" id="tapeDriveOut">0%</div></div>
+                <div class="fx-knob-wrap"><label class="fx-knob-label">SAT</label><input type="range" id="tapeSat" min="0" max="1" step="0.01" value="0"><div class="fx-readout" id="tapeSatOut">0%</div></div>
+                <div class="fx-knob-wrap"><label class="fx-knob-label">WOW</label><input type="range" id="tapeWow" min="0" max="1" step="0.01" value="0"><div class="fx-readout" id="tapeWowOut">0%</div></div>
+                <div class="fx-knob-wrap"><label class="fx-knob-label">FLUTTER</label><input type="range" id="tapeFlutter" min="0" max="1" step="0.01" value="0"><div class="fx-readout" id="tapeFlutterOut">0%</div></div>
+                <div class="fx-knob-wrap"><label class="fx-knob-label">TONE</label><input type="range" id="tapeTone" min="0" max="1" step="0.01" value="0.6"><div class="fx-readout" id="tapeToneOut">—</div></div>
               </div>
             </div>
           </div>
 
           <div class="fx-unit" id="fxBitUnit">
             <div class="fx-unit-header">
-              <button class="fx-bypass-btn" id="bitBypass" title="Active/Bypass"><span class="fx-led" id="bitLed"></span></button>
+              <button class="fx-bypass-btn" id="bitBypass"><span class="fx-led" id="bitLed"></span></button>
               <div class="fx-titles">
                 <div class="fx-unit-title">BIT / SR CRUSH</div>
                 <div class="fx-unit-sub">Bit Reduction · Sample Rate</div>
@@ -1233,21 +761,9 @@
             </div>
             <div class="fx-unit-body">
               <div class="fx-row">
-                <div class="fx-knob-wrap wide">
-                  <label class="fx-knob-label">BITS</label>
-                  <input type="range" id="bitDepth" min="1" max="16" step="0.25" value="16">
-                  <div class="fx-readout" id="bitDepthOut">16 bit</div>
-                </div>
-                <div class="fx-knob-wrap wide">
-                  <label class="fx-knob-label">SR REDUCE</label>
-                  <input type="range" id="srAmount" min="1" max="64" step="1" value="1">
-                  <div class="fx-readout" id="srAmountOut">FULL</div>
-                </div>
-                <div class="fx-knob-wrap">
-                  <label class="fx-knob-label">MIX</label>
-                  <input type="range" id="bitMix" min="0" max="1" step="0.01" value="1">
-                  <div class="fx-readout" id="bitMixOut">100%</div>
-                </div>
+                <div class="fx-knob-wrap wide"><label class="fx-knob-label">BITS</label><input type="range" id="bitDepth" min="1" max="16" step="0.25" value="16"><div class="fx-readout" id="bitDepthOut">16 bit</div></div>
+                <div class="fx-knob-wrap wide"><label class="fx-knob-label">SR REDUCE</label><input type="range" id="srAmount" min="1" max="64" step="1" value="1"><div class="fx-readout" id="srAmountOut">FULL</div></div>
+                <div class="fx-knob-wrap"><label class="fx-knob-label">MIX</label><input type="range" id="bitMix" min="0" max="1" step="0.01" value="1"><div class="fx-readout" id="bitMixOut">100%</div></div>
               </div>
               <div class="scope-wrap">
                 <canvas id="bitScope" width="500" height="90"></canvas>
@@ -1257,7 +773,7 @@
 
           <div class="fx-unit" id="fxShermanUnit">
             <div class="fx-unit-header">
-              <button class="fx-bypass-btn" id="shermanBypass" title="Active/Bypass"><span class="fx-led" id="shermanLed"></span></button>
+              <button class="fx-bypass-btn" id="shermanBypass"><span class="fx-led" id="shermanLed"></span></button>
               <div class="fx-titles">
                 <div class="fx-unit-title">SHERMAN FILTERBANK</div>
                 <div class="fx-unit-sub">Dual 12dB · Self-Osc · Drive · LFO</div>
@@ -1271,55 +787,24 @@
             </div>
             <div class="fx-unit-body">
               <div class="fx-row">
-                <div class="fx-knob-wrap xl">
-                  <label class="fx-knob-label">FREQ</label>
-                  <input type="range" id="shermanFreq" min="0" max="1" step="0.002" value="0.55">
-                  <div class="fx-readout" id="shermanFreqOut">—</div>
-                </div>
-                <div class="fx-knob-wrap">
-                  <label class="fx-knob-label">RES</label>
-                  <input type="range" id="shermanRes" min="0" max="1" step="0.01" value="0.3">
-                  <div class="fx-readout" id="shermanResOut">30%</div>
-                </div>
-                <div class="fx-knob-wrap">
-                  <label class="fx-knob-label">PRE DRIVE</label>
-                  <input type="range" id="shermanDrive" min="0" max="1" step="0.01" value="0.1">
-                  <div class="fx-readout" id="shermanDriveOut">10%</div>
-                </div>
-                <div class="fx-knob-wrap">
-                  <label class="fx-knob-label">DIST</label>
-                  <input type="range" id="shermanDist" min="0" max="1" step="0.01" value="0">
-                  <div class="fx-readout" id="shermanDistOut">0%</div>
-                </div>
-                <div class="fx-knob-wrap">
-                  <label class="fx-knob-label">LFO RATE</label>
-                  <input type="range" id="shermanLfoRate" min="0" max="1" step="0.01" value="0">
-                  <div class="fx-readout" id="shermanLfoRateOut">OFF</div>
-                </div>
-                <div class="fx-knob-wrap">
-                  <label class="fx-knob-label">LFO DEPTH</label>
-                  <input type="range" id="shermanLfoDepth" min="0" max="1" step="0.01" value="0">
-                  <div class="fx-readout" id="shermanLfoDepthOut">0%</div>
-                </div>
-                <div class="fx-knob-wrap">
-                  <label class="fx-knob-label">MIX</label>
-                  <input type="range" id="shermanMix" min="0" max="1" step="0.01" value="1">
-                  <div class="fx-readout" id="shermanMixOut">100%</div>
-                </div>
+                <div class="fx-knob-wrap xl"><label class="fx-knob-label">FREQ</label><input type="range" id="shermanFreq" min="0" max="1" step="0.002" value="0.55"><div class="fx-readout" id="shermanFreqOut">—</div></div>
+                <div class="fx-knob-wrap"><label class="fx-knob-label">RES</label><input type="range" id="shermanRes" min="0" max="1" step="0.01" value="0.3"><div class="fx-readout" id="shermanResOut">30%</div></div>
+                <div class="fx-knob-wrap"><label class="fx-knob-label">PRE DRIVE</label><input type="range" id="shermanDrive" min="0" max="1" step="0.01" value="0.1"><div class="fx-readout" id="shermanDriveOut">10%</div></div>
+                <div class="fx-knob-wrap"><label class="fx-knob-label">DIST</label><input type="range" id="shermanDist" min="0" max="1" step="0.01" value="0"><div class="fx-readout" id="shermanDistOut">0%</div></div>
+                <div class="fx-knob-wrap"><label class="fx-knob-label">LFO RATE</label><input type="range" id="shermanLfoRate" min="0" max="1" step="0.01" value="0"><div class="fx-readout" id="shermanLfoRateOut">OFF</div></div>
+                <div class="fx-knob-wrap"><label class="fx-knob-label">LFO DEPTH</label><input type="range" id="shermanLfoDepth" min="0" max="1" step="0.01" value="0"><div class="fx-readout" id="shermanLfoDepthOut">0%</div></div>
+                <div class="fx-knob-wrap"><label class="fx-knob-label">MIX</label><input type="range" id="shermanMix" min="0" max="1" step="0.01" value="1"><div class="fx-readout" id="shermanMixOut">100%</div></div>
               </div>
               <div class="scope-wrap">
                 <canvas id="shermanScope" width="500" height="100"></canvas>
-                <div class="scope-caption">
-                  <span class="scope-dot" id="scopeDot"></span>
-                  <span id="scopeLabel">IDLE</span>
-                </div>
+                <div class="scope-caption"><span class="scope-dot" id="scopeDot"></span><span id="scopeLabel">IDLE</span></div>
               </div>
             </div>
           </div>
 
           <div class="fx-unit" id="fxMasterUnit">
             <div class="fx-unit-header">
-              <button class="fx-bypass-btn" id="masterFxBypass" title="Active/Bypass"><span class="fx-led" id="masterFxLed"></span></button>
+              <button class="fx-bypass-btn" id="masterFxBypass"><span class="fx-led" id="masterFxLed"></span></button>
               <div class="fx-titles">
                 <div class="fx-unit-title">MASTER FINISH</div>
                 <div class="fx-unit-sub">Sub Clean · Tilt EQ · Glue Comp · Soft Clip · Output</div>
@@ -1327,31 +812,11 @@
             </div>
             <div class="fx-unit-body">
               <div class="fx-row">
-                <div class="fx-knob-wrap">
-                  <label class="fx-knob-label">SUB CUT</label>
-                  <input type="range" id="mastSub" min="0" max="1" step="0.01" value="0.18">
-                  <div class="fx-readout" id="mastSubOut">28 Hz</div>
-                </div>
-                <div class="fx-knob-wrap">
-                  <label class="fx-knob-label">TILT</label>
-                  <input type="range" id="mastTilt" min="-1" max="1" step="0.01" value="0">
-                  <div class="fx-readout" id="mastTiltOut">0.0 dB</div>
-                </div>
-                <div class="fx-knob-wrap">
-                  <label class="fx-knob-label">GLUE</label>
-                  <input type="range" id="mastGlue" min="0" max="1" step="0.01" value="0.28">
-                  <div class="fx-readout" id="mastGlueOut">28%</div>
-                </div>
-                <div class="fx-knob-wrap">
-                  <label class="fx-knob-label">CLIP</label>
-                  <input type="range" id="mastClip" min="0" max="1" step="0.01" value="0.18">
-                  <div class="fx-readout" id="mastClipOut">18%</div>
-                </div>
-                <div class="fx-knob-wrap">
-                  <label class="fx-knob-label">OUTPUT</label>
-                  <input type="range" id="mastOut" min="0" max="1.2" step="0.01" value="0.96">
-                  <div class="fx-readout" id="mastOutOut">96%</div>
-                </div>
+                <div class="fx-knob-wrap"><label class="fx-knob-label">SUB CUT</label><input type="range" id="mastSub" min="0" max="1" step="0.01" value="0.18"><div class="fx-readout" id="mastSubOut">28 Hz</div></div>
+                <div class="fx-knob-wrap"><label class="fx-knob-label">TILT</label><input type="range" id="mastTilt" min="-1" max="1" step="0.01" value="0"><div class="fx-readout" id="mastTiltOut">0.0 dB</div></div>
+                <div class="fx-knob-wrap"><label class="fx-knob-label">GLUE</label><input type="range" id="mastGlue" min="0" max="1" step="0.01" value="0.28"><div class="fx-readout" id="mastGlueOut">28%</div></div>
+                <div class="fx-knob-wrap"><label class="fx-knob-label">CLIP</label><input type="range" id="mastClip" min="0" max="1" step="0.01" value="0.18"><div class="fx-readout" id="mastClipOut">18%</div></div>
+                <div class="fx-knob-wrap"><label class="fx-knob-label">OUTPUT</label><input type="range" id="mastOut" min="0" max="1.2" step="0.01" value="0.96"><div class="fx-readout" id="mastOutOut">96%</div></div>
               </div>
               <div class="scope-wrap">
                 <canvas id="masterScope" width="500" height="100"></canvas>
@@ -1363,14 +828,13 @@
       </div>
     </section>
 
-    <!-- PAGE MIX -->
     <section class="page" id="page-mix">
       <div class="mix-grid">
         <div class="card">
           <div class="card-head">
             <div>
               <div class="card-title">MASTER METER</div>
-              <div class="card-sub">Surveillance simple du niveau global</div>
+              <div class="card-sub">Surveillance du niveau global</div>
             </div>
           </div>
           <div class="card-body">
@@ -1384,31 +848,28 @@
                 <div class="meter"><div class="meter-fill" id="meterR"></div></div>
               </div>
             </div>
-            <div style="margin-top:14px" class="mini-note">
-              Le <strong style="color:var(--orange3)">MASTER FINISH</strong> peut serrer légèrement le rendu pour donner un résultat plus cohérent, plus dense et plus “record-ready”, sans enlever le caractère brut de la machine.
-            </div>
           </div>
         </div>
 
         <div class="card">
           <div class="card-head">
             <div>
-              <div class="card-title">FINAL BUS</div>
-              <div class="card-sub">Réglages utiles pour un rendu plus pro</div>
+              <div class="card-title">GUIDE RAPIDE</div>
+              <div class="card-sub">Locks musicaux rentables</div>
             </div>
           </div>
           <div class="card-body">
             <div class="master-grid">
               <div class="curve-card">
-                <div class="pgroup-label">RECOMMANDATION CLEAN / MODERNE</div>
+                <div class="pgroup-label">LOCKS UTILES</div>
                 <div class="mini-note">
-                  Tape Drive 8 à 18% · Tape Sat 12 à 26% · Sherman Mix 10 à 22% avec résonance modérée · Glue 20 à 35% · Clip 10 à 20%.
+                  Pitch sur BD et HH · Decay sur HH et CP · Model T sur HH open/closed · Sherman mix sur fills et transitions.
                 </div>
               </div>
               <div class="curve-card">
-                <div class="pgroup-label">RECOMMANDATION SALE / HARDWARE</div>
+                <div class="pgroup-label">ASTUCE</div>
                 <div class="mini-note">
-                  Tape Drive 20 à 40% · Bit Mix 10 à 35% · Sherman Drive 18 à 35% · Tilt légèrement positif · Clip 18 à 32%.
+                  Mets des steps fixes à 100%, puis anime seulement quelques steps avec probability + microtiming + un lock ciblé.
                 </div>
               </div>
             </div>
@@ -1418,7 +879,7 @@
     </section>
 
     <div class="footer-hint">
-      ESPACE = play/stop · P = preview piste sélectionnée · clic = on/off step · SHIFT+clic ou clic-droit = accent
+      ESPACE = play/stop · P = preview piste sélectionnée · double-clic sur un step = page STEP · les steps bleus portent des p-locks.
     </div>
   </div>
 </div>
@@ -1430,16 +891,20 @@
 const qs = (s, el=document) => el.querySelector(s);
 const qsa = (s, el=document) => Array.from(el.querySelectorAll(s));
 const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v));
-const lerp  = (a, b, t) => a + (b - a) * t;
+const lerp = (a, b, t) => a + (b - a) * t;
 const expFreq = v => 20 * Math.pow(20000 / 20, v);
 const fmtPct = v => `${Math.round(v * 100)}%`;
+
+const STEP_COUNT = 16;
+const PATTERN_COUNT = 4;
+const LOCK_KEYS = ['pitch','decay','tone','shermanMix'];
 
 const TRACKS = [
   {
     id:'bd', name:'BD', fullName:'BASS DRUM', model:'Drive BD',
     color:'#ff6b35',
-    defaultPattern:[1,0,0,0, 0,0,0,0, 1,0,0,0, 0,0,1,0],
-    defaultAccents:[1,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0],
+    defaultPattern:[1,0,0,0,0,0,0,0,1,0,0,0,0,0,1,0],
+    defaultAccents:[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
     params:{ decay:0.55, curve:0.5, pitch:0.22, amount:0.78, pdec:0.28, pcrv:0.5, x:0.18, y:0.28, z:0.32, t:0.22 },
     paramLabels:{ x:'X  DIST GAIN', y:'Y  BPF FREQ', z:'Z  BPF RES', t:'T  DRY/WET' },
     modelDesc:'Sine + pitch env + distortion path'
@@ -1447,8 +912,8 @@ const TRACKS = [
   {
     id:'sd', name:'SD', fullName:'SNARE DRUM', model:'Noise Snare',
     color:'#38c4c4',
-    defaultPattern:[0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
-    defaultAccents:[0,0,0,0, 1,0,0,0, 0,0,0,0, 0,0,0,0],
+    defaultPattern:[0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0],
+    defaultAccents:[0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0],
     params:{ decay:0.42, curve:0.5, pitch:0.38, amount:0.32, pdec:0.14, pcrv:0.5, x:0.58, y:0.34, z:0.55, t:0.62 },
     paramLabels:{ x:'X  HPF FREQ', y:'Y  HPF RES', z:'Z  SNAP BURST', t:'T  TONE/NOISE' },
     modelDesc:'Sine tone + filtered noise + snap burst'
@@ -1456,8 +921,8 @@ const TRACKS = [
   {
     id:'hh', name:'HH', fullName:'HI-HAT', model:'Cymbal Noise',
     color:'#f5d000',
-    defaultPattern:[1,0,1,0, 1,0,1,0, 1,0,1,0, 1,0,1,0],
-    defaultAccents:[0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0],
+    defaultPattern:[1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0],
+    defaultAccents:[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
     params:{ decay:0.18, curve:0.52, pitch:0.65, amount:0, pdec:0, pcrv:0.5, x:0.72, y:0.38, z:0.32, t:0.08 },
     paramLabels:{ x:'X  BPF FREQ', y:'Y  BPF Q', z:'Z  CHAR SPREAD', t:'T  OPEN/CLOSED' },
     modelDesc:'6 oscillateurs carrés inharmoniques'
@@ -1465,8 +930,8 @@ const TRACKS = [
   {
     id:'cp', name:'CP', fullName:'CLAP', model:'Multi-Burst',
     color:'#b060ff',
-    defaultPattern:[0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
-    defaultAccents:[0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0],
+    defaultPattern:[0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0],
+    defaultAccents:[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
     params:{ decay:0.35, curve:0.52, pitch:0.5, amount:0, pdec:0, pcrv:0.5, x:0.52, y:0.48, z:0.38, t:0.44 },
     paramLabels:{ x:'X  BPF FREQ', y:'Y  BPF RES', z:'Z  BURST SPACE', t:'T  TAIL LEN' },
     modelDesc:'3 rafales de bruit + BPF + queue'
@@ -1481,12 +946,38 @@ const PARAM_DEFS = [
   {id:'z',     label:'Z'},     {id:'t',     label:'T'},
 ];
 
+function makeDefaultLocks(){
+  return {
+    pitch:{enabled:false,value:0.5},
+    decay:{enabled:false,value:0.5},
+    tone:{enabled:false,value:0.5},
+    shermanMix:{enabled:false,value:1}
+  };
+}
+function makeDefaultStepMeta() {
+  return Array.from({length: STEP_COUNT}, () => ({
+    prob: 1,
+    micro: 0,
+    locks: makeDefaultLocks()
+  }));
+}
+function makePatternData() {
+  return TRACKS.map(def => ({
+    id: def.id,
+    steps: [...def.defaultPattern],
+    accents: [...def.defaultAccents],
+    stepMeta: makeDefaultStepMeta()
+  }));
+}
+
+const patterns = Array.from({length: PATTERN_COUNT}, makePatternData);
+let currentPattern = 0;
+
 const trackState = TRACKS.map(def => ({
   id:def.id,
-  steps:[...def.defaultPattern],
-  accents:[...def.defaultAccents],
   params:{...def.params},
   mute:false,
+  solo:false,
   volume:0.82
 }));
 
@@ -1497,16 +988,15 @@ const fxState = {
   master:{ sub:0.18, tilt:0, glue:0.28, clip:0.18, out:0.96, enabled:true }
 };
 
+let selectedTrack = 'bd';
+let selectedStep = 0;
+let trackClipboard = null;
+
 let audioCtx = null;
 let audioReady = false;
 let _audioInitPromise = null;
-
-let masterGain = null;
-let mixBus = null;
-let finalGain = null;
-
+let mixBus = null, masterGain = null, finalGain = null;
 const fx = {};
-let selectedTrack = 'bd';
 
 let playing = false;
 let current = -1;
@@ -1516,9 +1006,28 @@ let bpm = 120;
 let swing = 0.08;
 
 let srFactor = 1, srHoldL = 0, srCount = 0;
-
 let scopeRaf = null;
-let masterMeterRaf = null;
+let meterRaf = null;
+
+function getPatternTrack(trackId) {
+  return patterns[currentPattern].find(t => t.id === trackId);
+}
+function getStepMeta(trackId, stepIdx){
+  return getPatternTrack(trackId).stepMeta[stepIdx];
+}
+function anySolo() {
+  return trackState.some(t => t.solo);
+}
+function trackAudible(ts) {
+  return anySolo() ? ts.solo : !ts.mute;
+}
+function stepHasLocks(meta){
+  return LOCK_KEYS.some(k => meta.locks?.[k]?.enabled);
+}
+function countTrackLocks(trackId){
+  const pt = getPatternTrack(trackId);
+  return pt.stepMeta.filter(stepHasLocks).length;
+}
 
 function dr2CurveArr(curveParam, samples = 256) {
   const arr = new Float32Array(samples);
@@ -1542,7 +1051,6 @@ function dr2CurveArr(curveParam, samples = 256) {
   arr[samples - 1] = 0.00001;
   return arr;
 }
-
 function applyDR2Env(param, when, decaySec, curveParam, fromVal, toVal = 0.00001) {
   const curve = dr2CurveArr(curveParam);
   const scaled = Float32Array.from(curve, v => lerp(toVal, fromVal, v));
@@ -1563,71 +1071,46 @@ function makeNoiseBuf(ctx, dur) {
   for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
   return buf;
 }
-
-function makeHardClip(z){
-  const n = 512, c = new Float32Array(n), k = 2 + z * 120;
-  for(let i = 0; i < n; i++){
-    const x = i * 2 / (n - 1) - 1;
-    c[i] = Math.tanh(k * x);
-  }
-  return c;
-}
-function makeSoftClip(z){
-  const n = 512, c = new Float32Array(n), k = 1 + z * 7;
-  for(let i = 0; i < n; i++){
-    const x = i * 2 / (n - 1) - 1;
-    c[i] = Math.tanh(k * x) / Math.tanh(k);
-  }
-  return c;
-}
+function makeHardClip(z){ const n=512,c=new Float32Array(n),k=2+z*120; for(let i=0;i<n;i++){const x=i*2/(n-1)-1;c[i]=Math.tanh(k*x)} return c; }
+function makeSoftClip(z){ const n=512,c=new Float32Array(n),k=1+z*7; for(let i=0;i<n;i++){const x=i*2/(n-1)-1;c[i]=Math.tanh(k*x)/Math.tanh(k)} return c; }
 function makeTapeCurve(drive){
-  const n = 512, c = new Float32Array(n), k = 1 + drive * 22;
-  for(let i = 0; i < n; i++){
-    const x = i * 2 / (n - 1) - 1;
-    c[i] = Math.tanh(k * x + 0.08 * Math.sin(k * x * 2.1)) / 1.08;
-  }
+  const n=512,c=new Float32Array(n),k=1+drive*22;
+  for(let i=0;i<n;i++){ const x=i*2/(n-1)-1; c[i]=Math.tanh(k*x+0.08*Math.sin(k*x*2.1))/1.08; }
   return c;
 }
 function makeBitCurve(bits){
-  const n = 512, c = new Float32Array(n);
-  const steps = Math.pow(2, Math.max(1, bits));
-  for(let i = 0; i < n; i++){
-    const x = i * 2 / (n - 1) - 1;
-    c[i] = Math.round(x * steps) / steps;
-  }
+  const n=512,c=new Float32Array(n),steps=Math.pow(2,Math.max(1,bits));
+  for(let i=0;i<n;i++){ const x=i*2/(n-1)-1; c[i]=Math.round(x*steps)/steps; }
   return c;
 }
 function makeShermanDrive(amount){
-  const n = 1024, c = new Float32Array(n), k = 1 + amount * 80;
-  for(let i = 0; i < n; i++){
-    const x = i * 2 / (n - 1) - 1;
-    let y = Math.tanh(k * x);
-    if(amount > 0.5) y = y - 0.18 * Math.sin(Math.PI * y);
-    c[i] = clamp(y, -1, 1);
+  const n=1024,c=new Float32Array(n),k=1+amount*80;
+  for(let i=0;i<n;i++){
+    const x=i*2/(n-1)-1;
+    let y=Math.tanh(k*x);
+    if(amount>0.5) y = y - 0.18*Math.sin(Math.PI*y);
+    c[i]=clamp(y,-1,1);
   }
   return c;
 }
 function makeShermanDist(amount){
-  const n = 512, c = new Float32Array(n);
-  for(let i = 0; i < n; i++){
-    const x = i * 2 / (n - 1) - 1;
-    c[i] = x < 0
-      ? -Math.pow(Math.abs(x), 1 - amount * 0.4)
-      :  Math.pow(x, 1 - amount * 0.4);
+  const n=512,c=new Float32Array(n);
+  for(let i=0;i<n;i++){
+    const x=i*2/(n-1)-1;
+    c[i]=x<0 ? -Math.pow(Math.abs(x),1-amount*0.4) : Math.pow(x,1-amount*0.4);
   }
   return c;
 }
 function makeLimiterCurve(amount){
-  const n = 1024, c = new Float32Array(n);
-  const drive = 1 + amount * 18;
-  for(let i = 0; i < n; i++){
-    const x = i * 2 / (n - 1) - 1;
-    c[i] = Math.tanh(x * drive) / Math.tanh(drive);
+  const n=1024,c=new Float32Array(n),drive=1+amount*18;
+  for(let i=0;i<n;i++){
+    const x=i*2/(n-1)-1;
+    c[i]=Math.tanh(x*drive)/Math.tanh(drive);
   }
   return c;
 }
 
-function createVoiceChannel(ctx, out, panAmt = 0){
+function createVoiceChannel(ctx, out, panAmt=0){
   const voice = ctx.createGain();
   const hp = ctx.createBiquadFilter();
   hp.type = 'highpass';
@@ -1637,10 +1120,7 @@ function createVoiceChannel(ctx, out, panAmt = 0){
   sh.oversample = '2x';
   const pan = ctx.createStereoPanner();
   pan.pan.value = panAmt;
-  voice.connect(hp);
-  hp.connect(sh);
-  sh.connect(pan);
-  pan.connect(out);
+  voice.connect(hp); hp.connect(sh); sh.connect(pan); pan.connect(out);
   return voice;
 }
 
@@ -1652,23 +1132,17 @@ function triggerBD(ctx, out, p, when, vel){
   const bpfFreq = 40 + p.y * 1100;
   const bpfQ = 0.4 + p.z * 18;
   const dryWet = p.t;
-
   const voiceOut = createVoiceChannel(ctx, out, 0);
 
-  const osc = ctx.createOscillator();
-  osc.type = 'sine';
+  const osc = ctx.createOscillator(); osc.type = 'sine';
   osc.frequency.setValueAtTime(pitchTop, when);
   applyDR2Env(osc.frequency, when, pitchDec, p.pcrv, pitchTop, baseFreq);
 
-  const preGain = ctx.createGain();
-  preGain.gain.value = 1 + p.x * 5;
-
-  const vca = ctx.createGain();
-  vca.gain.setValueAtTime(0.00001, when - 0.001);
+  const preGain = ctx.createGain(); preGain.gain.value = 1 + p.x * 5;
+  const vca = ctx.createGain(); vca.gain.setValueAtTime(0.00001, when - 0.001);
   applyDR2Env(vca.gain, when, ampDec, p.curve, vel * 0.9);
 
-  const click = ctx.createOscillator();
-  click.type = 'triangle';
+  const click = ctx.createOscillator(); click.type = 'triangle';
   click.frequency.setValueAtTime(1200 + p.x * 1800, when);
   const clickVca = ctx.createGain();
   clickVca.gain.setValueAtTime(0.00001, when);
@@ -1678,33 +1152,18 @@ function triggerBD(ctx, out, p, when, vel){
   const dryG = ctx.createGain(); dryG.gain.value = 1 - dryWet;
   const wetG = ctx.createGain(); wetG.gain.value = dryWet;
   const hardSh = ctx.createWaveShaper(); hardSh.curve = makeHardClip(p.x); hardSh.oversample = '4x';
-  const bpf = ctx.createBiquadFilter(); bpf.type = 'bandpass';
-  bpf.frequency.value = bpfFreq; bpf.Q.value = bpfQ;
+  const bpf = ctx.createBiquadFilter(); bpf.type = 'bandpass'; bpf.frequency.value = bpfFreq; bpf.Q.value = bpfQ;
   const low = ctx.createBiquadFilter(); low.type = 'lowpass'; low.frequency.value = 9000;
   const softSh = ctx.createWaveShaper(); softSh.curve = makeSoftClip(0.15 + p.x * 0.4); softSh.oversample = '2x';
 
-  osc.connect(preGain);
-  preGain.connect(dryG);
-  dryG.connect(vca);
-
-  preGain.connect(hardSh);
-  hardSh.connect(bpf);
-  bpf.connect(low);
-  low.connect(softSh);
-  softSh.connect(wetG);
-  wetG.connect(vca);
-
-  click.connect(clickVca);
-  clickVca.connect(vca);
-
+  osc.connect(preGain); preGain.connect(dryG); dryG.connect(vca);
+  preGain.connect(hardSh); hardSh.connect(bpf); bpf.connect(low); low.connect(softSh); softSh.connect(wetG); wetG.connect(vca);
+  click.connect(clickVca); clickVca.connect(vca);
   vca.connect(voiceOut);
 
-  osc.start(when);
-  osc.stop(when + ampDec + 0.6);
-  click.start(when);
-  click.stop(when + 0.03);
+  osc.start(when); osc.stop(when + ampDec + 0.6);
+  click.start(when); click.stop(when + 0.03);
 }
-
 function triggerSD(ctx, out, p, when, vel){
   const toneFreq = 80 + p.pitch * 320;
   const ampDec = 0.04 + p.decay * 0.9;
@@ -1714,55 +1173,38 @@ function triggerSD(ctx, out, p, when, vel){
   const toneMix = 1 - p.t;
   const noiseMix = p.t;
   const end = when + ampDec + 0.15;
-
   const voiceOut = createVoiceChannel(ctx, out, 0);
 
-  const osc = ctx.createOscillator();
-  osc.type = 'sine';
+  const osc = ctx.createOscillator(); osc.type = 'sine';
   osc.frequency.setValueAtTime(toneFreq * 1.7, when);
   applyDR2Env(osc.frequency, when, 0.018, 0.55, toneFreq * 1.7, toneFreq);
 
-  const tVCA = ctx.createGain();
-  tVCA.gain.setValueAtTime(0.00001, when - 0.001);
+  const tVCA = ctx.createGain(); tVCA.gain.setValueAtTime(0.00001, when - 0.001);
   applyDR2Env(tVCA.gain, when, ampDec * 0.64, p.curve, vel * 0.58 * (toneMix + 0.08));
-
-  const toneLP = ctx.createBiquadFilter();
-  toneLP.type = 'lowpass';
-  toneLP.frequency.value = 4200 + (1 - p.t) * 2400;
-
-  osc.connect(toneLP);
-  toneLP.connect(tVCA);
-  tVCA.connect(voiceOut);
-  osc.start(when);
-  osc.stop(end);
+  const toneLP = ctx.createBiquadFilter(); toneLP.type = 'lowpass'; toneLP.frequency.value = 4200 + (1 - p.t) * 2400;
+  osc.connect(toneLP); toneLP.connect(tVCA); tVCA.connect(voiceOut);
+  osc.start(when); osc.stop(end);
 
   const nBuf = makeNoiseBuf(ctx, ampDec + 0.2);
   const noise = ctx.createBufferSource(); noise.buffer = nBuf;
-  const hpf = ctx.createBiquadFilter(); hpf.type = 'highpass';
-  hpf.frequency.value = hpfFreq; hpf.Q.value = hpfQ;
-  const bp = ctx.createBiquadFilter(); bp.type = 'bandpass';
-  bp.frequency.value = 1500 + p.pitch * 2500;
-  bp.Q.value = 0.45 + p.y * 2.5;
-  const nVCA = ctx.createGain();
-  nVCA.gain.setValueAtTime(0.00001, when - 0.001);
+  const hpf = ctx.createBiquadFilter(); hpf.type = 'highpass'; hpf.frequency.value = hpfFreq; hpf.Q.value = hpfQ;
+  const bp = ctx.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 1500 + p.pitch * 2500; bp.Q.value = 0.45 + p.y * 2.5;
+  const nVCA = ctx.createGain(); nVCA.gain.setValueAtTime(0.00001, when - 0.001);
   applyDR2Env(nVCA.gain, when, ampDec, p.curve, vel * 0.82 * noiseMix);
-
   noise.connect(hpf); hpf.connect(bp); bp.connect(nVCA); nVCA.connect(voiceOut);
   noise.start(when); noise.stop(end);
 
-  if(snapAmt > 0.02){
+  if (snapAmt > 0.02) {
     const snapDec = 0.003 + snapAmt * 0.025;
     const sBuf = makeNoiseBuf(ctx, snapDec + 0.01);
     const sNoise = ctx.createBufferSource(); sNoise.buffer = sBuf;
     const sHP = ctx.createBiquadFilter(); sHP.type = 'highpass'; sHP.frequency.value = 3000 + snapAmt * 6000;
-    const sVCA = ctx.createGain();
-    sVCA.gain.setValueAtTime(0.00001, when - 0.001);
+    const sVCA = ctx.createGain(); sVCA.gain.setValueAtTime(0.00001, when - 0.001);
     applyDR2Env(sVCA.gain, when, snapDec, 0.2, vel * snapAmt * 0.65);
     sNoise.connect(sHP); sHP.connect(sVCA); sVCA.connect(voiceOut);
     sNoise.start(when); sNoise.stop(when + snapDec + 0.05);
   }
 }
-
 const CYMBAL_RATIOS = [1.0, 1.3131, 1.4983, 1.6755, 2.0, 2.3741];
 function triggerHH(ctx, out, p, when, vel){
   const baseFreq = 160 + p.pitch * 1800;
@@ -1771,53 +1213,40 @@ function triggerHH(ctx, out, p, when, vel){
   const bpfFreq = 2000 + p.x * 14000;
   const bpfQ = 0.5 + p.y * 8;
   const spread = p.z;
-
   const voiceOut = createVoiceChannel(ctx, out, 0.03);
 
-  const mix = ctx.createGain();
-  mix.gain.value = 1 / CYMBAL_RATIOS.length;
-
+  const mix = ctx.createGain(); mix.gain.value = 1 / CYMBAL_RATIOS.length;
   CYMBAL_RATIOS.forEach((r, i) => {
-    const osc = ctx.createOscillator();
-    osc.type = 'square';
+    const osc = ctx.createOscillator(); osc.type = 'square';
     osc.frequency.value = baseFreq * r * (1 + (i - 2.5) * 0.038 * spread);
-    const g = ctx.createGain();
-    g.gain.value = 0.85 + Math.random() * 0.1;
-    osc.connect(g);
-    g.connect(mix);
-    osc.start(when);
-    osc.stop(when + ampDec + 0.06);
+    const g = ctx.createGain(); g.gain.value = 0.85 + Math.random() * 0.1;
+    osc.connect(g); g.connect(mix);
+    osc.start(when); osc.stop(when + ampDec + 0.06);
   });
 
-  const bpf = ctx.createBiquadFilter(); bpf.type = 'bandpass';
-  bpf.frequency.value = bpfFreq; bpf.Q.value = bpfQ;
+  const bpf = ctx.createBiquadFilter(); bpf.type = 'bandpass'; bpf.frequency.value = bpfFreq; bpf.Q.value = bpfQ;
   const hpf = ctx.createBiquadFilter(); hpf.type = 'highpass'; hpf.frequency.value = bpfFreq * 0.45;
-  const highShelf = ctx.createBiquadFilter(); highShelf.type = 'highshelf'; highShelf.frequency.value = 7000; highShelf.gain.value = 1.5;
-  const vca = ctx.createGain();
-  vca.gain.setValueAtTime(0.00001, when - 0.001);
+  const hs = ctx.createBiquadFilter(); hs.type = 'highshelf'; hs.frequency.value = 7000; hs.gain.value = 1.5;
+  const vca = ctx.createGain(); vca.gain.setValueAtTime(0.00001, when - 0.001);
   applyDR2Env(vca.gain, when, ampDec, p.curve, vel * 0.58);
-
-  mix.connect(bpf); bpf.connect(hpf); hpf.connect(highShelf); highShelf.connect(vca); vca.connect(voiceOut);
+  mix.connect(bpf); bpf.connect(hpf); hpf.connect(hs); hs.connect(vca); vca.connect(voiceOut);
 }
-
 function triggerCP(ctx, out, p, when, vel){
   const bpfFreq = 600 + p.x * 5500;
   const bpfQ = 0.5 + p.y * 9;
   const spacing = 0.004 + p.z * 0.026;
   const tailDec = 0.04 + p.t * 0.55;
   const burstDec = 0.005 + p.decay * 0.016;
-
   const voiceOut = createVoiceChannel(ctx, out, -0.02);
 
-  for(let b = 0; b < 3; b++){
+  for (let b = 0; b < 3; b++) {
     const t0 = when + b * spacing;
     const dec = b < 2 ? burstDec : burstDec + tailDec;
     const level = b < 2 ? vel * 0.46 : vel * 0.88;
     const curv = b < 2 ? 0.45 : p.curve;
     const buf = makeNoiseBuf(ctx, dec + 0.06);
     const src = ctx.createBufferSource(); src.buffer = buf;
-    const bpf = ctx.createBiquadFilter(); bpf.type = 'bandpass';
-    bpf.frequency.value = bpfFreq; bpf.Q.value = bpfQ;
+    const bpf = ctx.createBiquadFilter(); bpf.type = 'bandpass'; bpf.frequency.value = bpfFreq; bpf.Q.value = bpfQ;
     const hp = ctx.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 450;
     const vca = ctx.createGain(); vca.gain.setValueAtTime(0.00001, t0 - 0.001);
     applyDR2Env(vca.gain, t0, dec, curv, level);
@@ -1825,20 +1254,13 @@ function triggerCP(ctx, out, p, when, vel){
     src.start(t0); src.stop(t0 + dec + 0.1);
   }
 }
-
 const TRIGGER = { bd:triggerBD, sd:triggerSD, hh:triggerHH, cp:triggerCP };
 
-function buildFxChain(){
+function buildFxChain() {
   const ctx = audioCtx;
-
-  mixBus = ctx.createGain();
-  mixBus.gain.value = 0.88;
-
-  masterGain = ctx.createGain();
-  masterGain.gain.value = 0.82;
-
-  finalGain = ctx.createGain();
-  finalGain.gain.value = 1;
+  mixBus = ctx.createGain(); mixBus.gain.value = 0.88;
+  masterGain = ctx.createGain(); masterGain.gain.value = 0.82;
+  finalGain = ctx.createGain(); finalGain.gain.value = 1;
 
   fx.tape = {};
   {
@@ -1846,36 +1268,20 @@ function buildFxChain(){
     t.in = ctx.createGain();
     t.dry = ctx.createGain(); t.dry.gain.value = 1;
     t.wet = ctx.createGain(); t.wet.gain.value = 0;
-
-    t.preEmph = ctx.createBiquadFilter();
-    t.preEmph.type = 'highshelf'; t.preEmph.frequency.value = 3200; t.preEmph.gain.value = 0;
-
+    t.preEmph = ctx.createBiquadFilter(); t.preEmph.type = 'highshelf'; t.preEmph.frequency.value = 3200; t.preEmph.gain.value = 0;
     t.shaper = ctx.createWaveShaper(); t.shaper.curve = makeTapeCurve(0); t.shaper.oversample = '4x';
-
-    t.deEmph = ctx.createBiquadFilter();
-    t.deEmph.type = 'lowpass'; t.deEmph.frequency.value = 18000;
-
-    t.toneF = ctx.createBiquadFilter();
-    t.toneF.type = 'lowpass'; t.toneF.frequency.value = 18000;
-
-    t.wowDelay = ctx.createDelay(0.08);
-    t.wowDelay.delayTime.value = 0.02;
-
+    t.deEmph = ctx.createBiquadFilter(); t.deEmph.type = 'lowpass'; t.deEmph.frequency.value = 18000;
+    t.toneF = ctx.createBiquadFilter(); t.toneF.type = 'lowpass'; t.toneF.frequency.value = 18000;
+    t.wowDelay = ctx.createDelay(0.08); t.wowDelay.delayTime.value = 0.02;
     t.wowLfo = ctx.createOscillator(); t.wowLfo.type = 'sine'; t.wowLfo.frequency.value = 0.5;
     t.wowGain = ctx.createGain(); t.wowGain.gain.value = 0;
     t.wowLfo.connect(t.wowGain); t.wowGain.connect(t.wowDelay.delayTime); t.wowLfo.start();
-
     t.flutterLfo = ctx.createOscillator(); t.flutterLfo.type = 'triangle'; t.flutterLfo.frequency.value = 12;
     t.flutterGain = ctx.createGain(); t.flutterGain.gain.value = 0;
     t.flutterLfo.connect(t.flutterGain); t.flutterGain.connect(t.wowDelay.delayTime); t.flutterLfo.start();
-
-    t.in.connect(t.preEmph); t.preEmph.connect(t.shaper);
-    t.shaper.connect(t.deEmph); t.deEmph.connect(t.toneF); t.toneF.connect(t.wowDelay);
-    t.wowDelay.connect(t.wet);
+    t.in.connect(t.preEmph); t.preEmph.connect(t.shaper); t.shaper.connect(t.deEmph); t.deEmph.connect(t.toneF); t.toneF.connect(t.wowDelay); t.wowDelay.connect(t.wet);
     t.in.connect(t.dry);
-
-    t.out = ctx.createGain();
-    t.dry.connect(t.out); t.wet.connect(t.out);
+    t.out = ctx.createGain(); t.dry.connect(t.out); t.wet.connect(t.out);
   }
 
   fx.bit = {};
@@ -1884,31 +1290,26 @@ function buildFxChain(){
     b.in = ctx.createGain();
     b.dry = ctx.createGain(); b.dry.gain.value = 0;
     b.wet = ctx.createGain(); b.wet.gain.value = 0;
-
     b.bitSh = ctx.createWaveShaper(); b.bitSh.curve = makeBitCurve(16);
-    try{
+    try {
       b.srProc = ctx.createScriptProcessor(256, 1, 1);
       b.srProc.onaudioprocess = e => {
         const inp = e.inputBuffer.getChannelData(0);
         const out = e.outputBuffer.getChannelData(0);
-        for(let i = 0; i < inp.length; i++){
-          if(srCount % srFactor === 0) srHoldL = inp[i];
+        for (let i = 0; i < inp.length; i++) {
+          if (srCount % srFactor === 0) srHoldL = inp[i];
           out[i] = srHoldL;
           srCount++;
         }
       };
-    } catch(_){
+    } catch (_) {
       b.srProc = ctx.createGain();
     }
-
     b.aaLpf = ctx.createBiquadFilter(); b.aaLpf.type = 'lowpass'; b.aaLpf.frequency.value = 20000;
     b.postLpf = ctx.createBiquadFilter(); b.postLpf.type = 'lowpass'; b.postLpf.frequency.value = 20000;
-
     b.in.connect(b.bitSh); b.bitSh.connect(b.aaLpf); b.aaLpf.connect(b.srProc); b.srProc.connect(b.postLpf); b.postLpf.connect(b.wet);
     b.in.connect(b.dry);
-
-    b.out = ctx.createGain();
-    b.dry.connect(b.out); b.wet.connect(b.out);
+    b.out = ctx.createGain(); b.dry.connect(b.out); b.wet.connect(b.out);
   }
 
   fx.sh = {};
@@ -1917,32 +1318,21 @@ function buildFxChain(){
     s.in = ctx.createGain();
     s.dry = ctx.createGain(); s.dry.gain.value = 0;
     s.wet = ctx.createGain(); s.wet.gain.value = 0;
-
     s.preDriveGain = ctx.createGain(); s.preDriveGain.gain.value = 1;
     s.preSh = ctx.createWaveShaper(); s.preSh.curve = makeShermanDrive(0.1); s.preSh.oversample = '4x';
-
     s.filt1 = ctx.createBiquadFilter(); s.filt2 = ctx.createBiquadFilter();
     s.filt1.type = 'lowpass'; s.filt2.type = 'lowpass';
     const hz = expFreq(fxState.sherman.freq);
     s.filt1.frequency.value = hz; s.filt2.frequency.value = hz;
     s.filt1.Q.value = 1; s.filt2.Q.value = 1;
-
     s.postSh = ctx.createWaveShaper(); s.postSh.curve = makeShermanDist(0); s.postSh.oversample = '2x';
-
     s.lfo = ctx.createOscillator(); s.lfo.type = 'sine'; s.lfo.frequency.value = 0.1;
     s.lfoGain = ctx.createGain(); s.lfoGain.gain.value = 0;
     s.lfo.connect(s.lfoGain); s.lfoGain.connect(s.filt1.detune); s.lfoGain.connect(s.filt2.detune); s.lfo.start();
-
-    s.analyser = ctx.createAnalyser();
-    s.analyser.fftSize = 256;
-    s.analyser.smoothingTimeConstant = 0.6;
-
-    s.in.connect(s.preDriveGain); s.preDriveGain.connect(s.preSh);
-    s.preSh.connect(s.filt1); s.filt1.connect(s.filt2); s.filt2.connect(s.postSh); s.postSh.connect(s.analyser); s.analyser.connect(s.wet);
+    s.analyser = ctx.createAnalyser(); s.analyser.fftSize = 256; s.analyser.smoothingTimeConstant = 0.6;
+    s.in.connect(s.preDriveGain); s.preDriveGain.connect(s.preSh); s.preSh.connect(s.filt1); s.filt1.connect(s.filt2); s.filt2.connect(s.postSh); s.postSh.connect(s.analyser); s.analyser.connect(s.wet);
     s.in.connect(s.dry);
-
-    s.out = ctx.createGain();
-    s.dry.connect(s.out); s.wet.connect(s.out);
+    s.out = ctx.createGain(); s.dry.connect(s.out); s.wet.connect(s.out);
   }
 
   fx.master = {};
@@ -1951,35 +1341,20 @@ function buildFxChain(){
     m.in = ctx.createGain();
     m.dry = ctx.createGain(); m.dry.gain.value = 0;
     m.wet = ctx.createGain(); m.wet.gain.value = 1;
-
     m.subCut = ctx.createBiquadFilter(); m.subCut.type = 'highpass'; m.subCut.frequency.value = 28;
     m.lowShelf = ctx.createBiquadFilter(); m.lowShelf.type = 'lowshelf'; m.lowShelf.frequency.value = 220; m.lowShelf.gain.value = 0;
     m.highShelf = ctx.createBiquadFilter(); m.highShelf.type = 'highshelf'; m.highShelf.frequency.value = 3800; m.highShelf.gain.value = 0;
-
     m.comp = ctx.createDynamicsCompressor();
-    m.comp.threshold.value = -18;
-    m.comp.knee.value = 18;
-    m.comp.ratio.value = 2.5;
-    m.comp.attack.value = 0.01;
-    m.comp.release.value = 0.12;
-
+    m.comp.threshold.value = -18; m.comp.knee.value = 18; m.comp.ratio.value = 2.5; m.comp.attack.value = 0.01; m.comp.release.value = 0.12;
     m.softClipGain = ctx.createGain(); m.softClipGain.gain.value = 1;
     m.softClip = ctx.createWaveShaper(); m.softClip.curve = makeLimiterCurve(0.18); m.softClip.oversample = '4x';
-
     m.outTrim = ctx.createGain(); m.outTrim.gain.value = 0.96;
-
-    m.analyser = ctx.createAnalyser();
-    m.analyser.fftSize = 1024;
-    m.analyser.smoothingTimeConstant = 0.72;
-
-    m.in.connect(m.subCut); m.subCut.connect(m.lowShelf); m.lowShelf.connect(m.highShelf);
-    m.highShelf.connect(m.comp); m.comp.connect(m.softClipGain); m.softClipGain.connect(m.softClip);
-    m.softClip.connect(m.analyser); m.analyser.connect(m.wet);
-
+    m.analyser = ctx.createAnalyser(); m.analyser.fftSize = 1024; m.analyser.smoothingTimeConstant = 0.72;
+    m.in.connect(m.subCut); m.subCut.connect(m.lowShelf); m.lowShelf.connect(m.highShelf); m.highShelf.connect(m.comp); m.comp.connect(m.softClipGain); m.softClipGain.connect(m.softClip); m.softClip.connect(m.analyser); m.analyser.connect(m.wet);
     m.in.connect(m.dry);
-
     m.out = ctx.createGain();
-    m.dry.connect(m.out); m.wet.connect(m.out);
+    m.dry.connect(m.out);
+    m.wet.connect(m.outTrim);
     m.outTrim.connect(m.out);
   }
 
@@ -1994,21 +1369,17 @@ function buildFxChain(){
   applyAllFxState();
 }
 
-function updateLedUI(fxId, on){
+function updateLedUI(fxId, on) {
   const ledMap = { tape:'tapeLed', bit:'bitLed', sherman:'shermanLed', master:'masterFxLed' };
   const unitMap = { tape:'fxTapeUnit', bit:'fxBitUnit', sherman:'fxShermanUnit', master:'fxMasterUnit' };
   qs('#' + ledMap[fxId])?.classList.toggle('active', on);
   qs('#' + unitMap[fxId])?.classList.toggle('fx-active', on);
 }
-
-function applyTape(){
-  const p = fxState.tape, t = fx.tape;
-  if(!t || !audioCtx) return;
-  const now = audioCtx.currentTime;
-  const on = p.enabled;
-  t.dry.gain.setTargetAtTime(on ? 0 : 1, now, 0.03);
-  t.wet.gain.setTargetAtTime(on ? 1 : 0, now, 0.03);
-
+function applyTape() {
+  if (!audioCtx || !fx.tape) return;
+  const p = fxState.tape, t = fx.tape, now = audioCtx.currentTime;
+  t.dry.gain.setTargetAtTime(p.enabled ? 0 : 1, now, 0.03);
+  t.wet.gain.setTargetAtTime(p.enabled ? 1 : 0, now, 0.03);
   t.preEmph.gain.setTargetAtTime(-3 + p.drive * 10, now, 0.05);
   t.shaper.curve = makeTapeCurve(p.drive * 0.6 + p.sat * 0.4);
   t.toneF.frequency.setTargetAtTime(800 + p.tone * 18000, now, 0.05);
@@ -2016,98 +1387,72 @@ function applyTape(){
   t.wowGain.gain.setTargetAtTime(p.wow * 0.012, now, 0.05);
   t.flutterLfo.frequency.setTargetAtTime(8 + p.flutter * 8, now, 0.1);
   t.flutterGain.gain.setTargetAtTime(p.flutter * 0.003, now, 0.05);
-
-  updateLedUI('tape', on);
+  updateLedUI('tape', p.enabled);
 }
-
-function applyBit(){
-  const p = fxState.bit, b = fx.bit;
-  if(!b || !audioCtx) return;
-  const now = audioCtx.currentTime;
-  const on = p.enabled;
-  b.dry.gain.setTargetAtTime(on ? 1 - p.mix : 1, now, 0.03);
-  b.wet.gain.setTargetAtTime(on ? p.mix : 0, now, 0.03);
-
+function applyBit() {
+  if (!audioCtx || !fx.bit) return;
+  const p = fxState.bit, b = fx.bit, now = audioCtx.currentTime;
+  b.dry.gain.setTargetAtTime(p.enabled ? 1 - p.mix : 1, now, 0.03);
+  b.wet.gain.setTargetAtTime(p.enabled ? p.mix : 0, now, 0.03);
   b.bitSh.curve = makeBitCurve(p.bits);
-  srFactor = on ? Math.max(1, Math.round(p.sr)) : 1;
+  srFactor = p.enabled ? Math.max(1, Math.round(p.sr)) : 1;
   const nyq = (audioCtx.sampleRate / 2) / Math.max(1, srFactor);
   b.aaLpf.frequency.setTargetAtTime(Math.min(nyq, 20000), now, 0.02);
   b.postLpf.frequency.setTargetAtTime(Math.min(nyq * 1.5, 20000), now, 0.02);
-
-  updateLedUI('bit', on);
+  updateLedUI('bit', p.enabled);
 }
-
-function applySherman(){
-  const p = fxState.sherman, s = fx.sh;
-  if(!s || !audioCtx) return;
-  const now = audioCtx.currentTime;
-  const on = p.enabled;
-  s.dry.gain.setTargetAtTime(on ? 1 - p.mix : 1, now, 0.03);
-  s.wet.gain.setTargetAtTime(on ? p.mix : 0, now, 0.03);
-
+function applySherman() {
+  if (!audioCtx || !fx.sh) return;
+  const p = fxState.sherman, s = fx.sh, now = audioCtx.currentTime;
+  s.dry.gain.setTargetAtTime(p.enabled ? 1 - p.mix : 1, now, 0.03);
+  s.wet.gain.setTargetAtTime(p.enabled ? p.mix : 0, now, 0.03);
   const freq = expFreq(p.freq);
   const q = 0.5 + Math.pow(p.res, 2) * 55;
   s.filt1.frequency.setTargetAtTime(freq, now, 0.01);
   s.filt2.frequency.setTargetAtTime(freq, now, 0.01);
   s.filt1.Q.setTargetAtTime(q, now, 0.01);
   s.filt2.Q.setTargetAtTime(q, now, 0.01);
-
   const MODE_MAP = { lp:'lowpass', hp:'highpass', bp:'bandpass', notch:'lowpass' };
   s.filt1.type = MODE_MAP[p.mode] ?? 'lowpass';
   s.filt2.type = p.mode === 'notch' ? 'highpass' : (MODE_MAP[p.mode] ?? 'lowpass');
-
   s.preSh.curve = makeShermanDrive(p.drive);
   s.preDriveGain.gain.setTargetAtTime(1 + p.drive * 4, now, 0.02);
   s.postSh.curve = makeShermanDist(p.dist);
-
   const lfoHz = p.lfoRate < 0.02 ? 0.001 : 0.05 + p.lfoRate * 14;
   s.lfo.frequency.setTargetAtTime(lfoHz, now, 0.1);
   s.lfoGain.gain.setTargetAtTime(p.lfoDepth * 1800, now, 0.05);
-
-  updateLedUI('sherman', on);
+  updateLedUI('sherman', p.enabled);
 }
-
-function applyMasterFx(){
-  const p = fxState.master, m = fx.master;
-  if(!m || !audioCtx) return;
-  const now = audioCtx.currentTime;
-  const on = p.enabled;
-  m.dry.gain.setTargetAtTime(on ? 0 : 1, now, 0.03);
-  m.wet.gain.setTargetAtTime(on ? 1 : 0, now, 0.03);
-
+function applyMasterFx() {
+  if (!audioCtx || !fx.master) return;
+  const p = fxState.master, m = fx.master, now = audioCtx.currentTime;
+  m.dry.gain.setTargetAtTime(p.enabled ? 0 : 1, now, 0.03);
+  m.wet.gain.setTargetAtTime(p.enabled ? 1 : 0, now, 0.03);
   const subHz = 20 + p.sub * 44;
   m.subCut.frequency.setTargetAtTime(subHz, now, 0.03);
-
   const tiltDb = p.tilt * 6;
   m.lowShelf.gain.setTargetAtTime(-tiltDb, now, 0.04);
   m.highShelf.gain.setTargetAtTime(tiltDb, now, 0.04);
-
   const glue = p.glue;
   m.comp.threshold.setTargetAtTime(-10 - glue * 18, now, 0.05);
   m.comp.ratio.setTargetAtTime(1.2 + glue * 3.5, now, 0.05);
   m.comp.attack.setTargetAtTime(0.003 + (1 - glue) * 0.03, now, 0.05);
   m.comp.release.setTargetAtTime(0.06 + glue * 0.22, now, 0.05);
-
   m.softClipGain.gain.setTargetAtTime(1 + p.clip * 1.8, now, 0.04);
   m.softClip.curve = makeLimiterCurve(p.clip);
   m.outTrim.gain.setTargetAtTime(p.out, now, 0.04);
-
-  updateLedUI('master', on);
+  updateLedUI('master', p.enabled);
+}
+function applyAllFxState() {
+  applyTape(); applyBit(); applySherman(); applyMasterFx();
 }
 
-function applyAllFxState(){
-  applyTape();
-  applyBit();
-  applySherman();
-  applyMasterFx();
-}
-
-async function initAudio(){
-  if(audioReady){
-    if(audioCtx.state === 'suspended') await audioCtx.resume();
+async function initAudio() {
+  if (audioReady) {
+    if (audioCtx.state === 'suspended') await audioCtx.resume();
     return;
   }
-  if(_audioInitPromise){
+  if (_audioInitPromise) {
     await _audioInitPromise;
     return;
   }
@@ -2117,14 +1462,14 @@ async function initAudio(){
     audioReady = true;
     qs('#audioBtn').classList.add('active');
     qs('#audioBtn').innerHTML = '<span class="audio-dot"></span>AUDIO ON';
-    startScopeLoop();
-    startMasterMeter();
+    startScopes();
+    startMeters();
   })();
   await _audioInitPromise;
 }
 
-function startSeq(){
-  if(!audioReady) return;
+function startSeq() {
+  if (!audioReady) return;
   playing = true;
   current = -1;
   nextTick = audioCtx.currentTime + 0.04;
@@ -2132,7 +1477,7 @@ function startSeq(){
   seqTimer = setInterval(scheduler, 22);
   qs('#playBtn').classList.add('active');
 }
-function stopSeq(){
+function stopSeq() {
   playing = false;
   clearInterval(seqTimer);
   seqTimer = null;
@@ -2141,35 +1486,82 @@ function stopSeq(){
   renderPlayhead();
   updateSeqMonitor();
 }
-function scheduler(){
+function scheduler() {
   const lookAhead = 0.14;
   const stepDur = 60 / bpm / 4;
-  while(nextTick < audioCtx.currentTime + lookAhead){
-    current = (current + 1) % 16;
+  while (nextTick < audioCtx.currentTime + lookAhead) {
+    current = (current + 1) % STEP_COUNT;
     scheduleStep(current, nextTick);
     nextTick += stepDur + (current % 2 === 1 ? stepDur * swing : 0);
   }
   renderPlayhead();
 }
-function scheduleStep(idx, when){
-  trackState.forEach(ts => {
-    if(ts.mute || !ts.steps[idx]) return;
-    const vel = ts.accents[idx] ? Math.min(1, ts.volume * 1.28) : ts.volume;
-    TRIGGER[ts.id]?.(audioCtx, mixBus, ts.params, when, vel);
+
+function getLockedParams(trackId, stepIdx){
+  const ts = trackState.find(t => t.id === trackId);
+  const meta = getStepMeta(trackId, stepIdx);
+  const params = {...ts.params};
+  const locks = meta.locks || {};
+  if (locks.pitch?.enabled) params.pitch = locks.pitch.value;
+  if (locks.decay?.enabled) params.decay = locks.decay.value;
+  if (locks.tone?.enabled) params.t = locks.tone.value;
+  return { params, shermanMixLocked: locks.shermanMix?.enabled ? locks.shermanMix.value : null };
+}
+
+function scheduleHit(trackId, when, vel, accent, stepIdx) {
+  const { params, shermanMixLocked } = getLockedParams(trackId, stepIdx);
+  const finalVel = accent ? Math.min(1, vel * 1.22) : vel;
+
+  let restoreMix = null;
+  if (shermanMixLocked !== null) {
+    restoreMix = fxState.sherman.mix;
+    fxState.sherman.mix = shermanMixLocked;
+    if (audioReady) applySherman();
+    const restoreAt = when + 0.14;
+    if (audioCtx) {
+      const delayMs = Math.max(0, (restoreAt - audioCtx.currentTime) * 1000);
+      setTimeout(() => {
+        fxState.sherman.mix = restoreMix;
+        if (audioReady) applySherman();
+        updateShermanReadouts();
+      }, delayMs);
+    }
+  }
+
+  TRIGGER[trackId]?.(audioCtx, mixBus, params, when, finalVel);
+}
+
+function scheduleStep(idx, when) {
+  TRACKS.forEach(def => {
+    const ts = trackState.find(t => t.id === def.id);
+    const pt = getPatternTrack(def.id);
+    if (!ts || !pt || !trackAudible(ts) || !pt.steps[idx]) return;
+
+    const meta = pt.stepMeta[idx];
+    const prob = meta?.prob ?? 1;
+    if (Math.random() > prob) return;
+
+    const accent = !!pt.accents[idx];
+    const micro = (meta?.micro ?? 0) * 0.028;
+    const baseVel = ts.volume;
+    const hitTime = when + micro;
+
+    scheduleHit(def.id, hitTime, baseVel, accent, idx);
   });
 }
-function previewTrack(id){
-  if(!audioReady) return;
+function previewTrack(id) {
+  if (!audioReady) return;
   const ts = trackState.find(t => t.id === id);
-  if(!ts) return;
+  if (!ts) return;
   TRIGGER[id]?.(audioCtx, mixBus, ts.params, audioCtx.currentTime + 0.01, ts.volume);
 }
 
-function buildTracks(){
+function buildTracks() {
   qs('#tracksSection').innerHTML = TRACKS.map(def => {
     const ts = trackState.find(t => t.id === def.id);
-    const activeCount = ts.steps.filter(Boolean).length;
-    const accCount = ts.accents.filter(Boolean).length;
+    const pt = getPatternTrack(def.id);
+    const activeCount = pt.steps.filter(Boolean).length;
+    const accCount = pt.accents.filter(Boolean).length;
     return `
       <div class="track" data-id="${def.id}">
         <div class="track-header" data-track="${def.id}">
@@ -2180,8 +1572,9 @@ function buildTracks(){
           </div>
 
           <div class="track-tools">
-            <button class="mini-btn mute-btn" data-track="${def.id}" title="Mute">M</button>
-            <button class="mini-btn preview-btn" data-track="${def.id}" title="Preview">▶</button>
+            <button class="icon-btn mute-btn ${ts.mute ? 'muted' : ''}" data-track="${def.id}" title="Mute">M</button>
+            <button class="icon-btn solo-btn ${ts.solo ? 'soloed' : ''}" data-track="${def.id}" title="Solo">S</button>
+            <button class="icon-btn preview preview-btn" data-track="${def.id}" title="Preview">▶</button>
 
             <div class="track-stat">
               <div class="track-stat-label">STEPS</div>
@@ -2189,8 +1582,8 @@ function buildTracks(){
             </div>
 
             <div class="track-stat">
-              <div class="track-stat-label">ACC</div>
-              <div class="track-stat-value" id="trackAcc_${def.id}">${accCount}</div>
+              <div class="track-stat-label">LOCKS</div>
+              <div class="track-stat-value" id="trackLocks_${def.id}">${countTrackLocks(def.id)}</div>
             </div>
 
             <div class="track-vol-wrap">
@@ -2201,18 +1594,33 @@ function buildTracks(){
         </div>
 
         <div class="steps-row">
-          ${Array.from({length:16}, (_,i) => `
-            <button class="step-btn${ts.steps[i] ? ' on' : ''}${ts.accents[i] ? ' accent' : ''}" data-track="${def.id}" data-step="${i}">
-              <span class="step-num">${i + 1}</span>
-            </button>
-          `).join('')}
+          ${Array.from({length: STEP_COUNT}, (_, i) => {
+            const meta = pt.stepMeta[i];
+            const hasData = (meta.prob < 0.999) || Math.abs(meta.micro) > 0.01;
+            const hasLock = stepHasLocks(meta);
+            return `
+              <button class="step-btn${pt.steps[i] ? ' on' : ''}${pt.accents[i] ? ' accent' : ''}${hasData ? ' has-data' : ''}${hasLock ? ' has-lock' : ''}" data-track="${def.id}" data-step="${i}">
+                <span class="step-num">${i + 1}</span>
+              </button>
+            `;
+          }).join('')}
         </div>
       </div>
     `;
   }).join('');
-}
 
-function buildQuickTrackGrid(){
+  refreshTrackClasses();
+}
+function refreshTrackClasses() {
+  qsa('.track').forEach(el => {
+    const id = el.dataset.id;
+    const ts = trackState.find(t => t.id === id);
+    el.classList.toggle('selected', id === selectedTrack);
+    el.classList.toggle('muted', !!ts?.mute && !ts?.solo);
+    el.classList.toggle('soloed', !!ts?.solo);
+  });
+}
+function buildQuickTrackGrid() {
   qs('#trackQuickGrid').innerHTML = TRACKS.map(def => `
     <div class="track-quick${def.id === selectedTrack ? ' active' : ''}" data-quick-track="${def.id}">
       <div class="track-quick-name" style="color:${def.color}">${def.name}</div>
@@ -2220,11 +1628,10 @@ function buildQuickTrackGrid(){
     </div>
   `).join('');
 }
-
-function buildParamRows(){
-  PARAM_DEFS.forEach(({id,label}) => {
+function buildParamRows() {
+  PARAM_DEFS.forEach(({id, label}) => {
     const row = qs('#paramRow_' + id);
-    if(!row) return;
+    if (!row) return;
     row.innerHTML = `
       <div class="prow-inner">
         <label class="prow-label" id="plabel_${id}">${label}</label>
@@ -2235,79 +1642,70 @@ function buildParamRows(){
     qs('#pslider_' + id).addEventListener('input', e => {
       const val = parseFloat(e.target.value);
       const ts = trackState.find(t => t.id === selectedTrack);
-      if(!ts) return;
       ts.params[id] = val;
       qs('#preadout_' + id).textContent = formatParam(id, val, selectedTrack);
-      if(['curve','pcrv'].includes(id)) drawEnvCurve();
+      if (['curve','pcrv'].includes(id)) drawEnvCurve();
     });
   });
 }
-
-function formatParam(p, v, tid){
-  if(p === 'pitch') return `${Math.round(28 + v * 200)} Hz`;
-  if(p === 'decay') return `${(0.08 + v * 2.8).toFixed(2)}s`;
-  if(p === 'pdec') return `${Math.round((0.012 + v * 0.38) * 1000)}ms`;
-  if(p === 'amount') return `${Math.round(v * 100)}%`;
-  if(p === 'curve' || p === 'pcrv') return ['LIN','SQL','EXP','SQR','RCP'][clamp(Math.round(v * 4), 0, 4)];
-  if(p === 't' && tid === 'hh') return v > 0.5 ? 'OPEN' : 'CLOSED';
+function buildStepMiniGrid() {
+  const pt = getPatternTrack(selectedTrack);
+  qs('#stepMiniGrid').innerHTML = Array.from({length: STEP_COUNT}, (_, i) => {
+    const m = pt.stepMeta[i];
+    const hasNote = pt.steps[i] || pt.accents[i] || m.prob < 0.999 || Math.abs(m.micro) > 0.01;
+    const hasLock = stepHasLocks(m);
+    return `<button class="step-mini${i === selectedStep ? ' active' : ''}${hasNote ? ' has-note' : ''}${hasLock ? ' has-lock' : ''}" data-mini-step="${i}">${String(i+1).padStart(2,'0')}</button>`;
+  }).join('');
+}
+function formatParam(p, v, tid) {
+  if (p === 'pitch') return `${Math.round(28 + v * 200)} Hz`;
+  if (p === 'decay') return `${(0.08 + v * 2.8).toFixed(2)}s`;
+  if (p === 'pdec') return `${Math.round((0.012 + v * 0.38) * 1000)}ms`;
+  if (p === 'amount') return `${Math.round(v * 100)}%`;
+  if (p === 'curve' || p === 'pcrv') return ['LIN','SQL','EXP','SQR','RCP'][clamp(Math.round(v * 4), 0, 4)];
+  if (p === 't' && tid === 'hh') return v > 0.5 ? 'OPEN' : 'CLOSED';
   return `${Math.round(v * 100)}%`;
 }
-
-function updateParamPanel(){
+function formatLockValue(key, value){
+  if (key === 'pitch') return formatParam('pitch', value, selectedTrack);
+  if (key === 'decay') return formatParam('decay', value, selectedTrack);
+  if (key === 'tone') return formatParam('t', value, selectedTrack);
+  if (key === 'shermanMix') return fmtPct(value);
+  return '—';
+}
+function updateParamPanel() {
   const def = TRACKS.find(d => d.id === selectedTrack);
   const ts = trackState.find(t => t.id === selectedTrack);
-  if(!def || !ts) return;
-
   const badge = qs('#paramsTrackBadge');
   badge.textContent = def.name;
   badge.style.color = def.color;
   badge.style.borderColor = def.color;
-
   qs('#paramsTrackName').textContent = def.fullName;
   qs('#paramsModel').textContent = `${def.model} — ${def.modelDesc}`;
-
   ['x','y','z','t'].forEach(k => {
     const el = qs('#plabel_' + k);
-    if(el && def.paramLabels[k]) el.textContent = def.paramLabels[k];
+    if (el && def.paramLabels[k]) el.textContent = def.paramLabels[k];
   });
-
   PARAM_DEFS.forEach(({id}) => {
-    const sl = qs('#pslider_' + id);
-    const rd = qs('#preadout_' + id);
-    if(sl && id in ts.params){
-      sl.value = ts.params[id];
-      rd.textContent = formatParam(id, ts.params[id], selectedTrack);
-    }
+    qs('#pslider_' + id).value = ts.params[id];
+    qs('#preadout_' + id).textContent = formatParam(id, ts.params[id], selectedTrack);
   });
-
-  qsa('.track').forEach(el => el.classList.toggle('selected', el.dataset.id === selectedTrack));
   qsa('.track-quick').forEach(el => el.classList.toggle('active', el.dataset.quickTrack === selectedTrack));
-
   drawEnvCurve();
-  updateSeqMonitor();
 }
-
-function drawEnvCurve(){
+function drawEnvCurve() {
   const canvas = qs('#envCanvas');
-  if(!canvas) return;
   const c = canvas.getContext('2d');
   const W = canvas.width, H = canvas.height;
   const ts = trackState.find(t => t.id === selectedTrack);
-  const curv = ts?.params.curve ?? 0.5;
-  const pcrv = ts?.params.pcrv ?? 0.5;
-
+  const curv = ts.params.curve, pcrv = ts.params.pcrv;
   c.clearRect(0,0,W,H);
   c.strokeStyle = 'rgba(255,124,0,.08)';
   c.lineWidth = 1;
-  for(let x = 0; x <= W; x += W / 4){
-    c.beginPath(); c.moveTo(x,0); c.lineTo(x,H); c.stroke();
-  }
+  for (let x = 0; x <= W; x += W / 4) { c.beginPath(); c.moveTo(x,0); c.lineTo(x,H); c.stroke(); }
   c.strokeStyle = 'rgba(255,255,255,.05)';
-  for(let y = 0; y <= H; y += H / 4){
-    c.beginPath(); c.moveTo(0,y); c.lineTo(W,y); c.stroke();
-  }
-
-  function drawC(cp, col, glow){
+  for (let y = 0; y <= H; y += H / 4) { c.beginPath(); c.moveTo(0,y); c.lineTo(W,y); c.stroke(); }
+  function drawC(cp, col, glow) {
     const arr = dr2CurveArr(cp, W);
     c.save();
     c.strokeStyle = col;
@@ -2315,58 +1713,84 @@ function drawEnvCurve(){
     c.shadowColor = col;
     c.shadowBlur = glow ? 9 : 0;
     c.beginPath();
-    for(let i = 0; i < W; i++){
+    for (let i = 0; i < W; i++) {
       const y = H - 6 - arr[i] * (H - 12);
       i === 0 ? c.moveTo(i, y) : c.lineTo(i, y);
     }
     c.stroke();
     c.restore();
   }
-
-  if(ts?.params.amount > 0.05) drawC(pcrv, 'rgba(100,200,255,.42)', false);
+  if (ts.params.amount > 0.05) drawC(pcrv, 'rgba(100,200,255,.42)', false);
   drawC(curv, '#ff8c00', true);
-
-  c.fillStyle = 'rgba(255,124,0,.58)';
-  c.font = '10px "Share Tech Mono", monospace';
-  c.fillText('AMP', 8, 14);
-  if(ts?.params.amount > 0.05){
-    c.fillStyle = 'rgba(100,200,255,.6)';
-    c.fillText('PITCH', 8, 28);
-  }
 }
-
-function renderPlayhead(){
-  qsa('.step-btn').forEach(btn => {
-    btn.classList.toggle('playing', playing && current === parseInt(btn.dataset.step, 10));
-  });
+function renderPlayhead() {
+  qsa('.step-btn').forEach(btn => btn.classList.toggle('playing', playing && current === parseInt(btn.dataset.step, 10)));
   updateSeqMonitor();
 }
-
-function updateTrackCounters(id){
-  const ts = trackState.find(t => t.id === id);
-  if(!ts) return;
-  qs('#trackSteps_' + id).textContent = ts.steps.filter(Boolean).length;
-  qs('#trackAcc_' + id).textContent = ts.accents.filter(Boolean).length;
+function updateTrackCounters(id) {
+  const pt = getPatternTrack(id);
+  qs('#trackSteps_' + id).textContent = pt.steps.filter(Boolean).length;
+  qs('#trackLocks_' + id).textContent = countTrackLocks(id);
 }
-
-function updateSeqMonitor(){
+function updateSeqMonitor() {
   const def = TRACKS.find(t => t.id === selectedTrack);
   const ts = trackState.find(t => t.id === selectedTrack);
-  if(!def || !ts) return;
-
+  const pt = getPatternTrack(selectedTrack);
+  qs('#lcdPattern').textContent = String(currentPattern + 1);
   qs('#lcdTrack').textContent = def.name;
   qs('#lcdModel').textContent = def.model;
-  qs('#lcdSteps').textContent = ts.steps.filter(Boolean).length;
-  qs('#lcdAccents').textContent = ts.accents.filter(Boolean).length;
-  qs('#lcdVol').textContent = `${Math.round(ts.volume * 100)}%`;
   qs('#lcdPlayhead').textContent = playing && current >= 0 ? String(current + 1).padStart(2, '0') : '--';
+  qs('#lcdSteps').textContent = pt.steps.filter(Boolean).length;
+  qs('#lcdAccents').textContent = pt.accents.filter(Boolean).length;
+  qs('#lcdVol').textContent = `${Math.round(ts.volume * 100)}%`;
+  qs('#lcdLocks').textContent = countTrackLocks(selectedTrack);
+}
+function updatePatternButtons() {
+  qsa('.pattern-btn').forEach(btn => btn.classList.toggle('active', parseInt(btn.dataset.pattern, 10) === currentPattern));
+}
+function syncLockUI(lockKey, toggleId, sliderId, outId){
+  const meta = getStepMeta(selectedTrack, selectedStep);
+  const lock = meta.locks[lockKey];
+  qs('#' + toggleId).classList.toggle('active', lock.enabled);
+  qs('#' + toggleId).textContent = lock.enabled ? 'ON' : 'OFF';
+  qs('#' + sliderId).value = lock.value;
+  qs('#' + outId).textContent = lock.enabled ? formatLockValue(lockKey, lock.value) : '—';
+}
+function updateStepEditor() {
+  const def = TRACKS.find(t => t.id === selectedTrack);
+  const pt = getPatternTrack(selectedTrack);
+  const meta = pt.stepMeta[selectedStep];
+  const stepOn = !!pt.steps[selectedStep];
+  const accent = !!pt.accents[selectedStep];
+  qs('#stepBigIndex').textContent = String(selectedStep + 1).padStart(2, '0');
+  qs('#stepBigState').textContent = stepOn ? (accent ? 'ON + ACCENT' : 'ON') : 'OFF';
+  qs('#stepBig').classList.toggle('on', stepOn);
+  qs('#stepProb').value = meta.prob;
+  qs('#stepProbOut').textContent = `${Math.round(meta.prob * 100)}%`;
+  qs('#stepMicro').value = meta.micro;
+  qs('#stepMicroOut').textContent = `${Math.round(meta.micro * 28)} ms`;
+  qs('#stepTargetOut').textContent = `${def.name} · Step ${selectedStep + 1}`;
+  syncLockUI('pitch', 'lockPitchToggle', 'lockPitch', 'lockPitchOut');
+  syncLockUI('decay', 'lockDecayToggle', 'lockDecay', 'lockDecayOut');
+  syncLockUI('tone', 'lockToneToggle', 'lockTone', 'lockToneOut');
+  syncLockUI('shermanMix', 'lockShermanToggle', 'lockSherman', 'lockShermanOut');
+  buildStepMiniGrid();
+}
+function refreshAllUI() {
+  buildTracks();
+  buildQuickTrackGrid();
+  updatePatternButtons();
+  updateParamPanel();
+  updateSeqMonitor();
+  updateStepEditor();
+  updateTapeReadouts();
+  updateBitReadouts();
+  updateShermanReadouts();
+  updateMasterReadouts();
 }
 
-function fxReadout(id, val){
-  const el = qs('#' + id);
-  if(el) el.textContent = val;
-}
-function updateTapeReadouts(){
+function fxReadout(id, val) { const el = qs('#' + id); if (el) el.textContent = val; }
+function updateTapeReadouts() {
   const p = fxState.tape;
   fxReadout('tapeDriveOut', fmtPct(p.drive));
   fxReadout('tapeSatOut', fmtPct(p.sat));
@@ -2374,14 +1798,14 @@ function updateTapeReadouts(){
   fxReadout('tapeFlutterOut', fmtPct(p.flutter));
   fxReadout('tapeToneOut', p.tone < 0.1 ? 'DARK' : p.tone > 0.9 ? 'BRIGHT' : fmtPct(p.tone));
 }
-function updateBitReadouts(){
+function updateBitReadouts() {
   const p = fxState.bit;
   fxReadout('bitDepthOut', `${parseFloat(p.bits).toFixed(1)} bit`);
   fxReadout('srAmountOut', p.sr <= 1 ? 'FULL' : `÷ ${Math.round(p.sr)}`);
   fxReadout('bitMixOut', fmtPct(p.mix));
   drawBitScope(p.bits);
 }
-function updateShermanReadouts(){
+function updateShermanReadouts() {
   const p = fxState.sherman;
   const hz = expFreq(p.freq);
   fxReadout('shermanFreqOut', hz < 1000 ? `${Math.round(hz)} Hz` : `${(hz / 1000).toFixed(2)} kHz`);
@@ -2392,7 +1816,7 @@ function updateShermanReadouts(){
   fxReadout('shermanLfoDepthOut', fmtPct(p.lfoDepth));
   fxReadout('shermanMixOut', fmtPct(p.mix));
 }
-function updateMasterReadouts(){
+function updateMasterReadouts() {
   const p = fxState.master;
   fxReadout('mastSubOut', `${Math.round(20 + p.sub * 44)} Hz`);
   fxReadout('mastTiltOut', `${p.tilt >= 0 ? '+' : ''}${(p.tilt * 6).toFixed(1)} dB`);
@@ -2400,18 +1824,16 @@ function updateMasterReadouts(){
   fxReadout('mastClipOut', fmtPct(p.clip));
   fxReadout('mastOutOut', `${Math.round(p.out * 100)}%`);
 }
-function drawBitScope(bits){
-  const canvas = qs('#bitScope'); if(!canvas) return;
+function drawBitScope(bits) {
+  const canvas = qs('#bitScope');
   const c = canvas.getContext('2d');
   const W = canvas.width, H = canvas.height;
   c.clearRect(0, 0, W, H);
   c.fillStyle = 'rgba(90,212,255,.08)';
   c.fillRect(0, 0, W, H);
-
-  const displaySteps = Math.max(4, Math.min(64, Math.round(Math.pow(2, Math.max(1, Math.min(bits, 6)))))); 
+  const displaySteps = Math.max(4, Math.min(64, Math.round(Math.pow(2, Math.max(1, Math.min(bits, 6))))));
   const bw = W / displaySteps;
-
-  for(let i = 0; i < displaySteps; i++){
+  for (let i = 0; i < displaySteps; i++) {
     const h = (0.18 + Math.random() * 0.78) * (H - 8);
     c.fillStyle = 'rgba(90,212,255,.92)';
     c.fillRect(i * bw + 1, H - h - 3, Math.max(1, bw - 2), h);
@@ -2420,71 +1842,62 @@ function drawBitScope(bits){
   }
 }
 
-function startScopeLoop(){
+function startScopes() {
   const shCanvas = qs('#shermanScope');
   const mCanvas = qs('#masterScope');
-  if(!shCanvas || !mCanvas) return;
-
   const sc = shCanvas.getContext('2d');
   const mc = mCanvas.getContext('2d');
   const shBuf = new Uint8Array(fx.sh.analyser.fftSize);
   const mBuf = new Uint8Array(fx.master.analyser.fftSize);
 
-  function draw(){
+  function draw() {
     scopeRaf = requestAnimationFrame(draw);
 
     fx.sh.analyser.getByteTimeDomainData(shBuf);
-    sc.clearRect(0,0,shCanvas.width,shCanvas.height);
+    sc.clearRect(0, 0, shCanvas.width, shCanvas.height);
     let maxAmp = 0;
-    for(let i = 0; i < shBuf.length; i++) maxAmp = Math.max(maxAmp, Math.abs(shBuf[i] - 128));
+    for (let i = 0; i < shBuf.length; i++) maxAmp = Math.max(maxAmp, Math.abs(shBuf[i] - 128));
     const selfOsc = maxAmp > 80;
-    qs('#scopeDot')?.classList.toggle('osc', selfOsc);
+    qs('#scopeDot').classList.toggle('osc', selfOsc);
     qs('#scopeLabel').textContent = selfOsc ? 'SELF-OSC !' : (fxState.sherman.enabled ? 'ACTIVE' : 'IDLE');
-
     sc.strokeStyle = selfOsc ? '#ff4444' : '#c060ff';
     sc.shadowColor = selfOsc ? '#ff0000' : '#c060ff';
     sc.shadowBlur = selfOsc ? 8 : 4;
     sc.lineWidth = 2;
     sc.beginPath();
-    for(let i = 0; i < shBuf.length; i++){
+    for (let i = 0; i < shBuf.length; i++) {
       const x = (i / shBuf.length) * shCanvas.width;
       const y = shCanvas.height / 2 + ((shBuf[i] - 128) / 128) * (shCanvas.height / 2 - 3);
-      i === 0 ? sc.moveTo(x,y) : sc.lineTo(x,y);
+      i === 0 ? sc.moveTo(x, y) : sc.lineTo(x, y);
     }
     sc.stroke();
     sc.shadowBlur = 0;
 
     fx.master.analyser.getByteTimeDomainData(mBuf);
-    mc.clearRect(0,0,mCanvas.width,mCanvas.height);
+    mc.clearRect(0, 0, mCanvas.width, mCanvas.height);
     mc.strokeStyle = '#7dffa1';
     mc.shadowColor = '#7dffa1';
     mc.shadowBlur = 6;
     mc.lineWidth = 2;
     mc.beginPath();
-    for(let i = 0; i < mBuf.length; i++){
+    for (let i = 0; i < mBuf.length; i++) {
       const x = (i / mBuf.length) * mCanvas.width;
       const y = mCanvas.height / 2 + ((mBuf[i] - 128) / 128) * (mCanvas.height / 2 - 3);
-      i === 0 ? mc.moveTo(x,y) : mc.lineTo(x,y);
+      i === 0 ? mc.moveTo(x, y) : mc.lineTo(x, y);
     }
     mc.stroke();
     mc.shadowBlur = 0;
   }
   draw();
 }
-
-function startMasterMeter(){
+function startMeters() {
   const analyser = fx.master.analyser;
-  if(!analyser) return;
   const data = new Uint8Array(analyser.fftSize);
-
-  function tick(){
-    masterMeterRaf = requestAnimationFrame(tick);
+  function tick() {
+    meterRaf = requestAnimationFrame(tick);
     analyser.getByteTimeDomainData(data);
-
     let peak = 0;
-    for(let i = 0; i < data.length; i++){
-      peak = Math.max(peak, Math.abs(data[i] - 128) / 128);
-    }
+    for (let i = 0; i < data.length; i++) peak = Math.max(peak, Math.abs(data[i] - 128) / 128);
     const pct = Math.round(clamp(peak * 125, 0, 100));
     qs('#meterL').style.width = pct + '%';
     qs('#meterR').style.width = pct + '%';
@@ -2494,19 +1907,96 @@ function startMasterMeter(){
   tick();
 }
 
-function setActivePage(tab){
+function setActivePage(tab) {
   qsa('.tab-btn').forEach(btn => btn.classList.toggle('active', btn.dataset.tab === tab));
   qsa('.page').forEach(page => page.classList.toggle('active', page.id === 'page-' + tab));
 }
+function selectTrack(trackId) {
+  selectedTrack = trackId;
+  updateParamPanel();
+  updateSeqMonitor();
+  updateStepEditor();
+  refreshTrackClasses();
+}
+function selectStep(idx, openStepPage = false) {
+  selectedStep = clamp(idx, 0, STEP_COUNT - 1);
+  updateStepEditor();
+  if (openStepPage) setActivePage('step');
+}
+function updateTrackStepVisual(trackId, idx) {
+  const pt = getPatternTrack(trackId);
+  const btn = qs(`.step-btn[data-track="${trackId}"][data-step="${idx}"]`);
+  const meta = pt.stepMeta[idx];
+  const hasData = (meta.prob < 0.999) || Math.abs(meta.micro) > 0.01;
+  btn.classList.toggle('on', !!pt.steps[idx]);
+  btn.classList.toggle('accent', !!pt.accents[idx]);
+  btn.classList.toggle('has-data', hasData);
+  btn.classList.toggle('has-lock', stepHasLocks(meta));
+}
 
-function initEvents(){
+function randomizeCurrentTrack() {
+  const pt = getPatternTrack(selectedTrack);
+  for (let i = 0; i < STEP_COUNT; i++) {
+    const on = Math.random() > 0.55;
+    pt.steps[i] = on ? 1 : 0;
+    pt.accents[i] = on && Math.random() > 0.74 ? 1 : 0;
+    pt.stepMeta[i].prob = on ? lerp(0.55, 1, Math.random()) : 1;
+    pt.stepMeta[i].micro = on ? (Math.random() * 0.4 - 0.2) : 0;
+    pt.stepMeta[i].locks = makeDefaultLocks();
+    if (on && Math.random() > 0.78) {
+      pt.stepMeta[i].locks.pitch = {enabled:true, value:Math.random()};
+    }
+  }
+  refreshAllUI();
+}
+function clearCurrentTrack() {
+  const pt = getPatternTrack(selectedTrack);
+  for (let i = 0; i < STEP_COUNT; i++) {
+    pt.steps[i] = 0;
+    pt.accents[i] = 0;
+    pt.stepMeta[i].prob = 1;
+    pt.stepMeta[i].micro = 0;
+    pt.stepMeta[i].locks = makeDefaultLocks();
+  }
+  refreshAllUI();
+}
+function copyCurrentTrack() {
+  trackClipboard = JSON.parse(JSON.stringify(getPatternTrack(selectedTrack)));
+}
+function pasteCurrentTrack() {
+  if (!trackClipboard) return;
+  const pt = getPatternTrack(selectedTrack);
+  pt.steps = [...trackClipboard.steps];
+  pt.accents = [...trackClipboard.accents];
+  pt.stepMeta = trackClipboard.stepMeta.map(m => JSON.parse(JSON.stringify(m)));
+  refreshAllUI();
+}
+
+function toggleLock(lockKey){
+  const meta = getStepMeta(selectedTrack, selectedStep);
+  meta.locks[lockKey].enabled = !meta.locks[lockKey].enabled;
+  updateStepEditor();
+  updateTrackStepVisual(selectedTrack, selectedStep);
+  updateTrackCounters(selectedTrack);
+  buildStepMiniGrid();
+  updateSeqMonitor();
+}
+function updateLockValue(lockKey, value){
+  const meta = getStepMeta(selectedTrack, selectedStep);
+  meta.locks[lockKey].value = value;
+  updateStepEditor();
+  updateTrackStepVisual(selectedTrack, selectedStep);
+  updateTrackCounters(selectedTrack);
+  buildStepMiniGrid();
+  updateSeqMonitor();
+}
+
+function initEvents() {
   qs('#audioBtn').addEventListener('click', async () => { await initAudio(); });
-  qs('#playBtn').addEventListener('click', async () => { await initAudio(); if(!playing) startSeq(); else stopSeq(); });
+  qs('#playBtn').addEventListener('click', async () => { await initAudio(); if (!playing) startSeq(); else stopSeq(); });
   qs('#stopBtn').addEventListener('click', () => stopSeq());
 
-  qsa('.tab-btn').forEach(btn => {
-    btn.addEventListener('click', () => setActivePage(btn.dataset.tab));
-  });
+  qsa('.tab-btn').forEach(btn => btn.addEventListener('click', () => setActivePage(btn.dataset.tab)));
 
   const bpmSync = v => {
     bpm = clamp(v, 60, 200);
@@ -2522,41 +2012,45 @@ function initEvents(){
     swing = parseFloat(e.target.value);
     qs('#swingReadout').textContent = `${Math.round(swing * 100)}%`;
   });
-
   qs('#masterSlider').addEventListener('input', e => {
     const v = parseFloat(e.target.value);
-    if(masterGain) masterGain.gain.value = v;
+    if (masterGain) masterGain.gain.value = v;
     qs('#masterReadout').textContent = `${Math.round(v * 100)}%`;
   });
 
   document.addEventListener('click', e => {
     const hdr = e.target.closest('.track-header');
-    if(hdr && !e.target.closest('.mute-btn,.preview-btn,.track-vol-wrap')){
-      selectedTrack = hdr.dataset.track;
-      updateParamPanel();
+    if (hdr && !e.target.closest('.mute-btn,.solo-btn,.preview-btn,.track-vol-wrap')) {
+      selectTrack(hdr.dataset.track);
     }
   });
 
   document.addEventListener('click', e => {
     const quick = e.target.closest('.track-quick');
-    if(!quick) return;
-    selectedTrack = quick.dataset.quickTrack;
-    updateParamPanel();
+    if (!quick) return;
+    selectTrack(quick.dataset.quickTrack);
     setActivePage('synth');
   });
 
   document.addEventListener('click', e => {
     const btn = e.target.closest('.mute-btn');
-    if(!btn) return;
+    if (!btn) return;
     const ts = trackState.find(t => t.id === btn.dataset.track);
-    if(!ts) return;
     ts.mute = !ts.mute;
-    qs(`.track[data-id="${ts.id}"]`)?.classList.toggle('muted', ts.mute);
+    refreshAllUI();
+  });
+
+  document.addEventListener('click', e => {
+    const btn = e.target.closest('.solo-btn');
+    if (!btn) return;
+    const ts = trackState.find(t => t.id === btn.dataset.track);
+    ts.solo = !ts.solo;
+    refreshAllUI();
   });
 
   document.addEventListener('click', async e => {
     const btn = e.target.closest('.preview-btn');
-    if(!btn) return;
+    if (!btn) return;
     await initAudio();
     previewTrack(btn.dataset.track);
   });
@@ -2567,85 +2061,140 @@ function initEvents(){
 
   document.addEventListener('input', e => {
     const el = e.target.closest('.track-vol');
-    if(!el) return;
+    if (!el) return;
     const ts = trackState.find(t => t.id === el.dataset.track);
-    if(ts){
-      ts.volume = parseFloat(el.value);
-      if(ts.id === selectedTrack) updateSeqMonitor();
-    }
+    ts.volume = parseFloat(el.value);
+    if (ts.id === selectedTrack) updateSeqMonitor();
   });
 
   document.addEventListener('click', async e => {
     const btn = e.target.closest('.step-btn');
-    if(!btn) return;
+    if (!btn) return;
     await initAudio();
-    const ts = trackState.find(t => t.id === btn.dataset.track);
+    const trackId = btn.dataset.track;
     const idx = parseInt(btn.dataset.step, 10);
-    if(!ts) return;
+    const pt = getPatternTrack(trackId);
 
-    if(e.shiftKey){
-      ts.accents[idx] = !ts.accents[idx];
-      btn.classList.toggle('accent', ts.accents[idx]);
-    } else {
-      ts.steps[idx] = ts.steps[idx] ? 0 : 1;
-      btn.classList.toggle('on', !!ts.steps[idx]);
-      btn.classList.toggle('accent', !!ts.accents[idx] && !!ts.steps[idx]);
+    selectTrack(trackId);
+    selectStep(idx);
+
+    if (e.detail === 2) {
+      setActivePage('step');
+      return;
     }
 
-    updateTrackCounters(ts.id);
-    if(ts.id === selectedTrack) updateSeqMonitor();
+    if (e.shiftKey) {
+      pt.accents[idx] = !pt.accents[idx];
+    } else {
+      pt.steps[idx] = pt.steps[idx] ? 0 : 1;
+      if (!pt.steps[idx]) pt.accents[idx] = 0;
+    }
 
-    if(ts.steps[idx] && audioReady){
-      TRIGGER[ts.id]?.(audioCtx, mixBus, ts.params, audioCtx.currentTime + 0.005, ts.volume * 0.7);
+    updateTrackStepVisual(trackId, idx);
+    updateTrackCounters(trackId);
+    updateSeqMonitor();
+    updateStepEditor();
+
+    if (pt.steps[idx] && audioReady) {
+      const ts = trackState.find(t => t.id === trackId);
+      TRIGGER[trackId]?.(audioCtx, mixBus, ts.params, audioCtx.currentTime + 0.005, ts.volume * 0.7);
     }
   });
 
   document.addEventListener('contextmenu', e => {
     const btn = e.target.closest('.step-btn');
-    if(!btn) return;
+    if (!btn) return;
     e.preventDefault();
-    const ts = trackState.find(t => t.id === btn.dataset.track);
+    const trackId = btn.dataset.track;
     const idx = parseInt(btn.dataset.step, 10);
-    if(!ts) return;
-    ts.accents[idx] = !ts.accents[idx];
-    btn.classList.toggle('accent', !!ts.accents[idx]);
-    updateTrackCounters(ts.id);
-    if(ts.id === selectedTrack) updateSeqMonitor();
+    const pt = getPatternTrack(trackId);
+    pt.accents[idx] = !pt.accents[idx];
+    selectTrack(trackId);
+    selectStep(idx);
+    updateTrackStepVisual(trackId, idx);
+    updateTrackCounters(trackId);
+    updateSeqMonitor();
+    updateStepEditor();
   });
 
+  document.addEventListener('click', e => {
+    const btn = e.target.closest('.pattern-btn');
+    if (!btn) return;
+    currentPattern = parseInt(btn.dataset.pattern, 10);
+    refreshAllUI();
+  });
+
+  qs('#copyTrackBtn').addEventListener('click', copyCurrentTrack);
+  qs('#pasteTrackBtn').addEventListener('click', pasteCurrentTrack);
+  qs('#clearTrackBtn').addEventListener('click', clearCurrentTrack);
+  qs('#randomTrackBtn').addEventListener('click', randomizeCurrentTrack);
+
+  qs('#toggleStepMainBtn').addEventListener('click', () => {
+    const pt = getPatternTrack(selectedTrack);
+    pt.steps[selectedStep] = pt.steps[selectedStep] ? 0 : 1;
+    if (!pt.steps[selectedStep]) pt.accents[selectedStep] = 0;
+    refreshAllUI();
+  });
+  qs('#toggleAccentMainBtn').addEventListener('click', () => {
+    const pt = getPatternTrack(selectedTrack);
+    pt.accents[selectedStep] = pt.accents[selectedStep] ? 0 : 1;
+    refreshAllUI();
+  });
+
+  qs('#stepProb').addEventListener('input', e => {
+    getStepMeta(selectedTrack, selectedStep).prob = parseFloat(e.target.value);
+    updateStepEditor();
+    updateTrackStepVisual(selectedTrack, selectedStep);
+    buildStepMiniGrid();
+  });
+  qs('#stepMicro').addEventListener('input', e => {
+    getStepMeta(selectedTrack, selectedStep).micro = parseFloat(e.target.value);
+    updateStepEditor();
+    updateTrackStepVisual(selectedTrack, selectedStep);
+    buildStepMiniGrid();
+  });
+
+  document.addEventListener('click', e => {
+    const btn = e.target.closest('.step-mini');
+    if (!btn) return;
+    selectStep(parseInt(btn.dataset.miniStep, 10));
+  });
+
+  qs('#lockPitchToggle').addEventListener('click', () => toggleLock('pitch'));
+  qs('#lockDecayToggle').addEventListener('click', () => toggleLock('decay'));
+  qs('#lockToneToggle').addEventListener('click', () => toggleLock('tone'));
+  qs('#lockShermanToggle').addEventListener('click', () => toggleLock('shermanMix'));
+
+  qs('#lockPitch').addEventListener('input', e => updateLockValue('pitch', parseFloat(e.target.value)));
+  qs('#lockDecay').addEventListener('input', e => updateLockValue('decay', parseFloat(e.target.value)));
+  qs('#lockTone').addEventListener('input', e => updateLockValue('tone', parseFloat(e.target.value)));
+  qs('#lockSherman').addEventListener('input', e => updateLockValue('shermanMix', parseFloat(e.target.value)));
+
   document.addEventListener('keydown', async e => {
-    if(['INPUT','SELECT','TEXTAREA'].includes(document.activeElement?.tagName)) return;
-    if(e.code === 'Space'){
+    if (['INPUT','SELECT','TEXTAREA'].includes(document.activeElement?.tagName)) return;
+    if (e.code === 'Space') {
       e.preventDefault();
       await initAudio();
       playing ? stopSeq() : startSeq();
     }
-    if(e.code === 'KeyP'){
+    if (e.code === 'KeyP') {
       await initAudio();
       previewTrack(selectedTrack);
     }
+    if (e.code === 'ArrowRight') {
+      e.preventDefault();
+      selectStep((selectedStep + 1) % STEP_COUNT);
+    }
+    if (e.code === 'ArrowLeft') {
+      e.preventDefault();
+      selectStep((selectedStep - 1 + STEP_COUNT) % STEP_COUNT);
+    }
   });
 
-  qs('#tapeBypass').addEventListener('click', async () => {
-    await initAudio();
-    fxState.tape.enabled = !fxState.tape.enabled;
-    applyTape();
-  });
-  qs('#bitBypass').addEventListener('click', async () => {
-    await initAudio();
-    fxState.bit.enabled = !fxState.bit.enabled;
-    applyBit();
-  });
-  qs('#shermanBypass').addEventListener('click', async () => {
-    await initAudio();
-    fxState.sherman.enabled = !fxState.sherman.enabled;
-    applySherman();
-  });
-  qs('#masterFxBypass').addEventListener('click', async () => {
-    await initAudio();
-    fxState.master.enabled = !fxState.master.enabled;
-    applyMasterFx();
-  });
+  qs('#tapeBypass').addEventListener('click', async () => { await initAudio(); fxState.tape.enabled = !fxState.tape.enabled; applyTape(); });
+  qs('#bitBypass').addEventListener('click', async () => { await initAudio(); fxState.bit.enabled = !fxState.bit.enabled; applyBit(); });
+  qs('#shermanBypass').addEventListener('click', async () => { await initAudio(); fxState.sherman.enabled = !fxState.sherman.enabled; applySherman(); });
+  qs('#masterFxBypass').addEventListener('click', async () => { await initAudio(); fxState.master.enabled = !fxState.master.enabled; applyMasterFx(); });
 
   const FX_SLIDER_MAP = {
     tapeDrive:v => { fxState.tape.drive = v; applyTape(); updateTapeReadouts(); },
@@ -2653,11 +2202,9 @@ function initEvents(){
     tapeWow:v => { fxState.tape.wow = v; applyTape(); updateTapeReadouts(); },
     tapeFlutter:v => { fxState.tape.flutter = v; applyTape(); updateTapeReadouts(); },
     tapeTone:v => { fxState.tape.tone = v; applyTape(); updateTapeReadouts(); },
-
     bitDepth:v => { fxState.bit.bits = v; applyBit(); updateBitReadouts(); },
     srAmount:v => { fxState.bit.sr = v; applyBit(); updateBitReadouts(); },
     bitMix:v => { fxState.bit.mix = v; applyBit(); updateBitReadouts(); },
-
     shermanFreq:v => { fxState.sherman.freq = v; applySherman(); updateShermanReadouts(); },
     shermanRes:v => { fxState.sherman.res = v; applySherman(); updateShermanReadouts(); },
     shermanDrive:v => { fxState.sherman.drive = v; applySherman(); updateShermanReadouts(); },
@@ -2665,7 +2212,6 @@ function initEvents(){
     shermanLfoRate:v => { fxState.sherman.lfoRate = v; applySherman(); updateShermanReadouts(); },
     shermanLfoDepth:v => { fxState.sherman.lfoDepth = v; applySherman(); updateShermanReadouts(); },
     shermanMix:v => { fxState.sherman.mix = v; applySherman(); updateShermanReadouts(); },
-
     mastSub:v => { fxState.master.sub = v; applyMasterFx(); updateMasterReadouts(); },
     mastTilt:v => { fxState.master.tilt = v; applyMasterFx(); updateMasterReadouts(); },
     mastGlue:v => { fxState.master.glue = v; applyMasterFx(); updateMasterReadouts(); },
@@ -2675,16 +2221,16 @@ function initEvents(){
 
   document.addEventListener('input', async e => {
     const slider = e.target.closest('input[type=range]');
-    if(!slider) return;
+    if (!slider) return;
     const handler = FX_SLIDER_MAP[slider.id];
-    if(!handler) return;
+    if (!handler) return;
     await initAudio();
     handler(parseFloat(slider.value));
   });
 
   document.addEventListener('click', async e => {
     const btn = e.target.closest('.mode-btn');
-    if(!btn) return;
+    if (!btn) return;
     await initAudio();
     fxState.sherman.mode = btn.dataset.mode;
     qsa('.mode-btn').forEach(b => b.classList.remove('active'));
@@ -2693,18 +2239,11 @@ function initEvents(){
   });
 }
 
-buildTracks();
-buildQuickTrackGrid();
 buildParamRows();
-updateParamPanel();
-updateTapeReadouts();
-updateBitReadouts();
-updateShermanReadouts();
-updateMasterReadouts();
-updateSeqMonitor();
+buildQuickTrackGrid();
+refreshAllUI();
 initEvents();
 drawEnvCurve();
-
 })();
 </script>
 </body>
