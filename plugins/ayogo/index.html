@@ -1,817 +1,663 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,maximum-scale=1,user-scalable=no" />
-<meta name="theme-color" content="#0b0d10" />
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,maximum-scale=1,user-scalable=no">
+<meta name="theme-color" content="#141414">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>AYOGO 106</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
 :root{
-  --bg:#0b0d10;
-  --panel:#14181d;
-  --panel2:#191f26;
-  --line:#2a313a;
-  --text:#edf2f7;
-  --muted:#8a95a3;
-  --accent:#ff6b35;
-  --accent2:#ff9f43;
-  --green:#57f287;
-  --red:#ff5d73;
-  --shadow:0 10px 24px rgba(0,0,0,.34);
-  --r:16px;
-  --safe-top:env(safe-area-inset-top);
-  --safe-bottom:env(safe-area-inset-bottom);
+  --bg:#141414;--s1:#1c1c1c;--s2:#242424;--s3:#2e2e2e;
+  --line:#2a2a2a;--line2:#383838;
+  --text:#e6e6e6;--muted:#5a5a5a;--dim:#333333;
+  --acc:#ff5500;--acc-dim:rgba(255,85,0,.13);--acc-glow:rgba(255,85,0,.42);
+  --green:#00dd55;--red:#ee2222;
+  --f:'IBM Plex Mono',ui-monospace,monospace;
+  --safe-t:env(safe-area-inset-top,0px);--safe-b:env(safe-area-inset-bottom,0px);
 }
-*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-html,body{margin:0;background:linear-gradient(180deg,#090b0d,#0f1318 45%,#0c0f13);color:var(--text);font-family:Inter,ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;overscroll-behavior:none}
-body{min-height:100vh}
+*,*::before,*::after{box-sizing:border-box;-webkit-tap-highlight-color:transparent;-webkit-text-size-adjust:100%}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--text);font-family:var(--f);overscroll-behavior:none;-webkit-font-smoothing:antialiased}
 button,input,select{font:inherit}
-.app{max-width:1080px;margin:0 auto;padding:calc(12px + var(--safe-top)) 12px calc(22px + var(--safe-bottom));}
-.shell{background:linear-gradient(180deg,#11151a,#0d1014);border:1px solid var(--line);border-radius:24px;box-shadow:var(--shadow);overflow:hidden}
-.topbar{display:flex;gap:10px;align-items:center;justify-content:space-between;padding:12px;border-bottom:1px solid var(--line);background:linear-gradient(180deg,#161b22,#11161c)}
-.brand{display:flex;flex-direction:column;gap:2px}
-.brand .title{font-weight:800;letter-spacing:.08em;font-size:14px}
-.brand .sub{font-size:11px;color:var(--muted);letter-spacing:.14em;text-transform:uppercase}
-.transport{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
-.btn{appearance:none;border:none;background:var(--panel2);color:var(--text);padding:10px 12px;border-radius:12px;border:1px solid var(--line);font-weight:700;letter-spacing:.04em;cursor:pointer;touch-action:manipulation}
-.btn:active{transform:translateY(1px)}
-.btn.accent{background:linear-gradient(180deg,var(--accent2),var(--accent));color:#120b09;border-color:#c95a29}
-.btn.on{outline:2px solid rgba(255,159,67,.45)}
-.btn.small{padding:8px 10px;font-size:12px}
-.main{display:grid;grid-template-columns:1.15fr .85fr;gap:12px;padding:12px}
-.card{background:linear-gradient(180deg,#151a21,#11161c);border:1px solid var(--line);border-radius:18px;padding:12px}
-.card h3{margin:0 0 10px;font-size:12px;letter-spacing:.16em;color:var(--muted);text-transform:uppercase}
-.grid2,.grid3,.grid4{display:grid;gap:10px}
-.grid2{grid-template-columns:repeat(2,minmax(0,1fr))}
-.grid3{grid-template-columns:repeat(3,minmax(0,1fr))}
-.grid4{grid-template-columns:repeat(4,minmax(0,1fr))}
-label{display:flex;flex-direction:column;gap:6px;font-size:12px;color:var(--muted);font-weight:700;letter-spacing:.04em;text-transform:uppercase}
-select,input[type="range"]{width:100%}
-select{background:var(--panel2);color:var(--text);border:1px solid var(--line);border-radius:12px;padding:10px 12px}
-input[type="range"]{accent-color:var(--accent)}
-.readout{display:flex;justify-content:space-between;align-items:center;background:#0d1116;border:1px solid var(--line);padding:9px 10px;border-radius:12px;font-size:12px;color:var(--muted)}
-.readout strong{color:var(--text);font-size:13px}
-.chordArea{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
-.chordPad{min-height:82px;border-radius:16px;border:1px solid var(--line);background:linear-gradient(180deg,#202732,#151b23);display:flex;flex-direction:column;justify-content:space-between;padding:10px;cursor:pointer;user-select:none;touch-action:manipulation;box-shadow:inset 0 1px 0 rgba(255,255,255,.03)}
-.chordPad .deg{font-size:11px;color:var(--muted);font-weight:800;letter-spacing:.14em}
-.chordPad .name{font-size:18px;font-weight:800}
-.chordPad .hint{font-size:11px;color:var(--muted)}
-.chordPad.active{border-color:#f79b72;background:linear-gradient(180deg,#3b2a23,#231814);box-shadow:0 0 0 1px rgba(255,159,67,.3),0 8px 18px rgba(255,107,53,.15)}
-.playRow{display:flex;gap:10px;align-items:center;justify-content:space-between;margin-top:10px;flex-wrap:wrap}
-.xyWrap{display:grid;grid-template-columns:1fr 100px;gap:12px;align-items:stretch}
-.xyPad{position:relative;aspect-ratio:1/1;background:
-  linear-gradient(90deg,rgba(255,255,255,.04) 1px,transparent 1px) 0 0/33.333% 100%,
-  linear-gradient(rgba(255,255,255,.04) 1px,transparent 1px) 0 0/100% 33.333%,
-  radial-gradient(circle at 50% 50%,rgba(255,255,255,.03),transparent 55%),
-  linear-gradient(135deg,#131922,#1d2530);
-  border:1px solid var(--line);border-radius:18px;overflow:hidden;touch-action:none}
-.xyLabel{position:absolute;font-size:11px;color:var(--muted);font-weight:800;letter-spacing:.08em}
-.xyLabel.top{top:8px;left:50%;transform:translateX(-50%)}
-.xyLabel.bottom{bottom:8px;left:50%;transform:translateX(-50%)}
-.xyLabel.left{left:8px;top:50%;transform:translateY(-50%) rotate(-90deg)}
-.xyLabel.right{right:8px;top:50%;transform:translateY(-50%) rotate(90deg)}
-.xyDot{position:absolute;width:26px;height:26px;border-radius:50%;background:radial-gradient(circle at 30% 30%,#fff,#ffc7b0 35%,#ff7d42 65%,#d35620 100%);box-shadow:0 0 16px rgba(255,107,53,.55);transform:translate(-50%,-50%);left:50%;top:50%}
-.meterCol{display:flex;flex-direction:column;gap:10px}
-.meter{background:#0d1116;border:1px solid var(--line);border-radius:14px;padding:10px}
-.meter .k{font-size:11px;color:var(--muted);letter-spacing:.12em;text-transform:uppercase;font-weight:800}
-.meter .v{font-size:20px;font-weight:800;margin-top:8px}
-.seq{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:8px}
-.step{aspect-ratio:1/1;min-height:44px;border-radius:12px;border:1px solid var(--line);background:#161b23;color:var(--muted);display:flex;align-items:center;justify-content:center;font-weight:800;cursor:pointer;touch-action:manipulation}
-.step.on{background:linear-gradient(180deg,#433126,#261912);color:#fff0ea;border-color:#f08e63}
-.step.play{outline:2px solid rgba(87,242,135,.55)}
-.footerNote{padding:0 12px 12px;color:var(--muted);font-size:12px;line-height:1.45}
-.badge{display:inline-flex;gap:6px;align-items:center;padding:6px 8px;background:#0f141b;border:1px solid var(--line);border-radius:999px;font-size:11px;color:var(--muted);font-weight:800;letter-spacing:.08em;text-transform:uppercase}
-.dot{width:8px;height:8px;border-radius:999px;background:var(--red)}
-.dot.live{background:var(--green);box-shadow:0 0 10px rgba(87,242,135,.6)}
-.mini{font-size:11px;color:var(--muted)}
-@media (max-width:920px){
-  .main{grid-template-columns:1fr}
+
+/* Shell */
+.app{display:flex;flex-direction:column;height:100dvh;max-width:560px;margin:0 auto}
+
+/* Header */
+.hdr{flex-shrink:0;display:flex;align-items:center;gap:10px;padding:calc(var(--safe-t) + 9px) 12px 9px;background:var(--s1);border-bottom:1px solid var(--line)}
+.hdr-l{flex:1;display:flex;align-items:center;gap:10px}
+.logo{font-size:13px;font-weight:700;letter-spacing:.18em;color:var(--text)}
+.logo em{color:var(--acc);font-style:normal}
+.status{display:flex;align-items:center;gap:5px;font-size:9px;color:var(--muted);letter-spacing:.12em}
+.led{width:6px;height:6px;border-radius:50%;background:var(--red);flex-shrink:0;transition:background .3s,box-shadow .3s}
+.led.on{background:var(--green);box-shadow:0 0 7px rgba(0,221,85,.55)}
+.btn-start{appearance:none;border:1px solid var(--acc);background:transparent;color:var(--acc);font-family:var(--f);font-size:9px;font-weight:700;letter-spacing:.22em;padding:8px 16px;border-radius:1px;cursor:pointer;touch-action:manipulation;flex-shrink:0;transition:background .1s,color .1s}
+.btn-start:active{background:var(--acc);color:var(--bg)}
+
+/* Transport */
+.transport{flex-shrink:0;display:grid;grid-template-columns:repeat(4,1fr);border-bottom:1px solid var(--line)}
+.tp{appearance:none;border:none;border-right:1px solid var(--line);background:var(--bg);color:var(--muted);font-family:var(--f);font-size:9px;font-weight:700;letter-spacing:.14em;padding:10px 4px;cursor:pointer;touch-action:manipulation;text-align:center;transition:background .08s,color .08s}
+.tp:last-child{border-right:none}
+.tp.on{color:var(--acc);background:var(--acc-dim)}
+.tp.danger{color:var(--red)}
+.tp:active{background:var(--s1)}
+
+/* Tab viewport */
+.viewport{flex:1;min-height:0;position:relative;overflow:hidden}
+.panel{position:absolute;inset:0;overflow-y:auto;-webkit-overflow-scrolling:touch;display:none;flex-direction:column;scrollbar-width:none}
+.panel::-webkit-scrollbar{display:none}
+.panel.active{display:flex}
+
+/* ── 7-pad chord row ─────────────────────────────── */
+.chord-row{
+  flex-shrink:0;
+  position:sticky;top:0;z-index:4;
+  display:grid;
+  grid-template-columns:repeat(7,1fr);
+  border-bottom:1px solid var(--line);
+  background:var(--bg);
 }
-@media (max-width:720px){
-  .chordArea{grid-template-columns:repeat(2,minmax(0,1fr))}
-  .grid4{grid-template-columns:repeat(2,minmax(0,1fr))}
-  .grid3{grid-template-columns:1fr}
-  .xyWrap{grid-template-columns:1fr}
-  .seq{grid-template-columns:repeat(4,minmax(0,1fr))}
-  .topbar{align-items:flex-start;flex-direction:column}
-  .transport{width:100%;justify-content:flex-start}
+/* JS injects .chordPad into #chordPads */
+.chordPad{
+  position:relative;height:82px;
+  border:none;border-right:1px solid var(--line);
+  background:var(--bg);
+  display:flex;flex-direction:column;align-items:flex-start;
+  padding:0;cursor:pointer;user-select:none;touch-action:manipulation;
+  text-align:left;appearance:none;overflow:hidden;
+  transition:background .07s;
 }
+.chordPad:last-child{border-right:none}
+.chordPad:active{background:var(--s2)}
+.chordPad.active{background:var(--s1)}
+/* LED bar top */
+.chordPad::before{content:'';display:block;width:100%;height:3px;background:var(--dim);flex-shrink:0;transition:background .07s,box-shadow .07s}
+.chordPad.active::before{background:var(--acc);box-shadow:0 2px 10px var(--acc-glow)}
+.pad-body{padding:5px 5px 4px;display:flex;flex-direction:column;gap:1px;width:100%;overflow:hidden}
+.chordPad .deg{font-size:8px;font-weight:400;color:var(--muted);letter-spacing:.04em;line-height:1}
+.chordPad.active .deg{color:var(--acc)}
+.chordPad .name{font-size:15px;font-weight:700;color:var(--text);line-height:1.1;white-space:nowrap;overflow:hidden}
+.chordPad.active .name{color:#fff}
+.chordPad .hint{font-size:7px;color:var(--muted);line-height:1.2;white-space:nowrap;overflow:hidden;letter-spacing:.02em}
+.chordPad.active .hint{color:var(--dim)}
+
+/* ── PLAY body ── */
+.play-body{display:flex;flex-direction:column;flex:1}
+
+/* Harmony strip */
+.harmony{display:grid;grid-template-columns:repeat(4,1fr);border-bottom:1px solid var(--line)}
+.hf{display:flex;flex-direction:column;gap:0;border-right:1px solid var(--line);padding:8px 8px}
+.hf:last-child{border-right:none}
+.flbl{font-size:8px;font-weight:700;letter-spacing:.2em;color:var(--muted);text-transform:uppercase;margin-bottom:4px}
+select{width:100%;appearance:none;-webkit-appearance:none;background:transparent;color:var(--text);border:none;border-bottom:1px solid var(--line2);padding:4px 0;font-family:var(--f);font-size:10px;font-weight:500;cursor:pointer;outline:none}
+select:focus{border-bottom-color:var(--acc)}
+
+/* Readouts */
+.readouts{display:grid;grid-template-columns:1fr 1fr;border-bottom:1px solid var(--line)}
+.rout{padding:8px 10px;border-right:1px solid var(--line);display:flex;flex-direction:column;gap:2px}
+.rout:last-child{border-right:none}
+.rk{font-size:8px;color:var(--muted);letter-spacing:.18em;text-transform:uppercase}
+.rv{font-size:11px;font-weight:700;color:var(--acc);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+/* XY pad */
+.xy-section{display:flex;flex-direction:column;border-bottom:1px solid var(--line)}
+.xyPad{
+  position:relative;aspect-ratio:16/7;background:var(--s1);
+  border-bottom:1px solid var(--line);overflow:hidden;touch-action:none;cursor:crosshair;
+}
+.xyPad::before{content:'';position:absolute;top:50%;left:0;right:0;height:1px;background:var(--line);pointer-events:none}
+.xyPad::after{content:'';position:absolute;left:50%;top:0;bottom:0;width:1px;background:var(--line);pointer-events:none}
+.xyLabel{position:absolute;font-size:8px;font-weight:700;color:var(--dim);letter-spacing:.1em;text-transform:uppercase;pointer-events:none;z-index:2}
+.xyLabel.top{top:5px;left:50%;transform:translateX(-50%)}
+.xyLabel.bottom{bottom:5px;left:50%;transform:translateX(-50%)}
+.xyLabel.left{left:6px;top:50%;transform:translateY(-50%) rotate(-90deg)}
+.xyLabel.right{right:6px;top:50%;transform:translateY(-50%) rotate(90deg)}
+.xyDot{position:absolute;width:8px;height:8px;border-radius:50%;background:var(--acc);box-shadow:0 0 14px var(--acc-glow);transform:translate(-50%,-50%);left:50%;top:50%;pointer-events:none;z-index:3}
+/* crosshair from cursor */
+.xyDot::before,.xyDot::after{content:'';position:absolute;background:rgba(255,85,0,.18);pointer-events:none}
+.xyDot::before{top:50%;left:-300vw;right:-300vw;height:1px;transform:translateY(-50%)}
+.xyDot::after{left:50%;top:-300vh;bottom:-300vh;width:1px;transform:translateX(-50%)}
+.xy-meters{display:grid;grid-template-columns:repeat(3,1fr)}
+.mtr{padding:8px 10px;border-right:1px solid var(--line);display:flex;flex-direction:column;gap:2px}
+.mtr:last-child{border-right:none}
+.mk{font-size:8px;color:var(--muted);letter-spacing:.18em;text-transform:uppercase}
+.mv{font-size:16px;font-weight:700;color:var(--text);line-height:1}
+
+/* ── SYNTH / MOD tab ── */
+.sec-hd{padding:9px 12px;font-size:8px;font-weight:700;letter-spacing:.22em;color:var(--muted);text-transform:uppercase;border-bottom:1px solid var(--line);background:var(--s1);display:flex;align-items:center;gap:8px}
+.sec-hd::after{content:'';flex:1;height:1px;background:var(--line2)}
+.param-list{display:flex;flex-direction:column;border-bottom:1px solid var(--line)}
+.param{display:flex;align-items:center;gap:14px;padding:11px 12px;border-bottom:1px solid var(--line)}
+.param:last-child{border-bottom:none}
+.pname{font-size:9px;font-weight:700;letter-spacing:.12em;color:var(--muted);text-transform:uppercase;width:102px;flex-shrink:0}
+input[type="range"]{flex:1;-webkit-appearance:none;appearance:none;height:2px;background:var(--line2);border-radius:0;outline:none;padding:0;cursor:pointer}
+input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:var(--text);border:2px solid var(--acc);cursor:pointer}
+input[type="range"]::-moz-range-thumb{width:14px;height:14px;border-radius:50%;background:var(--text);border:2px solid var(--acc);cursor:pointer}
+
+/* Seq */
+.tempo-row{display:flex;align-items:center;gap:14px;padding:11px 12px;border-bottom:1px solid var(--line)}
+.seq-selects{display:grid;grid-template-columns:repeat(3,1fr);border-bottom:1px solid var(--line)}
+.ssf{padding:8px 9px;border-right:1px solid var(--line);display:flex;flex-direction:column;gap:4px}
+.ssf:last-child{border-right:none}
+#seq{display:grid;grid-template-columns:repeat(8,1fr);border-bottom:1px solid var(--line)}
+.step{aspect-ratio:1;min-height:44px;border:none;border-right:1px solid var(--line);background:var(--bg);color:var(--muted);display:flex;align-items:center;justify-content:center;font-family:var(--f);font-size:10px;font-weight:700;cursor:pointer;touch-action:manipulation;appearance:none;position:relative}
+.step:last-child{border-right:none}
+.step.on{background:var(--acc-dim);color:var(--acc)}
+.step.on::after{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--acc)}
+.step.play{box-shadow:inset 0 0 0 1px var(--green)}
+.seq-btns{display:grid;grid-template-columns:1fr 1fr;border-bottom:1px solid var(--line)}
+.sbtn{appearance:none;border:none;border-right:1px solid var(--line);background:var(--bg);color:var(--muted);font-family:var(--f);font-size:9px;font-weight:700;letter-spacing:.16em;padding:13px;cursor:pointer;touch-action:manipulation;text-align:center}
+.sbtn:last-child{border-right:none}
+.sbtn.hi{color:var(--acc);background:var(--acc-dim)}
+.sbtn:active{background:var(--s2)}
+
+/* Tab bar */
+.tabbar{flex-shrink:0;display:grid;grid-template-columns:repeat(3,1fr);border-top:1px solid var(--line);background:var(--s1);padding-bottom:var(--safe-b)}
+.tabbtn{appearance:none;border:none;border-right:1px solid var(--line);background:transparent;color:var(--muted);display:flex;flex-direction:column;align-items:center;gap:3px;padding:9px 6px;cursor:pointer;touch-action:manipulation;font-size:8px;font-weight:700;letter-spacing:.16em;transition:color .1s,background .1s}
+.tabbtn:last-child{border-right:none}
+.tabbtn.active{color:var(--acc);background:var(--acc-dim)}
+.tabbtn svg{display:block}
 </style>
 </head>
 <body>
 <div class="app">
-  <div class="shell">
-    <div class="topbar">
-      <div class="brand">
-        <div class="title">AYOGO 106</div>
-        <div class="sub">Chord instrument • KR-inspired polysynth • browser native</div>
-      </div>
-      <div class="transport">
-        <span class="badge"><span class="dot" id="audioDot"></span><span id="audioState">audio off</span></span>
-        <button class="btn accent" id="startBtn">Start Audio</button>
-        <button class="btn small" id="holdBtn">Hold</button>
-        <button class="btn small" id="arpBtn">Arp</button>
-        <button class="btn small" id="latchBtn">Latch Seq</button>
-        <button class="btn small" id="panicBtn">Panic</button>
-      </div>
-    </div>
 
-    <div class="main">
-      <div class="leftCol" style="display:flex;flex-direction:column;gap:12px">
-        <section class="card">
-          <h3>Harmony</h3>
-          <div class="grid4">
-            <label>Key
-              <select id="keySelect"></select>
-            </label>
-            <label>Scale
-              <select id="scaleSelect"></select>
-            </label>
-            <label>Octave
-              <select id="octaveSelect">
-                <option value="2">2</option>
-                <option value="3" selected>3</option>
-                <option value="4">4</option>
-              </select>
-            </label>
-            <label>Style preset
-              <select id="presetSelect">
-                <option value="neo">Neo Soul</option>
-                <option value="house">Deep House</option>
-                <option value="dream">Dream Pop</option>
-                <option value="dark">Dark Dorian</option>
-              </select>
-            </label>
-          </div>
-          <div class="playRow">
-            <div class="readout"><span>Current voicing</span><strong id="voicingReadout">Maj7 / open</strong></div>
-            <div class="readout"><span>Chord output</span><strong id="chordReadout">Cmaj7</strong></div>
-          </div>
-          <div class="chordArea" id="chordPads"></div>
-        </section>
-
-        <section class="card">
-          <h3>Feel pad</h3>
-          <div class="xyWrap">
-            <div class="xyPad" id="xyPad">
-              <div class="xyLabel top">BRIGHT / TENSE</div>
-              <div class="xyLabel bottom">DARK / SOFT</div>
-              <div class="xyLabel left">SIMPLE</div>
-              <div class="xyLabel right">RICH</div>
-              <div class="xyDot" id="xyDot"></div>
-            </div>
-            <div class="meterCol">
-              <div class="meter"><div class="k">Brightness</div><div class="v" id="brightVal">50</div></div>
-              <div class="meter"><div class="k">Density</div><div class="v" id="denseVal">50</div></div>
-              <div class="meter"><div class="k">Strum</div><div class="v" id="strumVal">24 ms</div></div>
-            </div>
-          </div>
-        </section>
-
-        <section class="card">
-          <h3>Sequence</h3>
-          <div class="grid4" style="margin-bottom:10px">
-            <label>Tempo
-              <input id="tempo" type="range" min="60" max="160" value="96" />
-            </label>
-            <label>Rate
-              <select id="rateSelect">
-                <option value="4">1/4</option>
-                <option value="8" selected>1/8</option>
-                <option value="16">1/16</option>
-              </select>
-            </label>
-            <label>Direction
-              <select id="dirSelect">
-                <option value="up" selected>Up</option>
-                <option value="down">Down</option>
-                <option value="updown">Up-Down</option>
-                <option value="random">Random</option>
-              </select>
-            </label>
-            <label>Recorded degree
-              <select id="seqDegreeSelect">
-                <option value="1">I</option><option value="2">II</option><option value="3">III</option><option value="4">IV</option><option value="5">V</option><option value="6">VI</option><option value="7">VII</option>
-              </select>
-            </label>
-          </div>
-          <div class="seq" id="seq"></div>
-          <div class="playRow">
-            <div class="mini">Tape-like arp over KR-style synth core</div>
-            <div style="display:flex;gap:8px;flex-wrap:wrap">
-              <button class="btn small" id="clearSeqBtn">Clear</button>
-              <button class="btn small" id="fillSeqBtn">Musical Fill</button>
-            </div>
-          </div>
-        </section>
-      </div>
-
-      <div class="rightCol" style="display:flex;flex-direction:column;gap:12px">
-        <section class="card">
-          <h3>Synth engine</h3>
-          <div class="grid2">
-            <label>Saw
-              <input id="saw" type="range" min="0" max="1" step="0.01" value="0.82" />
-            </label>
-            <label>Pulse
-              <input id="pulse" type="range" min="0" max="1" step="0.01" value="0.30" />
-            </label>
-            <label>Sub
-              <input id="sub" type="range" min="0" max="1" step="0.01" value="0.52" />
-            </label>
-            <label>Noise
-              <input id="noise" type="range" min="0" max="1" step="0.01" value="0.05" />
-            </label>
-            <label>PW
-              <input id="pw" type="range" min="0.1" max="0.9" step="0.01" value="0.48" />
-            </label>
-            <label>Detune
-              <input id="detune" type="range" min="0" max="20" step="0.1" value="4.5" />
-            </label>
-          </div>
-        </section>
-
-        <section class="card">
-          <h3>Filter & amp</h3>
-          <div class="grid2">
-            <label>LPF Cutoff
-              <input id="cutoff" type="range" min="120" max="9000" step="1" value="1900" />
-            </label>
-            <label>Resonance
-              <input id="res" type="range" min="0.1" max="20" step="0.01" value="2.2" />
-            </label>
-            <label>HPF
-              <input id="hpf" type="range" min="20" max="1200" step="1" value="40" />
-            </label>
-            <label>Env Amt
-              <input id="envAmt" type="range" min="0" max="1" step="0.01" value="0.32" />
-            </label>
-            <label>Attack
-              <input id="attack" type="range" min="0.001" max="2" step="0.001" value="0.02" />
-            </label>
-            <label>Decay
-              <input id="decay" type="range" min="0.03" max="3" step="0.001" value="0.45" />
-            </label>
-            <label>Sustain
-              <input id="sustain" type="range" min="0" max="1" step="0.01" value="0.72" />
-            </label>
-            <label>Release
-              <input id="release" type="range" min="0.03" max="6" step="0.01" value="1.65" />
-            </label>
-          </div>
-        </section>
-
-        <section class="card">
-          <h3>Mod & space</h3>
-          <div class="grid2">
-            <label>Chorus Mix
-              <input id="chorusMix" type="range" min="0" max="1" step="0.01" value="0.45" />
-            </label>
-            <label>Chorus Rate
-              <input id="chorusRate" type="range" min="0.05" max="3" step="0.01" value="0.32" />
-            </label>
-            <label>Chorus Depth
-              <input id="chorusDepth" type="range" min="0" max="0.02" step="0.0001" value="0.006" />
-            </label>
-            <label>Stereo Width
-              <input id="width" type="range" min="0" max="1" step="0.01" value="0.55" />
-            </label>
-            <label>LFO Rate
-              <input id="lfoRate" type="range" min="0.05" max="12" step="0.01" value="0.22" />
-            </label>
-            <label>LFO Filter
-              <input id="lfoToFilter" type="range" min="0" max="1" step="0.01" value="0.08" />
-            </label>
-            <label>LFO PWM
-              <input id="lfoToPWM" type="range" min="0" max="1" step="0.01" value="0.18" />
-            </label>
-            <label>Master
-              <input id="master" type="range" min="0" max="1" step="0.01" value="0.72" />
-            </label>
-          </div>
-        </section>
-      </div>
-    </div>
-    <div class="footerNote">
-      Instrument pensé pour le jeu harmonique immédiat. Les accords suivent la tonalité et la gamme choisies, puis le pad XY fait dériver le voicing entre simple / riche et sombre / brillant.
-    </div>
+<!-- Header -->
+<header class="hdr">
+  <div class="hdr-l">
+    <span class="logo">AYOGO <em>106</em></span>
+    <span class="status"><span class="led" id="audioDot"></span><span id="audioState">OFF</span></span>
   </div>
+  <button class="btn-start" id="startBtn">START</button>
+</header>
+
+<!-- Transport -->
+<div class="transport">
+  <button class="tp" id="holdBtn">HOLD</button>
+  <button class="tp" id="arpBtn">ARP</button>
+  <button class="tp" id="latchBtn">LATCH</button>
+  <button class="tp danger" id="panicBtn">PANIC</button>
+</div>
+
+<!-- Panels -->
+<div class="viewport">
+
+  <!-- PLAY -->
+  <section class="panel active" data-tab="play">
+    <!-- 7-pad row — sticky, JS fills this -->
+    <div class="chord-row" id="chordPads"></div>
+
+    <div class="play-body">
+      <div class="harmony">
+        <div class="hf"><span class="flbl">KEY</span><select id="keySelect"></select></div>
+        <div class="hf"><span class="flbl">SCALE</span><select id="scaleSelect"></select></div>
+        <div class="hf"><span class="flbl">OCT</span>
+          <select id="octaveSelect">
+            <option value="2">2</option><option value="3" selected>3</option><option value="4">4</option>
+          </select>
+        </div>
+        <div class="hf"><span class="flbl">PRESET</span>
+          <select id="presetSelect">
+            <option value="neo">Neo Soul</option><option value="house">Deep House</option>
+            <option value="dream">Dream Pop</option><option value="dark">Dark Dorian</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="readouts">
+        <div class="rout"><span class="rk">VOICING</span><span class="rv" id="voicingReadout">Maj7 / open</span></div>
+        <div class="rout"><span class="rk">CHORD</span><span class="rv" id="chordReadout">Cmaj7</span></div>
+      </div>
+
+      <div class="xy-section">
+        <div class="xyPad" id="xyPad">
+          <span class="xyLabel top">BRIGHT</span>
+          <span class="xyLabel bottom">DARK</span>
+          <span class="xyLabel left">SMP</span>
+          <span class="xyLabel right">RICH</span>
+          <div class="xyDot" id="xyDot"></div>
+        </div>
+        <div class="xy-meters">
+          <div class="mtr"><span class="mk">BRIGHT</span><span class="mv" id="brightVal">50</span></div>
+          <div class="mtr"><span class="mk">DENSITY</span><span class="mv" id="denseVal">50</span></div>
+          <div class="mtr"><span class="mk">STRUM</span><span class="mv" id="strumVal">24ms</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SYNTH -->
+  <section class="panel" data-tab="synth">
+    <div class="sec-hd">OSCILLATORS</div>
+    <div class="param-list">
+      <div class="param"><span class="pname">SAW</span><input id="saw" type="range" min="0" max="1" step="0.01" value="0.82"></div>
+      <div class="param"><span class="pname">PULSE</span><input id="pulse" type="range" min="0" max="1" step="0.01" value="0.30"></div>
+      <div class="param"><span class="pname">SUB</span><input id="sub" type="range" min="0" max="1" step="0.01" value="0.52"></div>
+      <div class="param"><span class="pname">NOISE</span><input id="noise" type="range" min="0" max="1" step="0.01" value="0.05"></div>
+      <div class="param"><span class="pname">PULSE WIDTH</span><input id="pw" type="range" min="0.1" max="0.9" step="0.01" value="0.48"></div>
+      <div class="param"><span class="pname">DETUNE</span><input id="detune" type="range" min="0" max="20" step="0.1" value="4.5"></div>
+    </div>
+    <div class="sec-hd">FILTER</div>
+    <div class="param-list">
+      <div class="param"><span class="pname">LPF CUTOFF</span><input id="cutoff" type="range" min="120" max="9000" step="1" value="1900"></div>
+      <div class="param"><span class="pname">RESONANCE</span><input id="res" type="range" min="0.1" max="20" step="0.01" value="2.2"></div>
+      <div class="param"><span class="pname">HPF</span><input id="hpf" type="range" min="20" max="1200" step="1" value="40"></div>
+      <div class="param"><span class="pname">ENV AMT</span><input id="envAmt" type="range" min="0" max="1" step="0.01" value="0.32"></div>
+    </div>
+    <div class="sec-hd">AMP ENVELOPE</div>
+    <div class="param-list">
+      <div class="param"><span class="pname">ATTACK</span><input id="attack" type="range" min="0.001" max="2" step="0.001" value="0.02"></div>
+      <div class="param"><span class="pname">DECAY</span><input id="decay" type="range" min="0.03" max="3" step="0.001" value="0.45"></div>
+      <div class="param"><span class="pname">SUSTAIN</span><input id="sustain" type="range" min="0" max="1" step="0.01" value="0.72"></div>
+      <div class="param"><span class="pname">RELEASE</span><input id="release" type="range" min="0.03" max="6" step="0.01" value="1.65"></div>
+    </div>
+  </section>
+
+  <!-- MOD -->
+  <section class="panel" data-tab="mod">
+    <div class="sec-hd">CHORUS · SPACE</div>
+    <div class="param-list">
+      <div class="param"><span class="pname">CHORUS MIX</span><input id="chorusMix" type="range" min="0" max="1" step="0.01" value="0.45"></div>
+      <div class="param"><span class="pname">CHORUS RATE</span><input id="chorusRate" type="range" min="0.05" max="3" step="0.01" value="0.32"></div>
+      <div class="param"><span class="pname">DEPTH</span><input id="chorusDepth" type="range" min="0" max="0.02" step="0.0001" value="0.006"></div>
+      <div class="param"><span class="pname">WIDTH</span><input id="width" type="range" min="0" max="1" step="0.01" value="0.55"></div>
+    </div>
+    <div class="sec-hd">LFO</div>
+    <div class="param-list">
+      <div class="param"><span class="pname">LFO RATE</span><input id="lfoRate" type="range" min="0.05" max="12" step="0.01" value="0.22"></div>
+      <div class="param"><span class="pname">→ FILTER</span><input id="lfoToFilter" type="range" min="0" max="1" step="0.01" value="0.08"></div>
+      <div class="param"><span class="pname">→ PWM</span><input id="lfoToPWM" type="range" min="0" max="1" step="0.01" value="0.18"></div>
+      <div class="param"><span class="pname">MASTER VOL</span><input id="master" type="range" min="0" max="1" step="0.01" value="0.72"></div>
+    </div>
+    <div class="sec-hd">SEQUENCER</div>
+    <div class="tempo-row">
+      <span class="pname" style="width:60px">TEMPO</span>
+      <input id="tempo" type="range" min="60" max="160" value="96" style="flex:1">
+    </div>
+    <div class="seq-selects">
+      <div class="ssf"><span class="flbl">RATE</span>
+        <select id="rateSelect">
+          <option value="4">1/4</option><option value="8" selected>1/8</option><option value="16">1/16</option>
+        </select>
+      </div>
+      <div class="ssf"><span class="flbl">DIRECTION</span>
+        <select id="dirSelect">
+          <option value="up" selected>Up</option><option value="down">Down</option>
+          <option value="updown">Up-Down</option><option value="random">Random</option>
+        </select>
+      </div>
+      <div class="ssf"><span class="flbl">DEGREE</span>
+        <select id="seqDegreeSelect">
+          <option value="1">I</option><option value="2">II</option><option value="3">III</option>
+          <option value="4">IV</option><option value="5">V</option><option value="6">VI</option><option value="7">VII</option>
+        </select>
+      </div>
+    </div>
+    <div id="seq"></div>
+    <div class="seq-btns">
+      <button class="sbtn" id="clearSeqBtn">CLEAR</button>
+      <button class="sbtn hi" id="fillSeqBtn">FILL</button>
+    </div>
+  </section>
+</div>
+
+<!-- Tab bar -->
+<nav class="tabbar">
+  <button class="tabbtn active" data-target="play">
+    <svg width="18" height="18" viewBox="0 0 18 18" fill="currentColor">
+      <rect x="0" y="3" width="3.2" height="12" rx="1"/>
+      <rect x="4.2" y="3" width="3.2" height="12" rx="1" opacity=".6"/>
+      <rect x="8.4" y="3" width="3.2" height="12" rx="1"/>
+      <rect x="12.6" y="3" width="3.2" height="12" rx="1" opacity=".6"/>
+      <rect x="3" y="3" width="2" height="7" rx=".5" fill="var(--bg)"/>
+      <rect x="7.2" y="3" width="2" height="7" rx=".5" fill="var(--bg)"/>
+      <rect x="11.4" y="3" width="2" height="7" rx=".5" fill="var(--bg)"/>
+    </svg>
+    PLAY
+  </button>
+  <button class="tabbtn" data-target="synth">
+    <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M1 9 L3 9 L4.5 4 L6.5 14 L8.5 9 L10 9 L11.5 5.5 L13.5 12.5 L15 9 L17 9"/>
+    </svg>
+    SYNTH
+  </button>
+  <button class="tabbtn" data-target="mod">
+    <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round">
+      <path d="M1 9 Q4 3 7.5 9 Q11 15 14.5 9 Q16 6 17 9"/>
+      <circle cx="9" cy="9" r="1.6" fill="currentColor" stroke="none"/>
+    </svg>
+    MOD
+  </button>
+</nav>
 </div>
 
 <script>
-(() => {
-  const $ = sel => document.querySelector(sel);
-  const chordPadsEl = $('#chordPads');
-  const seqEl = $('#seq');
+/* Tab routing */
+document.querySelectorAll('.tabbtn').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    const t=btn.dataset.target;
+    document.querySelectorAll('.tabbtn').forEach(b=>b.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+    btn.classList.add('active');
+    document.querySelector(`.panel[data-tab="${t}"]`).classList.add('active');
+  });
+});
 
-  const NOTES = ['C','C#','D','Eb','E','F','F#','G','Ab','A','Bb','B'];
-  const SCALES = {
-    major:{name:'Major', steps:[0,2,4,5,7,9,11], qualities:['maj','min','min','maj','maj','min','dim']},
-    minor:{name:'Natural Minor', steps:[0,2,3,5,7,8,10], qualities:['min','dim','maj','min','min','maj','maj']},
-    dorian:{name:'Dorian', steps:[0,2,3,5,7,9,10], qualities:['min','min','maj','maj','min','dim','maj']},
-    mixolydian:{name:'Mixolydian', steps:[0,2,4,5,7,9,10], qualities:['maj','min','dim','maj','min','min','maj']},
+/* Audio engine */
+(()=>{
+  const $=sel=>document.querySelector(sel);
+  const seqEl=$('#seq');
+  const NOTES=['C','C#','D','Eb','E','F','F#','G','Ab','A','Bb','B'];
+  const SCALES={
+    major:        {name:'Major',          steps:[0,2,4,5,7,9,11], qualities:['maj','min','min','maj','maj','min','dim']},
+    minor:        {name:'Natural Minor',  steps:[0,2,3,5,7,8,10], qualities:['min','dim','maj','min','min','maj','maj']},
+    dorian:       {name:'Dorian',         steps:[0,2,3,5,7,9,10], qualities:['min','min','maj','maj','min','dim','maj']},
+    mixolydian:   {name:'Mixolydian',     steps:[0,2,4,5,7,9,10], qualities:['maj','min','dim','maj','min','min','maj']},
     harmonicMinor:{name:'Harmonic Minor', steps:[0,2,3,5,7,8,11], qualities:['min','dim','aug','min','maj','maj','dim']}
   };
-
-  const state = {
-    ctx:null,
-    master:null,
-    dryBus:null,
-    chorusWet:null,
-    chorusDry:null,
-    analyser:null,
-    noiseBuffer:null,
-    audioReady:false,
-    key:0,
-    scale:'major',
-    octave:3,
-    hold:false,
-    arp:false,
-    seqLatch:false,
-    xyX:0.5,
-    xyY:0.5,
-    voices:[],
-    activeNotes:new Map(),
-    currentDegree:1,
-    seq:new Array(8).fill(false),
-    seqDegree:1,
-    stepIndex:-1,
-    arpTimer:null,
-    arpPhase:0,
-    arpDir:1,
-    latchedChord:null
+  const state={
+    ctx:null,master:null,dryBus:null,chorusWet:null,chorusDry:null,
+    analyser:null,noiseBuffer:null,audioReady:false,
+    key:0,scale:'major',octave:3,
+    hold:false,arp:false,seqLatch:false,xyX:.5,xyY:.5,
+    activeNotes:new Map(),currentDegree:1,
+    seq:new Array(8).fill(false),seqDegree:1,
+    stepIndex:-1,arpTimer:null,arpPhase:0,latchedChord:null
   };
-
-  function midiToFreq(n){ return 440 * Math.pow(2,(n-69)/12); }
-  function clamp(v,a,b){ return Math.max(a,Math.min(b,v)); }
-  function lerp(a,b,t){ return a + (b-a)*t; }
-  function choice(arr){ return arr[(Math.random()*arr.length)|0]; }
+  const midiToFreq=n=>440*Math.pow(2,(n-69)/12);
+  const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+  const lerp=(a,b,t)=>a+(b-a)*t;
+  const choice=arr=>arr[(Math.random()*arr.length)|0];
 
   function populateSelects(){
-    NOTES.forEach((n,i)=>$('#keySelect').insertAdjacentHTML('beforeend', `<option value="${i}">${n}</option>`));
-    Object.entries(SCALES).forEach(([k,v])=>$('#scaleSelect').insertAdjacentHTML('beforeend', `<option value="${k}">${v.name}</option>`));
-    $('#keySelect').value = String(state.key);
-    $('#scaleSelect').value = state.scale;
+    NOTES.forEach((n,i)=>$('#keySelect').insertAdjacentHTML('beforeend',`<option value="${i}">${n}</option>`));
+    Object.entries(SCALES).forEach(([k,v])=>$('#scaleSelect').insertAdjacentHTML('beforeend',`<option value="${k}">${v.name}</option>`));
+    $('#keySelect').value='0';$('#scaleSelect').value='major';
   }
 
-  function buildSequenceUI(){
-    seqEl.innerHTML = '';
+  function buildSeqUI(){
+    seqEl.innerHTML='';
     state.seq.forEach((on,i)=>{
-      const b = document.createElement('button');
-      b.className = 'step' + (on ? ' on' : '');
-      b.textContent = i+1;
-      b.addEventListener('click',()=>{ state.seq[i] = !state.seq[i]; buildSequenceUI(); });
+      const b=document.createElement('button');
+      b.className='step'+(on?' on':''); b.textContent=i+1;
+      b.addEventListener('click',()=>{state.seq[i]=!state.seq[i];buildSeqUI();});
       seqEl.appendChild(b);
     });
   }
 
   function degreeInfo(deg){
-    const s = SCALES[state.scale];
-    const rootSemi = (state.key + s.steps[deg-1]) % 12;
-    const rootName = NOTES[rootSemi];
-    const baseQ = s.qualities[deg-1];
-    return {rootSemi, rootName, baseQ};
+    const s=SCALES[state.scale],rootSemi=(state.key+s.steps[deg-1])%12;
+    return{rootSemi,rootName:NOTES[rootSemi],baseQ:s.qualities[deg-1]};
   }
 
-  function getVoicingProfile(baseQ){
-    const x = state.xyX;
-    const y = 1 - state.xyY;
-    let label = 'Neutral';
-    let intervals = [];
-    let extension = '';
-
-    if (y < 0.33) {
-      if (x < 0.33) { label = 'Power / sparse'; intervals = [0,7,12]; extension='5'; }
-      else if (x < 0.66) { label = baseQ.startsWith('min') ? 'Minor triad' : 'Triad'; intervals = triadForQuality(baseQ); }
-      else { label = 'Sus / open'; intervals = baseQ.startsWith('min') ? [0,5,7,12] : [0,2,7,12]; extension = baseQ.startsWith('min') ? 'sus4' : 'add2'; }
-    } else if (y < 0.66) {
-      if (x < 0.33) { label = baseQ.startsWith('min') ? 'Min7' : '7 / maj7'; intervals = seventhForQuality(baseQ, false); }
-      else if (x < 0.66) { label = 'Open 7'; intervals = spreadVoicing(seventhForQuality(baseQ, false)); }
-      else { label = 'Add9 / color'; intervals = addNineForQuality(baseQ); extension='add9'; }
-    } else {
-      if (x < 0.33) { label = 'Soft 6/9'; intervals = sixNineForQuality(baseQ); extension='6/9'; }
-      else if (x < 0.66) { label = 'Maj9 / min9'; intervals = nineForQuality(baseQ); extension='9'; }
-      else { label = 'Dense jazz'; intervals = denseForQuality(baseQ); extension='rich'; }
+  function getVP(baseQ){
+    const x=state.xyX,y=1-state.xyY;
+    let label='Neutral',intervals=[],extension='';
+    if(y<.33){
+      if(x<.33)     {label='Power';intervals=[0,7,12];extension='5';}
+      else if(x<.66){label=baseQ.startsWith('min')?'Min triad':'Triad';intervals=triadFQ(baseQ);}
+      else          {label='Sus';intervals=baseQ.startsWith('min')?[0,5,7,12]:[0,2,7,12];extension=baseQ.startsWith('min')?'sus4':'add2';}
+    }else if(y<.66){
+      if(x<.33)     {label=baseQ.startsWith('min')?'Min7':'Maj7';intervals=sevFQ(baseQ);}
+      else if(x<.66){label='Open7';intervals=spreadV(sevFQ(baseQ));}
+      else          {label='Add9';intervals=add9FQ(baseQ);extension='add9';}
+    }else{
+      if(x<.33)     {label='6/9';intervals=sixNFQ(baseQ);extension='6/9';}
+      else if(x<.66){label='9';intervals=nineFQ(baseQ);extension='9';}
+      else          {label='Dense';intervals=denseFQ(baseQ);extension='rich';}
     }
-
-    const brightness = x;
-    const density = y;
-    return { intervals, label, extension, brightness, density };
+    return{intervals,label,extension,brightness:x,density:y};
   }
-
-  function triadForQuality(q){
-    if(q==='maj') return [0,4,7];
-    if(q==='min') return [0,3,7];
-    if(q==='dim') return [0,3,6];
-    if(q==='aug') return [0,4,8];
-    return [0,4,7];
-  }
-  function seventhForQuality(q, preferMaj){
-    if(q==='maj') return preferMaj ? [0,4,7,11] : [0,4,7,11];
-    if(q==='min') return [0,3,7,10];
-    if(q==='dim') return [0,3,6,10];
-    if(q==='aug') return [0,4,8,11];
-    return [0,4,7,10];
-  }
-  function addNineForQuality(q){
-    if(q==='maj') return [0,4,7,14];
-    if(q==='min') return [0,3,7,14];
-    if(q==='dim') return [0,3,6,13];
-    return [0,4,7,14];
-  }
-  function sixNineForQuality(q){
-    if(q==='maj') return [0,4,9,14];
-    if(q==='min') return [0,3,9,14];
-    if(q==='dim') return [0,3,6,12];
-    return [0,4,9,14];
-  }
-  function nineForQuality(q){
-    if(q==='maj') return [0,4,7,11,14];
-    if(q==='min') return [0,3,7,10,14];
-    if(q==='dim') return [0,3,6,10,13];
-    return [0,4,7,10,14];
-  }
-  function denseForQuality(q){
-    if(q==='maj') return [0,4,7,11,14,19];
-    if(q==='min') return [0,3,7,10,14,19];
-    if(q==='dim') return [0,3,6,10,13,18];
-    return [0,4,7,11,14,19];
-  }
-  function spreadVoicing(intervals){
-    const out = intervals.slice();
-    if(out.length > 2) out[2] += 12;
-    return out;
-  }
+  const triadFQ =q=>q==='maj'?[0,4,7]:q==='min'?[0,3,7]:q==='dim'?[0,3,6]:q==='aug'?[0,4,8]:[0,4,7];
+  const sevFQ   =q=>q==='maj'?[0,4,7,11]:q==='min'?[0,3,7,10]:q==='dim'?[0,3,6,10]:q==='aug'?[0,4,8,11]:[0,4,7,10];
+  const add9FQ  =q=>q==='maj'?[0,4,7,14]:q==='min'?[0,3,7,14]:q==='dim'?[0,3,6,13]:[0,4,7,14];
+  const sixNFQ  =q=>q==='maj'?[0,4,9,14]:q==='min'?[0,3,9,14]:q==='dim'?[0,3,6,12]:[0,4,9,14];
+  const nineFQ  =q=>q==='maj'?[0,4,7,11,14]:q==='min'?[0,3,7,10,14]:q==='dim'?[0,3,6,10,13]:[0,4,7,10,14];
+  const denseFQ =q=>q==='maj'?[0,4,7,11,14,19]:q==='min'?[0,3,7,10,14,19]:q==='dim'?[0,3,6,10,13,18]:[0,4,7,11,14,19];
+  const spreadV =ivs=>{const o=ivs.slice();if(o.length>2)o[2]+=12;return o;};
 
   function chordLabel(deg){
-    const info = degreeInfo(deg);
-    const vp = getVoicingProfile(info.baseQ);
-    const triadName = info.baseQ === 'maj' ? '' : info.baseQ;
-    return { root: info.rootName, text: `${info.rootName}${triadName}${vp.extension ? ' ' + vp.extension : ''}`.trim(), info, vp };
+    const info=degreeInfo(deg),vp=getVP(info.baseQ);
+    const tn=info.baseQ==='maj'?'':info.baseQ;
+    return{root:info.rootName,text:`${info.rootName}${tn}${vp.extension?' '+vp.extension:''}`.trim(),info,vp};
   }
 
   function renderPads(){
-    chordPadsEl.innerHTML = '';
-    for(let deg=1; deg<=7; deg++){
-      const lab = chordLabel(deg);
-      const pad = document.createElement('button');
-      pad.className = 'chordPad' + (state.currentDegree===deg ? ' active':'');
-      pad.innerHTML = `<div class="deg">${['I','II','III','IV','V','VI','VII'][deg-1]}</div><div class="name">${lab.text}</div><div class="hint">${lab.vp.label}</div>`;
-      const down = e => { e.preventDefault(); state.currentDegree = deg; updateReadouts(); renderPads(); triggerDegree(deg); };
-      const up = e => { e.preventDefault(); if(!state.hold && !state.arp) releaseCurrent(); };
-      pad.addEventListener('pointerdown', down);
-      pad.addEventListener('pointerup', up);
-      pad.addEventListener('pointerleave', up);
-      chordPadsEl.appendChild(pad);
+    const el=$('#chordPads'); el.innerHTML='';
+    const romans=['I','II','III','IV','V','VI','VII'];
+    for(let deg=1;deg<=7;deg++){
+      const lab=chordLabel(deg);
+      const quality=(lab.info.baseQ==='maj'?'':lab.info.baseQ)+(lab.vp.extension?' '+lab.vp.extension:'');
+      const pad=document.createElement('button');
+      pad.className='chordPad'+(state.currentDegree===deg?' active':'');
+      pad.innerHTML=`<div class="pad-body"><div class="deg">${romans[deg-1]}</div><div class="name">${lab.root}</div><div class="hint">${quality.trim()||'maj'}</div></div>`;
+      const dn=e=>{e.preventDefault();state.currentDegree=deg;updateReadouts();renderPads();triggerDeg(deg);};
+      const up=e=>{e.preventDefault();if(!state.hold&&!state.arp)releaseCurrent();};
+      pad.addEventListener('pointerdown',dn);
+      pad.addEventListener('pointerup',up);
+      pad.addEventListener('pointerleave',up);
+      el.appendChild(pad);
     }
   }
 
   function updateReadouts(){
-    const lab = chordLabel(state.currentDegree);
-    $('#voicingReadout').textContent = lab.vp.label;
-    $('#chordReadout').textContent = lab.text;
-    $('#brightVal').textContent = Math.round(state.xyX*100);
-    $('#denseVal').textContent = Math.round((1-state.xyY)*100);
-    const ms = Math.round(10 + (1-state.xyY)*45 + state.xyX*20);
-    $('#strumVal').textContent = `${ms} ms`;
+    const lab=chordLabel(state.currentDegree);
+    $('#voicingReadout').textContent=lab.vp.label;
+    $('#chordReadout').textContent=lab.text;
+    $('#brightVal').textContent=Math.round(state.xyX*100);
+    $('#denseVal').textContent=Math.round((1-state.xyY)*100);
+    $('#strumVal').textContent=Math.round(10+(1-state.xyY)*45+state.xyX*20)+'ms';
   }
 
   async function initAudio(){
-    if(state.audioReady) return;
-    const ctx = new (window.AudioContext || window.webkitAudioContext)();
-    await ctx.resume();
-    state.ctx = ctx;
-
-    const master = ctx.createGain(); master.gain.value = parseFloat($('#master').value);
-    const analyser = ctx.createAnalyser(); analyser.fftSize = 512;
-
-    const hpf = ctx.createBiquadFilter(); hpf.type = 'highpass'; hpf.frequency.value = parseFloat($('#hpf').value);
-    const chorusIn = ctx.createGain();
-    const chorusDry = ctx.createGain();
-    const chorusWet = ctx.createGain();
-    chorusDry.gain.value = 1 - parseFloat($('#chorusMix').value);
-    chorusWet.gain.value = parseFloat($('#chorusMix').value);
-
-    const delayL = ctx.createDelay(0.05), delayR = ctx.createDelay(0.05);
-    delayL.delayTime.value = 0.018; delayR.delayTime.value = 0.024;
-    const lfo = ctx.createOscillator(); lfo.type='triangle'; lfo.frequency.value = parseFloat($('#chorusRate').value);
-    const lfoGainL = ctx.createGain(), lfoGainR = ctx.createGain();
-    lfoGainL.gain.value = parseFloat($('#chorusDepth').value);
-    lfoGainR.gain.value = -parseFloat($('#chorusDepth').value) * 0.9;
-    lfo.connect(lfoGainL).connect(delayL.delayTime);
-    lfo.connect(lfoGainR).connect(delayR.delayTime);
-    lfo.start();
-
-    const merger = ctx.createChannelMerger(2);
-    const splitter = ctx.createChannelSplitter(2);
-    const wetIn = ctx.createGain();
-    wetIn.connect(delayL);
-    wetIn.connect(delayR);
-    delayL.connect(merger,0,0);
-    delayR.connect(merger,0,1);
-
-    const out = ctx.createGain();
-    chorusIn.connect(hpf);
-    hpf.connect(chorusDry).connect(out);
-    hpf.connect(wetIn);
-    merger.connect(chorusWet).connect(out);
+    if(state.audioReady)return;
+    const ctx=new(window.AudioContext||window.webkitAudioContext)();
+    await ctx.resume();state.ctx=ctx;
+    const master=ctx.createGain();master.gain.value=+$('#master').value;
+    const analyser=ctx.createAnalyser();analyser.fftSize=512;
+    const hpf=ctx.createBiquadFilter();hpf.type='highpass';hpf.frequency.value=+$('#hpf').value;
+    const ci=ctx.createGain(),cd=ctx.createGain(),cw=ctx.createGain();
+    cd.gain.value=1-+$('#chorusMix').value;cw.gain.value=+$('#chorusMix').value;
+    const dL=ctx.createDelay(.05),dR=ctx.createDelay(.05);
+    dL.delayTime.value=.018;dR.delayTime.value=.024;
+    const lfo=ctx.createOscillator();lfo.type='triangle';lfo.frequency.value=+$('#chorusRate').value;
+    const lgL=ctx.createGain(),lgR=ctx.createGain();
+    lgL.gain.value=+$('#chorusDepth').value;lgR.gain.value=-+$('#chorusDepth').value*.9;
+    lfo.connect(lgL).connect(dL.delayTime);lfo.connect(lgR).connect(dR.delayTime);lfo.start();
+    const merger=ctx.createChannelMerger(2),wi=ctx.createGain();
+    wi.connect(dL);wi.connect(dR);dL.connect(merger,0,0);dR.connect(merger,0,1);
+    const out=ctx.createGain();
+    ci.connect(hpf);hpf.connect(cd).connect(out);hpf.connect(wi);merger.connect(cw).connect(out);
     out.connect(master).connect(analyser).connect(ctx.destination);
-
-    state.master = master;
-    state.analyser = analyser;
-    state.dryBus = chorusIn;
-    state.chorusWet = chorusWet;
-    state.chorusDry = chorusDry;
-    state.globalHPF = hpf;
-    state.chorusLFO = lfo;
-    state.chorusDepthGains = [lfoGainL,lfoGainR];
-    state.chorusDelays = [delayL,delayR];
-    state.audioReady = true;
-
-    makeNoiseBuffer();
-    setAudioBadge(true);
+    state.master=master;state.analyser=analyser;state.dryBus=ci;
+    state.chorusWet=cw;state.chorusDry=cd;state.globalHPF=hpf;
+    state.chorusLFO=lfo;state.chorusDepthGains=[lgL,lgR];
+    state.audioReady=true;makeNoise();
+    $('#audioDot').classList.add('on');$('#audioState').textContent='ON';
   }
 
-  function setAudioBadge(on){
-    $('#audioDot').classList.toggle('live', on);
-    $('#audioState').textContent = on ? 'audio on' : 'audio off';
+  function makeNoise(){
+    const len=state.ctx.sampleRate*2,buf=state.ctx.createBuffer(1,len,state.ctx.sampleRate);
+    const d=buf.getChannelData(0);let last=0;
+    for(let i=0;i<len;i++){const w=Math.random()*2-1;last=last*.86+w*.14;d[i]=last*.75;}
+    state.noiseBuffer=buf;
   }
 
-  function makeNoiseBuffer(){
-    const len = state.ctx.sampleRate * 2;
-    const buf = state.ctx.createBuffer(1, len, state.ctx.sampleRate);
-    const d = buf.getChannelData(0);
-    let last = 0;
-    for(let i=0;i<len;i++){
-      const white = Math.random()*2-1;
-      last = last * 0.86 + white * 0.14;
-      d[i] = last * 0.75;
-    }
-    state.noiseBuffer = buf;
+  function P(){
+    return{saw:+$('#saw').value,pulse:+$('#pulse').value,sub:+$('#sub').value,noise:+$('#noise').value,
+      pw:+$('#pw').value,detune:+$('#detune').value,cutoff:+$('#cutoff').value,res:+$('#res').value,
+      envAmt:+$('#envAmt').value,attack:+$('#attack').value,decay:+$('#decay').value,
+      sustain:+$('#sustain').value,release:+$('#release').value,width:+$('#width').value,
+      lfoRate:+$('#lfoRate').value,lfoToFilter:+$('#lfoToFilter').value,lfoToPWM:+$('#lfoToPWM').value,
+      master:+$('#master').value,hpf:+$('#hpf').value,chorusMix:+$('#chorusMix').value,
+      chorusRate:+$('#chorusRate').value,chorusDepth:+$('#chorusDepth').value};
   }
 
-  function currentParams(){
-    return {
-      saw:+$('#saw').value, pulse:+$('#pulse').value, sub:+$('#sub').value, noise:+$('#noise').value,
-      pw:+$('#pw').value, detune:+$('#detune').value, cutoff:+$('#cutoff').value, res:+$('#res').value,
-      envAmt:+$('#envAmt').value, attack:+$('#attack').value, decay:+$('#decay').value, sustain:+$('#sustain').value,
-      release:+$('#release').value, width:+$('#width').value, lfoRate:+$('#lfoRate').value,
-      lfoToFilter:+$('#lfoToFilter').value, lfoToPWM:+$('#lfoToPWM').value,
-      master:+$('#master').value, hpf:+$('#hpf').value, chorusMix:+$('#chorusMix').value,
-      chorusRate:+$('#chorusRate').value, chorusDepth:+$('#chorusDepth').value
-    };
+  function updateDSP(){
+    if(!state.audioReady)return;
+    const p=P(),t=state.ctx.currentTime;
+    state.master.gain.setTargetAtTime(p.master,t,.01);
+    state.globalHPF.frequency.setTargetAtTime(p.hpf,t,.02);
+    state.chorusDry.gain.setTargetAtTime(1-p.chorusMix,t,.02);
+    state.chorusWet.gain.setTargetAtTime(p.chorusMix,t,.02);
+    state.chorusLFO.frequency.setTargetAtTime(p.chorusRate,t,.05);
+    state.chorusDepthGains[0].gain.setTargetAtTime(p.chorusDepth,t,.05);
+    state.chorusDepthGains[1].gain.setTargetAtTime(-p.chorusDepth*.9,t,.05);
   }
 
-  function updateGlobalDSP(){
-    if(!state.audioReady) return;
-    const p = currentParams();
-    state.master.gain.setTargetAtTime(p.master, state.ctx.currentTime, 0.01);
-    state.globalHPF.frequency.setTargetAtTime(p.hpf, state.ctx.currentTime, 0.02);
-    state.chorusDry.gain.setTargetAtTime(1-p.chorusMix, state.ctx.currentTime, 0.02);
-    state.chorusWet.gain.setTargetAtTime(p.chorusMix, state.ctx.currentTime, 0.02);
-    state.chorusLFO.frequency.setTargetAtTime(p.chorusRate, state.ctx.currentTime, 0.05);
-    state.chorusDepthGains[0].gain.setTargetAtTime(p.chorusDepth, state.ctx.currentTime, 0.05);
-    state.chorusDepthGains[1].gain.setTargetAtTime(-p.chorusDepth*0.9, state.ctx.currentTime, 0.05);
-  }
-
-  function voiceForNote(midi, when, velocity=0.9){
-    const ctx = state.ctx;
-    const p = currentParams();
-    const rootFreq = midiToFreq(midi);
-    const brightFactor = lerp(0.72, 1.28, state.xyX);
-    const darkFactor = lerp(0.95, 0.62, state.xyY);
-    const cutoff = clamp(p.cutoff * brightFactor * darkFactor, 80, 12000);
-    const strWidth = p.width;
-    const panSpread = (Math.random()*2-1) * strWidth * 0.7;
-
-    const gain = ctx.createGain();
-    gain.gain.value = 0;
-    const pan = ctx.createStereoPanner();
-    pan.pan.value = panSpread;
-    const filter = ctx.createBiquadFilter(); filter.type='lowpass'; filter.frequency.value = cutoff; filter.Q.value = p.res;
-    const lfo = ctx.createOscillator(); lfo.type='triangle'; lfo.frequency.value = p.lfoRate;
-    const lfoToCut = ctx.createGain(); lfoToCut.gain.value = cutoff * 0.35 * p.lfoToFilter;
-    lfo.connect(lfoToCut).connect(filter.frequency);
-    lfo.start(when);
-
-    const oscMix = ctx.createGain();
-    const saw = ctx.createOscillator(); saw.type='sawtooth'; saw.frequency.value = rootFreq; saw.detune.value = (Math.random()*2-1)*p.detune;
-    const pulse = ctx.createOscillator(); pulse.type='square'; pulse.frequency.value = rootFreq; pulse.detune.value = (Math.random()*2-1)*p.detune*0.6;
-    const sub = ctx.createOscillator(); sub.type='square'; sub.frequency.value = rootFreq/2;
-    const noise = ctx.createBufferSource(); noise.buffer = state.noiseBuffer; noise.loop = true;
-
-    const sawG = ctx.createGain(), pulseG = ctx.createGain(), subG = ctx.createGain(), noiseG = ctx.createGain();
-    sawG.gain.value = p.saw * 0.22;
-    pulseG.gain.value = p.pulse * 0.15;
-    subG.gain.value = p.sub * 0.16;
-    noiseG.gain.value = p.noise * 0.04;
-
-    saw.connect(sawG).connect(oscMix);
-    pulse.connect(pulseG).connect(oscMix);
-    sub.connect(subG).connect(oscMix);
-    noise.connect(noiseG).connect(oscMix);
-
-    oscMix.connect(filter).connect(gain).connect(pan).connect(state.dryBus);
-
-    const a = p.attack;
-    const d = p.decay;
-    const s = p.sustain * velocity;
-    gain.gain.cancelScheduledValues(when);
-    gain.gain.setValueAtTime(0.0001, when);
-    gain.gain.linearRampToValueAtTime(velocity, when + a);
-    gain.gain.exponentialRampToValueAtTime(Math.max(0.0001, s), when + a + d);
-
-    const baseEnvDepth = 1 + p.envAmt * (0.7 + (1-state.xyY)*0.55);
-    filter.frequency.cancelScheduledValues(when);
-    filter.frequency.setValueAtTime(Math.max(80, cutoff * 0.52), when);
-    filter.frequency.exponentialRampToValueAtTime(Math.max(100, cutoff * baseEnvDepth), when + a + 0.03);
-    filter.frequency.exponentialRampToValueAtTime(Math.max(80, cutoff * 0.78), when + a + d + 0.03);
-
-    saw.start(when); pulse.start(when); sub.start(when); noise.start(when);
-
-    return {midi, when, gain, filter, lfo, osc:[saw,pulse,sub,noise], pan, released:false, release(){
-      if(this.released) return;
-      this.released = true;
-      const now = state.ctx.currentTime;
-      const rel = currentParams().release;
-      this.gain.gain.cancelScheduledValues(now);
-      this.gain.gain.setTargetAtTime(Math.max(0.0001, this.gain.gain.value), now, 0.01);
-      this.gain.gain.exponentialRampToValueAtTime(0.0001, now + rel);
-      this.filter.frequency.cancelScheduledValues(now);
-      this.filter.frequency.setTargetAtTime(Math.max(70, currentParams().cutoff * 0.55), now, rel * 0.2 + 0.01);
-      this.osc.forEach(o => { try{o.stop(now + rel + 0.06);}catch(e){} });
-      try{ this.lfo.stop(now + rel + 0.08);}catch(e){}
+  function voiceForNote(midi,when,vel=.9){
+    const ctx=state.ctx,p=P(),rf=midiToFreq(midi);
+    const cutoff=clamp(p.cutoff*lerp(.72,1.28,state.xyX)*lerp(.95,.62,state.xyY),80,12000);
+    const pan=ctx.createStereoPanner();pan.pan.value=(Math.random()*2-1)*p.width*.7;
+    const gain=ctx.createGain();gain.gain.value=0;
+    const flt=ctx.createBiquadFilter();flt.type='lowpass';flt.frequency.value=cutoff;flt.Q.value=p.res;
+    const lfo=ctx.createOscillator();lfo.type='triangle';lfo.frequency.value=p.lfoRate;
+    const ltf=ctx.createGain();ltf.gain.value=cutoff*.35*p.lfoToFilter;
+    lfo.connect(ltf).connect(flt.frequency);lfo.start(when);
+    const mix=ctx.createGain();
+    const saw=ctx.createOscillator();saw.type='sawtooth';saw.frequency.value=rf;saw.detune.value=(Math.random()*2-1)*p.detune;
+    const pls=ctx.createOscillator();pls.type='square';pls.frequency.value=rf;pls.detune.value=(Math.random()*2-1)*p.detune*.6;
+    const sub=ctx.createOscillator();sub.type='square';sub.frequency.value=rf/2;
+    const nse=ctx.createBufferSource();nse.buffer=state.noiseBuffer;nse.loop=true;
+    const sg=ctx.createGain(),pg=ctx.createGain(),sbg=ctx.createGain(),ng=ctx.createGain();
+    sg.gain.value=p.saw*.22;pg.gain.value=p.pulse*.15;sbg.gain.value=p.sub*.16;ng.gain.value=p.noise*.04;
+    saw.connect(sg).connect(mix);pls.connect(pg).connect(mix);sub.connect(sbg).connect(mix);nse.connect(ng).connect(mix);
+    mix.connect(flt).connect(gain).connect(pan).connect(state.dryBus);
+    const a=p.attack,d=p.decay,s=p.sustain*vel;
+    gain.gain.cancelScheduledValues(when);gain.gain.setValueAtTime(.0001,when);
+    gain.gain.linearRampToValueAtTime(vel,when+a);gain.gain.exponentialRampToValueAtTime(Math.max(.0001,s),when+a+d);
+    const ed=1+p.envAmt*(.7+(1-state.xyY)*.55);
+    flt.frequency.cancelScheduledValues(when);flt.frequency.setValueAtTime(Math.max(80,cutoff*.52),when);
+    flt.frequency.exponentialRampToValueAtTime(Math.max(100,cutoff*ed),when+a+.03);
+    flt.frequency.exponentialRampToValueAtTime(Math.max(80,cutoff*.78),when+a+d+.03);
+    saw.start(when);pls.start(when);sub.start(when);nse.start(when);
+    return{gain,flt,lfo,osc:[saw,pls,sub,nse],released:false,release(){
+      if(this.released)return;this.released=true;
+      const now=state.ctx.currentTime,rel=P().release;
+      this.gain.gain.cancelScheduledValues(now);this.gain.gain.setTargetAtTime(Math.max(.0001,this.gain.gain.value),now,.01);
+      this.gain.gain.exponentialRampToValueAtTime(.0001,now+rel);
+      this.flt.frequency.cancelScheduledValues(now);this.flt.frequency.setTargetAtTime(Math.max(70,P().cutoff*.55),now,rel*.2+.01);
+      this.osc.forEach(o=>{try{o.stop(now+rel+.06);}catch(e){}});
+      try{this.lfo.stop(now+rel+.08);}catch(e){}
     }};
   }
 
-  function computeChordMidi(deg){
-    const baseOct = +$('#octaveSelect').value;
-    const info = degreeInfo(deg);
-    const vp = getVoicingProfile(info.baseQ);
-    const rootMidi = 12 * (baseOct + 1) + info.rootSemi;
-    let notes = vp.intervals.map(iv => rootMidi + iv);
-
-    if(vp.density > 0.5 && Math.random() > 0.45) notes.push(rootMidi - 12);
-    notes = notes.sort((a,b)=>a-b);
-    return {notes, info, vp};
+  function computeChord(deg){
+    const info=degreeInfo(deg),vp=getVP(info.baseQ);
+    const root=12*(+$('#octaveSelect').value+1)+info.rootSemi;
+    let notes=vp.intervals.map(iv=>root+iv);
+    if(vp.density>.5&&Math.random()>.45)notes.push(root-12);
+    return{notes:notes.sort((a,b)=>a-b),info,vp};
   }
 
-  function triggerDegree(deg){
-    if(!state.audioReady) return;
+  function triggerDeg(deg){
+    if(!state.audioReady)return;
     releaseCurrent();
-    const {notes, info, vp} = computeChordMidi(deg);
-    state.latchedChord = {deg, notes};
-    const t0 = state.ctx.currentTime + 0.005;
-    const strumMs = (10 + (1-state.xyY)*45 + state.xyX*20) / 1000;
+    const{notes}=computeChord(deg);state.latchedChord={deg,notes};
+    const t0=state.ctx.currentTime+.005;
+    const strumS=(10+(1-state.xyY)*45+state.xyX*20)/1000;
     notes.forEach((m,i)=>{
-      const v = voiceForNote(m, t0 + i*strumMs, clamp(0.85 - i*0.05, 0.45, 1));
-      state.activeNotes.set(`${m}_${i}_${performance.now()}`, v);
+      const v=voiceForNote(m,t0+i*strumS,clamp(.85-i*.05,.45,1));
+      state.activeNotes.set(`${m}_${i}_${performance.now()}`,v);
     });
     updateReadouts();
   }
 
-  function releaseCurrent(){
-    state.activeNotes.forEach(v => v.release());
-    state.activeNotes.clear();
-  }
+  function releaseCurrent(){state.activeNotes.forEach(v=>v.release());state.activeNotes.clear();}
 
-  function setXY(clientX, clientY){
-    const rect = $('#xyPad').getBoundingClientRect();
-    const x = clamp((clientX - rect.left) / rect.width, 0, 1);
-    const y = clamp((clientY - rect.top) / rect.height, 0, 1);
-    state.xyX = x; state.xyY = y;
-    $('#xyDot').style.left = `${x*100}%`;
-    $('#xyDot').style.top = `${y*100}%`;
-    updateReadouts();
-    renderPads();
+  function setXY(cx,cy){
+    const r=$('#xyPad').getBoundingClientRect();
+    state.xyX=clamp((cx-r.left)/r.width,0,1);state.xyY=clamp((cy-r.top)/r.height,0,1);
+    $('#xyDot').style.left=state.xyX*100+'%';$('#xyDot').style.top=state.xyY*100+'%';
+    updateReadouts();renderPads();
   }
 
   function attachXY(){
-    const pad = $('#xyPad');
-    let drag = false;
-    pad.addEventListener('pointerdown', e => { drag = true; pad.setPointerCapture(e.pointerId); setXY(e.clientX, e.clientY); });
-    pad.addEventListener('pointermove', e => { if(drag) setXY(e.clientX, e.clientY); });
-    pad.addEventListener('pointerup', () => drag = false);
-    pad.addEventListener('pointercancel', () => drag = false);
+    const pad=$('#xyPad');let drag=false;
+    pad.addEventListener('pointerdown',e=>{drag=true;pad.setPointerCapture(e.pointerId);setXY(e.clientX,e.clientY);});
+    pad.addEventListener('pointermove',e=>{if(drag)setXY(e.clientX,e.clientY);});
+    pad.addEventListener('pointerup',()=>drag=false);
+    pad.addEventListener('pointercancel',()=>drag=false);
   }
 
-  function seqStepMs(){
-    const bpm = +$('#tempo').value;
-    const rate = +$('#rateSelect').value;
-    const quarter = 60000 / bpm;
-    return rate === 4 ? quarter : rate === 8 ? quarter/2 : quarter/4;
-  }
+  const stepMs=()=>{const bpm=+$('#tempo').value,r=+$('#rateSelect').value,q=60000/bpm;return r===4?q:r===8?q/2:q/4;};
 
   function arpOrder(notes){
-    const dir = $('#dirSelect').value;
-    const sorted = notes.slice().sort((a,b)=>a-b);
-    if(dir==='up') return sorted;
-    if(dir==='down') return sorted.slice().reverse();
-    if(dir==='updown') return sorted.concat(sorted.slice(1,-1).reverse());
-    if(dir==='random') return sorted.slice().sort(()=>Math.random()-.5);
-    return sorted;
+    const dir=$('#dirSelect').value,s=notes.slice().sort((a,b)=>a-b);
+    if(dir==='up')return s;if(dir==='down')return s.slice().reverse();
+    if(dir==='updown')return s.concat(s.slice(1,-1).reverse());
+    return s.slice().sort(()=>Math.random()-.5);
   }
 
   function tickArp(){
-    const active = state.arp || state.seqLatch;
-    if(!active || !state.audioReady) return;
-    const ms = seqStepMs();
-
+    if((!state.arp&&!state.seqLatch)||!state.audioReady)return;
+    const ms=stepMs();
     if(state.seqLatch){
-      state.stepIndex = (state.stepIndex + 1) % state.seq.length;
-      [...seqEl.children].forEach((el,i)=>el.classList.toggle('play', i===state.stepIndex));
-      if(state.seq[state.stepIndex]){
-        const deg = state.seqDegree;
-        state.currentDegree = deg;
-        renderPads();
-        const chord = computeChordMidi(deg).notes;
-        playArpOnce(chord, ms/1000);
-      }
-    } else if(state.arp && state.latchedChord){
-      playArpOnce(state.latchedChord.notes, ms/1000);
-    }
+      state.stepIndex=(state.stepIndex+1)%state.seq.length;
+      [...seqEl.children].forEach((el,i)=>el.classList.toggle('play',i===state.stepIndex));
+      if(state.seq[state.stepIndex]){state.currentDegree=state.seqDegree;renderPads();playArpOnce(computeChord(state.seqDegree).notes,ms/1000);}
+    }else if(state.arp&&state.latchedChord){playArpOnce(state.latchedChord.notes,ms/1000);}
   }
 
-  function playArpOnce(notes, gate){
-    const order = arpOrder(notes);
-    const note = order[state.arpPhase % order.length];
+  function playArpOnce(notes,gate){
+    const order=arpOrder(notes),note=order[state.arpPhase%order.length];
     state.arpPhase++;
-    const v = voiceForNote(note, state.ctx.currentTime + 0.005, 0.85);
-    setTimeout(()=>v.release(), Math.max(80, gate*800));
+    const v=voiceForNote(note,state.ctx.currentTime+.005,.85);
+    setTimeout(()=>v.release(),Math.max(80,gate*800));
   }
 
-  function startClock(){
-    stopClock();
-    state.arpTimer = setInterval(tickArp, seqStepMs());
-  }
-  function stopClock(){ if(state.arpTimer){ clearInterval(state.arpTimer); state.arpTimer = null; } }
+  function startClock(){stopClock();state.arpTimer=setInterval(tickArp,stepMs());}
+  function stopClock(){if(state.arpTimer){clearInterval(state.arpTimer);state.arpTimer=null;}}
 
   function applyPreset(name){
-    const map = {
-      neo:{cutoff:1900,res:2.2,attack:0.02,decay:0.45,sustain:0.72,release:1.65,chorusMix:0.45,chorusRate:0.32,chorusDepth:0.006,saw:0.82,pulse:0.30,sub:0.52,noise:0.05,pw:0.48,detune:4.5,width:0.55,lfoRate:0.22,lfoToFilter:0.08,lfoToPWM:0.18,xyX:0.66,xyY:0.38},
-      house:{cutoff:2400,res:1.8,attack:0.01,decay:0.28,sustain:0.65,release:0.9,chorusMix:0.28,chorusRate:0.42,chorusDepth:0.004,saw:0.88,pulse:0.22,sub:0.60,noise:0.01,pw:0.50,detune:2.5,width:0.35,lfoRate:0.16,lfoToFilter:0.04,lfoToPWM:0.08,xyX:0.58,xyY:0.50},
-      dream:{cutoff:1500,res:3.4,attack:0.12,decay:1.2,sustain:0.76,release:2.8,chorusMix:0.62,chorusRate:0.18,chorusDepth:0.009,saw:0.76,pulse:0.42,sub:0.34,noise:0.06,pw:0.42,detune:6.2,width:0.78,lfoRate:0.11,lfoToFilter:0.11,lfoToPWM:0.22,xyX:0.72,xyY:0.26},
-      dark:{cutoff:1100,res:4.8,attack:0.03,decay:0.62,sustain:0.58,release:1.9,chorusMix:0.36,chorusRate:0.24,chorusDepth:0.005,saw:0.72,pulse:0.34,sub:0.66,noise:0.03,pw:0.38,detune:3.8,width:0.42,lfoRate:0.17,lfoToFilter:0.14,lfoToPWM:0.10,xyX:0.34,xyY:0.68}
+    const map={
+      neo: {cutoff:1900,res:2.2,attack:.02,decay:.45,sustain:.72,release:1.65,chorusMix:.45,chorusRate:.32,chorusDepth:.006,saw:.82,pulse:.30,sub:.52,noise:.05,pw:.48,detune:4.5,width:.55,lfoRate:.22,lfoToFilter:.08,lfoToPWM:.18,xyX:.66,xyY:.38},
+      house:{cutoff:2400,res:1.8,attack:.01,decay:.28,sustain:.65,release:.90,chorusMix:.28,chorusRate:.42,chorusDepth:.004,saw:.88,pulse:.22,sub:.60,noise:.01,pw:.50,detune:2.5,width:.35,lfoRate:.16,lfoToFilter:.04,lfoToPWM:.08,xyX:.58,xyY:.50},
+      dream:{cutoff:1500,res:3.4,attack:.12,decay:1.2,sustain:.76,release:2.8,chorusMix:.62,chorusRate:.18,chorusDepth:.009,saw:.76,pulse:.42,sub:.34,noise:.06,pw:.42,detune:6.2,width:.78,lfoRate:.11,lfoToFilter:.11,lfoToPWM:.22,xyX:.72,xyY:.26},
+      dark: {cutoff:1100,res:4.8,attack:.03,decay:.62,sustain:.58,release:1.9,chorusMix:.36,chorusRate:.24,chorusDepth:.005,saw:.72,pulse:.34,sub:.66,noise:.03,pw:.38,detune:3.8,width:.42,lfoRate:.17,lfoToFilter:.14,lfoToPWM:.10,xyX:.34,xyY:.68}
     };
-    const p = map[name];
-    Object.entries(p).forEach(([k,v])=>{
-      if(k==='xyX' || k==='xyY') return;
-      const el = document.getElementById(k);
-      if(el) el.value = v;
-    });
-    state.xyX = p.xyX; state.xyY = p.xyY;
-    $('#xyDot').style.left = `${p.xyX*100}%`;
-    $('#xyDot').style.top = `${p.xyY*100}%`;
-    updateReadouts(); renderPads(); updateGlobalDSP();
+    const p=map[name];
+    Object.entries(p).forEach(([k,v])=>{if(k==='xyX'||k==='xyY')return;const el=document.getElementById(k);if(el)el.value=v;});
+    state.xyX=p.xyX;state.xyY=p.xyY;
+    $('#xyDot').style.left=p.xyX*100+'%';$('#xyDot').style.top=p.xyY*100+'%';
+    updateReadouts();renderPads();updateDSP();
   }
 
   function attachUI(){
-    $('#startBtn').addEventListener('click', async () => { await initAudio(); updateGlobalDSP(); });
-    $('#holdBtn').addEventListener('click', () => { state.hold = !state.hold; $('#holdBtn').classList.toggle('on', state.hold); if(!state.hold && !state.arp) releaseCurrent(); });
-    $('#arpBtn').addEventListener('click', () => { state.arp = !state.arp; $('#arpBtn').classList.toggle('on', state.arp); state.arpPhase = 0; if(state.arp || state.seqLatch) startClock(); else stopClock(); });
-    $('#latchBtn').addEventListener('click', () => { state.seqLatch = !state.seqLatch; $('#latchBtn').classList.toggle('on', state.seqLatch); state.stepIndex = -1; if(state.arp || state.seqLatch) startClock(); else stopClock(); });
-    $('#panicBtn').addEventListener('click', () => releaseCurrent());
-
-    $('#keySelect').addEventListener('change', e => { state.key = +e.target.value; renderPads(); updateReadouts(); });
-    $('#scaleSelect').addEventListener('change', e => { state.scale = e.target.value; renderPads(); updateReadouts(); });
-    $('#octaveSelect').addEventListener('change', () => updateReadouts());
-    $('#presetSelect').addEventListener('change', e => applyPreset(e.target.value));
-    $('#seqDegreeSelect').addEventListener('change', e => state.seqDegree = +e.target.value);
-    $('#tempo').addEventListener('input', () => { if(state.arp || state.seqLatch) startClock(); });
-    $('#rateSelect').addEventListener('change', () => { if(state.arp || state.seqLatch) startClock(); });
-    $('#dirSelect').addEventListener('change', () => { state.arpPhase = 0; });
-
-    document.querySelectorAll('input[type="range"], select').forEach(el => {
-      if(!['keySelect','scaleSelect','octaveSelect','presetSelect','seqDegreeSelect','rateSelect','dirSelect'].includes(el.id)) {
-        el.addEventListener('input', updateGlobalDSP);
-      }
+    $('#startBtn').addEventListener('click',async()=>{await initAudio();updateDSP();});
+    $('#holdBtn').addEventListener('click',()=>{state.hold=!state.hold;$('#holdBtn').classList.toggle('on',state.hold);if(!state.hold&&!state.arp)releaseCurrent();});
+    $('#arpBtn').addEventListener('click',()=>{state.arp=!state.arp;$('#arpBtn').classList.toggle('on',state.arp);state.arpPhase=0;if(state.arp||state.seqLatch)startClock();else stopClock();});
+    $('#latchBtn').addEventListener('click',()=>{state.seqLatch=!state.seqLatch;$('#latchBtn').classList.toggle('on',state.seqLatch);state.stepIndex=-1;if(state.arp||state.seqLatch)startClock();else stopClock();});
+    $('#panicBtn').addEventListener('click',()=>releaseCurrent());
+    $('#keySelect').addEventListener('change',e=>{state.key=+e.target.value;renderPads();updateReadouts();});
+    $('#scaleSelect').addEventListener('change',e=>{state.scale=e.target.value;renderPads();updateReadouts();});
+    $('#octaveSelect').addEventListener('change',()=>updateReadouts());
+    $('#presetSelect').addEventListener('change',e=>applyPreset(e.target.value));
+    $('#seqDegreeSelect').addEventListener('change',e=>state.seqDegree=+e.target.value);
+    $('#tempo').addEventListener('input',()=>{if(state.arp||state.seqLatch)startClock();});
+    $('#rateSelect').addEventListener('change',()=>{if(state.arp||state.seqLatch)startClock();});
+    $('#dirSelect').addEventListener('change',()=>{state.arpPhase=0;});
+    const excl=['keySelect','scaleSelect','octaveSelect','presetSelect','seqDegreeSelect','rateSelect','dirSelect'];
+    document.querySelectorAll('input[type="range"],select').forEach(el=>{if(!excl.includes(el.id))el.addEventListener('input',updateDSP);});
+    $('#clearSeqBtn').addEventListener('click',()=>{state.seq.fill(false);buildSeqUI();});
+    $('#fillSeqBtn').addEventListener('click',()=>{
+      const presets=[[1,0,0,1,0,1,0,1],[1,0,1,0,1,0,1,0],[1,0,0,0,1,0,1,0]];
+      state.seq=choice(presets).map(Boolean);buildSeqUI();
     });
-    $('#clearSeqBtn').addEventListener('click', ()=>{ state.seq.fill(false); buildSequenceUI(); });
-    $('#fillSeqBtn').addEventListener('click', ()=>{
-      const presets = [
-        [1,0,0,1,0,1,0,1],
-        [1,0,1,0,1,0,1,0],
-        [1,0,0,0,1,0,1,0]
-      ];
-      state.seq = choice(presets).map(Boolean);
-      buildSequenceUI();
+    window.addEventListener('keydown',async e=>{
+      const map={'1':1,'2':2,'3':3,'4':4,'5':5,'6':6,'7':7};
+      if(e.code==='Space'){e.preventDefault();if(!state.audioReady)await initAudio();state.hold=!state.hold;$('#holdBtn').classList.toggle('on',state.hold);return;}
+      if(map[e.key]){if(!state.audioReady)await initAudio();state.currentDegree=map[e.key];renderPads();updateReadouts();triggerDeg(map[e.key]);}
     });
-
-    window.addEventListener('keydown', async (e) => {
-      const map = {'1':1,'2':2,'3':3,'4':4,'5':5,'6':6,'7':7};
-      if(e.code === 'Space'){ e.preventDefault(); if(!state.audioReady) await initAudio(); state.hold = !state.hold; $('#holdBtn').classList.toggle('on', state.hold); return; }
-      if(map[e.key]) { if(!state.audioReady) await initAudio(); state.currentDegree = map[e.key]; renderPads(); updateReadouts(); triggerDegree(map[e.key]); }
-    });
-    window.addEventListener('keyup', (e)=>{ if('1234567'.includes(e.key) && !state.hold && !state.arp) releaseCurrent(); });
+    window.addEventListener('keyup',e=>{if('1234567'.includes(e.key)&&!state.hold&&!state.arp)releaseCurrent();});
   }
 
-  populateSelects();
-  buildSequenceUI();
-  attachXY();
-  attachUI();
-  applyPreset('neo');
-  renderPads();
-  updateReadouts();
+  populateSelects();buildSeqUI();attachXY();attachUI();
+  applyPreset('neo');renderPads();updateReadouts();
 })();
 </script>
 </body>
