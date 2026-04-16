@@ -427,21 +427,61 @@ document.querySelectorAll('.tabbtn').forEach(btn=>{
   }
 
   function renderPads(){
-    const el=$('#chordPads'); el.innerHTML='';
+    const el=$('#chordPads');
     const romans=['I','II','III','IV','V','VI','VII'];
-    for(let deg=1;deg<=7;deg++){
+
+    // First call: build the DOM once
+    if(!el.children.length){
+      for(let deg=1;deg<=7;deg++){
+        const lab=chordLabel(deg);
+        const quality=(lab.info.baseQ==='maj'?'':lab.info.baseQ)+(lab.vp.extension?' '+lab.vp.extension:'');
+        const pad=document.createElement('button');
+        pad.className='chordPad'+(state.currentDegree===deg?' active':'');
+        pad.dataset.deg=deg;
+        pad.innerHTML=`<div class="pad-body"><div class="deg">${romans[deg-1]}</div><div class="name">${lab.root}</div><div class="hint">${quality.trim()||'maj'}</div></div>`;
+
+        pad.addEventListener('pointerdown',e=>{
+          e.preventDefault();
+          pad.setPointerCapture(e.pointerId); // keep capture even if finger drifts
+          const d=+pad.dataset.deg;
+          state.currentDegree=d;
+          updateReadouts();
+          updatePadClasses();   // update CSS only, no DOM rebuild
+          updatePadLabels();    // refresh label text in-place
+          triggerDeg(d);
+        });
+
+        // Release only on pointerup / pointercancel — never on pointerleave
+        const onRelease=e=>{
+          e.preventDefault();
+          if(!state.hold&&!state.arp) releaseCurrent();
+        };
+        pad.addEventListener('pointerup',   onRelease);
+        pad.addEventListener('pointercancel',onRelease);
+
+        el.appendChild(pad);
+      }
+    } else {
+      // Subsequent calls: just refresh labels + active class
+      updatePadLabels();
+      updatePadClasses();
+    }
+  }
+
+  function updatePadClasses(){
+    document.querySelectorAll('.chordPad').forEach(pad=>{
+      pad.classList.toggle('active', +pad.dataset.deg===state.currentDegree);
+    });
+  }
+
+  function updatePadLabels(){
+    document.querySelectorAll('.chordPad').forEach(pad=>{
+      const deg=+pad.dataset.deg;
       const lab=chordLabel(deg);
       const quality=(lab.info.baseQ==='maj'?'':lab.info.baseQ)+(lab.vp.extension?' '+lab.vp.extension:'');
-      const pad=document.createElement('button');
-      pad.className='chordPad'+(state.currentDegree===deg?' active':'');
-      pad.innerHTML=`<div class="pad-body"><div class="deg">${romans[deg-1]}</div><div class="name">${lab.root}</div><div class="hint">${quality.trim()||'maj'}</div></div>`;
-      const dn=e=>{e.preventDefault();state.currentDegree=deg;updateReadouts();renderPads();triggerDeg(deg);};
-      const up=e=>{e.preventDefault();if(!state.hold&&!state.arp)releaseCurrent();};
-      pad.addEventListener('pointerdown',dn);
-      pad.addEventListener('pointerup',up);
-      pad.addEventListener('pointerleave',up);
-      el.appendChild(pad);
-    }
+      pad.querySelector('.name').textContent=lab.root;
+      pad.querySelector('.hint').textContent=quality.trim()||'maj';
+    });
   }
 
   function updateReadouts(){
