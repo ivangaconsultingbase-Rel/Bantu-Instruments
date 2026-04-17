@@ -59,11 +59,9 @@ input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none;appearance
 html,body{height:100%}
 body{
 min-height:100%;
-background:var(–bg);
-background-image:
-radial-gradient(rgba(255,255,255,.022) 1px, transparent 1px);
-background-size:28px 28px;
-color:var(–t1);
+background:#070707;
+background-color:#070707;
+color:#d8d8d8;
 font-family:‘IBM Plex Mono’,ui-monospace,‘SF Mono’,Menlo,Monaco,Consolas,‘Courier New’,monospace;
 font-weight:400;
 -webkit-font-smoothing:antialiased;
@@ -357,116 +355,129 @@ background:var(–bg);
 }
 .step-btn{
 position:relative;
-height:54px;
-border-radius:2px;
-border:1px solid var(–b1);
-background:#0d0d0d;
-background-color:#0d0d0d;
+height:56px;
+border-radius:3px;
+border:1px solid #1c1c1c;
+background:#141414;
+background-color:#141414;
 cursor:pointer;
-display:flex;align-items:flex-end;
+display:flex;align-items:center;
 justify-content:center;
-padding-bottom:5px;
 box-shadow:
-inset 0 1px 1px rgba(255,255,255,.03),
-0 2px 4px rgba(0,0,0,.55);
-transition:background 60ms;
-user-select:none;-webkit-user-select:none;
+inset 0 1px 1px rgba(255,255,255,.04),
+inset 0 -1px 2px rgba(0,0,0,.35),
+0 1px 2px rgba(0,0,0,.4);
+transition:background-color 60ms, border-color 60ms, box-shadow 60ms;
+-webkit-user-select:none;user-select:none;
+overflow:hidden;
 }
-/* LED indicator */
+/* Top accent strip (LED-like) */
 .step-btn::before{
 content:’’;
 position:absolute;
-top:10px;left:50%;
-transform:translateX(-50%);
-width:10px;height:10px;
-border-radius:2px;
-background:#111;
-border:1px solid #222;
-box-shadow:inset 0 2px 3px rgba(0,0,0,.8);
-transition:background 60ms, box-shadow 60ms;
+top:0;left:0;right:0;
+height:4px;
+background:#0a0a0a;
+background-color:#0a0a0a;
+border-bottom:1px solid rgba(0,0,0,.5);
+transition:background-color 60ms, box-shadow 60ms;
 }
 .step-btn .step-num{
-font:500 7px/1 ‘IBM Plex Mono’,ui-monospace,‘SF Mono’,Menlo,Monaco,Consolas,‘Courier New’,monospace;
-color:var(–t3);
-position:relative;z-index:1;
+font-family:‘IBM Plex Mono’,ui-monospace,‘SF Mono’,Menlo,Monaco,Consolas,‘Courier New’,monospace;
+font-weight:600;
+font-size:10px;
+line-height:1;
+color:#3a3a3a;
+position:relative;
+z-index:1;
+margin-top:4px;
 }
-/* Beat markers */
-.step-btn:nth-child(4n+1){border-left-color:var(–b2)}
-.step-btn:nth-child(8n+1){border-left:2px solid #333}
+/* Beat markers - every 4 steps */
+.step-btn:nth-child(4n+1){border-left-width:2px}
+.step-btn:nth-child(8n+1){border-left:2px solid #444}
 /* ON — base */
 .step-btn.on{background:#1a1a1a;background-color:#1a1a1a}
 .step-btn.on .step-num{color:#555}
 
-/* Accent dot above LED — base */
+/* Accent dot - shown when step has accent */
 .step-btn.accent::after{
 content:’’;
 position:absolute;
-top:4px;left:50%;
-transform:translateX(-50%);
-width:4px;height:4px;
+top:8px;right:5px;
+width:5px;height:5px;
 border-radius:50%;
-opacity:.85;
+opacity:1;
+box-shadow:0 0 4px currentColor;
 }
 
 /* PER-TRACK COLORS — explicit, no custom properties */
 /* BD — ORANGE */
 .track.t-bd .step-btn.on{
-background:rgba(255,68,0,.10)!important;background-color:rgba(255,68,0,.10)!important;
-border-color:rgba(255,68,0,.5)!important;
+background:#2a1208!important;background-color:#2a1208!important;
+border-color:#ff4400!important;
+box-shadow:inset 0 0 0 1px rgba(255,68,0,.3),0 0 12px rgba(255,68,0,.25)!important;
 }
 .track.t-bd .step-btn.on::before{
-background:#ff4400!important;
-background-color:#ff4400!important;
-border-color:#ff4400!important;
-box-shadow:0 0 5px #ff4400,0 0 12px rgba(255,68,0,.5)!important;
+background:#ff4400!important;background-color:#ff4400!important;
+height:5px!important;
+box-shadow:0 0 8px #ff4400,0 0 16px rgba(255,68,0,.6)!important;
 }
+.track.t-bd .step-btn.on .step-num{color:#ff6633!important}
 .track.t-bd .step-btn.accent::after{background:#ff4400!important}
 
 /* SD — CYAN */
 .track.t-sd .step-btn.on{
-background:rgba(0,170,255,.10)!important;background-color:rgba(0,170,255,.10)!important;
-border-color:rgba(0,170,255,.5)!important;
+background:#042538!important;background-color:#042538!important;
+border-color:#00aaff!important;
+box-shadow:inset 0 0 0 1px rgba(0,170,255,.3),0 0 12px rgba(0,170,255,.25)!important;
 }
 .track.t-sd .step-btn.on::before{
-background:#00aaff!important;
-background-color:#00aaff!important;
-border-color:#00aaff!important;
-box-shadow:0 0 5px #00aaff,0 0 12px rgba(0,170,255,.5)!important;
+background:#00aaff!important;background-color:#00aaff!important;
+height:5px!important;
+box-shadow:0 0 8px #00aaff,0 0 16px rgba(0,170,255,.6)!important;
 }
+.track.t-sd .step-btn.on .step-num{color:#44bbff!important}
 .track.t-sd .step-btn.accent::after{background:#00aaff!important}
 
 /* HH — AMBER */
 .track.t-hh .step-btn.on{
-background:rgba(240,178,0,.10)!important;background-color:rgba(240,178,0,.10)!important;
-border-color:rgba(240,178,0,.5)!important;
+background:#2a2005!important;background-color:#2a2005!important;
+border-color:#f0b200!important;
+box-shadow:inset 0 0 0 1px rgba(240,178,0,.3),0 0 12px rgba(240,178,0,.25)!important;
 }
 .track.t-hh .step-btn.on::before{
-background:#f0b200!important;
-background-color:#f0b200!important;
-border-color:#f0b200!important;
-box-shadow:0 0 5px #f0b200,0 0 12px rgba(240,178,0,.5)!important;
+background:#f0b200!important;background-color:#f0b200!important;
+height:5px!important;
+box-shadow:0 0 8px #f0b200,0 0 16px rgba(240,178,0,.6)!important;
 }
+.track.t-hh .step-btn.on .step-num{color:#ffcc33!important}
 .track.t-hh .step-btn.accent::after{background:#f0b200!important}
 
 /* CP — VIOLET */
 .track.t-cp .step-btn.on{
-background:rgba(153,68,255,.10)!important;background-color:rgba(153,68,255,.10)!important;
-border-color:rgba(153,68,255,.5)!important;
+background:#1d0a35!important;background-color:#1d0a35!important;
+border-color:#9944ff!important;
+box-shadow:inset 0 0 0 1px rgba(153,68,255,.3),0 0 12px rgba(153,68,255,.25)!important;
 }
 .track.t-cp .step-btn.on::before{
-background:#9944ff!important;
-background-color:#9944ff!important;
-border-color:#9944ff!important;
-box-shadow:0 0 5px #9944ff,0 0 12px rgba(153,68,255,.5)!important;
+background:#9944ff!important;background-color:#9944ff!important;
+height:5px!important;
+box-shadow:0 0 8px #9944ff,0 0 16px rgba(153,68,255,.6)!important;
 }
+.track.t-cp .step-btn.on .step-num{color:#bb77ff!important}
 .track.t-cp .step-btn.accent::after{background:#9944ff!important}
 
-/* Playing — GREEN override */
-.step-btn.playing{background:rgba(0,220,106,.08)!important;background-color:rgba(0,220,106,.08)!important;border-color:rgba(0,220,106,.5)!important}
+/* Playing — GREEN override — outer glow only, don’t hide track color */
+.step-btn.playing{
+box-shadow:
+inset 0 0 0 2px #00dc6a,
+0 0 14px rgba(0,220,106,.6)!important;
+}
 .step-btn.playing::before{
 background:#00dc6a!important;
-border-color:#00dc6a!important;
-box-shadow:0 0 6px #00dc6a,0 0 16px rgba(0,220,106,.5)!important;
+background-color:#00dc6a!important;
+height:6px!important;
+box-shadow:0 0 10px #00dc6a,0 0 20px rgba(0,220,106,.8)!important;
 }
 /* Has data (prob/micro) */
 .step-btn.has-data .step-num{color:var(–b3)}
@@ -829,9 +840,9 @@ flex:1;min-width:0;
 .tab-btn{padding:0 9px;height:26px;font-size:8px;letter-spacing:.1em}
 .page{padding:7px;gap:8px}
 .steps-row{gap:3px;padding:5px 7px 6px}
-.step-btn{height:42px}
-.step-btn::before{width:9px;height:9px;top:8px}
-.step-num{font-size:6px}
+.step-btn{height:46px}
+.step-btn::before{height:4px}
+.step-num{font-size:9px;margin-top:3px}
 .track-header{padding:5px 8px 5px 7px;height:36px;gap:6px}
 .track-abbr{font-size:14px;min-width:22px}
 .ctrl-btn{width:21px;height:19px;font-size:7px}
