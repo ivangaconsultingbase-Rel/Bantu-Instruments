@@ -722,10 +722,10 @@ var morphLocks=new Array(16).fill(null);
 var baseOctave=4,noteMin=24,noteMax=108,currentBank=null;
 
 var banks={
-  strings:{name:'STRINGS',synth:'strings',ov:{wow:40,flutter:30,tapeAge:45,brightness:55,attack:50,release:60}},
-  flute:{name:'FLUTE',synth:'flute',ov:{wow:25,flutter:20,tapeAge:30,brightness:70,attack:30,release:45}},
-  piano:{name:'PIANO',synth:'piano',ov:{wow:20,flutter:15,tapeAge:35,brightness:65,attack:20,release:55}},
-  custom:{name:'CUSTOM',synth:null,ov:{}}
+  strings:{name:'STRINGS',file:'https://raw.githubusercontent.com/ivangaconsultingbase-Rel/Bantu-Instruments/main/plugins/samplerlin/samples/strings.wav',synth:'strings',ov:{wow:40,flutter:30,tapeAge:45,brightness:55,attack:50,release:60}},
+  flute:{name:'FLUTE',file:'https://raw.githubusercontent.com/ivangaconsultingbase-Rel/Bantu-Instruments/main/plugins/samplerlin/samples/flute.wav',synth:'flute',ov:{wow:25,flutter:20,tapeAge:30,brightness:70,attack:30,release:45}},
+  piano:{name:'PIANO',file:'https://raw.githubusercontent.com/ivangaconsultingbase-Rel/Bantu-Instruments/main/plugins/samplerlin/samples/piano.wav',synth:'piano',ov:{wow:20,flutter:15,tapeAge:35,brightness:65,attack:20,release:55}},
+  custom:{name:'CUSTOM',file:null,synth:null,ov:{}}
 };
 var presets={
   pristine:{tapeLength:10,startJitter:10,wow:10,flutter:8,tapeAge:10,mechanicalNoise:5,brightness:75,saturation:15,attack:20,release:40,driftPerKey:10},
@@ -1097,7 +1097,8 @@ function synthBuffer(type){
   }
   return buf;
 }
-function loadBank(bankId){var bank=banks[bankId];if(!bank||!bank.synth)return;var btn=qs('[data-bank="'+bankId+'"]');if(btn)btn.classList.add('loading');status('GEN...');initAudio(function(){try{var buf=synthBuffer(bank.synth);applyOverrides(bank.ov);onSampleLoaded(buf,bank.name,bankId);if(btn)btn.classList.remove('loading');}catch(e){status('ERR');if(btn)btn.classList.remove('loading');}});}
+function loadBank(bankId){var bank=banks[bankId];if(!bank)return;var btn=qs('[data-bank="'+bankId+'"]');if(btn)btn.classList.add('loading');status('LOADING...');initAudio(function(){if(bank.file){fetch(bank.file).then(function(r){if(!r.ok)throw new Error('HTTP '+r.status);return r.arrayBuffer();}).then(function(ab){audioCtx.decodeAudioData(ab,function(buf){applyOverrides(bank.ov);onSampleLoaded(buf,bank.name,bankId);if(btn)btn.classList.remove('loading');},function(){fallbackSynth(bank,bankId,btn);});}).catch(function(){fallbackSynth(bank,bankId,btn);});}else if(bank.synth){fallbackSynth(bank,bankId,btn);}});}
+function fallbackSynth(bank,bankId,btn){if(!bank.synth){status('ERR');if(btn)btn.classList.remove('loading');return;}status('GEN...');try{var buf=synthBuffer(bank.synth);applyOverrides(bank.ov);onSampleLoaded(buf,bank.name,bankId);}catch(e){status('ERR');}if(btn)btn.classList.remove('loading');}
 function loadCustom(file){var lbl=el('cust-lbl');if(lbl)lbl.classList.add('loading');status('LOADING...');initAudio(function(){var reader=new FileReader();reader.onload=function(e){audioCtx.decodeAudioData(e.target.result,function(buf){onSampleLoaded(buf,file.name.slice(0,12).toUpperCase(),'custom');if(lbl)lbl.classList.remove('loading');},function(){status('DECODE ERR');if(lbl)lbl.classList.remove('loading');});};reader.onerror=function(){status('READ ERR');if(lbl)lbl.classList.remove('loading');};reader.readAsArrayBuffer(file);});}
 
 /* ── TAPE SAMPLER ── */
