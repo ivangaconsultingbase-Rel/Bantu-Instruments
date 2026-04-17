@@ -100,15 +100,18 @@ TOPBAR
 ═══════════════════════════════════════════════════ */
 .topbar{
 display:flex;
-align-items:center;
-gap:20px;
+flex-direction:column;
+gap:12px;
 padding:12px 18px;
 background:var(–s0);
 border-bottom:1px solid var(–b1);
-flex-wrap:wrap;
 }
 .topbar-row{
-display:contents; /* desktop: rows collapse so children flow in topbar flex */
+display:flex;
+align-items:center;
+gap:16px;
+flex-wrap:wrap;
+width:100%;
 }
 .brand{
 display:flex;
@@ -289,10 +292,10 @@ border-left:3px solid #363636;
 border-bottom:1px solid var(–b1);
 transition:border-left-color 150ms;
 }
-.track[data-id=“bd”]{border-left-color:#ff4400}
-.track[data-id=“sd”]{border-left-color:#00aaff}
-.track[data-id=“hh”]{border-left-color:#f0b200}
-.track[data-id=“cp”]{border-left-color:#9944ff}
+.track.t-bd{border-left-color:#ff4400!important}
+.track.t-sd{border-left-color:#00aaff!important}
+.track.t-hh{border-left-color:#f0b200!important}
+.track.t-cp{border-left-color:#9944ff!important}
 .track:last-child{border-bottom:none}
 .track.muted .steps-row{opacity:.28}
 
@@ -312,10 +315,10 @@ font-family:‘IBM Plex Mono’,ui-monospace,‘SF Mono’,Menlo,Monaco,Consolas
 color:#707070;
 min-width:28px;letter-spacing:-.03em;
 }
-.track[data-id=“bd”] .track-abbr{color:#ff4400}
-.track[data-id=“sd”] .track-abbr{color:#00aaff}
-.track[data-id=“hh”] .track-abbr{color:#f0b200}
-.track[data-id=“cp”] .track-abbr{color:#9944ff}
+.track.t-bd .track-abbr{color:#ff4400!important}
+.track.t-sd .track-abbr{color:#00aaff!important}
+.track.t-hh .track-abbr{color:#f0b200!important}
+.track.t-cp .track-abbr{color:#9944ff!important}
 .track-ctrls{display:flex;gap:4px}
 .ctrl-btn{
 width:25px;height:22px;border-radius:2px;
@@ -407,48 +410,56 @@ opacity:.85;
 
 /* PER-TRACK COLORS — explicit, no custom properties */
 /* BD — ORANGE */
-.track[data-id=“bd”] .step-btn.on{
-background:rgba(255,68,0,.10);background-color:rgba(255,68,0,.10);
-border-color:rgba(255,68,0,.45);
+.track.t-bd .step-btn.on{
+background:rgba(255,68,0,.10)!important;background-color:rgba(255,68,0,.10)!important;
+border-color:rgba(255,68,0,.5)!important;
 }
-.track[data-id=“bd”] .step-btn.on::before{
-background:#ff4400;border-color:#ff4400;
-box-shadow:0 0 5px #ff4400,0 0 12px rgba(255,68,0,.5);
+.track.t-bd .step-btn.on::before{
+background:#ff4400!important;
+background-color:#ff4400!important;
+border-color:#ff4400!important;
+box-shadow:0 0 5px #ff4400,0 0 12px rgba(255,68,0,.5)!important;
 }
-.track[data-id=“bd”] .step-btn.accent::after{background:#ff4400}
+.track.t-bd .step-btn.accent::after{background:#ff4400!important}
 
 /* SD — CYAN */
-.track[data-id=“sd”] .step-btn.on{
-background:rgba(0,170,255,.10);background-color:rgba(0,170,255,.10);
-border-color:rgba(0,170,255,.45);
+.track.t-sd .step-btn.on{
+background:rgba(0,170,255,.10)!important;background-color:rgba(0,170,255,.10)!important;
+border-color:rgba(0,170,255,.5)!important;
 }
-.track[data-id=“sd”] .step-btn.on::before{
-background:#00aaff;border-color:#00aaff;
-box-shadow:0 0 5px #00aaff,0 0 12px rgba(0,170,255,.5);
+.track.t-sd .step-btn.on::before{
+background:#00aaff!important;
+background-color:#00aaff!important;
+border-color:#00aaff!important;
+box-shadow:0 0 5px #00aaff,0 0 12px rgba(0,170,255,.5)!important;
 }
-.track[data-id=“sd”] .step-btn.accent::after{background:#00aaff}
+.track.t-sd .step-btn.accent::after{background:#00aaff!important}
 
 /* HH — AMBER */
-.track[data-id=“hh”] .step-btn.on{
-background:rgba(240,178,0,.10);background-color:rgba(240,178,0,.10);
-border-color:rgba(240,178,0,.45);
+.track.t-hh .step-btn.on{
+background:rgba(240,178,0,.10)!important;background-color:rgba(240,178,0,.10)!important;
+border-color:rgba(240,178,0,.5)!important;
 }
-.track[data-id=“hh”] .step-btn.on::before{
-background:#f0b200;border-color:#f0b200;
-box-shadow:0 0 5px #f0b200,0 0 12px rgba(240,178,0,.5);
+.track.t-hh .step-btn.on::before{
+background:#f0b200!important;
+background-color:#f0b200!important;
+border-color:#f0b200!important;
+box-shadow:0 0 5px #f0b200,0 0 12px rgba(240,178,0,.5)!important;
 }
-.track[data-id=“hh”] .step-btn.accent::after{background:#f0b200}
+.track.t-hh .step-btn.accent::after{background:#f0b200!important}
 
 /* CP — VIOLET */
-.track[data-id=“cp”] .step-btn.on{
-background:rgba(153,68,255,.10);background-color:rgba(153,68,255,.10);
-border-color:rgba(153,68,255,.45);
+.track.t-cp .step-btn.on{
+background:rgba(153,68,255,.10)!important;background-color:rgba(153,68,255,.10)!important;
+border-color:rgba(153,68,255,.5)!important;
 }
-.track[data-id=“cp”] .step-btn.on::before{
-background:#9944ff;border-color:#9944ff;
-box-shadow:0 0 5px #9944ff,0 0 12px rgba(153,68,255,.5);
+.track.t-cp .step-btn.on::before{
+background:#9944ff!important;
+background-color:#9944ff!important;
+border-color:#9944ff!important;
+box-shadow:0 0 5px #9944ff,0 0 12px rgba(153,68,255,.5)!important;
 }
-.track[data-id=“cp”] .step-btn.accent::after{background:#9944ff}
+.track.t-cp .step-btn.accent::after{background:#9944ff!important}
 
 /* Playing — GREEN override */
 .step-btn.playing{background:rgba(0,220,106,.08)!important;background-color:rgba(0,220,106,.08)!important;border-color:rgba(0,220,106,.5)!important}
@@ -795,20 +806,9 @@ RESPONSIVE
 #app{padding:6px}
 .machine{border-radius:4px;box-shadow:0 0 0 1px rgba(255,255,255,.03) inset,0 20px 60px rgba(0,0,0,.9)}
 
-/* ── MOBILE TOPBAR: force vertical flow ── */
-.topbar{
-display:flex!important;
-flex-direction:column!important;
-flex-wrap:nowrap!important;
-gap:8px!important;
-padding:10px 12px!important;
-}
-.topbar-row{
-display:flex!important;
-align-items:center!important;
-gap:8px!important;
-width:100%!important;
-}
+/* ── MOBILE TOPBAR: tighter spacing ── */
+.topbar{gap:8px;padding:10px 12px}
+.topbar-row{gap:8px}
 .brand{
 padding:0;border-right:none;border-bottom:none;
 flex:1;min-width:0;
@@ -1620,7 +1620,7 @@ function previewTrack(id){
 function buildTracks(){
   qs('#tracksSection').innerHTML=TRACKS.map(def=>{
     const ts=trackState.find(t=>t.id===def.id),pt=getPatternTrack(def.id);
-    return`<div class="track" data-id="${def.id}">
+    return`<div class="track t-${def.id}" data-id="${def.id}">
       <div class="track-header" data-track="${def.id}">
         <div class="track-abbr">${def.name}</div>
         <div class="track-ctrls">
