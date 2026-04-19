@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
@@ -25,36 +26,39 @@
 
 /* degree palette — subtle bg tints */
 :root {
-  --d1:#ff5500; --d2:#e06020; --d3:#c07040;
-  --d4:#a08060; --d5:#7090a0; --d6:#4080d0; --d7:#2060ff;
+–d1:#ff5500; –d2:#e06020; –d3:#c07040;
+–d4:#a08060; –d5:#7090a0; –d6:#4080d0; –d7:#2060ff;
 }
 
 *,*::before,*::after{box-sizing:border-box;-webkit-tap-highlight-color:transparent;-webkit-text-size-adjust:100%}
-html,body{margin:0;height:100%;background:var(--bg);color:var(--text);font-family:var(--f);overscroll-behavior:none;-webkit-font-smoothing:antialiased}
+html,body{margin:0;height:100%;background:var(–bg);color:var(–text);font-family:var(–f);overscroll-behavior:none;-webkit-font-smoothing:antialiased}
 button,input,select{font:inherit}
+
+/* iOS Safari: prevent text selection + callout on all touch targets */
+button,.chordPad,.step,.tp,.tabbtn,.sact,.btn-start,.pad-body,.step-deg,.step-chd,.step-num{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
 
 /* shell */
 .app{display:flex;flex-direction:column;height:100dvh;max-width:560px;margin:0 auto}
 
 /* ── header ─────────────────────────── */
-.hdr{flex-shrink:0;display:flex;align-items:center;gap:10px;padding:calc(var(--safe-t) + 9px) 12px 9px;background:var(--s1);border-bottom:1px solid var(--line)}
+.hdr{flex-shrink:0;display:flex;align-items:center;gap:10px;padding:calc(var(–safe-t) + 9px) 12px 9px;background:var(–s1);border-bottom:1px solid var(–line)}
 .hdr-l{flex:1;display:flex;align-items:center;gap:10px}
-.logo{font-size:13px;font-weight:700;letter-spacing:.18em;color:var(--text)}
-.logo em{color:var(--acc);font-style:normal}
-.status{display:flex;align-items:center;gap:5px;font-size:9px;color:var(--muted);letter-spacing:.12em}
-.led{width:6px;height:6px;border-radius:50%;background:var(--red);flex-shrink:0;transition:background .3s,box-shadow .3s}
-.led.on{background:var(--green);box-shadow:0 0 7px var(--grn-glow)}
-.btn-start{appearance:none;border:1px solid var(--acc);background:transparent;color:var(--acc);font-family:var(--f);font-size:9px;font-weight:700;letter-spacing:.22em;padding:8px 16px;border-radius:1px;cursor:pointer;touch-action:manipulation;flex-shrink:0;transition:background .1s,color .1s}
-.btn-start:active{background:var(--acc);color:var(--bg)}
+.logo{font-size:13px;font-weight:700;letter-spacing:.18em;color:var(–text)}
+.logo em{color:var(–acc);font-style:normal}
+.status{display:flex;align-items:center;gap:5px;font-size:9px;color:var(–muted);letter-spacing:.12em}
+.led{width:6px;height:6px;border-radius:50%;background:var(–red);flex-shrink:0;transition:background .3s,box-shadow .3s}
+.led.on{background:var(–green);box-shadow:0 0 7px var(–grn-glow)}
+.btn-start{appearance:none;border:1px solid var(–acc);background:transparent;color:var(–acc);font-family:var(–f);font-size:9px;font-weight:700;letter-spacing:.22em;padding:8px 16px;border-radius:1px;cursor:pointer;touch-action:manipulation;flex-shrink:0;transition:background .1s,color .1s}
+.btn-start:active{background:var(–acc);color:var(–bg)}
 
 /* ── transport ───────────────────────── */
-.transport{flex-shrink:0;display:grid;grid-template-columns:repeat(4,1fr);border-bottom:1px solid var(--line)}
-.tp{appearance:none;border:none;border-right:1px solid var(--line);background:var(--bg);color:var(--muted);font-family:var(--f);font-size:9px;font-weight:700;letter-spacing:.14em;padding:10px 4px;cursor:pointer;touch-action:manipulation;text-align:center;transition:background .08s,color .08s}
+.transport{flex-shrink:0;display:grid;grid-template-columns:repeat(4,1fr);border-bottom:1px solid var(–line)}
+.tp{appearance:none;border:none;border-right:1px solid var(–line);background:var(–bg);color:var(–muted);font-family:var(–f);font-size:9px;font-weight:700;letter-spacing:.14em;padding:10px 4px;cursor:pointer;touch-action:manipulation;text-align:center;transition:background .08s,color .08s}
 .tp:last-child{border-right:none}
-.tp.on{color:var(--acc);background:var(--acc-dim)}
-.tp.on-green{color:var(--green);background:var(--grn-dim)}
-.tp.danger{color:var(--red)}
-.tp:active{background:var(--s1)}
+.tp.on{color:var(–acc);background:var(–acc-dim)}
+.tp.on-green{color:var(–green);background:var(–grn-dim)}
+.tp.danger{color:var(–red)}
+.tp:active{background:var(–s1)}
 
 /* ── tab viewport ───────────────────── */
 .viewport{flex:1;min-height:0;position:relative;overflow:hidden}
@@ -63,162 +67,164 @@ button,input,select{font:inherit}
 .panel.active{display:flex}
 
 /* ── 7-pad chord row ────────────────── */
-.chord-row{flex-shrink:0;position:sticky;top:0;z-index:4;display:grid;grid-template-columns:repeat(7,1fr);border-bottom:1px solid var(--line);background:var(--bg)}
-.chordPad{position:relative;height:82px;border:none;border-right:1px solid var(--line);background:var(--bg);display:flex;flex-direction:column;align-items:flex-start;padding:0;cursor:pointer;user-select:none;touch-action:manipulation;text-align:left;appearance:none;overflow:hidden;transition:background .07s}
+.chord-row{flex-shrink:0;position:sticky;top:0;z-index:4;display:grid;grid-template-columns:repeat(7,1fr);border-bottom:1px solid var(–line);background:var(–bg)}
+.chordPad{position:relative;height:82px;border:none;border-right:1px solid var(–line);background:var(–bg);display:flex;flex-direction:column;align-items:flex-start;padding:0;cursor:pointer;user-select:none;touch-action:manipulation;text-align:left;appearance:none;overflow:hidden;transition:background .07s}
 .chordPad:last-child{border-right:none}
-.chordPad:active{background:var(--s2)}
-.chordPad.active{background:var(--s1)}
-.chordPad::before{content:'';display:block;width:100%;height:3px;background:var(--dim);flex-shrink:0;transition:background .07s,box-shadow .07s}
-.chordPad.active::before{background:var(--acc);box-shadow:0 2px 10px var(--acc-glow)}
+.chordPad:active{background:var(–s2)}
+.chordPad.active{background:var(–s1)}
+.chordPad::before{content:’’;display:block;width:100%;height:3px;background:var(–dim);flex-shrink:0;transition:background .07s,box-shadow .07s}
+.chordPad.active::before{background:var(–acc);box-shadow:0 2px 10px var(–acc-glow)}
 .pad-body{padding:5px 5px 4px;display:flex;flex-direction:column;gap:1px;width:100%;overflow:hidden}
-.chordPad .deg{font-size:8px;font-weight:400;color:var(--muted);letter-spacing:.04em;line-height:1}
-.chordPad.active .deg{color:var(--acc)}
-.chordPad .name{font-size:15px;font-weight:700;color:var(--text);line-height:1.1;white-space:nowrap;overflow:hidden}
+.chordPad .deg{font-size:8px;font-weight:400;color:var(–muted);letter-spacing:.04em;line-height:1}
+.chordPad.active .deg{color:var(–acc)}
+.chordPad .name{font-size:15px;font-weight:700;color:var(–text);line-height:1.1;white-space:nowrap;overflow:hidden}
 .chordPad.active .name{color:#fff}
-.chordPad .hint{font-size:7px;color:var(--muted);line-height:1.2;white-space:nowrap;overflow:hidden;letter-spacing:.02em}
-.chordPad.active .hint{color:var(--dim)}
+.chordPad .hint{font-size:7px;color:var(–muted);line-height:1.2;white-space:nowrap;overflow:hidden;letter-spacing:.02em}
+.chordPad.active .hint{color:var(–dim)}
 
 /* ── PLAY body ──────────────────────── */
 .play-body{display:flex;flex-direction:column;flex:1}
-.harmony{display:grid;grid-template-columns:repeat(4,1fr);border-bottom:1px solid var(--line)}
-.hf{display:flex;flex-direction:column;border-right:1px solid var(--line);padding:8px}
+.harmony{display:grid;grid-template-columns:repeat(4,1fr);border-bottom:1px solid var(–line)}
+.hf{display:flex;flex-direction:column;border-right:1px solid var(–line);padding:8px}
 .hf:last-child{border-right:none}
-.flbl{font-size:8px;font-weight:700;letter-spacing:.2em;color:var(--muted);text-transform:uppercase;margin-bottom:4px}
-select{width:100%;appearance:none;-webkit-appearance:none;background:transparent;color:var(--text);border:none;border-bottom:1px solid var(--line2);padding:4px 0;font-family:var(--f);font-size:10px;font-weight:500;cursor:pointer;outline:none}
-select:focus{border-bottom-color:var(--acc)}
-.readouts{display:grid;grid-template-columns:1fr 1fr;border-bottom:1px solid var(--line)}
-.rout{padding:8px 10px;border-right:1px solid var(--line);display:flex;flex-direction:column;gap:2px}
+.flbl{font-size:8px;font-weight:700;letter-spacing:.2em;color:var(–muted);text-transform:uppercase;margin-bottom:4px}
+select{width:100%;appearance:none;-webkit-appearance:none;background:transparent;color:var(–text);border:none;border-bottom:1px solid var(–line2);padding:4px 0;font-family:var(–f);font-size:10px;font-weight:500;cursor:pointer;outline:none}
+select:focus{border-bottom-color:var(–acc)}
+.readouts{display:grid;grid-template-columns:1fr 1fr;border-bottom:1px solid var(–line)}
+.rout{padding:8px 10px;border-right:1px solid var(–line);display:flex;flex-direction:column;gap:2px}
 .rout:last-child{border-right:none}
-.rk{font-size:8px;color:var(--muted);letter-spacing:.18em;text-transform:uppercase}
-.rv{font-size:11px;font-weight:700;color:var(--acc);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.xy-section{display:flex;flex-direction:column;border-bottom:1px solid var(--line)}
-.xyPad{position:relative;aspect-ratio:16/7;background:var(--s1);border-bottom:1px solid var(--line);overflow:hidden;touch-action:none;cursor:crosshair}
-.xyPad::before{content:'';position:absolute;top:50%;left:0;right:0;height:1px;background:var(--line);pointer-events:none}
-.xyPad::after{content:'';position:absolute;left:50%;top:0;bottom:0;width:1px;background:var(--line);pointer-events:none}
-.xyLabel{position:absolute;font-size:8px;font-weight:700;color:var(--dim);letter-spacing:.1em;text-transform:uppercase;pointer-events:none;z-index:2}
+.rk{font-size:8px;color:var(–muted);letter-spacing:.18em;text-transform:uppercase}
+.rv{font-size:11px;font-weight:700;color:var(–acc);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.xy-section{display:flex;flex-direction:column;border-bottom:1px solid var(–line)}
+.xyPad{position:relative;aspect-ratio:16/7;background:var(–s1);border-bottom:1px solid var(–line);overflow:hidden;touch-action:none;cursor:crosshair}
+.xyPad::before{content:’’;position:absolute;top:50%;left:0;right:0;height:1px;background:var(–line);pointer-events:none}
+.xyPad::after{content:’’;position:absolute;left:50%;top:0;bottom:0;width:1px;background:var(–line);pointer-events:none}
+.xyLabel{position:absolute;font-size:8px;font-weight:700;color:var(–dim);letter-spacing:.1em;text-transform:uppercase;pointer-events:none;z-index:2}
 .xyLabel.top{top:5px;left:50%;transform:translateX(-50%)}
 .xyLabel.bottom{bottom:5px;left:50%;transform:translateX(-50%)}
 .xyLabel.left{left:6px;top:50%;transform:translateY(-50%) rotate(-90deg)}
 .xyLabel.right{right:6px;top:50%;transform:translateY(-50%) rotate(90deg)}
-.xyDot{position:absolute;width:8px;height:8px;border-radius:50%;background:var(--acc);box-shadow:0 0 14px var(--acc-glow);transform:translate(-50%,-50%);left:50%;top:50%;pointer-events:none;z-index:3}
-.xyDot::before,.xyDot::after{content:'';position:absolute;background:rgba(255,85,0,.18);pointer-events:none}
+.xyDot{position:absolute;width:8px;height:8px;border-radius:50%;background:var(–acc);box-shadow:0 0 14px var(–acc-glow);transform:translate(-50%,-50%);left:50%;top:50%;pointer-events:none;z-index:3}
+.xyDot::before,.xyDot::after{content:’’;position:absolute;background:rgba(255,85,0,.18);pointer-events:none}
 .xyDot::before{top:50%;left:-300vw;right:-300vw;height:1px;transform:translateY(-50%)}
 .xyDot::after{left:50%;top:-300vh;bottom:-300vh;width:1px;transform:translateX(-50%)}
 .xy-meters{display:grid;grid-template-columns:repeat(3,1fr)}
-.mtr{padding:8px 10px;border-right:1px solid var(--line);display:flex;flex-direction:column;gap:2px}
+.mtr{padding:8px 10px;border-right:1px solid var(–line);display:flex;flex-direction:column;gap:2px}
 .mtr:last-child{border-right:none}
-.mk{font-size:8px;color:var(--muted);letter-spacing:.18em;text-transform:uppercase}
-.mv{font-size:16px;font-weight:700;color:var(--text);line-height:1}
+.mk{font-size:8px;color:var(–muted);letter-spacing:.18em;text-transform:uppercase}
+.mv{font-size:16px;font-weight:700;color:var(–text);line-height:1}
 
 /* ── SYNTH / MOD param rows ─────────── */
-.sec-hd{padding:9px 12px;font-size:8px;font-weight:700;letter-spacing:.22em;color:var(--muted);text-transform:uppercase;border-bottom:1px solid var(--line);background:var(--s1);display:flex;align-items:center;gap:8px}
-.sec-hd::after{content:'';flex:1;height:1px;background:var(--line2)}
-.param-list{display:flex;flex-direction:column;border-bottom:1px solid var(--line)}
-.param{display:flex;align-items:center;gap:14px;padding:11px 12px;border-bottom:1px solid var(--line)}
+.sec-hd{padding:9px 12px;font-size:8px;font-weight:700;letter-spacing:.22em;color:var(–muted);text-transform:uppercase;border-bottom:1px solid var(–line);background:var(–s1);display:flex;align-items:center;gap:8px}
+.sec-hd::after{content:’’;flex:1;height:1px;background:var(–line2)}
+.param-list{display:flex;flex-direction:column;border-bottom:1px solid var(–line)}
+.param{display:flex;align-items:center;gap:14px;padding:11px 12px;border-bottom:1px solid var(–line)}
 .param:last-child{border-bottom:none}
-.pname{font-size:9px;font-weight:700;letter-spacing:.12em;color:var(--muted);text-transform:uppercase;width:102px;flex-shrink:0}
-input[type="range"]{flex:1;-webkit-appearance:none;appearance:none;height:2px;background:var(--line2);border-radius:0;outline:none;padding:0;cursor:pointer}
-input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:var(--text);border:2px solid var(--acc);cursor:pointer}
-input[type="range"]::-moz-range-thumb{width:14px;height:14px;border-radius:50%;background:var(--text);border:2px solid var(--acc);cursor:pointer;border:none}
+.pname{font-size:9px;font-weight:700;letter-spacing:.12em;color:var(–muted);text-transform:uppercase;width:102px;flex-shrink:0}
+input[type=“range”]{flex:1;-webkit-appearance:none;appearance:none;height:2px;background:var(–line2);border-radius:0;outline:none;padding:0;cursor:pointer}
+input[type=“range”]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:var(–text);border:2px solid var(–acc);cursor:pointer}
+input[type=“range”]::-moz-range-thumb{width:14px;height:14px;border-radius:50%;background:var(–text);border:2px solid var(–acc);cursor:pointer;border:none}
 
 /* ── SEQ tab ────────────────────────── */
 
 /* BPM hero row */
 .seq-bpm-row{
-  display:flex;align-items:center;gap:0;
-  border-bottom:1px solid var(--line);
-  background:var(--s1);
+display:flex;align-items:center;gap:0;
+border-bottom:1px solid var(–line);
+background:var(–s1);
 }
 .bpm-display{
-  display:flex;flex-direction:column;justify-content:center;
-  padding:10px 14px;border-right:1px solid var(--line);
-  flex-shrink:0;min-width:80px;
+display:flex;flex-direction:column;justify-content:center;
+padding:10px 14px;border-right:1px solid var(–line);
+flex-shrink:0;min-width:80px;
 }
-.bpm-num{font-size:32px;font-weight:700;color:var(--text);line-height:1}
-.bpm-lbl{font-size:8px;color:var(--muted);letter-spacing:.2em;margin-top:2px}
+.bpm-num{font-size:32px;font-weight:700;color:var(–text);line-height:1}
+.bpm-lbl{font-size:8px;color:var(–muted);letter-spacing:.2em;margin-top:2px}
 .bpm-slider-wrap{flex:1;display:flex;align-items:center;padding:0 14px}
-.bpm-slider-wrap input[type="range"]{flex:1}
+.bpm-slider-wrap input[type=“range”]{flex:1}
 
 /* seq settings row */
-.seq-settings{display:grid;grid-template-columns:repeat(4,1fr);border-bottom:1px solid var(--line)}
-.ssf{display:flex;flex-direction:column;padding:8px 9px;border-right:1px solid var(--line)}
+.seq-settings{display:grid;grid-template-columns:repeat(4,1fr);border-bottom:1px solid var(–line)}
+.ssf{display:flex;flex-direction:column;padding:8px 9px;border-right:1px solid var(–line)}
 .ssf:last-child{border-right:none}
 
 /* step grid */
 .step-grid-wrap{
-  display:flex;flex-direction:column;
-  border-bottom:1px solid var(--line);
-  position:relative;
+display:flex;flex-direction:column;
+border-bottom:1px solid var(–line);
+position:relative;
 }
 .step-grid{
-  display:grid;
-  grid-template-columns:repeat(8,1fr);
-  /* rows built by step count */
+display:grid;
+grid-template-columns:repeat(8,1fr);
+/* rows built by step count */
 }
 /* Each step */
 .step{
-  position:relative;
-  aspect-ratio:1;
-  min-height:52px;
-  border:none;
-  border-right:1px solid var(--line);
-  border-bottom:1px solid var(--line);
-  background:var(--bg);
-  display:flex;flex-direction:column;align-items:center;justify-content:center;
-  gap:2px;
-  cursor:pointer;touch-action:manipulation;appearance:none;
-  overflow:hidden;
-  user-select:none;
-  -webkit-user-select:none;
-  transition:background .07s;
+position:relative;
+aspect-ratio:1;
+min-height:52px;
+border:none;
+border-right:1px solid var(–line);
+border-bottom:1px solid var(–line);
+background:var(–bg);
+display:flex;flex-direction:column;align-items:center;justify-content:center;
+gap:2px;
+cursor:pointer;touch-action:manipulation;appearance:none;
+overflow:hidden;
+user-select:none;
+-webkit-user-select:none;
+transition:background .07s;
 }
 .step:nth-child(8n){border-right:none}
 /* LED bar on top of each step */
 .step::before{
-  content:'';position:absolute;top:0;left:0;right:0;height:3px;
-  background:var(--dim);
-  transition:background .07s, box-shadow .07s;
+content:’’;position:absolute;top:0;left:0;right:0;height:3px;
+background:var(–dim);
+transition:background .07s, box-shadow .07s;
 }
 .step.active-playhead::before{
-  background:var(--green);
-  box-shadow:0 2px 8px var(--grn-glow);
+background:var(–green);
+box-shadow:0 2px 8px var(–grn-glow);
 }
 /* assigned degree indicator */
-.step.has-note{background:var(--s1)}
-.step.has-note::before{background:var(--acc)}
+.step.has-note{background:var(–s1)}
+.step.has-note::before{background:var(–acc)}
 /* both playing AND has note */
-.step.has-note.active-playhead::before{background:var(--green);box-shadow:0 2px 10px var(--grn-glow)}
-.step.active-playhead{background:var(--s2)}
-.step-deg{font-size:13px;font-weight:700;color:var(--muted);line-height:1}
-.step.has-note .step-deg{color:var(--acc)}
-.step.active-playhead .step-deg{color:var(--green)}
-.step.has-note.active-playhead .step-deg{color:var(--green)}
-.step-num{font-size:8px;color:var(--dim);line-height:1}
-.step.has-note .step-num{color:var(--muted)}
+.step.has-note.active-playhead::before{background:var(–green);box-shadow:0 2px 10px var(–grn-glow)}
+.step.active-playhead{background:var(–s2)}
+.step-deg{font-size:13px;font-weight:700;color:var(–muted);line-height:1}
+.step.has-note .step-deg{color:var(–acc)}
+.step.active-playhead .step-deg{color:var(–green)}
+.step.has-note.active-playhead .step-deg{color:var(–green)}
+.step-num{font-size:8px;color:var(–dim);line-height:1}
+.step.has-note .step-num{color:var(–muted)}
 
 /* step footer — chord name hint */
-.step-chd{font-size:7px;color:var(--dim);line-height:1;letter-spacing:.01em}
-.step.has-note .step-chd{color:var(--muted)}
+.step-chd{font-size:7px;color:var(–dim);line-height:1;letter-spacing:.01em}
+.step.has-note .step-chd{color:var(–muted)}
 
 /* seq action buttons */
-.seq-actions{display:grid;grid-template-columns:repeat(4,1fr);border-bottom:1px solid var(--line)}
-.sact{appearance:none;border:none;border-right:1px solid var(--line);background:var(--bg);color:var(--muted);font-family:var(--f);font-size:9px;font-weight:700;letter-spacing:.1em;padding:13px 4px;cursor:pointer;touch-action:manipulation;text-align:center;transition:background .08s,color .08s}
+.seq-actions{display:grid;grid-template-columns:repeat(4,1fr);border-bottom:1px solid var(–line)}
+.sact{appearance:none;border:none;border-right:1px solid var(–line);background:var(–bg);color:var(–muted);font-family:var(–f);font-size:9px;font-weight:700;letter-spacing:.1em;padding:13px 4px;cursor:pointer;touch-action:manipulation;text-align:center;transition:background .08s,color .08s}
 .sact:last-child{border-right:none}
-.sact.hi{color:var(--acc);background:var(--acc-dim)}
-.sact:active{background:var(--s2)}
+.sact.hi{color:var(–acc);background:var(–acc-dim)}
+.sact:active{background:var(–s2)}
 
 /* ── tab bar ────────────────────────── */
-.tabbar{flex-shrink:0;display:grid;grid-template-columns:repeat(4,1fr);border-top:1px solid var(--line);background:var(--s1);padding-bottom:var(--safe-b)}
-.tabbtn{appearance:none;border:none;border-right:1px solid var(--line);background:transparent;color:var(--muted);display:flex;flex-direction:column;align-items:center;gap:3px;padding:9px 4px;cursor:pointer;touch-action:manipulation;font-size:8px;font-weight:700;letter-spacing:.14em;transition:color .1s,background .1s}
+.tabbar{flex-shrink:0;display:grid;grid-template-columns:repeat(4,1fr);border-top:1px solid var(–line);background:var(–s1);padding-bottom:var(–safe-b)}
+.tabbtn{appearance:none;border:none;border-right:1px solid var(–line);background:transparent;color:var(–muted);display:flex;flex-direction:column;align-items:center;gap:3px;padding:9px 4px;cursor:pointer;touch-action:manipulation;font-size:8px;font-weight:700;letter-spacing:.14em;transition:color .1s,background .1s}
 .tabbtn:last-child{border-right:none}
-.tabbtn.active{color:var(--acc);background:var(--acc-dim)}
+.tabbtn.active{color:var(–acc);background:var(–acc-dim)}
 .tabbtn svg{display:block}
 </style>
+
 </head>
 <body>
 <div class="app">
 
 <!-- header -->
+
 <header class="hdr">
   <div class="hdr-l">
     <span class="logo">AYOGO <em>106</em></span>
@@ -228,6 +234,7 @@ input[type="range"]::-moz-range-thumb{width:14px;height:14px;border-radius:50%;b
 </header>
 
 <!-- transport -->
+
 <div class="transport">
   <button class="tp" id="holdBtn">HOLD</button>
   <button class="tp" id="arpBtn">ARP</button>
@@ -236,9 +243,11 @@ input[type="range"]::-moz-range-thumb{width:14px;height:14px;border-radius:50%;b
 </div>
 
 <!-- panels -->
+
 <div class="viewport">
 
   <!-- ══ PLAY ══ -->
+
   <section class="panel active" data-tab="play">
     <div class="chord-row" id="chordPads"></div>
     <div class="play-body">
@@ -279,6 +288,7 @@ input[type="range"]::-moz-range-thumb{width:14px;height:14px;border-radius:50%;b
   </section>
 
   <!-- ══ SYNTH ══ -->
+
   <section class="panel" data-tab="synth">
     <div class="sec-hd">OSCILLATORS</div>
     <div class="param-list">
@@ -306,6 +316,7 @@ input[type="range"]::-moz-range-thumb{width:14px;height:14px;border-radius:50%;b
   </section>
 
   <!-- ══ MOD ══ -->
+
   <section class="panel" data-tab="mod">
     <div class="sec-hd">CHORUS · SPACE</div>
     <div class="param-list">
@@ -324,96 +335,100 @@ input[type="range"]::-moz-range-thumb{width:14px;height:14px;border-radius:50%;b
   </section>
 
   <!-- ══ SEQ ══ -->
+
   <section class="panel" data-tab="seq">
 
-    <!-- BPM display + slider -->
-    <div class="seq-bpm-row">
-      <div class="bpm-display">
-        <div class="bpm-num" id="bpmDisplay">96</div>
-        <div class="bpm-lbl">BPM</div>
-      </div>
-      <div class="bpm-slider-wrap">
-        <input id="tempo" type="range" min="60" max="180" value="96">
-      </div>
-    </div>
+```
+<!-- BPM display + slider -->
+<div class="seq-bpm-row">
+  <div class="bpm-display">
+    <div class="bpm-num" id="bpmDisplay">96</div>
+    <div class="bpm-lbl">BPM</div>
+  </div>
+  <div class="bpm-slider-wrap">
+    <input id="tempo" type="range" min="60" max="180" value="96">
+  </div>
+</div>
 
-    <!-- Rate / Gate / Swing / Length -->
-    <div class="seq-settings">
-      <div class="ssf">
-        <span class="flbl">RATE</span>
-        <select id="rateSelect">
-          <option value="4">1/4</option>
-          <option value="8" selected>1/8</option>
-          <option value="16">1/16</option>
-        </select>
-      </div>
-      <div class="ssf">
-        <span class="flbl">GATE</span>
-        <select id="gateSelect">
-          <option value="0.25">25%</option>
-          <option value="0.5">50%</option>
-          <option value="0.75" selected>75%</option>
-          <option value="1.0">100%</option>
-          <option value="1.5">LEGATO</option>
-        </select>
-      </div>
-      <div class="ssf">
-        <span class="flbl">SWING</span>
-        <select id="swingSelect">
-          <option value="0" selected>0%</option>
-          <option value="0.1">10%</option>
-          <option value="0.2">20%</option>
-          <option value="0.33">33%</option>
-        </select>
-      </div>
-      <div class="ssf">
-        <span class="flbl">LENGTH</span>
-        <select id="seqLenSelect">
-          <option value="8">8</option>
-          <option value="16" selected>16</option>
-        </select>
-      </div>
-    </div>
+<!-- Rate / Gate / Swing / Length -->
+<div class="seq-settings">
+  <div class="ssf">
+    <span class="flbl">RATE</span>
+    <select id="rateSelect">
+      <option value="4">1/4</option>
+      <option value="8" selected>1/8</option>
+      <option value="16">1/16</option>
+    </select>
+  </div>
+  <div class="ssf">
+    <span class="flbl">GATE</span>
+    <select id="gateSelect">
+      <option value="0.25">25%</option>
+      <option value="0.5">50%</option>
+      <option value="0.75" selected>75%</option>
+      <option value="1.0">100%</option>
+      <option value="1.5">LEGATO</option>
+    </select>
+  </div>
+  <div class="ssf">
+    <span class="flbl">SWING</span>
+    <select id="swingSelect">
+      <option value="0" selected>0%</option>
+      <option value="0.1">10%</option>
+      <option value="0.2">20%</option>
+      <option value="0.33">33%</option>
+    </select>
+  </div>
+  <div class="ssf">
+    <span class="flbl">LENGTH</span>
+    <select id="seqLenSelect">
+      <option value="8">8</option>
+      <option value="16" selected>16</option>
+    </select>
+  </div>
+</div>
 
-    <!-- Step grid — built by JS -->
-    <div class="step-grid-wrap">
-      <div class="step-grid" id="stepGrid"></div>
-    </div>
+<!-- Step grid — built by JS -->
+<div class="step-grid-wrap">
+  <div class="step-grid" id="stepGrid"></div>
+</div>
 
-    <!-- Actions -->
-    <div class="seq-actions">
-      <button class="sact" id="seqClearBtn">CLEAR</button>
-      <button class="sact hi" id="seqFillBtn">FILL</button>
-      <button class="sact" id="seqShiftLBtn">◀ SHIFT</button>
-      <button class="sact" id="seqShiftRBtn">SHIFT ▶</button>
-    </div>
+<!-- Actions -->
+<div class="seq-actions">
+  <button class="sact" id="seqClearBtn">CLEAR</button>
+  <button class="sact hi" id="seqFillBtn">FILL</button>
+  <button class="sact" id="seqShiftLBtn">◀ SHIFT</button>
+  <button class="sact" id="seqShiftRBtn">SHIFT ▶</button>
+</div>
 
-    <!-- Direction -->
-    <div class="seq-settings" style="grid-template-columns:1fr 1fr">
-      <div class="ssf">
-        <span class="flbl">DIRECTION</span>
-        <select id="dirSelect">
-          <option value="fwd" selected>Forward</option>
-          <option value="rev">Reverse</option>
-          <option value="pingpong">Ping-pong</option>
-          <option value="random">Random</option>
-        </select>
-      </div>
-      <div class="ssf">
-        <span class="flbl">ARP DIR</span>
-        <select id="arpDirSelect">
-          <option value="up" selected>Up</option>
-          <option value="down">Down</option>
-          <option value="updown">Up-Down</option>
-          <option value="random">Random</option>
-        </select>
-      </div>
-    </div>
+<!-- Direction -->
+<div class="seq-settings" style="grid-template-columns:1fr 1fr">
+  <div class="ssf">
+    <span class="flbl">DIRECTION</span>
+    <select id="dirSelect">
+      <option value="fwd" selected>Forward</option>
+      <option value="rev">Reverse</option>
+      <option value="pingpong">Ping-pong</option>
+      <option value="random">Random</option>
+    </select>
+  </div>
+  <div class="ssf">
+    <span class="flbl">ARP DIR</span>
+    <select id="arpDirSelect">
+      <option value="up" selected>Up</option>
+      <option value="down">Down</option>
+      <option value="updown">Up-Down</option>
+      <option value="random">Random</option>
+    </select>
+  </div>
+</div>
+```
 
   </section>
 </div>
 
 <!-- tab bar — 4 tabs -->
+
 <nav class="tabbar">
   <button class="tabbtn active" data-target="play">
     <svg width="16" height="16" viewBox="0 0 18 18" fill="currentColor">
@@ -1023,5 +1038,6 @@ updateReadouts();
 
 })();
 </script>
+
 </body>
 </html>
