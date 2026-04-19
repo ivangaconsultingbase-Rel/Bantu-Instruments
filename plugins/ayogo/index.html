@@ -3,7 +3,6 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<meta name="color-scheme" content="dark">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,maximum-scale=1,user-scalable=no">
 <meta name="theme-color" content="#141414">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -31,14 +30,9 @@
 –d4:#a08060; –d5:#7090a0; –d6:#4080d0; –d7:#2060ff;
 }
 
-*,*::before,*::after{box-sizing:border-box;-webkit-tap-highlight-color:transparent;-webkit-text-size-adjust:100%}
-html,body{margin:0;height:100%;background:#141414;background:var(–bg);color:#e6e6e6;color:var(–text);font-family:var(–f);overscroll-behavior:none;-webkit-font-smoothing:antialiased;color-scheme:dark}
-/* Force Safari dark-mode UA stylesheet NOT to override our custom colors on interactive elements */
-button,select,input,textarea{color:inherit;background:transparent;font:inherit;-webkit-appearance:none;appearance:none;color-scheme:normal}
+*,*::before,*::after{box-sizing:border-box;-webkit-tap-highlight-color:transparent;-webkit-text-size-adjust:100%;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+html,body{margin:0;height:100%;background:var(–bg);color:var(–text);font-family:var(–f);overscroll-behavior:none;-webkit-font-smoothing:antialiased}
 button,input,select{font:inherit}
-
-/* iOS Safari: prevent text selection + callout on all touch targets */
-button,.chordPad,.step,.tp,.tabbtn,.sact,.btn-start,.pad-body,.step-deg,.step-chd,.step-num{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
 
 /* shell */
 .app{display:flex;flex-direction:column;height:100dvh;max-width:560px;margin:0 auto}
@@ -71,7 +65,7 @@ button,.chordPad,.step,.tp,.tabbtn,.sact,.btn-start,.pad-body,.step-deg,.step-ch
 
 /* ── 7-pad chord row ────────────────── */
 .chord-row{flex-shrink:0;position:sticky;top:0;z-index:4;display:grid;grid-template-columns:repeat(7,1fr);border-bottom:1px solid var(–line);background:var(–bg)}
-.chordPad{position:relative;height:82px;border:none;border-right:1px solid var(–line);background:var(–bg);display:flex;flex-direction:column;align-items:flex-start;padding:0;cursor:pointer;user-select:none;touch-action:manipulation;text-align:left;appearance:none;overflow:hidden;transition:background .07s}
+.chordPad{position:relative;height:82px;border:none;border-right:1px solid var(–line);background:var(–bg);display:flex;flex-direction:column;align-items:flex-start;padding:0;cursor:pointer;touch-action:manipulation;text-align:left;appearance:none;overflow:hidden;transition:background .07s}
 .chordPad:last-child{border-right:none}
 .chordPad:active{background:var(–s2)}
 .chordPad.active{background:var(–s1)}
@@ -129,71 +123,23 @@ input[type=“range”]::-webkit-slider-thumb{-webkit-appearance:none;width:14px
 input[type=“range”]::-moz-range-thumb{width:14px;height:14px;border-radius:50%;background:var(–text);border:2px solid var(–acc);cursor:pointer;border:none}
 
 /* ── SEQ tab ────────────────────────── */
-
-/* BPM hero row */
-.seq-bpm-row{
-display:flex;align-items:center;gap:0;
-border-bottom:1px solid var(–line);
-background:var(–s1);
-}
-.bpm-display{
-display:flex;flex-direction:column;justify-content:center;
-padding:10px 14px;border-right:1px solid var(–line);
-flex-shrink:0;min-width:80px;
-}
+.seq-bpm-row{display:flex;align-items:center;gap:0;border-bottom:1px solid var(–line);background:var(–s1)}
+.bpm-display{display:flex;flex-direction:column;justify-content:center;padding:10px 14px;border-right:1px solid var(–line);flex-shrink:0;min-width:80px}
 .bpm-num{font-size:32px;font-weight:700;color:var(–text);line-height:1}
 .bpm-lbl{font-size:8px;color:var(–muted);letter-spacing:.2em;margin-top:2px}
 .bpm-slider-wrap{flex:1;display:flex;align-items:center;padding:0 14px}
 .bpm-slider-wrap input[type=“range”]{flex:1}
-
-/* seq settings row */
 .seq-settings{display:grid;grid-template-columns:repeat(4,1fr);border-bottom:1px solid var(–line)}
 .ssf{display:flex;flex-direction:column;padding:8px 9px;border-right:1px solid var(–line)}
 .ssf:last-child{border-right:none}
-
-/* step grid */
-.step-grid-wrap{
-display:flex;flex-direction:column;
-border-bottom:1px solid var(–line);
-position:relative;
-}
-.step-grid{
-display:grid;
-grid-template-columns:repeat(8,1fr);
-/* rows built by step count */
-}
-/* Each step */
-.step{
-position:relative;
-aspect-ratio:1;
-min-height:52px;
-border:none;
-border-right:1px solid var(–line);
-border-bottom:1px solid var(–line);
-background:var(–bg);
-display:flex;flex-direction:column;align-items:center;justify-content:center;
-gap:2px;
-cursor:pointer;touch-action:manipulation;appearance:none;
-overflow:hidden;
-user-select:none;
--webkit-user-select:none;
-transition:background .07s;
-}
+.step-grid-wrap{display:flex;flex-direction:column;border-bottom:1px solid var(–line);position:relative}
+.step-grid{display:grid;grid-template-columns:repeat(8,1fr)}
+.step{position:relative;aspect-ratio:1;min-height:52px;border:none;border-right:1px solid var(–line);border-bottom:1px solid var(–line);background:var(–bg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;cursor:pointer;touch-action:manipulation;appearance:none;overflow:hidden;transition:background .07s}
 .step:nth-child(8n){border-right:none}
-/* LED bar on top of each step */
-.step::before{
-content:’’;position:absolute;top:0;left:0;right:0;height:3px;
-background:var(–dim);
-transition:background .07s, box-shadow .07s;
-}
-.step.active-playhead::before{
-background:var(–green);
-box-shadow:0 2px 8px var(–grn-glow);
-}
-/* assigned degree indicator */
+.step::before{content:’’;position:absolute;top:0;left:0;right:0;height:3px;background:var(–dim);transition:background .07s, box-shadow .07s}
+.step.active-playhead::before{background:var(–green);box-shadow:0 2px 8px var(–grn-glow)}
 .step.has-note{background:var(–s1)}
 .step.has-note::before{background:var(–acc)}
-/* both playing AND has note */
 .step.has-note.active-playhead::before{background:var(–green);box-shadow:0 2px 10px var(–grn-glow)}
 .step.active-playhead{background:var(–s2)}
 .step-deg{font-size:13px;font-weight:700;color:var(–muted);line-height:1}
@@ -202,12 +148,8 @@ box-shadow:0 2px 8px var(–grn-glow);
 .step.has-note.active-playhead .step-deg{color:var(–green)}
 .step-num{font-size:8px;color:var(–dim);line-height:1}
 .step.has-note .step-num{color:var(–muted)}
-
-/* step footer — chord name hint */
 .step-chd{font-size:7px;color:var(–dim);line-height:1;letter-spacing:.01em}
 .step.has-note .step-chd{color:var(–muted)}
-
-/* seq action buttons */
 .seq-actions{display:grid;grid-template-columns:repeat(4,1fr);border-bottom:1px solid var(–line)}
 .sact{appearance:none;border:none;border-right:1px solid var(–line);background:var(–bg);color:var(–muted);font-family:var(–f);font-size:9px;font-weight:700;letter-spacing:.1em;padding:13px 4px;cursor:pointer;touch-action:manipulation;text-align:center;transition:background .08s,color .08s}
 .sact:last-child{border-right:none}
@@ -226,8 +168,6 @@ box-shadow:0 2px 8px var(–grn-glow);
 <body>
 <div class="app">
 
-<!-- header -->
-
 <header class="hdr">
   <div class="hdr-l">
     <span class="logo">AYOGO <em>106</em></span>
@@ -236,8 +176,6 @@ box-shadow:0 2px 8px var(–grn-glow);
   <button class="btn-start" id="startBtn">START</button>
 </header>
 
-<!-- transport -->
-
 <div class="transport">
   <button class="tp" id="holdBtn">HOLD</button>
   <button class="tp" id="arpBtn">ARP</button>
@@ -245,11 +183,7 @@ box-shadow:0 2px 8px var(–grn-glow);
   <button class="tp danger" id="panicBtn">PANIC</button>
 </div>
 
-<!-- panels -->
-
 <div class="viewport">
-
-  <!-- ══ PLAY ══ -->
 
   <section class="panel active" data-tab="play">
     <div class="chord-row" id="chordPads"></div>
@@ -290,8 +224,6 @@ box-shadow:0 2px 8px var(–grn-glow);
     </div>
   </section>
 
-  <!-- ══ SYNTH ══ -->
-
   <section class="panel" data-tab="synth">
     <div class="sec-hd">OSCILLATORS</div>
     <div class="param-list">
@@ -318,8 +250,6 @@ box-shadow:0 2px 8px var(–grn-glow);
     </div>
   </section>
 
-  <!-- ══ MOD ══ -->
-
   <section class="panel" data-tab="mod">
     <div class="sec-hd">CHORUS · SPACE</div>
     <div class="param-list">
@@ -337,100 +267,63 @@ box-shadow:0 2px 8px var(–grn-glow);
     </div>
   </section>
 
-  <!-- ══ SEQ ══ -->
-
   <section class="panel" data-tab="seq">
-
-```
-<!-- BPM display + slider -->
-<div class="seq-bpm-row">
-  <div class="bpm-display">
-    <div class="bpm-num" id="bpmDisplay">96</div>
-    <div class="bpm-lbl">BPM</div>
-  </div>
-  <div class="bpm-slider-wrap">
-    <input id="tempo" type="range" min="60" max="180" value="96">
-  </div>
-</div>
-
-<!-- Rate / Gate / Swing / Length -->
-<div class="seq-settings">
-  <div class="ssf">
-    <span class="flbl">RATE</span>
-    <select id="rateSelect">
-      <option value="4">1/4</option>
-      <option value="8" selected>1/8</option>
-      <option value="16">1/16</option>
-    </select>
-  </div>
-  <div class="ssf">
-    <span class="flbl">GATE</span>
-    <select id="gateSelect">
-      <option value="0.25">25%</option>
-      <option value="0.5">50%</option>
-      <option value="0.75" selected>75%</option>
-      <option value="1.0">100%</option>
-      <option value="1.5">LEGATO</option>
-    </select>
-  </div>
-  <div class="ssf">
-    <span class="flbl">SWING</span>
-    <select id="swingSelect">
-      <option value="0" selected>0%</option>
-      <option value="0.1">10%</option>
-      <option value="0.2">20%</option>
-      <option value="0.33">33%</option>
-    </select>
-  </div>
-  <div class="ssf">
-    <span class="flbl">LENGTH</span>
-    <select id="seqLenSelect">
-      <option value="8">8</option>
-      <option value="16" selected>16</option>
-    </select>
-  </div>
-</div>
-
-<!-- Step grid — built by JS -->
-<div class="step-grid-wrap">
-  <div class="step-grid" id="stepGrid"></div>
-</div>
-
-<!-- Actions -->
-<div class="seq-actions">
-  <button class="sact" id="seqClearBtn">CLEAR</button>
-  <button class="sact hi" id="seqFillBtn">FILL</button>
-  <button class="sact" id="seqShiftLBtn">◀ SHIFT</button>
-  <button class="sact" id="seqShiftRBtn">SHIFT ▶</button>
-</div>
-
-<!-- Direction -->
-<div class="seq-settings" style="grid-template-columns:1fr 1fr">
-  <div class="ssf">
-    <span class="flbl">DIRECTION</span>
-    <select id="dirSelect">
-      <option value="fwd" selected>Forward</option>
-      <option value="rev">Reverse</option>
-      <option value="pingpong">Ping-pong</option>
-      <option value="random">Random</option>
-    </select>
-  </div>
-  <div class="ssf">
-    <span class="flbl">ARP DIR</span>
-    <select id="arpDirSelect">
-      <option value="up" selected>Up</option>
-      <option value="down">Down</option>
-      <option value="updown">Up-Down</option>
-      <option value="random">Random</option>
-    </select>
-  </div>
-</div>
-```
-
+    <div class="seq-bpm-row">
+      <div class="bpm-display">
+        <div class="bpm-num" id="bpmDisplay">96</div>
+        <div class="bpm-lbl">BPM</div>
+      </div>
+      <div class="bpm-slider-wrap">
+        <input id="tempo" type="range" min="60" max="180" value="96">
+      </div>
+    </div>
+    <div class="seq-settings">
+      <div class="ssf"><span class="flbl">RATE</span>
+        <select id="rateSelect">
+          <option value="4">1/4</option><option value="8" selected>1/8</option><option value="16">1/16</option>
+        </select>
+      </div>
+      <div class="ssf"><span class="flbl">GATE</span>
+        <select id="gateSelect">
+          <option value="0.25">25%</option><option value="0.5">50%</option>
+          <option value="0.75" selected>75%</option><option value="1.0">100%</option><option value="1.5">LEGATO</option>
+        </select>
+      </div>
+      <div class="ssf"><span class="flbl">SWING</span>
+        <select id="swingSelect">
+          <option value="0" selected>0%</option><option value="0.1">10%</option>
+          <option value="0.2">20%</option><option value="0.33">33%</option>
+        </select>
+      </div>
+      <div class="ssf"><span class="flbl">LENGTH</span>
+        <select id="seqLenSelect">
+          <option value="8">8</option><option value="16" selected>16</option>
+        </select>
+      </div>
+    </div>
+    <div class="step-grid-wrap"><div class="step-grid" id="stepGrid"></div></div>
+    <div class="seq-actions">
+      <button class="sact" id="seqClearBtn">CLEAR</button>
+      <button class="sact hi" id="seqFillBtn">FILL</button>
+      <button class="sact" id="seqShiftLBtn">◀ SHIFT</button>
+      <button class="sact" id="seqShiftRBtn">SHIFT ▶</button>
+    </div>
+    <div class="seq-settings" style="grid-template-columns:1fr 1fr">
+      <div class="ssf"><span class="flbl">DIRECTION</span>
+        <select id="dirSelect">
+          <option value="fwd" selected>Forward</option><option value="rev">Reverse</option>
+          <option value="pingpong">Ping-pong</option><option value="random">Random</option>
+        </select>
+      </div>
+      <div class="ssf"><span class="flbl">ARP DIR</span>
+        <select id="arpDirSelect">
+          <option value="up" selected>Up</option><option value="down">Down</option>
+          <option value="updown">Up-Down</option><option value="random">Random</option>
+        </select>
+      </div>
+    </div>
   </section>
 </div>
-
-<!-- tab bar — 4 tabs -->
 
 <nav class="tabbar">
   <button class="tabbtn active" data-target="play">
@@ -472,117 +365,90 @@ box-shadow:0 2px 8px var(–grn-glow);
 </div>
 
 <script>
-/* ── tab routing ────────────────────── */
-document.querySelectorAll('.tabbtn').forEach(btn => {
-  btn.addEventListener('click', () => {
-    const t = btn.dataset.target;
-    document.querySelectorAll('.tabbtn').forEach(b => b.classList.remove('active'));
-    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+document.querySelectorAll('.tabbtn').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    const t=btn.dataset.target;
+    document.querySelectorAll('.tabbtn').forEach(b=>b.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
     btn.classList.add('active');
     document.querySelector(`.panel[data-tab="${t}"]`).classList.add('active');
   });
 });
 
-/* ══════════════════════════════════════
-   AYOGO 106 — engine
-   ════════════════════════════════════ */
 (()=>{
-const $ = s => document.querySelector(s);
-
-/* ── constants ─ */
-const NOTES   = ['C','C#','D','Eb','E','F','F#','G','Ab','A','Bb','B'];
-const ROMANS  = ['I','II','III','IV','V','VI','VII'];
-const SCALES  = {
-  major:        {name:'Major',          steps:[0,2,4,5,7,9,11], qualities:['maj','min','min','maj','maj','min','dim']},
-  minor:        {name:'Natural Minor',  steps:[0,2,3,5,7,8,10], qualities:['min','dim','maj','min','min','maj','maj']},
-  dorian:       {name:'Dorian',         steps:[0,2,3,5,7,9,10], qualities:['min','min','maj','maj','min','dim','maj']},
-  mixolydian:   {name:'Mixolydian',     steps:[0,2,4,5,7,9,10], qualities:['maj','min','dim','maj','min','min','maj']},
-  harmonicMinor:{name:'Harmonic Minor', steps:[0,2,3,5,7,8,11], qualities:['min','dim','aug','min','maj','maj','dim']}
+const $=s=>document.querySelector(s);
+const NOTES=['C','C#','D','Eb','E','F','F#','G','Ab','A','Bb','B'];
+const ROMANS=['I','II','III','IV','V','VI','VII'];
+const SCALES={
+  major:{name:'Major',steps:[0,2,4,5,7,9,11],qualities:['maj','min','min','maj','maj','min','dim']},
+  minor:{name:'Natural Minor',steps:[0,2,3,5,7,8,10],qualities:['min','dim','maj','min','min','maj','maj']},
+  dorian:{name:'Dorian',steps:[0,2,3,5,7,9,10],qualities:['min','min','maj','maj','min','dim','maj']},
+  mixolydian:{name:'Mixolydian',steps:[0,2,4,5,7,9,10],qualities:['maj','min','dim','maj','min','min','maj']},
+  harmonicMinor:{name:'Harmonic Minor',steps:[0,2,3,5,7,8,11],qualities:['min','dim','aug','min','maj','maj','dim']}
 };
-
-/* ── state ─ */
-const state = {
-  /* audio */
-  ctx:null, master:null, dryBus:null, chorusWet:null, chorusDry:null,
-  globalHPF:null, chorusLFO:null, chorusDepthGains:null,
-  noiseBuffer:null, audioReady:false,
-  /* harmony */
-  key:0, scale:'major', octave:3,
-  xyX:.5, xyY:.5,
-  /* live play */
-  hold:false, arp:false, arpPhase:0, latchedChord:null,
-  activeNotes:new Map(), currentDegree:1,
-  /* step sequencer */
-  seqRunning:false,
-  seqSteps: new Array(16).fill(0), // 0=off, 1-7=degree
-  seqLen:16,
-  seqPos:-1,          // current playhead position
-  seqDir:1,           // +1 fwd / -1 rev (for pingpong)
-  seqTimer:null,
-  seqSwingToggle:false, // alternates odd/even steps for swing delay
-  /* arp timer (separate from seq) */
-  arpTimer:null,
+const state={
+  ctx:null,master:null,dryBus:null,chorusWet:null,chorusDry:null,
+  globalHPF:null,chorusLFO:null,chorusDepthGains:null,
+  noiseBuffer:null,audioReady:false,
+  key:0,scale:'major',octave:3,xyX:.5,xyY:.5,
+  hold:false,arp:false,arpPhase:0,latchedChord:null,
+  activeNotes:new Map(),currentDegree:1,
+  seqRunning:false,seqSteps:new Array(16).fill(0),seqLen:16,
+  seqPos:-1,seqDir:1,seqTimer:null,seqSwingToggle:false,arpTimer:null
 };
+const midiToFreq=n=>440*Math.pow(2,(n-69)/12);
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const lerp=(a,b,t)=>a+(b-a)*t;
+const choice=arr=>arr[(Math.random()*arr.length)|0];
 
-const midiToFreq = n => 440 * Math.pow(2,(n-69)/12);
-const clamp = (v,a,b) => Math.max(a,Math.min(b,v));
-const lerp  = (a,b,t) => a+(b-a)*t;
-const choice = arr => arr[(Math.random()*arr.length)|0];
-
-/* ── selects ─ */
 function populateSelects(){
-  NOTES.forEach((n,i)   => $('#keySelect').insertAdjacentHTML('beforeend',`<option value="${i}">${n}</option>`));
-  Object.entries(SCALES).forEach(([k,v]) => $('#scaleSelect').insertAdjacentHTML('beforeend',`<option value="${k}">${v.name}</option>`));
-  $('#keySelect').value='0'; $('#scaleSelect').value='major';
+  NOTES.forEach((n,i)=>$('#keySelect').insertAdjacentHTML('beforeend',`<option value="${i}">${n}</option>`));
+  Object.entries(SCALES).forEach(([k,v])=>$('#scaleSelect').insertAdjacentHTML('beforeend',`<option value="${k}">${v.name}</option>`));
+  $('#keySelect').value='0';$('#scaleSelect').value='major';
 }
 
-/* ── harmony helpers ─ */
 function degreeInfo(deg){
-  const s=SCALES[state.scale], semi=(state.key+s.steps[deg-1])%12;
-  return{rootSemi:semi, rootName:NOTES[semi], baseQ:s.qualities[deg-1]};
+  const s=SCALES[state.scale],semi=(state.key+s.steps[deg-1])%12;
+  return{rootSemi:semi,rootName:NOTES[semi],baseQ:s.qualities[deg-1]};
 }
-
 function getVP(baseQ){
-  const x=state.xyX, y=1-state.xyY;
-  let label='Neutral', intervals=[], extension='';
+  const x=state.xyX,y=1-state.xyY;
+  let label='Neutral',intervals=[],extension='';
   if(y<.33){
-    if(x<.33)     {label='Power';   intervals=[0,7,12];                              extension='5';}
-    else if(x<.66){label=baseQ.startsWith('min')?'Min triad':'Triad'; intervals=triadFQ(baseQ);}
-    else          {label='Sus';     intervals=baseQ.startsWith('min')?[0,5,7,12]:[0,2,7,12]; extension=baseQ.startsWith('min')?'sus4':'add2';}
+    if(x<.33){label='Power';intervals=[0,7,12];extension='5';}
+    else if(x<.66){label=baseQ.startsWith('min')?'Min triad':'Triad';intervals=triadFQ(baseQ);}
+    else{label='Sus';intervals=baseQ.startsWith('min')?[0,5,7,12]:[0,2,7,12];extension=baseQ.startsWith('min')?'sus4':'add2';}
   }else if(y<.66){
-    if(x<.33)     {label=baseQ.startsWith('min')?'Min7':'Maj7'; intervals=sevFQ(baseQ);}
-    else if(x<.66){label='Open7';   intervals=spreadV(sevFQ(baseQ));}
-    else          {label='Add9';    intervals=add9FQ(baseQ);  extension='add9';}
+    if(x<.33){label=baseQ.startsWith('min')?'Min7':'Maj7';intervals=sevFQ(baseQ);}
+    else if(x<.66){label='Open7';intervals=spreadV(sevFQ(baseQ));}
+    else{label='Add9';intervals=add9FQ(baseQ);extension='add9';}
   }else{
-    if(x<.33)     {label='6/9';     intervals=sixNFQ(baseQ);  extension='6/9';}
-    else if(x<.66){label='9th';     intervals=nineFQ(baseQ);  extension='9';}
-    else          {label='Dense';   intervals=denseFQ(baseQ); extension='rich';}
+    if(x<.33){label='6/9';intervals=sixNFQ(baseQ);extension='6/9';}
+    else if(x<.66){label='9th';intervals=nineFQ(baseQ);extension='9';}
+    else{label='Dense';intervals=denseFQ(baseQ);extension='rich';}
   }
-  return{intervals, label, extension, brightness:x, density:y};
+  return{intervals,label,extension,brightness:x,density:y};
 }
-const triadFQ  = q=>q==='maj'?[0,4,7]:q==='min'?[0,3,7]:q==='dim'?[0,3,6]:q==='aug'?[0,4,8]:[0,4,7];
-const sevFQ    = q=>q==='maj'?[0,4,7,11]:q==='min'?[0,3,7,10]:q==='dim'?[0,3,6,10]:q==='aug'?[0,4,8,11]:[0,4,7,10];
-const add9FQ   = q=>q==='maj'?[0,4,7,14]:q==='min'?[0,3,7,14]:q==='dim'?[0,3,6,13]:[0,4,7,14];
-const sixNFQ   = q=>q==='maj'?[0,4,9,14]:q==='min'?[0,3,9,14]:q==='dim'?[0,3,6,12]:[0,4,9,14];
-const nineFQ   = q=>q==='maj'?[0,4,7,11,14]:q==='min'?[0,3,7,10,14]:q==='dim'?[0,3,6,10,13]:[0,4,7,10,14];
-const denseFQ  = q=>q==='maj'?[0,4,7,11,14,19]:q==='min'?[0,3,7,10,14,19]:q==='dim'?[0,3,6,10,13,18]:[0,4,7,11,14,19];
-const spreadV  = ivs=>{const o=ivs.slice(); if(o.length>2) o[2]+=12; return o;};
+const triadFQ=q=>q==='maj'?[0,4,7]:q==='min'?[0,3,7]:q==='dim'?[0,3,6]:q==='aug'?[0,4,8]:[0,4,7];
+const sevFQ=q=>q==='maj'?[0,4,7,11]:q==='min'?[0,3,7,10]:q==='dim'?[0,3,6,10]:q==='aug'?[0,4,8,11]:[0,4,7,10];
+const add9FQ=q=>q==='maj'?[0,4,7,14]:q==='min'?[0,3,7,14]:q==='dim'?[0,3,6,13]:[0,4,7,14];
+const sixNFQ=q=>q==='maj'?[0,4,9,14]:q==='min'?[0,3,9,14]:q==='dim'?[0,3,6,12]:[0,4,9,14];
+const nineFQ=q=>q==='maj'?[0,4,7,11,14]:q==='min'?[0,3,7,10,14]:q==='dim'?[0,3,6,10,13]:[0,4,7,10,14];
+const denseFQ=q=>q==='maj'?[0,4,7,11,14,19]:q==='min'?[0,3,7,10,14,19]:q==='dim'?[0,3,6,10,13,18]:[0,4,7,11,14,19];
+const spreadV=ivs=>{const o=ivs.slice();if(o.length>2)o[2]+=12;return o;};
 
 function chordLabel(deg){
-  const info=degreeInfo(deg), vp=getVP(info.baseQ);
+  const info=degreeInfo(deg),vp=getVP(info.baseQ);
   const tn=info.baseQ==='maj'?'':info.baseQ;
-  return{root:info.rootName, text:`${info.rootName}${tn}${vp.extension?' '+vp.extension:''}`.trim(), info, vp};
+  return{root:info.rootName,text:`${info.rootName}${tn}${vp.extension?' '+vp.extension:''}`.trim(),info,vp};
 }
-
 function shortChordName(deg){
-  // compact: root + quality abbreviation
-  const info=degreeInfo(deg), vp=getVP(info.baseQ);
+  const info=degreeInfo(deg),vp=getVP(info.baseQ);
   const tn=info.baseQ==='maj'?'':info.baseQ;
   const ext=vp.extension||'';
-  return `${info.rootName}${tn}${ext?ext:''}`.trim().replace('add','').replace(' ','').slice(0,5);
+  return `${info.rootName}${tn}${ext}`.trim().replace('add','').replace(' ','').slice(0,5);
 }
 
-/* ── chord pads ─ */
 function renderPads(){
   const el=$('#chordPads');
   if(!el.children.length){
@@ -594,24 +460,21 @@ function renderPads(){
       pad.dataset.deg=deg;
       pad.innerHTML=`<div class="pad-body"><div class="deg">${ROMANS[deg-1]}</div><div class="name">${lab.root}</div><div class="hint">${quality.trim()||'maj'}</div></div>`;
       pad.addEventListener('pointerdown',e=>{
-        e.preventDefault(); pad.setPointerCapture(e.pointerId);
+        e.preventDefault();pad.setPointerCapture(e.pointerId);
         state.currentDegree=+pad.dataset.deg;
-        updateReadouts(); updatePadClasses(); updatePadLabels(); triggerDeg(state.currentDegree);
+        updateReadouts();updatePadClasses();updatePadLabels();triggerDeg(state.currentDegree);
       });
-      const onRelease=e=>{e.preventDefault(); if(!state.hold&&!state.arp) releaseCurrent();};
+      const onRelease=e=>{e.preventDefault();if(!state.hold&&!state.arp)releaseCurrent();};
       pad.addEventListener('pointerup',onRelease);
       pad.addEventListener('pointercancel',onRelease);
       el.appendChild(pad);
     }
-  }else{updatePadLabels(); updatePadClasses();}
+  }else{updatePadLabels();updatePadClasses();}
 }
-
-function updatePadClasses(){
-  document.querySelectorAll('.chordPad').forEach(p=>p.classList.toggle('active',+p.dataset.deg===state.currentDegree));
-}
+function updatePadClasses(){document.querySelectorAll('.chordPad').forEach(p=>p.classList.toggle('active',+p.dataset.deg===state.currentDegree));}
 function updatePadLabels(){
   document.querySelectorAll('.chordPad').forEach(p=>{
-    const deg=+p.dataset.deg, lab=chordLabel(deg);
+    const deg=+p.dataset.deg,lab=chordLabel(deg);
     const quality=(lab.info.baseQ==='maj'?'':lab.info.baseQ)+(lab.vp.extension?' '+lab.vp.extension:'');
     p.querySelector('.name').textContent=lab.root;
     p.querySelector('.hint').textContent=quality.trim()||'maj';
@@ -627,11 +490,8 @@ function updateReadouts(){
   $('#strumVal').textContent=Math.round(10+(1-state.xyY)*45+state.xyX*20)+'ms';
 }
 
-/* ── step grid ─────────────────────── */
 function buildStepGrid(){
-  const grid=$('#stepGrid');
-  const len=state.seqLen;
-  // set columns (always 8 per row)
+  const grid=$('#stepGrid'),len=state.seqLen;
   grid.style.gridTemplateColumns='repeat(8,1fr)';
   grid.innerHTML='';
   for(let i=0;i<len;i++){
@@ -641,7 +501,6 @@ function buildStepGrid(){
     btn.dataset.idx=i;
     const chName=deg>0?shortChordName(deg):'';
     btn.innerHTML=`<span class="step-deg">${deg>0?ROMANS[deg-1]:'·'}</span><span class="step-chd">${chName}</span><span class="step-num">${i+1}</span>`;
-    // tap cycles degree: off→I→II→…→VII→off
     btn.addEventListener('click',()=>{
       const cur=state.seqSteps[+btn.dataset.idx];
       state.seqSteps[+btn.dataset.idx]=(cur+1)%8;
@@ -650,94 +509,74 @@ function buildStepGrid(){
     grid.appendChild(btn);
   }
 }
-
 function refreshStepCell(i){
   const grid=$('#stepGrid');
   if(i<0||i>=grid.children.length)return;
-  const btn=grid.children[i];
-  const deg=state.seqSteps[i];
+  const btn=grid.children[i],deg=state.seqSteps[i];
   btn.className='step'+(deg>0?' has-note':'')+(i===state.seqPos?' active-playhead':'');
   const chName=deg>0?shortChordName(deg):'';
   btn.querySelector('.step-deg').textContent=deg>0?ROMANS[deg-1]:'·';
   btn.querySelector('.step-chd').textContent=chName;
 }
-
-function refreshAllStepCells(){
+function refreshAllStepCells(){const grid=$('#stepGrid');for(let i=0;i<grid.children.length;i++)refreshStepCell(i);}
+function updateSeqPlayhead(o,n){
   const grid=$('#stepGrid');
-  for(let i=0;i<grid.children.length;i++) refreshStepCell(i);
+  if(o>=0&&o<grid.children.length)grid.children[o].classList.remove('active-playhead');
+  if(n>=0&&n<grid.children.length)grid.children[n].classList.add('active-playhead');
 }
-
-function updateSeqPlayhead(oldPos, newPos){
-  const grid=$('#stepGrid');
-  if(oldPos>=0 && oldPos<grid.children.length)
-    grid.children[oldPos].classList.remove('active-playhead');
-  if(newPos>=0 && newPos<grid.children.length)
-    grid.children[newPos].classList.add('active-playhead');
-}
-
-/* ── step length change ─ */
 function onSeqLenChange(){
   const newLen=+$('#seqLenSelect').value;
   if(newLen!==state.seqLen){
     state.seqLen=newLen;
     state.seqSteps=Array.from({length:newLen},(_,i)=>state.seqSteps[i]||0);
-    state.seqPos=-1; state.seqDir=1;
+    state.seqPos=-1;state.seqDir=1;
     buildStepGrid();
   }
 }
+function stepMs(){const bpm=+$('#tempo').value,r=+$('#rateSelect').value,q=60000/bpm;return r===4?q:r===8?q/2:q/4;}
 
-/* ── timing helpers ─ */
-function stepMs(){
-  const bpm=+$('#tempo').value, rate=+$('#rateSelect').value, q=60000/bpm;
-  return rate===4?q:rate===8?q/2:q/4;
-}
-
-/* ── audio init ─ */
 async function initAudio(){
   if(state.audioReady)return;
   const ctx=new(window.AudioContext||window.webkitAudioContext)();
-  await ctx.resume(); state.ctx=ctx;
-  const master=ctx.createGain(); master.gain.value=+$('#master').value;
-  const hpf=ctx.createBiquadFilter(); hpf.type='highpass'; hpf.frequency.value=+$('#hpf').value;
-  const ci=ctx.createGain(), cd=ctx.createGain(), cw=ctx.createGain();
-  cd.gain.value=1-+$('#chorusMix').value; cw.gain.value=+$('#chorusMix').value;
-  const dL=ctx.createDelay(.05), dR=ctx.createDelay(.05);
-  dL.delayTime.value=.018; dR.delayTime.value=.024;
-  const lfo=ctx.createOscillator(); lfo.type='triangle'; lfo.frequency.value=+$('#chorusRate').value;
-  const lgL=ctx.createGain(), lgR=ctx.createGain();
-  lgL.gain.value=+$('#chorusDepth').value; lgR.gain.value=-+$('#chorusDepth').value*.9;
-  lfo.connect(lgL).connect(dL.delayTime); lfo.connect(lgR).connect(dR.delayTime); lfo.start();
-  const merger=ctx.createChannelMerger(2), wi=ctx.createGain();
-  wi.connect(dL); wi.connect(dR); dL.connect(merger,0,0); dR.connect(merger,0,1);
+  await ctx.resume();state.ctx=ctx;
+  const master=ctx.createGain();master.gain.value=+$('#master').value;
+  const hpf=ctx.createBiquadFilter();hpf.type='highpass';hpf.frequency.value=+$('#hpf').value;
+  const ci=ctx.createGain(),cd=ctx.createGain(),cw=ctx.createGain();
+  cd.gain.value=1-+$('#chorusMix').value;cw.gain.value=+$('#chorusMix').value;
+  const dL=ctx.createDelay(.05),dR=ctx.createDelay(.05);
+  dL.delayTime.value=.018;dR.delayTime.value=.024;
+  const lfo=ctx.createOscillator();lfo.type='triangle';lfo.frequency.value=+$('#chorusRate').value;
+  const lgL=ctx.createGain(),lgR=ctx.createGain();
+  lgL.gain.value=+$('#chorusDepth').value;lgR.gain.value=-+$('#chorusDepth').value*.9;
+  lfo.connect(lgL).connect(dL.delayTime);lfo.connect(lgR).connect(dR.delayTime);lfo.start();
+  const merger=ctx.createChannelMerger(2),wi=ctx.createGain();
+  wi.connect(dL);wi.connect(dR);dL.connect(merger,0,0);dR.connect(merger,0,1);
   const out=ctx.createGain();
-  ci.connect(hpf); hpf.connect(cd).connect(out); hpf.connect(wi); merger.connect(cw).connect(out);
+  ci.connect(hpf);hpf.connect(cd).connect(out);hpf.connect(wi);merger.connect(cw).connect(out);
   out.connect(master).connect(ctx.destination);
-  state.master=master; state.dryBus=ci; state.chorusWet=cw; state.chorusDry=cd;
-  state.globalHPF=hpf; state.chorusLFO=lfo; state.chorusDepthGains=[lgL,lgR];
-  state.audioReady=true; makeNoise();
-  $('#audioDot').classList.add('on'); $('#audioState').textContent='ON';
+  state.master=master;state.dryBus=ci;state.chorusWet=cw;state.chorusDry=cd;
+  state.globalHPF=hpf;state.chorusLFO=lfo;state.chorusDepthGains=[lgL,lgR];
+  state.audioReady=true;makeNoise();
+  $('#audioDot').classList.add('on');$('#audioState').textContent='ON';
 }
-
 function makeNoise(){
-  const len=state.ctx.sampleRate*2, buf=state.ctx.createBuffer(1,len,state.ctx.sampleRate);
-  const d=buf.getChannelData(0); let last=0;
-  for(let i=0;i<len;i++){const w=Math.random()*2-1; last=last*.86+w*.14; d[i]=last*.75;}
+  const len=state.ctx.sampleRate*2,buf=state.ctx.createBuffer(1,len,state.ctx.sampleRate);
+  const d=buf.getChannelData(0);let last=0;
+  for(let i=0;i<len;i++){const w=Math.random()*2-1;last=last*.86+w*.14;d[i]=last*.75;}
   state.noiseBuffer=buf;
 }
-
 function P(){
-  return{saw:+$('#saw').value, pulse:+$('#pulse').value, sub:+$('#sub').value, noise:+$('#noise').value,
-    pw:+$('#pw').value, detune:+$('#detune').value, cutoff:+$('#cutoff').value, res:+$('#res').value,
-    envAmt:+$('#envAmt').value, attack:+$('#attack').value, decay:+$('#decay').value,
-    sustain:+$('#sustain').value, release:+$('#release').value, width:+$('#width').value,
-    lfoRate:+$('#lfoRate').value, lfoToFilter:+$('#lfoToFilter').value, lfoToPWM:+$('#lfoToPWM').value,
-    master:+$('#master').value, hpf:+$('#hpf').value, chorusMix:+$('#chorusMix').value,
-    chorusRate:+$('#chorusRate').value, chorusDepth:+$('#chorusDepth').value};
+  return{saw:+$('#saw').value,pulse:+$('#pulse').value,sub:+$('#sub').value,noise:+$('#noise').value,
+    pw:+$('#pw').value,detune:+$('#detune').value,cutoff:+$('#cutoff').value,res:+$('#res').value,
+    envAmt:+$('#envAmt').value,attack:+$('#attack').value,decay:+$('#decay').value,
+    sustain:+$('#sustain').value,release:+$('#release').value,width:+$('#width').value,
+    lfoRate:+$('#lfoRate').value,lfoToFilter:+$('#lfoToFilter').value,lfoToPWM:+$('#lfoToPWM').value,
+    master:+$('#master').value,hpf:+$('#hpf').value,chorusMix:+$('#chorusMix').value,
+    chorusRate:+$('#chorusRate').value,chorusDepth:+$('#chorusDepth').value};
 }
-
 function updateDSP(){
   if(!state.audioReady)return;
-  const p=P(), t=state.ctx.currentTime;
+  const p=P(),t=state.ctx.currentTime;
   state.master.gain.setTargetAtTime(p.master,t,.01);
   state.globalHPF.frequency.setTargetAtTime(p.hpf,t,.02);
   state.chorusDry.gain.setTargetAtTime(1-p.chorusMix,t,.02);
@@ -747,38 +586,36 @@ function updateDSP(){
   state.chorusDepthGains[1].gain.setTargetAtTime(-p.chorusDepth*.9,t,.05);
 }
 
-/* ── voice ─ */
 function voiceForNote(midi,when,vel=.9){
-  const ctx=state.ctx, p=P(), rf=midiToFreq(midi);
+  const ctx=state.ctx,p=P(),rf=midiToFreq(midi);
   const cutoff=clamp(p.cutoff*lerp(.72,1.28,state.xyX)*lerp(.95,.62,state.xyY),80,12000);
-  const pan=ctx.createStereoPanner(); pan.pan.value=(Math.random()*2-1)*p.width*.7;
-  const gain=ctx.createGain(); gain.gain.value=0;
-  const flt=ctx.createBiquadFilter(); flt.type='lowpass'; flt.frequency.value=cutoff; flt.Q.value=p.res;
-  const lfo=ctx.createOscillator(); lfo.type='triangle'; lfo.frequency.value=p.lfoRate;
-  const ltf=ctx.createGain(); ltf.gain.value=cutoff*.35*p.lfoToFilter;
-  lfo.connect(ltf).connect(flt.frequency); lfo.start(when);
+  const pan=ctx.createStereoPanner();pan.pan.value=(Math.random()*2-1)*p.width*.7;
+  const gain=ctx.createGain();gain.gain.value=0;
+  const flt=ctx.createBiquadFilter();flt.type='lowpass';flt.frequency.value=cutoff;flt.Q.value=p.res;
+  const lfo=ctx.createOscillator();lfo.type='triangle';lfo.frequency.value=p.lfoRate;
+  const ltf=ctx.createGain();ltf.gain.value=cutoff*.35*p.lfoToFilter;
+  lfo.connect(ltf).connect(flt.frequency);lfo.start(when);
   const mix=ctx.createGain();
-  const saw=ctx.createOscillator(); saw.type='sawtooth'; saw.frequency.value=rf; saw.detune.value=(Math.random()*2-1)*p.detune;
-  const pls=ctx.createOscillator(); pls.type='square';   pls.frequency.value=rf; pls.detune.value=(Math.random()*2-1)*p.detune*.6;
-  const sub=ctx.createOscillator(); sub.type='square';   sub.frequency.value=rf/2;
-  const nse=ctx.createBufferSource(); nse.buffer=state.noiseBuffer; nse.loop=true;
+  const saw=ctx.createOscillator();saw.type='sawtooth';saw.frequency.value=rf;saw.detune.value=(Math.random()*2-1)*p.detune;
+  const pls=ctx.createOscillator();pls.type='square';pls.frequency.value=rf;pls.detune.value=(Math.random()*2-1)*p.detune*.6;
+  const sub=ctx.createOscillator();sub.type='square';sub.frequency.value=rf/2;
+  const nse=ctx.createBufferSource();nse.buffer=state.noiseBuffer;nse.loop=true;
   const sg=ctx.createGain(),pg=ctx.createGain(),sbg=ctx.createGain(),ng=ctx.createGain();
-  sg.gain.value=p.saw*.22; pg.gain.value=p.pulse*.15; sbg.gain.value=p.sub*.16; ng.gain.value=p.noise*.04;
-  saw.connect(sg).connect(mix); pls.connect(pg).connect(mix);
-  sub.connect(sbg).connect(mix); nse.connect(ng).connect(mix);
+  sg.gain.value=p.saw*.22;pg.gain.value=p.pulse*.15;sbg.gain.value=p.sub*.16;ng.gain.value=p.noise*.04;
+  saw.connect(sg).connect(mix);pls.connect(pg).connect(mix);sub.connect(sbg).connect(mix);nse.connect(ng).connect(mix);
   mix.connect(flt).connect(gain).connect(pan).connect(state.dryBus);
   const a=p.attack,d=p.decay,s=p.sustain*vel;
-  gain.gain.cancelScheduledValues(when); gain.gain.setValueAtTime(.0001,when);
+  gain.gain.cancelScheduledValues(when);gain.gain.setValueAtTime(.0001,when);
   gain.gain.linearRampToValueAtTime(vel,when+a);
   gain.gain.exponentialRampToValueAtTime(Math.max(.0001,s),when+a+d);
   const ed=1+p.envAmt*(.7+(1-state.xyY)*.55);
-  flt.frequency.cancelScheduledValues(when); flt.frequency.setValueAtTime(Math.max(80,cutoff*.52),when);
+  flt.frequency.cancelScheduledValues(when);flt.frequency.setValueAtTime(Math.max(80,cutoff*.52),when);
   flt.frequency.exponentialRampToValueAtTime(Math.max(100,cutoff*ed),when+a+.03);
   flt.frequency.exponentialRampToValueAtTime(Math.max(80,cutoff*.78),when+a+d+.03);
-  saw.start(when); pls.start(when); sub.start(when); nse.start(when);
+  saw.start(when);pls.start(when);sub.start(when);nse.start(when);
   return{gain,flt,lfo,osc:[saw,pls,sub,nse],released:false,release(){
-    if(this.released)return; this.released=true;
-    const now=state.ctx.currentTime, rel=P().release;
+    if(this.released)return;this.released=true;
+    const now=state.ctx.currentTime,rel=P().release;
     this.gain.gain.cancelScheduledValues(now);
     this.gain.gain.setTargetAtTime(Math.max(.0001,this.gain.gain.value),now,.01);
     this.gain.gain.exponentialRampToValueAtTime(.0001,now+rel);
@@ -788,20 +625,17 @@ function voiceForNote(midi,when,vel=.9){
     try{this.lfo.stop(now+rel+.08);}catch(e){}
   }};
 }
-
 function computeChord(deg){
-  const info=degreeInfo(deg), vp=getVP(info.baseQ);
+  const info=degreeInfo(deg),vp=getVP(info.baseQ);
   const root=12*(+$('#octaveSelect').value+1)+info.rootSemi;
   let notes=vp.intervals.map(iv=>root+iv);
-  if(vp.density>.5&&Math.random()>.45) notes.push(root-12);
-  return{notes:notes.sort((a,b)=>a-b), info, vp};
+  if(vp.density>.5&&Math.random()>.45)notes.push(root-12);
+  return{notes:notes.sort((a,b)=>a-b),info,vp};
 }
-
-/* trigger for manual play */
 function triggerDeg(deg){
   if(!state.audioReady)return;
   releaseCurrent();
-  const{notes}=computeChord(deg); state.latchedChord={deg,notes};
+  const{notes}=computeChord(deg);state.latchedChord={deg,notes};
   const t0=state.ctx.currentTime+.005;
   const strumS=(10+(1-state.xyY)*45+state.xyX*20)/1000;
   notes.forEach((m,i)=>{
@@ -810,16 +644,11 @@ function triggerDeg(deg){
   });
   updateReadouts();
 }
-
-/* trigger for sequencer — plays chord with auto gate release */
 function triggerDegSeq(deg){
   if(!state.audioReady)return;
-  // release notes from previous step (don't use releaseCurrent to avoid killing held manual notes)
-  state.activeNotes.forEach(v=>v.release());
-  state.activeNotes.clear();
-
+  state.activeNotes.forEach(v=>v.release());state.activeNotes.clear();
   const{notes}=computeChord(deg);
-  state.currentDegree=deg; updatePadClasses(); updatePadLabels(); updateReadouts();
+  state.currentDegree=deg;updatePadClasses();updatePadLabels();updateReadouts();
   const t0=state.ctx.currentTime+.005;
   const strumS=(10+(1-state.xyY)*45+state.xyX*20)/1000;
   const gateRatio=+$('#gateSelect').value;
@@ -830,215 +659,143 @@ function triggerDegSeq(deg){
     state.activeNotes.set(`${m}_${i}_seq_${performance.now()}`,v);
     stepVoices.push(v);
   });
-  // schedule gate release (only if gate < LEGATO)
   if(gateRatio<1.5){
     const releaseDelay=Math.max(50,gateDuration-30);
-    setTimeout(()=>{ stepVoices.forEach(v=>v.release()); },releaseDelay);
+    setTimeout(()=>{stepVoices.forEach(v=>v.release());},releaseDelay);
   }
 }
+function releaseCurrent(){state.activeNotes.forEach(v=>v.release());state.activeNotes.clear();}
 
-function releaseCurrent(){ state.activeNotes.forEach(v=>v.release()); state.activeNotes.clear(); }
-
-/* ── sequencer clock ─ */
 function nextSeqPos(){
-  const dir=$('#dirSelect').value;
-  const len=state.seqLen;
-  if(dir==='fwd'){
-    return(state.seqPos+1)%len;
-  }else if(dir==='rev'){
-    return(state.seqPos-1+len)%len;
-  }else if(dir==='pingpong'){
+  const dir=$('#dirSelect').value,len=state.seqLen;
+  if(dir==='fwd')return(state.seqPos+1)%len;
+  if(dir==='rev')return(state.seqPos-1+len)%len;
+  if(dir==='pingpong'){
     let next=state.seqPos+state.seqDir;
-    if(next>=len){next=len-2; state.seqDir=-1;}
-    else if(next<0){next=1; state.seqDir=1;}
+    if(next>=len){next=len-2;state.seqDir=-1;}
+    else if(next<0){next=1;state.seqDir=1;}
     return Math.max(0,Math.min(len-1,next));
-  }else{
-    return Math.floor(Math.random()*len);
   }
+  return Math.floor(Math.random()*len);
 }
-
 function tickSeq(){
   if(!state.seqRunning||!state.audioReady)return;
   const oldPos=state.seqPos;
   state.seqPos=nextSeqPos();
   updateSeqPlayhead(oldPos,state.seqPos);
   const deg=state.seqSteps[state.seqPos];
-  if(deg>0) triggerDegSeq(deg);
-  // reschedule with swing
-  const ms=stepMs();
-  const swing=+$('#swingSelect').value;
+  if(deg>0)triggerDegSeq(deg);
+  const ms=stepMs(),swing=+$('#swingSelect').value;
   state.seqSwingToggle=!state.seqSwingToggle;
-  const delay=state.seqSwingToggle ? ms*(1+swing) : ms*(1-swing);
-  state.seqTimer=setTimeout(tickSeq, delay);
+  const delay=state.seqSwingToggle?ms*(1+swing):ms*(1-swing);
+  state.seqTimer=setTimeout(tickSeq,delay);
 }
-
-function startSeq(){
-  stopSeq();
-  state.seqPos=-1; state.seqDir=1; state.seqSwingToggle=false;
-  // fire first tick immediately
-  state.seqTimer=setTimeout(tickSeq,0);
-}
-
+function startSeq(){stopSeq();state.seqPos=-1;state.seqDir=1;state.seqSwingToggle=false;state.seqTimer=setTimeout(tickSeq,0);}
 function stopSeq(){
-  if(state.seqTimer){clearTimeout(state.seqTimer); state.seqTimer=null;}
-  const oldPos=state.seqPos;
-  state.seqPos=-1;
-  updateSeqPlayhead(oldPos,-1);
-  releaseCurrent();
+  if(state.seqTimer){clearTimeout(state.seqTimer);state.seqTimer=null;}
+  const oldPos=state.seqPos;state.seqPos=-1;
+  updateSeqPlayhead(oldPos,-1);releaseCurrent();
 }
-
-/* ── arp clock ─ */
 function arpOrder(notes){
-  const dir=$('#arpDirSelect').value, s=notes.slice().sort((a,b)=>a-b);
-  if(dir==='up')return s; if(dir==='down')return s.slice().reverse();
+  const dir=$('#arpDirSelect').value,s=notes.slice().sort((a,b)=>a-b);
+  if(dir==='up')return s;if(dir==='down')return s.slice().reverse();
   if(dir==='updown')return s.concat(s.slice(1,-1).reverse());
   return s.slice().sort(()=>Math.random()-.5);
 }
 function tickArp(){
   if(!state.arp||!state.audioReady||!state.latchedChord)return;
-  const notes=state.latchedChord.notes;
-  const order=arpOrder(notes);
-  const note=order[state.arpPhase%order.length]; state.arpPhase++;
+  const order=arpOrder(state.latchedChord.notes);
+  const note=order[state.arpPhase%order.length];state.arpPhase++;
   const v=voiceForNote(note,state.ctx.currentTime+.005,.85);
-  const ms=stepMs();
-  setTimeout(()=>v.release(),Math.max(80,ms*.7));
+  const ms=stepMs();setTimeout(()=>v.release(),Math.max(80,ms*.7));
   state.arpTimer=setTimeout(tickArp,ms);
 }
 function startArp(){stopArp();state.arpPhase=0;state.arpTimer=setTimeout(tickArp,0);}
 function stopArp(){if(state.arpTimer){clearTimeout(state.arpTimer);state.arpTimer=null;}}
 
-/* ── XY pad ─ */
 function setXY(cx,cy){
   const r=$('#xyPad').getBoundingClientRect();
-  state.xyX=clamp((cx-r.left)/r.width,0,1); state.xyY=clamp((cy-r.top)/r.height,0,1);
-  $('#xyDot').style.left=state.xyX*100+'%'; $('#xyDot').style.top=state.xyY*100+'%';
-  updateReadouts(); renderPads();
+  state.xyX=clamp((cx-r.left)/r.width,0,1);state.xyY=clamp((cy-r.top)/r.height,0,1);
+  $('#xyDot').style.left=state.xyX*100+'%';$('#xyDot').style.top=state.xyY*100+'%';
+  updateReadouts();renderPads();
 }
 function attachXY(){
-  const pad=$('#xyPad'); let drag=false;
+  const pad=$('#xyPad');let drag=false;
   pad.addEventListener('pointerdown',e=>{drag=true;pad.setPointerCapture(e.pointerId);setXY(e.clientX,e.clientY);});
   pad.addEventListener('pointermove',e=>{if(drag)setXY(e.clientX,e.clientY);});
   pad.addEventListener('pointerup',()=>drag=false);
   pad.addEventListener('pointercancel',()=>drag=false);
 }
 
-/* ── presets ─ */
 function applyPreset(name){
   const map={
-    neo:  {cutoff:1900,res:2.2,attack:.02,decay:.45,sustain:.72,release:1.65,chorusMix:.45,chorusRate:.32,chorusDepth:.006,saw:.82,pulse:.30,sub:.52,noise:.05,pw:.48,detune:4.5,width:.55,lfoRate:.22,lfoToFilter:.08,lfoToPWM:.18,xyX:.66,xyY:.38},
+    neo:{cutoff:1900,res:2.2,attack:.02,decay:.45,sustain:.72,release:1.65,chorusMix:.45,chorusRate:.32,chorusDepth:.006,saw:.82,pulse:.30,sub:.52,noise:.05,pw:.48,detune:4.5,width:.55,lfoRate:.22,lfoToFilter:.08,lfoToPWM:.18,xyX:.66,xyY:.38},
     house:{cutoff:2400,res:1.8,attack:.01,decay:.28,sustain:.65,release:.90,chorusMix:.28,chorusRate:.42,chorusDepth:.004,saw:.88,pulse:.22,sub:.60,noise:.01,pw:.50,detune:2.5,width:.35,lfoRate:.16,lfoToFilter:.04,lfoToPWM:.08,xyX:.58,xyY:.50},
     dream:{cutoff:1500,res:3.4,attack:.12,decay:1.2,sustain:.76,release:2.8,chorusMix:.62,chorusRate:.18,chorusDepth:.009,saw:.76,pulse:.42,sub:.34,noise:.06,pw:.42,detune:6.2,width:.78,lfoRate:.11,lfoToFilter:.11,lfoToPWM:.22,xyX:.72,xyY:.26},
-    dark: {cutoff:1100,res:4.8,attack:.03,decay:.62,sustain:.58,release:1.9,chorusMix:.36,chorusRate:.24,chorusDepth:.005,saw:.72,pulse:.34,sub:.66,noise:.03,pw:.38,detune:3.8,width:.42,lfoRate:.17,lfoToFilter:.14,lfoToPWM:.10,xyX:.34,xyY:.68}
+    dark:{cutoff:1100,res:4.8,attack:.03,decay:.62,sustain:.58,release:1.9,chorusMix:.36,chorusRate:.24,chorusDepth:.005,saw:.72,pulse:.34,sub:.66,noise:.03,pw:.38,detune:3.8,width:.42,lfoRate:.17,lfoToFilter:.14,lfoToPWM:.10,xyX:.34,xyY:.68}
   };
   const p=map[name];
   Object.entries(p).forEach(([k,v])=>{if(k==='xyX'||k==='xyY')return;const el=document.getElementById(k);if(el)el.value=v;});
-  state.xyX=p.xyX; state.xyY=p.xyY;
-  $('#xyDot').style.left=p.xyX*100+'%'; $('#xyDot').style.top=p.xyY*100+'%';
-  updateReadouts(); renderPads(); updateDSP();
+  state.xyX=p.xyX;state.xyY=p.xyY;
+  $('#xyDot').style.left=p.xyX*100+'%';$('#xyDot').style.top=p.xyY*100+'%';
+  updateReadouts();renderPads();updateDSP();
 }
 
-/* ── UI wiring ─ */
 function attachUI(){
-  // audio start
   $('#startBtn').addEventListener('click',async()=>{await initAudio();updateDSP();});
-
-  // hold
   $('#holdBtn').addEventListener('click',()=>{
-    state.hold=!state.hold; $('#holdBtn').classList.toggle('on',state.hold);
-    if(!state.hold&&!state.arp&&!state.seqRunning) releaseCurrent();
+    state.hold=!state.hold;$('#holdBtn').classList.toggle('on',state.hold);
+    if(!state.hold&&!state.arp&&!state.seqRunning)releaseCurrent();
   });
-
-  // arp
   $('#arpBtn').addEventListener('click',()=>{
-    state.arp=!state.arp; $('#arpBtn').classList.toggle('on',state.arp);
-    if(state.arp) startArp(); else stopArp();
+    state.arp=!state.arp;$('#arpBtn').classList.toggle('on',state.arp);
+    if(state.arp)startArp();else stopArp();
   });
-
-  // seq play/stop
   $('#seqPlayBtn').addEventListener('click',async()=>{
-    if(!state.audioReady) await initAudio();
+    if(!state.audioReady)await initAudio();
     state.seqRunning=!state.seqRunning;
     $('#seqPlayBtn').textContent=state.seqRunning?'SEQ ■':'SEQ ▶';
     $('#seqPlayBtn').classList.toggle('on-green',state.seqRunning);
-    if(state.seqRunning) startSeq(); else stopSeq();
+    if(state.seqRunning)startSeq();else stopSeq();
   });
-
-  // panic
   $('#panicBtn').addEventListener('click',()=>releaseCurrent());
-
-  // harmony
-  $('#keySelect').addEventListener('change',  e=>{state.key=+e.target.value;renderPads();updateReadouts();refreshAllStepCells();});
-  $('#scaleSelect').addEventListener('change', e=>{state.scale=e.target.value;renderPads();updateReadouts();refreshAllStepCells();});
+  $('#keySelect').addEventListener('change',e=>{state.key=+e.target.value;renderPads();updateReadouts();refreshAllStepCells();});
+  $('#scaleSelect').addEventListener('change',e=>{state.scale=e.target.value;renderPads();updateReadouts();refreshAllStepCells();});
   $('#octaveSelect').addEventListener('change',()=>updateReadouts());
   $('#presetSelect').addEventListener('change',e=>applyPreset(e.target.value));
-
-  // seq controls
   $('#seqLenSelect').addEventListener('change',onSeqLenChange);
   $('#tempo').addEventListener('input',()=>{
     $('#bpmDisplay').textContent=$('#tempo').value;
     if(state.seqRunning){stopSeq();startSeq();}
     if(state.arp){stopArp();startArp();}
   });
-  $('#rateSelect').addEventListener('change',()=>{ if(state.seqRunning){stopSeq();startSeq();} if(state.arp){stopArp();startArp();} });
-
-  // step grid actions
+  $('#rateSelect').addEventListener('change',()=>{if(state.seqRunning){stopSeq();startSeq();}if(state.arp){stopArp();startArp();}});
   $('#seqClearBtn').addEventListener('click',()=>{state.seqSteps.fill(0);refreshAllStepCells();});
-
   $('#seqFillBtn').addEventListener('click',()=>{
-    // musical fill patterns (degrees)
     const pats=[
-      [1,0,5,0, 4,0,6,0, 1,0,5,0, 4,6,0,0],  // I V IV VI
-      [1,0,0,4, 0,0,5,0, 6,0,0,4, 0,5,0,0],  // I IV V VI
-      [1,0,2,0, 4,0,5,0, 1,0,2,0, 4,5,0,0],  // I II IV V
-      [1,0,6,0, 4,0,5,0, 1,0,6,0, 5,4,0,0],  // I VI IV V
+      [1,0,5,0,4,0,6,0,1,0,5,0,4,6,0,0],
+      [1,0,0,4,0,0,5,0,6,0,0,4,0,5,0,0],
+      [1,0,2,0,4,0,5,0,1,0,2,0,4,5,0,0],
+      [1,0,6,0,4,0,5,0,1,0,6,0,5,4,0,0]
     ];
     const pat=choice(pats);
     state.seqSteps=Array.from({length:state.seqLen},(_,i)=>pat[i%pat.length]);
     refreshAllStepCells();
   });
-
-  $('#seqShiftLBtn').addEventListener('click',()=>{
-    const first=state.seqSteps.shift(); state.seqSteps.push(first);
-    refreshAllStepCells();
-  });
-  $('#seqShiftRBtn').addEventListener('click',()=>{
-    const last=state.seqSteps.pop(); state.seqSteps.unshift(last);
-    refreshAllStepCells();
-  });
-
-  // DSP params
+  $('#seqShiftLBtn').addEventListener('click',()=>{const f=state.seqSteps.shift();state.seqSteps.push(f);refreshAllStepCells();});
+  $('#seqShiftRBtn').addEventListener('click',()=>{const l=state.seqSteps.pop();state.seqSteps.unshift(l);refreshAllStepCells();});
   const noDSP=['keySelect','scaleSelect','octaveSelect','presetSelect','seqLenSelect','rateSelect','dirSelect','arpDirSelect','gateSelect','swingSelect'];
-  document.querySelectorAll('input[type="range"],select').forEach(el=>{
-    if(!noDSP.includes(el.id)) el.addEventListener('input',updateDSP);
-  });
-
-  // keyboard shortcuts
+  document.querySelectorAll('input[type="range"],select').forEach(el=>{if(!noDSP.includes(el.id))el.addEventListener('input',updateDSP);});
   window.addEventListener('keydown',async e=>{
     const map={'1':1,'2':2,'3':3,'4':4,'5':5,'6':6,'7':7};
-    if(e.code==='Space'){
-      e.preventDefault();
-      if(!state.audioReady)await initAudio();
-      state.hold=!state.hold; $('#holdBtn').classList.toggle('on',state.hold); return;
-    }
-    if(map[e.key]){
-      if(!state.audioReady)await initAudio();
-      state.currentDegree=map[e.key]; renderPads(); updateReadouts(); triggerDeg(map[e.key]);
-    }
+    if(e.code==='Space'){e.preventDefault();if(!state.audioReady)await initAudio();state.hold=!state.hold;$('#holdBtn').classList.toggle('on',state.hold);return;}
+    if(map[e.key]){if(!state.audioReady)await initAudio();state.currentDegree=map[e.key];renderPads();updateReadouts();triggerDeg(map[e.key]);}
   });
-  window.addEventListener('keyup',e=>{
-    if('1234567'.includes(e.key)&&!state.hold&&!state.arp) releaseCurrent();
-  });
+  window.addEventListener('keyup',e=>{if('1234567'.includes(e.key)&&!state.hold&&!state.arp)releaseCurrent();});
 }
 
-/* ── boot ─ */
-populateSelects();
-buildStepGrid();
-attachXY();
-attachUI();
-applyPreset('neo');
-renderPads();
-updateReadouts();
-
+populateSelects();buildStepGrid();attachXY();attachUI();
+applyPreset('neo');renderPads();updateReadouts();
 })();
 </script>
 
