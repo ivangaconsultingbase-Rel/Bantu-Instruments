@@ -3,6 +3,7 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
+<meta name="color-scheme" content="dark">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,maximum-scale=1,user-scalable=no">
 <meta name="theme-color" content="#141414">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -14,7 +15,6 @@
 <style>
 /* ── tokens ─────────────────────────── */
 :root {
-  color-scheme: dark;
   --bg:#141414; --s1:#1c1c1c; --s2:#242424; --s3:#2e2e2e;
   --line:#2a2a2a; --line2:#383838;
   --text:#e6e6e6; --muted:#5a5a5a; --dim:#303030;
@@ -32,8 +32,9 @@
 }
 
 *,*::before,*::after{box-sizing:border-box;-webkit-tap-highlight-color:transparent;-webkit-text-size-adjust:100%}
-html{background:#141414;color:#e6e6e6;color-scheme:dark}
-html,body{margin:0;height:100%;background:#141414;background:var(–bg);color:#e6e6e6;color:var(–text);font-family:var(–f);overscroll-behavior:none;-webkit-font-smoothing:antialiased}
+html,body{margin:0;height:100%;background:#141414;background:var(–bg);color:#e6e6e6;color:var(–text);font-family:var(–f);overscroll-behavior:none;-webkit-font-smoothing:antialiased;color-scheme:dark}
+/* Force Safari dark-mode UA stylesheet NOT to override our custom colors on interactive elements */
+button,select,input,textarea{color:inherit;background:transparent;font:inherit;-webkit-appearance:none;appearance:none;color-scheme:normal}
 button,input,select{font:inherit}
 
 /* iOS Safari: prevent text selection + callout on all touch targets */
