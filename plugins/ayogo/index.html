@@ -539,6 +539,10 @@ function driftDepthCents(){
   const p=P();
   return lerp(0,8,p.drift);
 }
+function cutoffDriftAmount(baseCutoff){
+  const p=P();
+  return baseCutoff * lerp(0,0.035,p.drift);
+}
 
 function renderPads(){
   const el=$('#chordPads');
@@ -707,9 +711,7 @@ function makePinkNoise(){
   const len=state.ctx.sampleRate*2;
   const buf=state.ctx.createBuffer(1,len,state.ctx.sampleRate);
   const out=buf.getChannelData(0);
-
   let b0=0,b1=0,b2=0,b3=0,b4=0,b5=0,b6=0;
-
   for(let i=0;i<len;i++){
     const white=Math.random()*2-1;
     b0 = 0.99886 * b0 + white * 0.0555179;
@@ -722,7 +724,6 @@ function makePinkNoise(){
     b6 = white * 0.115926;
     out[i] = pink * 0.11;
   }
-
   state.noiseBuffer=buf;
 }
 
@@ -814,6 +815,9 @@ function createPersistentVoice(midi,when,vel=.9){
   const driftPulse=ctx.createGain();
   const driftSub=ctx.createGain();
 
+  const cutoffDriftOsc=ctx.createOscillator();
+  const cutoffDriftGain=ctx.createGain();
+
   const sg=ctx.createGain(),pg=ctx.createGain(),sbg=ctx.createGain(),ng=ctx.createGain();
 
   const panBase=(Math.random()*2-1);
@@ -825,6 +829,7 @@ function createPersistentVoice(midi,when,vel=.9){
   nse.loop=true;
   lfo.type='triangle';
   driftOsc.type='sine';
+  cutoffDriftOsc.type='sine';
 
   saw.frequency.setValueAtTime(rf,when);
   pls.frequency.setValueAtTime(rf,when);
@@ -846,6 +851,9 @@ function createPersistentVoice(midi,when,vel=.9){
   driftOsc.connect(driftPulse).connect(pls.detune);
   driftOsc.connect(driftSub).connect(sub.detune);
 
+  cutoffDriftOsc.frequency.setValueAtTime(0.018 + Math.random()*0.055, when);
+  cutoffDriftOsc.connect(cutoffDriftGain).connect(flt.frequency);
+
   saw.connect(sg).connect(mix);
   pls.connect(pg).connect(mix);
   sub.connect(sbg).connect(mix);
@@ -858,16 +866,19 @@ function createPersistentVoice(midi,when,vel=.9){
   nse.start(when);
   lfo.start(when);
   driftOsc.start(when);
+  cutoffDriftOsc.start(when);
 
   const voice={
     midi,
     active:true,
     gain,flt,saw,pls,sub,nse,lfo,ltf,sg,pg,sbg,ng,pan,panBase,
     driftOsc,driftSaw,driftPulse,driftSub,
+    cutoffDriftOsc,cutoffDriftGain,
     refresh(t=ctx.currentTime){
       const p=P();
       const cutoff=dynamicCutoff(p.cutoff);
       const drift=driftDepthCents();
+      const cfDrift=cutoffDriftAmount(cutoff);
 
       this.sg.gain.setTargetAtTime(p.saw*.22,t,.03);
       this.pg.gain.setTargetAtTime(p.pulse*.15,t,.03);
@@ -883,6 +894,8 @@ function createPersistentVoice(midi,when,vel=.9){
       this.driftSaw.gain.setTargetAtTime(drift,t,.2);
       this.driftPulse.gain.setTargetAtTime(drift*.82,t,.2);
       this.driftSub.gain.setTargetAtTime(drift*.45,t,.25);
+
+      this.cutoffDriftGain.gain.setTargetAtTime(cfDrift,t,.25);
     },
     noteOn(v=.9,t=ctx.currentTime,soft=false){
       const p=P();
@@ -955,6 +968,7 @@ function createPersistentVoice(midi,when,vel=.9){
       try{this.nse.stop(t+rel+.08);}catch(e){}
       try{this.lfo.stop(t+rel+.08);}catch(e){}
       try{this.driftOsc.stop(t+rel+.08);}catch(e){}
+      try{this.cutoffDriftOsc.stop(t+rel+.08);}catch(e){}
     }
   };
   return voice;
