@@ -346,6 +346,7 @@ input[type="range"]::-moz-range-thumb{
       <div class="param"><span class="pname">→ PWM</span><input id="lfoToPWM" type="range" min="0" max="1" step="0.01" value="0.18"></div>
       <div class="param"><span class="pname">MASTER VOL</span><input id="master" type="range" min="0" max="1" step="0.01" value="0.72"></div>
       <div class="param"><span class="pname">GLIDE</span><input id="glideTime" type="range" min="0.02" max="0.35" step="0.005" value="0.14"></div>
+      <div class="param"><span class="pname">DRIFT</span><input id="drift" type="range" min="0" max="1" step="0.01" value="0.22"></div>
     </div>
   </section>
 
@@ -533,6 +534,10 @@ function shortChordName(deg){
   const tn=info.baseQ==='maj'?'':info.baseQ;
   const ext=vp.extension||'';
   return `${info.rootName}${tn}${ext}`.trim().replace('add','').replace(' ','').slice(0,5);
+}
+function driftDepthCents(){
+  const p=P();
+  return lerp(0,8,p.drift);
 }
 
 function renderPads(){
@@ -729,7 +734,8 @@ function P(){
     sustain:+$('#sustain').value,release:+$('#release').value,width:+$('#width').value,
     lfoRate:+$('#lfoRate').value,lfoToFilter:+$('#lfoToFilter').value,lfoToPWM:+$('#lfoToPWM').value,
     master:+$('#master').value,hpf:+$('#hpf').value,chorusMix:+$('#chorusMix').value,
-    chorusRate:+$('#chorusRate').value,chorusDepth:+$('#chorusDepth').value
+    chorusRate:+$('#chorusRate').value,chorusDepth:+$('#chorusDepth').value,
+    drift:+$('#drift').value
   };
 }
 function updateDSP(){
@@ -803,6 +809,11 @@ function createPersistentVoice(midi,when,vel=.9){
   const lfo=ctx.createOscillator();
   const ltf=ctx.createGain();
 
+  const driftOsc=ctx.createOscillator();
+  const driftSaw=ctx.createGain();
+  const driftPulse=ctx.createGain();
+  const driftSub=ctx.createGain();
+
   const sg=ctx.createGain(),pg=ctx.createGain(),sbg=ctx.createGain(),ng=ctx.createGain();
 
   const panBase=(Math.random()*2-1);
@@ -813,6 +824,7 @@ function createPersistentVoice(midi,when,vel=.9){
   nse.buffer=state.noiseBuffer;
   nse.loop=true;
   lfo.type='triangle';
+  driftOsc.type='sine';
 
   saw.frequency.setValueAtTime(rf,when);
   pls.frequency.setValueAtTime(rf,when);
@@ -829,6 +841,11 @@ function createPersistentVoice(midi,when,vel=.9){
   lfo.frequency.setValueAtTime(p.lfoRate,when);
   lfo.connect(ltf).connect(flt.frequency);
 
+  driftOsc.frequency.setValueAtTime(0.045 + Math.random()*0.11, when);
+  driftOsc.connect(driftSaw).connect(saw.detune);
+  driftOsc.connect(driftPulse).connect(pls.detune);
+  driftOsc.connect(driftSub).connect(sub.detune);
+
   saw.connect(sg).connect(mix);
   pls.connect(pg).connect(mix);
   sub.connect(sbg).connect(mix);
@@ -840,23 +857,32 @@ function createPersistentVoice(midi,when,vel=.9){
   sub.start(when);
   nse.start(when);
   lfo.start(when);
+  driftOsc.start(when);
 
   const voice={
     midi,
     active:true,
     gain,flt,saw,pls,sub,nse,lfo,ltf,sg,pg,sbg,ng,pan,panBase,
+    driftOsc,driftSaw,driftPulse,driftSub,
     refresh(t=ctx.currentTime){
       const p=P();
       const cutoff=dynamicCutoff(p.cutoff);
+      const drift=driftDepthCents();
+
       this.sg.gain.setTargetAtTime(p.saw*.22,t,.03);
       this.pg.gain.setTargetAtTime(p.pulse*.15,t,.03);
       this.sbg.gain.setTargetAtTime(p.sub*.16,t,.03);
       this.ng.gain.setTargetAtTime(p.noise*.032,t,.03);
+
       this.flt.Q.setTargetAtTime(p.res,t,.05);
       this.flt.frequency.setTargetAtTime(cutoff,t,.08);
       this.lfo.frequency.setTargetAtTime(p.lfoRate,t,.06);
       this.ltf.gain.setTargetAtTime(cutoff*.35*p.lfoToFilter,t,.06);
       this.pan.pan.setTargetAtTime(this.panBase*p.width*.7,t,.05);
+
+      this.driftSaw.gain.setTargetAtTime(drift,t,.2);
+      this.driftPulse.gain.setTargetAtTime(drift*.82,t,.2);
+      this.driftSub.gain.setTargetAtTime(drift*.45,t,.25);
     },
     noteOn(v=.9,t=ctx.currentTime,soft=false){
       const p=P();
@@ -928,6 +954,7 @@ function createPersistentVoice(midi,when,vel=.9){
       try{this.sub.stop(t+rel+.08);}catch(e){}
       try{this.nse.stop(t+rel+.08);}catch(e){}
       try{this.lfo.stop(t+rel+.08);}catch(e){}
+      try{this.driftOsc.stop(t+rel+.08);}catch(e){}
     }
   };
   return voice;
@@ -1180,10 +1207,10 @@ function attachXY(){
 
 function applyPreset(name){
   const map={
-    neo:{cutoff:1900,res:2.2,attack:.02,decay:.45,sustain:.72,release:1.65,chorusMix:.45,chorusRate:.32,chorusDepth:.006,saw:.82,pulse:.30,sub:.52,noise:.05,pw:.48,detune:4.5,width:.55,lfoRate:.22,lfoToFilter:.08,lfoToPWM:.18,xyX:.66,xyY:.38,glideTime:.14},
-    house:{cutoff:2400,res:1.8,attack:.01,decay:.28,sustain:.65,release:.90,chorusMix:.28,chorusRate:.42,chorusDepth:.004,saw:.88,pulse:.22,sub:.60,noise:.01,pw:.50,detune:2.5,width:.35,lfoRate:.16,lfoToFilter:.04,lfoToPWM:.08,xyX:.58,xyY:.50,glideTime:.11},
-    dream:{cutoff:1500,res:3.4,attack:.12,decay:1.2,sustain:.76,release:2.8,chorusMix:.62,chorusRate:.18,chorusDepth:.009,saw:.76,pulse:.42,sub:.34,noise:.06,pw:.42,detune:6.2,width:.78,lfoRate:.11,lfoToFilter:.11,lfoToPWM:.22,xyX:.72,xyY:.26,glideTime:.20},
-    dark:{cutoff:1100,res:4.8,attack:.03,decay:.62,sustain:.58,release:1.9,chorusMix:.36,chorusRate:.24,chorusDepth:.005,saw:.72,pulse:.34,sub:.66,noise:.03,pw:.38,detune:3.8,width:.42,lfoRate:.17,lfoToFilter:.14,lfoToPWM:.10,xyX:.34,xyY:.68,glideTime:.16}
+    neo:{cutoff:1900,res:2.2,attack:.02,decay:.45,sustain:.72,release:1.65,chorusMix:.45,chorusRate:.32,chorusDepth:.006,saw:.82,pulse:.30,sub:.52,noise:.05,pw:.48,detune:4.5,width:.55,lfoRate:.22,lfoToFilter:.08,lfoToPWM:.18,xyX:.66,xyY:.38,glideTime:.14,drift:.22},
+    house:{cutoff:2400,res:1.8,attack:.01,decay:.28,sustain:.65,release:.90,chorusMix:.28,chorusRate:.42,chorusDepth:.004,saw:.88,pulse:.22,sub:.60,noise:.01,pw:.50,detune:2.5,width:.35,lfoRate:.16,lfoToFilter:.04,lfoToPWM:.08,xyX:.58,xyY:.50,glideTime:.11,drift:.14},
+    dream:{cutoff:1500,res:3.4,attack:.12,decay:1.2,sustain:.76,release:2.8,chorusMix:.62,chorusRate:.18,chorusDepth:.009,saw:.76,pulse:.42,sub:.34,noise:.06,pw:.42,detune:6.2,width:.78,lfoRate:.11,lfoToFilter:.11,lfoToPWM:.22,xyX:.72,xyY:.26,glideTime:.20,drift:.32},
+    dark:{cutoff:1100,res:4.8,attack:.03,decay:.62,sustain:.58,release:1.9,chorusMix:.36,chorusRate:.24,chorusDepth:.005,saw:.72,pulse:.34,sub:.66,noise:.03,pw:.38,detune:3.8,width:.42,lfoRate:.17,lfoToFilter:.14,lfoToPWM:.10,xyX:.34,xyY:.68,glideTime:.16,drift:.18}
   };
   const p=map[name];
   Object.entries(p).forEach(([k,v])=>{
@@ -1292,7 +1319,7 @@ function attachUI(){
     if(!noDSP.includes(el.id)){
       el.addEventListener('input',()=>{
         updateDSP();
-        if(['cutoff','res','attack','decay','sustain','release','saw','pulse','sub','noise','pw','detune','width','lfoRate','lfoToFilter','lfoToPWM','glideTime'].includes(el.id)){
+        if(['cutoff','res','attack','decay','sustain','release','saw','pulse','sub','noise','pw','detune','width','lfoRate','lfoToFilter','lfoToPWM','glideTime','drift'].includes(el.id)){
           scheduleHeldChordRefresh();
         }
       });
