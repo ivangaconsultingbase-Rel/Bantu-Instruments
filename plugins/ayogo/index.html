@@ -345,7 +345,7 @@ input[type="range"]::-moz-range-thumb{
       <div class="param"><span class="pname">→ FILTER</span><input id="lfoToFilter" type="range" min="0" max="1" step="0.01" value="0.08"></div>
       <div class="param"><span class="pname">→ PWM</span><input id="lfoToPWM" type="range" min="0" max="1" step="0.01" value="0.18"></div>
       <div class="param"><span class="pname">MASTER VOL</span><input id="master" type="range" min="0" max="1" step="0.01" value="0.72"></div>
-      <div class="param"><span class="pname">GLIDE</span><input id="glideTime" type="range" min="0.02" max="0.35" step="0.005" value="0.12"></div>
+      <div class="param"><span class="pname">GLIDE</span><input id="glideTime" type="range" min="0.02" max="0.35" step="0.005" value="0.14"></div>
     </div>
   </section>
 
@@ -692,21 +692,35 @@ async function initAudio(){
   state.chorusLFO=lfo;
   state.chorusDepthGains=[lgL,lgR];
   state.audioReady=true;
-  makeNoise();
+  makePinkNoise();
 
   $('#audioDot').classList.add('on');
   $('#audioState').textContent='ON';
 }
-function makeNoise(){
-  const len=state.ctx.sampleRate*2,buf=state.ctx.createBuffer(1,len,state.ctx.sampleRate);
-  const d=buf.getChannelData(0);let last=0;
+
+function makePinkNoise(){
+  const len=state.ctx.sampleRate*2;
+  const buf=state.ctx.createBuffer(1,len,state.ctx.sampleRate);
+  const out=buf.getChannelData(0);
+
+  let b0=0,b1=0,b2=0,b3=0,b4=0,b5=0,b6=0;
+
   for(let i=0;i<len;i++){
-    const w=Math.random()*2-1;
-    last=last*.86+w*.14;
-    d[i]=last*.75;
+    const white=Math.random()*2-1;
+    b0 = 0.99886 * b0 + white * 0.0555179;
+    b1 = 0.99332 * b1 + white * 0.0750759;
+    b2 = 0.96900 * b2 + white * 0.1538520;
+    b3 = 0.86650 * b3 + white * 0.3104856;
+    b4 = 0.55000 * b4 + white * 0.5329522;
+    b5 = -0.7616 * b5 - white * 0.0168980;
+    const pink = b0 + b1 + b2 + b3 + b4 + b5 + b6 + white * 0.5362;
+    b6 = white * 0.115926;
+    out[i] = pink * 0.11;
   }
+
   state.noiseBuffer=buf;
 }
+
 function P(){
   return{
     saw:+$('#saw').value,pulse:+$('#pulse').value,sub:+$('#sub').value,noise:+$('#noise').value,
@@ -746,7 +760,7 @@ function voiceForNote(midi,when,vel=.9){
   const sub=ctx.createOscillator();sub.type='square';sub.frequency.value=rf/2;
   const nse=ctx.createBufferSource();nse.buffer=state.noiseBuffer;nse.loop=true;
   const sg=ctx.createGain(),pg=ctx.createGain(),sbg=ctx.createGain(),ng=ctx.createGain();
-  sg.gain.value=p.saw*.22;pg.gain.value=p.pulse*.15;sbg.gain.value=p.sub*.16;ng.gain.value=p.noise*.04;
+  sg.gain.value=p.saw*.22;pg.gain.value=p.pulse*.15;sbg.gain.value=p.sub*.16;ng.gain.value=p.noise*.032;
   saw.connect(sg).connect(mix);pls.connect(pg).connect(mix);sub.connect(sbg).connect(mix);nse.connect(ng).connect(mix);
   mix.connect(flt).connect(gain).connect(pan).connect(state.dryBus);
   const a=p.attack,d=p.decay,s=p.sustain*vel;
@@ -834,32 +848,38 @@ function createPersistentVoice(midi,when,vel=.9){
     refresh(t=ctx.currentTime){
       const p=P();
       const cutoff=dynamicCutoff(p.cutoff);
-      this.sg.gain.setTargetAtTime(p.saw*.22,t,.02);
-      this.pg.gain.setTargetAtTime(p.pulse*.15,t,.02);
-      this.sbg.gain.setTargetAtTime(p.sub*.16,t,.02);
-      this.ng.gain.setTargetAtTime(p.noise*.04,t,.02);
-      this.flt.Q.setTargetAtTime(p.res,t,.03);
-      this.flt.frequency.setTargetAtTime(cutoff,t,.05);
-      this.lfo.frequency.setTargetAtTime(p.lfoRate,t,.05);
-      this.ltf.gain.setTargetAtTime(cutoff*.35*p.lfoToFilter,t,.05);
-      this.pan.pan.setTargetAtTime(this.panBase*p.width*.7,t,.04);
+      this.sg.gain.setTargetAtTime(p.saw*.22,t,.03);
+      this.pg.gain.setTargetAtTime(p.pulse*.15,t,.03);
+      this.sbg.gain.setTargetAtTime(p.sub*.16,t,.03);
+      this.ng.gain.setTargetAtTime(p.noise*.032,t,.03);
+      this.flt.Q.setTargetAtTime(p.res,t,.05);
+      this.flt.frequency.setTargetAtTime(cutoff,t,.08);
+      this.lfo.frequency.setTargetAtTime(p.lfoRate,t,.06);
+      this.ltf.gain.setTargetAtTime(cutoff*.35*p.lfoToFilter,t,.06);
+      this.pan.pan.setTargetAtTime(this.panBase*p.width*.7,t,.05);
     },
     noteOn(v=.9,t=ctx.currentTime,soft=false){
       const p=P();
-      const a=soft ? Math.max(.01,p.attack*.35) : p.attack;
-      const d=soft ? Math.max(.04,p.decay*.55) : p.decay;
+      const a=soft ? Math.max(.025,p.attack*.8) : p.attack;
+      const d=soft ? Math.max(.09,p.decay*.8) : p.decay;
       const s=Math.max(.0001,p.sustain*v);
       const cutoff=dynamicCutoff(p.cutoff);
 
       this.gain.gain.cancelScheduledValues(t);
       this.gain.gain.setValueAtTime(Math.max(.0001,this.gain.gain.value),t);
-      this.gain.gain.linearRampToValueAtTime(v,t+a);
-      this.gain.gain.exponentialRampToValueAtTime(s,t+a+d);
+
+      if(soft){
+        this.gain.gain.linearRampToValueAtTime(v*.82,t+a);
+        this.gain.gain.setTargetAtTime(s,t+a,0.12);
+      }else{
+        this.gain.gain.linearRampToValueAtTime(v,t+a);
+        this.gain.gain.exponentialRampToValueAtTime(s,t+a+d);
+      }
 
       this.flt.frequency.cancelScheduledValues(t);
 
       if(soft){
-        this.flt.frequency.setTargetAtTime(cutoff,t,.08);
+        this.flt.frequency.setTargetAtTime(cutoff,t,.14);
       }else{
         const ed=1+p.envAmt*(.7+(1-state.xyY)*.55);
         this.flt.frequency.setValueAtTime(Math.max(80,cutoff*.52),t);
@@ -869,9 +889,9 @@ function createPersistentVoice(midi,when,vel=.9){
 
       this.refresh(t);
     },
-    glideToMidi(newMidi,glideTime=.12,t=ctx.currentTime,retrigger=false){
+    glideToMidi(newMidi,glideTime=.14,t=ctx.currentTime,retrigger=false){
       const newFreq=midiToFreq(newMidi);
-      const tc=Math.max(.015,glideTime*.55);
+      const tc=Math.max(.03,glideTime*.72);
 
       this.saw.frequency.cancelScheduledValues(t);
       this.pls.frequency.cancelScheduledValues(t);
@@ -885,12 +905,13 @@ function createPersistentVoice(midi,when,vel=.9){
       this.refresh(t);
 
       if(retrigger){
-        this.noteOn(.88,t,true);
+        this.noteOn(.82,t,true);
       }else{
+        const holdLevel=Math.max(.0001,this.gain.gain.value);
         this.gain.gain.cancelScheduledValues(t);
-        this.gain.gain.setTargetAtTime(Math.max(.0001,this.gain.gain.value),t,.03);
+        this.gain.gain.setTargetAtTime(holdLevel,t,.08);
         this.flt.frequency.cancelScheduledValues(t);
-        this.flt.frequency.setTargetAtTime(dynamicCutoff(P().cutoff),t,.08);
+        this.flt.frequency.setTargetAtTime(dynamicCutoff(P().cutoff),t,.14);
       }
     },
     release(t=ctx.currentTime){
@@ -901,7 +922,7 @@ function createPersistentVoice(midi,when,vel=.9){
       this.gain.gain.setValueAtTime(Math.max(.0001,this.gain.gain.value),t);
       this.gain.gain.exponentialRampToValueAtTime(.0001,t+rel);
       this.flt.frequency.cancelScheduledValues(t);
-      this.flt.frequency.setTargetAtTime(Math.max(70,P().cutoff*.55),t,rel*.2+.01);
+      this.flt.frequency.setTargetAtTime(Math.max(70,P().cutoff*.55),t,rel*.25+.01);
       try{this.saw.stop(t+rel+.08);}catch(e){}
       try{this.pls.stop(t+rel+.08);}catch(e){}
       try{this.sub.stop(t+rel+.08);}catch(e){}
@@ -956,6 +977,7 @@ function releaseAll(){
   releaseTransientVoices();
   releaseManualChord();
 }
+
 function glideToNotes(targetNotes,retrigger=false){
   if(!state.audioReady)return;
   const t=state.ctx.currentTime+.005;
@@ -964,8 +986,8 @@ function glideToNotes(targetNotes,retrigger=false){
 
   if(!live.length){
     state.glideVoices=targetNotes.map((m,i)=>{
-      const tt=t+i*.002;
-      const vv=clamp(.88-i*.04,.5,1);
+      const tt=t+i*.004;
+      const vv=clamp(.86-i*.035,.48,1);
       const v=createPersistentVoice(m,tt,vv);
       v.noteOn(vv,tt,false);
       return v;
@@ -980,10 +1002,19 @@ function glideToNotes(targetNotes,retrigger=false){
   });
 
   leftTargets.forEach((midi,i)=>{
-    const tt=t+i*.003;
-    const vv=clamp(.82-i*.04,.45,1);
+    const tt=t+i*.008;
+    const vv=clamp(.76-i*.03,.42,1);
     const v=createPersistentVoice(midi,tt,vv);
-    v.noteOn(vv,tt,true);
+
+    v.gain.gain.cancelScheduledValues(tt);
+    v.gain.gain.setValueAtTime(.0001,tt);
+    v.gain.gain.linearRampToValueAtTime(vv*.78,tt+Math.max(.05,glideTime*.75));
+    v.gain.gain.setTargetAtTime(Math.max(.0001,P().sustain*vv),tt+Math.max(.05,glideTime*.75),0.14);
+
+    v.flt.frequency.cancelScheduledValues(tt);
+    v.flt.frequency.setTargetAtTime(dynamicCutoff(P().cutoff),tt,.16);
+    v.refresh(tt);
+
     state.glideVoices.push(v);
   });
 
@@ -992,6 +1023,7 @@ function glideToNotes(targetNotes,retrigger=false){
   state.glideVoices=state.glideVoices.filter(v=>v.active);
   state.glideVoices.forEach(v=>v.refresh(t));
 }
+
 function triggerDeg(deg,forceAttack=false){
   if(!state.audioReady)return;
   state.currentDegree=deg;
@@ -1148,10 +1180,10 @@ function attachXY(){
 
 function applyPreset(name){
   const map={
-    neo:{cutoff:1900,res:2.2,attack:.02,decay:.45,sustain:.72,release:1.65,chorusMix:.45,chorusRate:.32,chorusDepth:.006,saw:.82,pulse:.30,sub:.52,noise:.05,pw:.48,detune:4.5,width:.55,lfoRate:.22,lfoToFilter:.08,lfoToPWM:.18,xyX:.66,xyY:.38,glideTime:.12},
-    house:{cutoff:2400,res:1.8,attack:.01,decay:.28,sustain:.65,release:.90,chorusMix:.28,chorusRate:.42,chorusDepth:.004,saw:.88,pulse:.22,sub:.60,noise:.01,pw:.50,detune:2.5,width:.35,lfoRate:.16,lfoToFilter:.04,lfoToPWM:.08,xyX:.58,xyY:.50,glideTime:.09},
-    dream:{cutoff:1500,res:3.4,attack:.12,decay:1.2,sustain:.76,release:2.8,chorusMix:.62,chorusRate:.18,chorusDepth:.009,saw:.76,pulse:.42,sub:.34,noise:.06,pw:.42,detune:6.2,width:.78,lfoRate:.11,lfoToFilter:.11,lfoToPWM:.22,xyX:.72,xyY:.26,glideTime:.18},
-    dark:{cutoff:1100,res:4.8,attack:.03,decay:.62,sustain:.58,release:1.9,chorusMix:.36,chorusRate:.24,chorusDepth:.005,saw:.72,pulse:.34,sub:.66,noise:.03,pw:.38,detune:3.8,width:.42,lfoRate:.17,lfoToFilter:.14,lfoToPWM:.10,xyX:.34,xyY:.68,glideTime:.14}
+    neo:{cutoff:1900,res:2.2,attack:.02,decay:.45,sustain:.72,release:1.65,chorusMix:.45,chorusRate:.32,chorusDepth:.006,saw:.82,pulse:.30,sub:.52,noise:.05,pw:.48,detune:4.5,width:.55,lfoRate:.22,lfoToFilter:.08,lfoToPWM:.18,xyX:.66,xyY:.38,glideTime:.14},
+    house:{cutoff:2400,res:1.8,attack:.01,decay:.28,sustain:.65,release:.90,chorusMix:.28,chorusRate:.42,chorusDepth:.004,saw:.88,pulse:.22,sub:.60,noise:.01,pw:.50,detune:2.5,width:.35,lfoRate:.16,lfoToFilter:.04,lfoToPWM:.08,xyX:.58,xyY:.50,glideTime:.11},
+    dream:{cutoff:1500,res:3.4,attack:.12,decay:1.2,sustain:.76,release:2.8,chorusMix:.62,chorusRate:.18,chorusDepth:.009,saw:.76,pulse:.42,sub:.34,noise:.06,pw:.42,detune:6.2,width:.78,lfoRate:.11,lfoToFilter:.11,lfoToPWM:.22,xyX:.72,xyY:.26,glideTime:.20},
+    dark:{cutoff:1100,res:4.8,attack:.03,decay:.62,sustain:.58,release:1.9,chorusMix:.36,chorusRate:.24,chorusDepth:.005,saw:.72,pulse:.34,sub:.66,noise:.03,pw:.38,detune:3.8,width:.42,lfoRate:.17,lfoToFilter:.14,lfoToPWM:.10,xyX:.34,xyY:.68,glideTime:.16}
   };
   const p=map[name];
   Object.entries(p).forEach(([k,v])=>{
