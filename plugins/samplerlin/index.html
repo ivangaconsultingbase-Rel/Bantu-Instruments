@@ -844,32 +844,54 @@ function createPersistentVoice(midi,when,vel=.9){
       this.ltf.gain.setTargetAtTime(cutoff*.35*p.lfoToFilter,t,.05);
       this.pan.pan.setTargetAtTime(this.panBase*p.width*.7,t,.04);
     },
-    noteOn(v=.9,t=ctx.currentTime){
+    noteOn(v=.9,t=ctx.currentTime,soft=false){
       const p=P();
-      const a=p.attack,d=p.decay,s=Math.max(.0001,p.sustain*v);
+      const a=soft ? Math.max(.01,p.attack*.35) : p.attack;
+      const d=soft ? Math.max(.04,p.decay*.55) : p.decay;
+      const s=Math.max(.0001,p.sustain*v);
+      const cutoff=dynamicCutoff(p.cutoff);
+
       this.gain.gain.cancelScheduledValues(t);
       this.gain.gain.setValueAtTime(Math.max(.0001,this.gain.gain.value),t);
       this.gain.gain.linearRampToValueAtTime(v,t+a);
       this.gain.gain.exponentialRampToValueAtTime(s,t+a+d);
-      const cutoff=dynamicCutoff(p.cutoff);
-      const ed=1+p.envAmt*(.7+(1-state.xyY)*.55);
+
       this.flt.frequency.cancelScheduledValues(t);
-      this.flt.frequency.setValueAtTime(Math.max(80,cutoff*.52),t);
-      this.flt.frequency.exponentialRampToValueAtTime(Math.max(100,cutoff*ed),t+a+.03);
-      this.flt.frequency.exponentialRampToValueAtTime(Math.max(80,cutoff*.78),t+a+d+.03);
+
+      if(soft){
+        this.flt.frequency.setTargetAtTime(cutoff,t,.08);
+      }else{
+        const ed=1+p.envAmt*(.7+(1-state.xyY)*.55);
+        this.flt.frequency.setValueAtTime(Math.max(80,cutoff*.52),t);
+        this.flt.frequency.exponentialRampToValueAtTime(Math.max(100,cutoff*ed),t+a+.03);
+        this.flt.frequency.exponentialRampToValueAtTime(Math.max(80,cutoff*.78),t+a+d+.03);
+      }
+
       this.refresh(t);
     },
     glideToMidi(newMidi,glideTime=.12,t=ctx.currentTime,retrigger=false){
       const newFreq=midiToFreq(newMidi);
+      const tc=Math.max(.015,glideTime*.55);
+
       this.saw.frequency.cancelScheduledValues(t);
       this.pls.frequency.cancelScheduledValues(t);
       this.sub.frequency.cancelScheduledValues(t);
-      this.saw.frequency.setTargetAtTime(newFreq,t,Math.max(.01,glideTime*.45));
-      this.pls.frequency.setTargetAtTime(newFreq,t,Math.max(.01,glideTime*.45));
-      this.sub.frequency.setTargetAtTime(newFreq/2,t,Math.max(.01,glideTime*.45));
+
+      this.saw.frequency.setTargetAtTime(newFreq,t,tc);
+      this.pls.frequency.setTargetAtTime(newFreq,t,tc);
+      this.sub.frequency.setTargetAtTime(newFreq/2,t,tc);
+
       this.midi=newMidi;
       this.refresh(t);
-      if(retrigger) this.noteOn(.88,t);
+
+      if(retrigger){
+        this.noteOn(.88,t,true);
+      }else{
+        this.gain.gain.cancelScheduledValues(t);
+        this.gain.gain.setTargetAtTime(Math.max(.0001,this.gain.gain.value),t,.03);
+        this.flt.frequency.cancelScheduledValues(t);
+        this.flt.frequency.setTargetAtTime(dynamicCutoff(P().cutoff),t,.08);
+      }
     },
     release(t=ctx.currentTime){
       if(!this.active)return;
@@ -887,7 +909,6 @@ function createPersistentVoice(midi,when,vel=.9){
       try{this.lfo.stop(t+rel+.08);}catch(e){}
     }
   };
-  voice.noteOn(vel,when);
   return voice;
 }
 
@@ -942,7 +963,13 @@ function glideToNotes(targetNotes,retrigger=false){
   const live=state.glideVoices.filter(v=>v&&v.active);
 
   if(!live.length){
-    state.glideVoices=targetNotes.map((m,i)=>createPersistentVoice(m,t+i*.002,clamp(.88-i*.04,.5,1)));
+    state.glideVoices=targetNotes.map((m,i)=>{
+      const tt=t+i*.002;
+      const vv=clamp(.88-i*.04,.5,1);
+      const v=createPersistentVoice(m,tt,vv);
+      v.noteOn(vv,tt,false);
+      return v;
+    });
     return;
   }
 
@@ -953,7 +980,10 @@ function glideToNotes(targetNotes,retrigger=false){
   });
 
   leftTargets.forEach((midi,i)=>{
-    const v=createPersistentVoice(midi,t+i*.003,clamp(.82-i*.04,.45,1));
+    const tt=t+i*.003;
+    const vv=clamp(.82-i*.04,.45,1);
+    const v=createPersistentVoice(midi,tt,vv);
+    v.noteOn(vv,tt,true);
     state.glideVoices.push(v);
   });
 
