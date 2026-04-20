@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
@@ -291,6 +292,16 @@ input[type="range"]::-moz-range-thumb{
           </select>
         </div>
       </div>
+      <div class="harmony" style="grid-template-columns:1fr">
+        <div class="hf"><span class="flbl">GLIDE (XY VOICING BEND)</span>
+          <select id="glideSelect">
+            <option value="0">OFF — retrigger</option>
+            <option value="0.08">SHORT — 80 ms</option>
+            <option value="0.2" selected>MED — 200 ms</option>
+            <option value="0.5">LONG — 500 ms</option>
+          </select>
+        </div>
+      </div>
       <div class="readouts">
         <div class="rout"><span class="rk">VOICING</span><span class="rv" id="voicingReadout">Maj7</span></div>
         <div class="rout"><span class="rk">CHORD</span><span class="rv" id="chordReadout">Cmaj7</span></div>
@@ -475,6 +486,10 @@ const state={
   key:0,scale:'major',octave:3,xyX:.5,xyY:.5,
   hold:false,arp:false,arpPhase:0,latchedChord:null,
   activeNotes:new Map(),currentDegree:1,
+  // ── pad-held state for live XY retrigger ──
+  heldDegree:0,             // 0 = no pad currently held; 1..7 = degree being held
+  lastVoicingZone:'',       // last (x-zone, y-zone) signature played
+  lastRetriggerTime:0,      // throttle re-trigger to avoid edge-jitter
   seqRunning:false,seqSteps:new Array(16).fill(0),seqLen:16,
   seqPos:-1,seqDir:1,seqTimer:null,seqSwingToggle:false,arpTimer:null
 };
@@ -482,392 +497,531 @@ const midiToFreq=n=>440*Math.pow(2,(n-69)/12);
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 const lerp=(a,b,t)=>a+(b-a)*t;
 const choice=arr=>arr[(Math.random()*arr.length)|0];
+
+// Compute the discrete voicing zone from xyX / xyY.
+// Mirrors the threshold logic inside getVP() so any time the resulting
+// (xZone,yZone) changes, we know the chord intervals will differ.
+function voicingZone(){
+const x=state.xyX, y=1-state.xyY;
+const xz = x<.33 ? 0 : x<.66 ? 1 : 2;
+const yz = y<.33 ? 0 : y<.66 ? 1 : 2;
+return xz+’-’+yz;
+}
+
 function populateSelects(){
-  NOTES.forEach((n,i)=>$('#keySelect').insertAdjacentHTML('beforeend',`<option value="${i}">${n}</option>`));
-  Object.entries(SCALES).forEach(([k,v])=>$('#scaleSelect').insertAdjacentHTML('beforeend',`<option value="${k}">${v.name}</option>`));
-  $('#keySelect').value='0';$('#scaleSelect').value='major';
+NOTES.forEach((n,i)=>$(’#keySelect’).insertAdjacentHTML(‘beforeend’,`<option value="${i}">${n}</option>`));
+Object.entries(SCALES).forEach(([k,v])=>$(’#scaleSelect’).insertAdjacentHTML(‘beforeend’,`<option value="${k}">${v.name}</option>`));
+$(’#keySelect’).value=‘0’;$(’#scaleSelect’).value=‘major’;
 }
 function degreeInfo(deg){
-  const s=SCALES[state.scale],semi=(state.key+s.steps[deg-1])%12;
-  return{rootSemi:semi,rootName:NOTES[semi],baseQ:s.qualities[deg-1]};
+const s=SCALES[state.scale],semi=(state.key+s.steps[deg-1])%12;
+return{rootSemi:semi,rootName:NOTES[semi],baseQ:s.qualities[deg-1]};
 }
 function getVP(baseQ){
-  const x=state.xyX,y=1-state.xyY;
-  let label='Neutral',intervals=[],extension='';
-  if(y<.33){
-    if(x<.33){label='Power';intervals=[0,7,12];extension='5';}
-    else if(x<.66){label=baseQ.startsWith('min')?'Min triad':'Triad';intervals=triadFQ(baseQ);}
-    else{label='Sus';intervals=baseQ.startsWith('min')?[0,5,7,12]:[0,2,7,12];extension=baseQ.startsWith('min')?'sus4':'add2';}
-  }else if(y<.66){
-    if(x<.33){label=baseQ.startsWith('min')?'Min7':'Maj7';intervals=sevFQ(baseQ);}
-    else if(x<.66){label='Open7';intervals=spreadV(sevFQ(baseQ));}
-    else{label='Add9';intervals=add9FQ(baseQ);extension='add9';}
-  }else{
-    if(x<.33){label='6/9';intervals=sixNFQ(baseQ);extension='6/9';}
-    else if(x<.66){label='9th';intervals=nineFQ(baseQ);extension='9';}
-    else{label='Dense';intervals=denseFQ(baseQ);extension='rich';}
-  }
-  return{intervals,label,extension,brightness:x,density:y};
+const x=state.xyX,y=1-state.xyY;
+let label=‘Neutral’,intervals=[],extension=’’;
+if(y<.33){
+if(x<.33){label=‘Power’;intervals=[0,7,12];extension=‘5’;}
+else if(x<.66){label=baseQ.startsWith(‘min’)?‘Min triad’:‘Triad’;intervals=triadFQ(baseQ);}
+else{label=‘Sus’;intervals=baseQ.startsWith(‘min’)?[0,5,7,12]:[0,2,7,12];extension=baseQ.startsWith(‘min’)?‘sus4’:‘add2’;}
+}else if(y<.66){
+if(x<.33){label=baseQ.startsWith(‘min’)?‘Min7’:‘Maj7’;intervals=sevFQ(baseQ);}
+else if(x<.66){label=‘Open7’;intervals=spreadV(sevFQ(baseQ));}
+else{label=‘Add9’;intervals=add9FQ(baseQ);extension=‘add9’;}
+}else{
+if(x<.33){label=‘6/9’;intervals=sixNFQ(baseQ);extension=‘6/9’;}
+else if(x<.66){label=‘9th’;intervals=nineFQ(baseQ);extension=‘9’;}
+else{label=‘Dense’;intervals=denseFQ(baseQ);extension=‘rich’;}
 }
-const triadFQ=q=>q==='maj'?[0,4,7]:q==='min'?[0,3,7]:q==='dim'?[0,3,6]:q==='aug'?[0,4,8]:[0,4,7];
-const sevFQ=q=>q==='maj'?[0,4,7,11]:q==='min'?[0,3,7,10]:q==='dim'?[0,3,6,10]:q==='aug'?[0,4,8,11]:[0,4,7,10];
-const add9FQ=q=>q==='maj'?[0,4,7,14]:q==='min'?[0,3,7,14]:q==='dim'?[0,3,6,13]:[0,4,7,14];
-const sixNFQ=q=>q==='maj'?[0,4,9,14]:q==='min'?[0,3,9,14]:q==='dim'?[0,3,6,12]:[0,4,9,14];
-const nineFQ=q=>q==='maj'?[0,4,7,11,14]:q==='min'?[0,3,7,10,14]:q==='dim'?[0,3,6,10,13]:[0,4,7,10,14];
-const denseFQ=q=>q==='maj'?[0,4,7,11,14,19]:q==='min'?[0,3,7,10,14,19]:q==='dim'?[0,3,6,10,13,18]:[0,4,7,11,14,19];
+return{intervals,label,extension,brightness:x,density:y};
+}
+const triadFQ=q=>q===‘maj’?[0,4,7]:q===‘min’?[0,3,7]:q===‘dim’?[0,3,6]:q===‘aug’?[0,4,8]:[0,4,7];
+const sevFQ=q=>q===‘maj’?[0,4,7,11]:q===‘min’?[0,3,7,10]:q===‘dim’?[0,3,6,10]:q===‘aug’?[0,4,8,11]:[0,4,7,10];
+const add9FQ=q=>q===‘maj’?[0,4,7,14]:q===‘min’?[0,3,7,14]:q===‘dim’?[0,3,6,13]:[0,4,7,14];
+const sixNFQ=q=>q===‘maj’?[0,4,9,14]:q===‘min’?[0,3,9,14]:q===‘dim’?[0,3,6,12]:[0,4,9,14];
+const nineFQ=q=>q===‘maj’?[0,4,7,11,14]:q===‘min’?[0,3,7,10,14]:q===‘dim’?[0,3,6,10,13]:[0,4,7,10,14];
+const denseFQ=q=>q===‘maj’?[0,4,7,11,14,19]:q===‘min’?[0,3,7,10,14,19]:q===‘dim’?[0,3,6,10,13,18]:[0,4,7,11,14,19];
 const spreadV=ivs=>{const o=ivs.slice();if(o.length>2)o[2]+=12;return o;};
 function chordLabel(deg){
-  const info=degreeInfo(deg),vp=getVP(info.baseQ);
-  const tn=info.baseQ==='maj'?'':info.baseQ;
-  return{root:info.rootName,text:`${info.rootName}${tn}${vp.extension?' '+vp.extension:''}`.trim(),info,vp};
+const info=degreeInfo(deg),vp=getVP(info.baseQ);
+const tn=info.baseQ===‘maj’?’’:info.baseQ;
+return{root:info.rootName,text:`${info.rootName}${tn}${vp.extension?' '+vp.extension:''}`.trim(),info,vp};
 }
 function shortChordName(deg){
-  const info=degreeInfo(deg),vp=getVP(info.baseQ);
-  const tn=info.baseQ==='maj'?'':info.baseQ;
-  const ext=vp.extension||'';
-  return `${info.rootName}${tn}${ext}`.trim().replace('add','').replace(' ','').slice(0,5);
+const info=degreeInfo(deg),vp=getVP(info.baseQ);
+const tn=info.baseQ===‘maj’?’’:info.baseQ;
+const ext=vp.extension||’’;
+return `${info.rootName}${tn}${ext}`.trim().replace(‘add’,’’).replace(’ ‘,’’).slice(0,5);
 }
 function renderPads(){
-  const el=$('#chordPads');
-  if(!el.children.length){
-    for(let deg=1;deg<=7;deg++){
-      const lab=chordLabel(deg);
-      const quality=(lab.info.baseQ==='maj'?'':lab.info.baseQ)+(lab.vp.extension?' '+lab.vp.extension:'');
-      const pad=document.createElement('button');
-      pad.className='chordPad'+(state.currentDegree===deg?' active':'');
-      pad.dataset.deg=deg;
-      pad.innerHTML=`<div class="pad-body"><div class="deg">${ROMANS[deg-1]}</div><div class="name">${lab.root}</div><div class="hint">${quality.trim()||'maj'}</div></div>`;
-      pad.addEventListener('pointerdown',e=>{
-        e.preventDefault();pad.setPointerCapture(e.pointerId);
-        state.currentDegree=+pad.dataset.deg;
-        updateReadouts();updatePadClasses();updatePadLabels();triggerDeg(state.currentDegree);
-      });
-      const onRelease=e=>{e.preventDefault();if(!state.hold&&!state.arp)releaseCurrent();};
-      pad.addEventListener('pointerup',onRelease);
-      pad.addEventListener('pointercancel',onRelease);
-      el.appendChild(pad);
-    }
-  }else{updatePadLabels();updatePadClasses();}
+const el=$(’#chordPads’);
+if(!el.children.length){
+for(let deg=1;deg<=7;deg++){
+const lab=chordLabel(deg);
+const quality=(lab.info.baseQ===‘maj’?’’:lab.info.baseQ)+(lab.vp.extension?’ ‘+lab.vp.extension:’’);
+const pad=document.createElement(‘button’);
+pad.className=‘chordPad’+(state.currentDegree===deg?’ active’:’’);
+pad.dataset.deg=deg;
+pad.innerHTML=`<div class="pad-body"><div class="deg">${ROMANS[deg-1]}</div><div class="name">${lab.root}</div><div class="hint">${quality.trim()||'maj'}</div></div>`;
+pad.addEventListener(‘pointerdown’,e=>{
+e.preventDefault();pad.setPointerCapture(e.pointerId);
+const d=+pad.dataset.deg;
+state.currentDegree=d;
+// mark pad as held & snapshot the current voicing zone
+state.heldDegree=d;
+state.lastVoicingZone=voicingZone();
+updateReadouts();updatePadClasses();updatePadLabels();triggerDeg(d);
+});
+const onRelease=e=>{
+e.preventDefault();
+// pad released — clear held state
+state.heldDegree=0;
+if(!state.hold&&!state.arp)releaseCurrent();
+};
+pad.addEventListener(‘pointerup’,onRelease);
+pad.addEventListener(‘pointercancel’,onRelease);
+el.appendChild(pad);
 }
-function updatePadClasses(){document.querySelectorAll('.chordPad').forEach(p=>p.classList.toggle('active',+p.dataset.deg===state.currentDegree));}
+}else{updatePadLabels();updatePadClasses();}
+}
+function updatePadClasses(){document.querySelectorAll(’.chordPad’).forEach(p=>p.classList.toggle(‘active’,+p.dataset.deg===state.currentDegree));}
 function updatePadLabels(){
-  document.querySelectorAll('.chordPad').forEach(p=>{
-    const deg=+p.dataset.deg,lab=chordLabel(deg);
-    const quality=(lab.info.baseQ==='maj'?'':lab.info.baseQ)+(lab.vp.extension?' '+lab.vp.extension:'');
-    p.querySelector('.name').textContent=lab.root;
-    p.querySelector('.hint').textContent=quality.trim()||'maj';
-  });
+document.querySelectorAll(’.chordPad’).forEach(p=>{
+const deg=+p.dataset.deg,lab=chordLabel(deg);
+const quality=(lab.info.baseQ===‘maj’?’’:lab.info.baseQ)+(lab.vp.extension?’ ‘+lab.vp.extension:’’);
+p.querySelector(’.name’).textContent=lab.root;
+p.querySelector(’.hint’).textContent=quality.trim()||‘maj’;
+});
 }
 function updateReadouts(){
-  const lab=chordLabel(state.currentDegree);
-  $('#voicingReadout').textContent=lab.vp.label;
-  $('#chordReadout').textContent=lab.text;
-  $('#brightVal').textContent=Math.round(state.xyX*100);
-  $('#denseVal').textContent=Math.round((1-state.xyY)*100);
-  $('#strumVal').textContent=Math.round(10+(1-state.xyY)*45+state.xyX*20)+'ms';
+const lab=chordLabel(state.currentDegree);
+$(’#voicingReadout’).textContent=lab.vp.label;
+$(’#chordReadout’).textContent=lab.text;
+$(’#brightVal’).textContent=Math.round(state.xyX*100);
+$(’#denseVal’).textContent=Math.round((1-state.xyY)*100);
+$(’#strumVal’).textContent=Math.round(10+(1-state.xyY)*45+state.xyX*20)+‘ms’;
 }
 function buildStepGrid(){
-  const grid=$('#stepGrid'),len=state.seqLen;
-  grid.style.gridTemplateColumns='repeat(8,1fr)';
-  grid.innerHTML='';
-  for(let i=0;i<len;i++){
-    const deg=state.seqSteps[i];
-    const btn=document.createElement('button');
-    btn.className='step'+(deg>0?' has-note':'')+(i===state.seqPos?' active-playhead':'');
-    btn.dataset.idx=i;
-    const chName=deg>0?shortChordName(deg):'';
-    btn.innerHTML=`<span class="step-deg">${deg>0?ROMANS[deg-1]:'·'}</span><span class="step-chd">${chName}</span><span class="step-num">${i+1}</span>`;
-    btn.addEventListener('click',()=>{
-      const cur=state.seqSteps[+btn.dataset.idx];
-      state.seqSteps[+btn.dataset.idx]=(cur+1)%8;
-      refreshStepCell(+btn.dataset.idx);
-    });
-    grid.appendChild(btn);
-  }
+const grid=$(’#stepGrid’),len=state.seqLen;
+grid.style.gridTemplateColumns=‘repeat(8,1fr)’;
+grid.innerHTML=’’;
+for(let i=0;i<len;i++){
+const deg=state.seqSteps[i];
+const btn=document.createElement(‘button’);
+btn.className=‘step’+(deg>0?’ has-note’:’’)+(i===state.seqPos?’ active-playhead’:’’);
+btn.dataset.idx=i;
+const chName=deg>0?shortChordName(deg):’’;
+btn.innerHTML=`<span class="step-deg">${deg>0?ROMANS[deg-1]:'·'}</span><span class="step-chd">${chName}</span><span class="step-num">${i+1}</span>`;
+btn.addEventListener(‘click’,()=>{
+const cur=state.seqSteps[+btn.dataset.idx];
+state.seqSteps[+btn.dataset.idx]=(cur+1)%8;
+refreshStepCell(+btn.dataset.idx);
+});
+grid.appendChild(btn);
+}
 }
 function refreshStepCell(i){
-  const grid=$('#stepGrid');
-  if(i<0||i>=grid.children.length)return;
-  const btn=grid.children[i],deg=state.seqSteps[i];
-  btn.className='step'+(deg>0?' has-note':'')+(i===state.seqPos?' active-playhead':'');
-  const chName=deg>0?shortChordName(deg):'';
-  btn.querySelector('.step-deg').textContent=deg>0?ROMANS[deg-1]:'·';
-  btn.querySelector('.step-chd').textContent=chName;
+const grid=$(’#stepGrid’);
+if(i<0||i>=grid.children.length)return;
+const btn=grid.children[i],deg=state.seqSteps[i];
+btn.className=‘step’+(deg>0?’ has-note’:’’)+(i===state.seqPos?’ active-playhead’:’’);
+const chName=deg>0?shortChordName(deg):’’;
+btn.querySelector(’.step-deg’).textContent=deg>0?ROMANS[deg-1]:’·’;
+btn.querySelector(’.step-chd’).textContent=chName;
 }
-function refreshAllStepCells(){const grid=$('#stepGrid');for(let i=0;i<grid.children.length;i++)refreshStepCell(i);}
+function refreshAllStepCells(){const grid=$(’#stepGrid’);for(let i=0;i<grid.children.length;i++)refreshStepCell(i);}
 function updateSeqPlayhead(o,n){
-  const grid=$('#stepGrid');
-  if(o>=0&&o<grid.children.length)grid.children[o].classList.remove('active-playhead');
-  if(n>=0&&n<grid.children.length)grid.children[n].classList.add('active-playhead');
+const grid=$(’#stepGrid’);
+if(o>=0&&o<grid.children.length)grid.children[o].classList.remove(‘active-playhead’);
+if(n>=0&&n<grid.children.length)grid.children[n].classList.add(‘active-playhead’);
 }
 function onSeqLenChange(){
-  const newLen=+$('#seqLenSelect').value;
-  if(newLen!==state.seqLen){
-    state.seqLen=newLen;
-    state.seqSteps=Array.from({length:newLen},(_,i)=>state.seqSteps[i]||0);
-    state.seqPos=-1;state.seqDir=1;
-    buildStepGrid();
-  }
+const newLen=+$(’#seqLenSelect’).value;
+if(newLen!==state.seqLen){
+state.seqLen=newLen;
+state.seqSteps=Array.from({length:newLen},(_,i)=>state.seqSteps[i]||0);
+state.seqPos=-1;state.seqDir=1;
+buildStepGrid();
 }
-function stepMs(){const bpm=+$('#tempo').value,r=+$('#rateSelect').value,q=60000/bpm;return r===4?q:r===8?q/2:q/4;}
+}
+function stepMs(){const bpm=+$(’#tempo’).value,r=+$(’#rateSelect’).value,q=60000/bpm;return r===4?q:r===8?q/2:q/4;}
 async function initAudio(){
-  if(state.audioReady)return;
-  const ctx=new(window.AudioContext||window.webkitAudioContext)();
-  await ctx.resume();state.ctx=ctx;
-  const master=ctx.createGain();master.gain.value=+$('#master').value;
-  const hpf=ctx.createBiquadFilter();hpf.type='highpass';hpf.frequency.value=+$('#hpf').value;
-  const ci=ctx.createGain(),cd=ctx.createGain(),cw=ctx.createGain();
-  cd.gain.value=1-+$('#chorusMix').value;cw.gain.value=+$('#chorusMix').value;
-  const dL=ctx.createDelay(.05),dR=ctx.createDelay(.05);
-  dL.delayTime.value=.018;dR.delayTime.value=.024;
-  const lfo=ctx.createOscillator();lfo.type='triangle';lfo.frequency.value=+$('#chorusRate').value;
-  const lgL=ctx.createGain(),lgR=ctx.createGain();
-  lgL.gain.value=+$('#chorusDepth').value;lgR.gain.value=-+$('#chorusDepth').value*.9;
-  lfo.connect(lgL).connect(dL.delayTime);lfo.connect(lgR).connect(dR.delayTime);lfo.start();
-  const merger=ctx.createChannelMerger(2),wi=ctx.createGain();
-  wi.connect(dL);wi.connect(dR);dL.connect(merger,0,0);dR.connect(merger,0,1);
-  const out=ctx.createGain();
-  ci.connect(hpf);hpf.connect(cd).connect(out);hpf.connect(wi);merger.connect(cw).connect(out);
-  out.connect(master).connect(ctx.destination);
-  state.master=master;state.dryBus=ci;state.chorusWet=cw;state.chorusDry=cd;
-  state.globalHPF=hpf;state.chorusLFO=lfo;state.chorusDepthGains=[lgL,lgR];
-  state.audioReady=true;makeNoise();
-  $('#audioDot').classList.add('on');$('#audioState').textContent='ON';
+if(state.audioReady)return;
+const ctx=new(window.AudioContext||window.webkitAudioContext)();
+await ctx.resume();state.ctx=ctx;
+const master=ctx.createGain();master.gain.value=+$(’#master’).value;
+const hpf=ctx.createBiquadFilter();hpf.type=‘highpass’;hpf.frequency.value=+$(’#hpf’).value;
+const ci=ctx.createGain(),cd=ctx.createGain(),cw=ctx.createGain();
+cd.gain.value=1-+$(’#chorusMix’).value;cw.gain.value=+$(’#chorusMix’).value;
+const dL=ctx.createDelay(.05),dR=ctx.createDelay(.05);
+dL.delayTime.value=.018;dR.delayTime.value=.024;
+const lfo=ctx.createOscillator();lfo.type=‘triangle’;lfo.frequency.value=+$(’#chorusRate’).value;
+const lgL=ctx.createGain(),lgR=ctx.createGain();
+lgL.gain.value=+$(’#chorusDepth’).value;lgR.gain.value=-+$(’#chorusDepth’).value*.9;
+lfo.connect(lgL).connect(dL.delayTime);lfo.connect(lgR).connect(dR.delayTime);lfo.start();
+const merger=ctx.createChannelMerger(2),wi=ctx.createGain();
+wi.connect(dL);wi.connect(dR);dL.connect(merger,0,0);dR.connect(merger,0,1);
+const out=ctx.createGain();
+ci.connect(hpf);hpf.connect(cd).connect(out);hpf.connect(wi);merger.connect(cw).connect(out);
+out.connect(master).connect(ctx.destination);
+state.master=master;state.dryBus=ci;state.chorusWet=cw;state.chorusDry=cd;
+state.globalHPF=hpf;state.chorusLFO=lfo;state.chorusDepthGains=[lgL,lgR];
+state.audioReady=true;makeNoise();
+$(’#audioDot’).classList.add(‘on’);$(’#audioState’).textContent=‘ON’;
 }
 function makeNoise(){
-  const len=state.ctx.sampleRate*2,buf=state.ctx.createBuffer(1,len,state.ctx.sampleRate);
-  const d=buf.getChannelData(0);let last=0;
-  for(let i=0;i<len;i++){const w=Math.random()*2-1;last=last*.86+w*.14;d[i]=last*.75;}
-  state.noiseBuffer=buf;
+const len=state.ctx.sampleRate*2,buf=state.ctx.createBuffer(1,len,state.ctx.sampleRate);
+const d=buf.getChannelData(0);let last=0;
+for(let i=0;i<len;i++){const w=Math.random()*2-1;last=last*.86+w*.14;d[i]=last*.75;}
+state.noiseBuffer=buf;
 }
 function P(){
-  return{saw:+$('#saw').value,pulse:+$('#pulse').value,sub:+$('#sub').value,noise:+$('#noise').value,
-    pw:+$('#pw').value,detune:+$('#detune').value,cutoff:+$('#cutoff').value,res:+$('#res').value,
-    envAmt:+$('#envAmt').value,attack:+$('#attack').value,decay:+$('#decay').value,
-    sustain:+$('#sustain').value,release:+$('#release').value,width:+$('#width').value,
-    lfoRate:+$('#lfoRate').value,lfoToFilter:+$('#lfoToFilter').value,lfoToPWM:+$('#lfoToPWM').value,
-    master:+$('#master').value,hpf:+$('#hpf').value,chorusMix:+$('#chorusMix').value,
-    chorusRate:+$('#chorusRate').value,chorusDepth:+$('#chorusDepth').value};
+return{saw:+$(’#saw’).value,pulse:+$(’#pulse’).value,sub:+$(’#sub’).value,noise:+$(’#noise’).value,
+pw:+$(’#pw’).value,detune:+$(’#detune’).value,cutoff:+$(’#cutoff’).value,res:+$(’#res’).value,
+envAmt:+$(’#envAmt’).value,attack:+$(’#attack’).value,decay:+$(’#decay’).value,
+sustain:+$(’#sustain’).value,release:+$(’#release’).value,width:+$(’#width’).value,
+lfoRate:+$(’#lfoRate’).value,lfoToFilter:+$(’#lfoToFilter’).value,lfoToPWM:+$(’#lfoToPWM’).value,
+master:+$(’#master’).value,hpf:+$(’#hpf’).value,chorusMix:+$(’#chorusMix’).value,
+chorusRate:+$(’#chorusRate’).value,chorusDepth:+$(’#chorusDepth’).value};
 }
 function updateDSP(){
-  if(!state.audioReady)return;
-  const p=P(),t=state.ctx.currentTime;
-  state.master.gain.setTargetAtTime(p.master,t,.01);
-  state.globalHPF.frequency.setTargetAtTime(p.hpf,t,.02);
-  state.chorusDry.gain.setTargetAtTime(1-p.chorusMix,t,.02);
-  state.chorusWet.gain.setTargetAtTime(p.chorusMix,t,.02);
-  state.chorusLFO.frequency.setTargetAtTime(p.chorusRate,t,.05);
-  state.chorusDepthGains[0].gain.setTargetAtTime(p.chorusDepth,t,.05);
-  state.chorusDepthGains[1].gain.setTargetAtTime(-p.chorusDepth*.9,t,.05);
+if(!state.audioReady)return;
+const p=P(),t=state.ctx.currentTime;
+state.master.gain.setTargetAtTime(p.master,t,.01);
+state.globalHPF.frequency.setTargetAtTime(p.hpf,t,.02);
+state.chorusDry.gain.setTargetAtTime(1-p.chorusMix,t,.02);
+state.chorusWet.gain.setTargetAtTime(p.chorusMix,t,.02);
+state.chorusLFO.frequency.setTargetAtTime(p.chorusRate,t,.05);
+state.chorusDepthGains[0].gain.setTargetAtTime(p.chorusDepth,t,.05);
+state.chorusDepthGains[1].gain.setTargetAtTime(-p.chorusDepth*.9,t,.05);
 }
 function voiceForNote(midi,when,vel=.9){
-  const ctx=state.ctx,p=P(),rf=midiToFreq(midi);
-  const cutoff=clamp(p.cutoff*lerp(.72,1.28,state.xyX)*lerp(.95,.62,state.xyY),80,12000);
-  const pan=ctx.createStereoPanner();pan.pan.value=(Math.random()*2-1)*p.width*.7;
-  const gain=ctx.createGain();gain.gain.value=0;
-  const flt=ctx.createBiquadFilter();flt.type='lowpass';flt.frequency.value=cutoff;flt.Q.value=p.res;
-  const lfo=ctx.createOscillator();lfo.type='triangle';lfo.frequency.value=p.lfoRate;
-  const ltf=ctx.createGain();ltf.gain.value=cutoff*.35*p.lfoToFilter;
-  lfo.connect(ltf).connect(flt.frequency);lfo.start(when);
-  const mix=ctx.createGain();
-  const saw=ctx.createOscillator();saw.type='sawtooth';saw.frequency.value=rf;saw.detune.value=(Math.random()*2-1)*p.detune;
-  const pls=ctx.createOscillator();pls.type='square';pls.frequency.value=rf;pls.detune.value=(Math.random()*2-1)*p.detune*.6;
-  const sub=ctx.createOscillator();sub.type='square';sub.frequency.value=rf/2;
-  const nse=ctx.createBufferSource();nse.buffer=state.noiseBuffer;nse.loop=true;
-  const sg=ctx.createGain(),pg=ctx.createGain(),sbg=ctx.createGain(),ng=ctx.createGain();
-  sg.gain.value=p.saw*.22;pg.gain.value=p.pulse*.15;sbg.gain.value=p.sub*.16;ng.gain.value=p.noise*.04;
-  saw.connect(sg).connect(mix);pls.connect(pg).connect(mix);sub.connect(sbg).connect(mix);nse.connect(ng).connect(mix);
-  mix.connect(flt).connect(gain).connect(pan).connect(state.dryBus);
-  const a=p.attack,d=p.decay,s=p.sustain*vel;
-  gain.gain.cancelScheduledValues(when);gain.gain.setValueAtTime(.0001,when);
-  gain.gain.linearRampToValueAtTime(vel,when+a);
-  gain.gain.exponentialRampToValueAtTime(Math.max(.0001,s),when+a+d);
-  const ed=1+p.envAmt*(.7+(1-state.xyY)*.55);
-  flt.frequency.cancelScheduledValues(when);flt.frequency.setValueAtTime(Math.max(80,cutoff*.52),when);
-  flt.frequency.exponentialRampToValueAtTime(Math.max(100,cutoff*ed),when+a+.03);
-  flt.frequency.exponentialRampToValueAtTime(Math.max(80,cutoff*.78),when+a+d+.03);
-  saw.start(when);pls.start(when);sub.start(when);nse.start(when);
-  return{gain,flt,lfo,osc:[saw,pls,sub,nse],released:false,release(){
-    if(this.released)return;this.released=true;
-    const now=state.ctx.currentTime,rel=P().release;
-    this.gain.gain.cancelScheduledValues(now);
-    this.gain.gain.setTargetAtTime(Math.max(.0001,this.gain.gain.value),now,.01);
-    this.gain.gain.exponentialRampToValueAtTime(.0001,now+rel);
-    this.flt.frequency.cancelScheduledValues(now);
-    this.flt.frequency.setTargetAtTime(Math.max(70,P().cutoff*.55),now,rel*.2+.01);
-    this.osc.forEach(o=>{try{o.stop(now+rel+.06);}catch(e){}});
-    try{this.lfo.stop(now+rel+.08);}catch(e){}
-  }};
+const ctx=state.ctx,p=P(),rf=midiToFreq(midi);
+const cutoff=clamp(p.cutoff*lerp(.72,1.28,state.xyX)*lerp(.95,.62,state.xyY),80,12000);
+const pan=ctx.createStereoPanner();pan.pan.value=(Math.random()*2-1)*p.width*.7;
+const gain=ctx.createGain();gain.gain.value=0;
+const flt=ctx.createBiquadFilter();flt.type=‘lowpass’;flt.frequency.value=cutoff;flt.Q.value=p.res;
+const lfo=ctx.createOscillator();lfo.type=‘triangle’;lfo.frequency.value=p.lfoRate;
+const ltf=ctx.createGain();ltf.gain.value=cutoff*.35*p.lfoToFilter;
+lfo.connect(ltf).connect(flt.frequency);lfo.start(when);
+const mix=ctx.createGain();
+const saw=ctx.createOscillator();saw.type=‘sawtooth’;saw.frequency.value=rf;saw.detune.value=(Math.random()*2-1)*p.detune;
+const pls=ctx.createOscillator();pls.type=‘square’;pls.frequency.value=rf;pls.detune.value=(Math.random()*2-1)*p.detune*.6;
+const sub=ctx.createOscillator();sub.type=‘square’;sub.frequency.value=rf/2;
+const nse=ctx.createBufferSource();nse.buffer=state.noiseBuffer;nse.loop=true;
+const sg=ctx.createGain(),pg=ctx.createGain(),sbg=ctx.createGain(),ng=ctx.createGain();
+sg.gain.value=p.saw*.22;pg.gain.value=p.pulse*.15;sbg.gain.value=p.sub*.16;ng.gain.value=p.noise*.04;
+saw.connect(sg).connect(mix);pls.connect(pg).connect(mix);sub.connect(sbg).connect(mix);nse.connect(ng).connect(mix);
+mix.connect(flt).connect(gain).connect(pan).connect(state.dryBus);
+const a=p.attack,d=p.decay,s=p.sustain*vel;
+gain.gain.cancelScheduledValues(when);gain.gain.setValueAtTime(.0001,when);
+gain.gain.linearRampToValueAtTime(vel,when+a);
+gain.gain.exponentialRampToValueAtTime(Math.max(.0001,s),when+a+d);
+const ed=1+p.envAmt*(.7+(1-state.xyY)*.55);
+flt.frequency.cancelScheduledValues(when);flt.frequency.setValueAtTime(Math.max(80,cutoff*.52),when);
+flt.frequency.exponentialRampToValueAtTime(Math.max(100,cutoff*ed),when+a+.03);
+flt.frequency.exponentialRampToValueAtTime(Math.max(80,cutoff*.78),when+a+d+.03);
+saw.start(when);pls.start(when);sub.start(when);nse.start(when);
+return{midi,gain,flt,lfo,osc:[saw,pls,sub,nse],released:false,
+// Smoothly retune all oscillators to a new midi note over `glideS` seconds.
+// Used by the live XY bend so we don’t have to retrigger envelopes.
+glideTo(newMidi, glideS){
+this.midi = newMidi;
+const newF = midiToFreq(newMidi);
+const now = state.ctx.currentTime;
+const tau = Math.max(0.005, glideS / 3); // setTargetAtTime time-constant ≈ 1/3 of total
+// saw + pulse track the root
+this.osc[0].frequency.setTargetAtTime(newF, now, tau);
+this.osc[1].frequency.setTargetAtTime(newF, now, tau);
+// sub is one octave below
+this.osc[2].frequency.setTargetAtTime(newF/2, now, tau);
+// noise has no pitch — leave alone
+},
+// Smoothly fade the voice out (without scheduling the full release tail).
+// Used when a glide drops a note that has no equivalent in the new chord.
+fadeOut(fadeS){
+if(this.released)return; this.released=true;
+const now=state.ctx.currentTime;
+const t=Math.max(0.02,fadeS);
+this.gain.gain.cancelScheduledValues(now);
+this.gain.gain.setTargetAtTime(0.0001, now, t/3);
+this.osc.forEach(o=>{try{o.stop(now+t+0.05);}catch(e){}});
+try{this.lfo.stop(now+t+0.05);}catch(e){}
+},
+release(){
+if(this.released)return;this.released=true;
+const now=state.ctx.currentTime,rel=P().release;
+this.gain.gain.cancelScheduledValues(now);
+this.gain.gain.setTargetAtTime(Math.max(.0001,this.gain.gain.value),now,.01);
+this.gain.gain.exponentialRampToValueAtTime(.0001,now+rel);
+this.flt.frequency.cancelScheduledValues(now);
+this.flt.frequency.setTargetAtTime(Math.max(70,P().cutoff*.55),now,rel*.2+.01);
+this.osc.forEach(o=>{try{o.stop(now+rel+.06);}catch(e){}});
+try{this.lfo.stop(now+rel+.08);}catch(e){}
+}};
 }
 function computeChord(deg){
-  const info=degreeInfo(deg),vp=getVP(info.baseQ);
-  const root=12*(+$('#octaveSelect').value+1)+info.rootSemi;
-  let notes=vp.intervals.map(iv=>root+iv);
-  if(vp.density>.5&&Math.random()>.45)notes.push(root-12);
-  return{notes:notes.sort((a,b)=>a-b),info,vp};
+const info=degreeInfo(deg),vp=getVP(info.baseQ);
+const root=12*(+$(’#octaveSelect’).value+1)+info.rootSemi;
+let notes=vp.intervals.map(iv=>root+iv);
+if(vp.density>.5&&Math.random()>.45)notes.push(root-12);
+return{notes:notes.sort((a,b)=>a-b),info,vp};
 }
 function triggerDeg(deg){
-  if(!state.audioReady)return;
-  releaseCurrent();
-  const{notes}=computeChord(deg);state.latchedChord={deg,notes};
-  const t0=state.ctx.currentTime+.005;
-  const strumS=(10+(1-state.xyY)*45+state.xyX*20)/1000;
-  notes.forEach((m,i)=>{
-    const v=voiceForNote(m,t0+i*strumS,clamp(.85-i*.05,.45,1));
-    state.activeNotes.set(`${m}_${i}_${performance.now()}`,v);
-  });
-  updateReadouts();
+if(!state.audioReady)return;
+releaseCurrent();
+const{notes}=computeChord(deg);state.latchedChord={deg,notes};
+const t0=state.ctx.currentTime+.005;
+const strumS=(10+(1-state.xyY)*45+state.xyX*20)/1000;
+notes.forEach((m,i)=>{
+const v=voiceForNote(m,t0+i*strumS,clamp(.85-i*.05,.45,1));
+state.activeNotes.set(`${m}_${i}_${performance.now()}`,v);
+});
+updateReadouts();
 }
 function triggerDegSeq(deg){
-  if(!state.audioReady)return;
-  state.activeNotes.forEach(v=>v.release());state.activeNotes.clear();
-  const{notes}=computeChord(deg);
-  state.currentDegree=deg;updatePadClasses();updatePadLabels();updateReadouts();
-  const t0=state.ctx.currentTime+.005;
-  const strumS=(10+(1-state.xyY)*45+state.xyX*20)/1000;
-  const gateRatio=+$('#gateSelect').value;
-  const gateDuration=stepMs()*gateRatio;
-  const stepVoices=[];
-  notes.forEach((m,i)=>{
-    const v=voiceForNote(m,t0+i*strumS,clamp(.85-i*.05,.45,1));
-    state.activeNotes.set(`${m}_${i}_seq_${performance.now()}`,v);
-    stepVoices.push(v);
-  });
-  if(gateRatio<1.5){
-    const releaseDelay=Math.max(50,gateDuration-30);
-    setTimeout(()=>{stepVoices.forEach(v=>v.release());},releaseDelay);
-  }
+if(!state.audioReady)return;
+state.activeNotes.forEach(v=>v.release());state.activeNotes.clear();
+const{notes}=computeChord(deg);
+state.currentDegree=deg;updatePadClasses();updatePadLabels();updateReadouts();
+const t0=state.ctx.currentTime+.005;
+const strumS=(10+(1-state.xyY)*45+state.xyX*20)/1000;
+const gateRatio=+$(’#gateSelect’).value;
+const gateDuration=stepMs()*gateRatio;
+const stepVoices=[];
+notes.forEach((m,i)=>{
+const v=voiceForNote(m,t0+i*strumS,clamp(.85-i*.05,.45,1));
+state.activeNotes.set(`${m}_${i}_seq_${performance.now()}`,v);
+stepVoices.push(v);
+});
+if(gateRatio<1.5){
+const releaseDelay=Math.max(50,gateDuration-30);
+setTimeout(()=>{stepVoices.forEach(v=>v.release());},releaseDelay);
+}
 }
 function releaseCurrent(){state.activeNotes.forEach(v=>v.release());state.activeNotes.clear();}
 function nextSeqPos(){
-  const dir=$('#dirSelect').value,len=state.seqLen;
-  if(dir==='fwd')return(state.seqPos+1)%len;
-  if(dir==='rev')return(state.seqPos-1+len)%len;
-  if(dir==='pingpong'){
-    let next=state.seqPos+state.seqDir;
-    if(next>=len){next=len-2;state.seqDir=-1;}
-    else if(next<0){next=1;state.seqDir=1;}
-    return Math.max(0,Math.min(len-1,next));
-  }
-  return Math.floor(Math.random()*len);
+const dir=$(’#dirSelect’).value,len=state.seqLen;
+if(dir===‘fwd’)return(state.seqPos+1)%len;
+if(dir===‘rev’)return(state.seqPos-1+len)%len;
+if(dir===‘pingpong’){
+let next=state.seqPos+state.seqDir;
+if(next>=len){next=len-2;state.seqDir=-1;}
+else if(next<0){next=1;state.seqDir=1;}
+return Math.max(0,Math.min(len-1,next));
+}
+return Math.floor(Math.random()*len);
 }
 function tickSeq(){
-  if(!state.seqRunning||!state.audioReady)return;
-  const oldPos=state.seqPos;
-  state.seqPos=nextSeqPos();
-  updateSeqPlayhead(oldPos,state.seqPos);
-  const deg=state.seqSteps[state.seqPos];
-  if(deg>0)triggerDegSeq(deg);
-  const ms=stepMs(),swing=+$('#swingSelect').value;
-  state.seqSwingToggle=!state.seqSwingToggle;
-  const delay=state.seqSwingToggle?ms*(1+swing):ms*(1-swing);
-  state.seqTimer=setTimeout(tickSeq,delay);
+if(!state.seqRunning||!state.audioReady)return;
+const oldPos=state.seqPos;
+state.seqPos=nextSeqPos();
+updateSeqPlayhead(oldPos,state.seqPos);
+const deg=state.seqSteps[state.seqPos];
+if(deg>0)triggerDegSeq(deg);
+const ms=stepMs(),swing=+$(’#swingSelect’).value;
+state.seqSwingToggle=!state.seqSwingToggle;
+const delay=state.seqSwingToggle?ms*(1+swing):ms*(1-swing);
+state.seqTimer=setTimeout(tickSeq,delay);
 }
 function startSeq(){stopSeq();state.seqPos=-1;state.seqDir=1;state.seqSwingToggle=false;state.seqTimer=setTimeout(tickSeq,0);}
 function stopSeq(){
-  if(state.seqTimer){clearTimeout(state.seqTimer);state.seqTimer=null;}
-  const oldPos=state.seqPos;state.seqPos=-1;
-  updateSeqPlayhead(oldPos,-1);releaseCurrent();
+if(state.seqTimer){clearTimeout(state.seqTimer);state.seqTimer=null;}
+const oldPos=state.seqPos;state.seqPos=-1;
+updateSeqPlayhead(oldPos,-1);releaseCurrent();
 }
 function arpOrder(notes){
-  const dir=$('#arpDirSelect').value,s=notes.slice().sort((a,b)=>a-b);
-  if(dir==='up')return s;if(dir==='down')return s.slice().reverse();
-  if(dir==='updown')return s.concat(s.slice(1,-1).reverse());
-  return s.slice().sort(()=>Math.random()-.5);
+const dir=$(’#arpDirSelect’).value,s=notes.slice().sort((a,b)=>a-b);
+if(dir===‘up’)return s;if(dir===‘down’)return s.slice().reverse();
+if(dir===‘updown’)return s.concat(s.slice(1,-1).reverse());
+return s.slice().sort(()=>Math.random()-.5);
 }
 function tickArp(){
-  if(!state.arp||!state.audioReady||!state.latchedChord)return;
-  const order=arpOrder(state.latchedChord.notes);
-  const note=order[state.arpPhase%order.length];state.arpPhase++;
-  const v=voiceForNote(note,state.ctx.currentTime+.005,.85);
-  const ms=stepMs();setTimeout(()=>v.release(),Math.max(80,ms*.7));
-  state.arpTimer=setTimeout(tickArp,ms);
+if(!state.arp||!state.audioReady||!state.latchedChord)return;
+const order=arpOrder(state.latchedChord.notes);
+const note=order[state.arpPhase%order.length];state.arpPhase++;
+const v=voiceForNote(note,state.ctx.currentTime+.005,.85);
+const ms=stepMs();setTimeout(()=>v.release(),Math.max(80,ms*.7));
+state.arpTimer=setTimeout(tickArp,ms);
 }
 function startArp(){stopArp();state.arpPhase=0;state.arpTimer=setTimeout(tickArp,0);}
 function stopArp(){if(state.arpTimer){clearTimeout(state.arpTimer);state.arpTimer=null;}}
+
+// Minimum delay between two voicing-zone retriggers.
+// Prevents crackle if the finger oscillates right on a threshold border.
+const RETRIGGER_THROTTLE_MS = 90;
+
+// Smoothly morph the currently-sounding chord to a new degree’s voicing.
+// Strategy:
+//  - Pair up old and new notes by ascending order
+//  - For each pair: glide the old voice’s pitch toward the new midi value
+//  - If new chord has MORE notes: spawn extra voices with a fade-in
+//  - If new chord has FEWER notes: fade out the surplus voices
+function glideToChord(deg, glideS){
+if(!state.audioReady)return;
+const{notes:newNotes}=computeChord(deg);
+state.latchedChord={deg, notes:newNotes};
+
+// Snapshot currently-active voices in the order they were triggered (insertion order)
+const oldVoices = Array.from(state.activeNotes.entries())
+.filter(([_,v])=>!v.released);
+
+// If nothing is ringing, fall back to a normal trigger
+if(oldVoices.length===0){
+triggerDeg(deg);
+return;
+}
+
+// Sort old voices by current midi (ascending) to match against sorted newNotes
+oldVoices.sort((a,b)=>a[1].midi - b[1].midi);
+const sortedNew = newNotes.slice().sort((a,b)=>a-b);
+
+const pairCount = Math.min(oldVoices.length, sortedNew.length);
+
+// 1. Glide existing voices toward new pitches (1:1 pairing)
+for(let i=0; i<pairCount; i++){
+oldVoices[i][1].glideTo(sortedNew[i], glideS);
+}
+
+// 2. If new chord is bigger: spawn extra voices, fade them in over glideS
+if(sortedNew.length > oldVoices.length){
+const t0 = state.ctx.currentTime + 0.005;
+for(let i=oldVoices.length; i<sortedNew.length; i++){
+const v = voiceForNote(sortedNew[i], t0, clamp(.85 - i*.05, .45, 1));
+// voiceForNote already starts the amp envelope at attack speed.
+// For consistency with glide tempo, we don’t need extra ramp.
+state.activeNotes.set(`glide_in_${sortedNew[i]}_${performance.now()}`, v);
+}
+}
+
+// 3. If new chord is smaller: fade out the surplus voices
+if(oldVoices.length > sortedNew.length){
+for(let i=sortedNew.length; i<oldVoices.length; i++){
+const [key, v] = oldVoices[i];
+v.fadeOut(glideS);
+state.activeNotes.delete(key);
+}
+}
+
+updateReadouts();
+}
+
 function setXY(cx,cy){
-  const r=$('#xyPad').getBoundingClientRect();
-  state.xyX=clamp((cx-r.left)/r.width,0,1);state.xyY=clamp((cy-r.top)/r.height,0,1);
-  $('#xyDot').style.left=state.xyX*100+'%';$('#xyDot').style.top=state.xyY*100+'%';
-  updateReadouts();renderPads();
+const r=$(’#xyPad’).getBoundingClientRect();
+state.xyX=clamp((cx-r.left)/r.width,0,1);
+state.xyY=clamp((cy-r.top)/r.height,0,1);
+$(’#xyDot’).style.left=state.xyX*100+’%’;
+$(’#xyDot’).style.top=state.xyY*100+’%’;
+updateReadouts();renderPads();
+
+// ── live retrigger / glide logic ──────────────────────
+if(state.heldDegree>0 && state.audioReady){
+const zone = voicingZone();
+if(zone !== state.lastVoicingZone){
+const now = performance.now();
+if(now - state.lastRetriggerTime >= RETRIGGER_THROTTLE_MS){
+state.lastVoicingZone = zone;
+state.lastRetriggerTime = now;
+const glideS = +$(’#glideSelect’).value;
+if(glideS > 0){
+// Smooth pitch bend between voicings — keeps envelopes alive
+glideToChord(state.heldDegree, glideS);
+} else {
+// Hard retrigger (legacy behaviour)
+triggerDeg(state.heldDegree);
+}
+}
+}
+}
 }
 function attachXY(){
-  const pad=$('#xyPad');let drag=false;
-  pad.addEventListener('pointerdown',e=>{drag=true;pad.setPointerCapture(e.pointerId);setXY(e.clientX,e.clientY);});
-  pad.addEventListener('pointermove',e=>{if(drag)setXY(e.clientX,e.clientY);});
-  pad.addEventListener('pointerup',()=>drag=false);
-  pad.addEventListener('pointercancel',()=>drag=false);
+const pad=$(’#xyPad’);let drag=false;
+pad.addEventListener(‘pointerdown’,e=>{drag=true;pad.setPointerCapture(e.pointerId);setXY(e.clientX,e.clientY);});
+pad.addEventListener(‘pointermove’,e=>{if(drag)setXY(e.clientX,e.clientY);});
+pad.addEventListener(‘pointerup’,()=>drag=false);
+pad.addEventListener(‘pointercancel’,()=>drag=false);
 }
 function applyPreset(name){
-  const map={
-    neo:{cutoff:1900,res:2.2,attack:.02,decay:.45,sustain:.72,release:1.65,chorusMix:.45,chorusRate:.32,chorusDepth:.006,saw:.82,pulse:.30,sub:.52,noise:.05,pw:.48,detune:4.5,width:.55,lfoRate:.22,lfoToFilter:.08,lfoToPWM:.18,xyX:.66,xyY:.38},
-    house:{cutoff:2400,res:1.8,attack:.01,decay:.28,sustain:.65,release:.90,chorusMix:.28,chorusRate:.42,chorusDepth:.004,saw:.88,pulse:.22,sub:.60,noise:.01,pw:.50,detune:2.5,width:.35,lfoRate:.16,lfoToFilter:.04,lfoToPWM:.08,xyX:.58,xyY:.50},
-    dream:{cutoff:1500,res:3.4,attack:.12,decay:1.2,sustain:.76,release:2.8,chorusMix:.62,chorusRate:.18,chorusDepth:.009,saw:.76,pulse:.42,sub:.34,noise:.06,pw:.42,detune:6.2,width:.78,lfoRate:.11,lfoToFilter:.11,lfoToPWM:.22,xyX:.72,xyY:.26},
-    dark:{cutoff:1100,res:4.8,attack:.03,decay:.62,sustain:.58,release:1.9,chorusMix:.36,chorusRate:.24,chorusDepth:.005,saw:.72,pulse:.34,sub:.66,noise:.03,pw:.38,detune:3.8,width:.42,lfoRate:.17,lfoToFilter:.14,lfoToPWM:.10,xyX:.34,xyY:.68}
-  };
-  const p=map[name];
-  Object.entries(p).forEach(([k,v])=>{if(k==='xyX'||k==='xyY')return;const el=document.getElementById(k);if(el)el.value=v;});
-  state.xyX=p.xyX;state.xyY=p.xyY;
-  $('#xyDot').style.left=p.xyX*100+'%';$('#xyDot').style.top=p.xyY*100+'%';
-  updateReadouts();renderPads();updateDSP();
+const map={
+neo:{cutoff:1900,res:2.2,attack:.02,decay:.45,sustain:.72,release:1.65,chorusMix:.45,chorusRate:.32,chorusDepth:.006,saw:.82,pulse:.30,sub:.52,noise:.05,pw:.48,detune:4.5,width:.55,lfoRate:.22,lfoToFilter:.08,lfoToPWM:.18,xyX:.66,xyY:.38},
+house:{cutoff:2400,res:1.8,attack:.01,decay:.28,sustain:.65,release:.90,chorusMix:.28,chorusRate:.42,chorusDepth:.004,saw:.88,pulse:.22,sub:.60,noise:.01,pw:.50,detune:2.5,width:.35,lfoRate:.16,lfoToFilter:.04,lfoToPWM:.08,xyX:.58,xyY:.50},
+dream:{cutoff:1500,res:3.4,attack:.12,decay:1.2,sustain:.76,release:2.8,chorusMix:.62,chorusRate:.18,chorusDepth:.009,saw:.76,pulse:.42,sub:.34,noise:.06,pw:.42,detune:6.2,width:.78,lfoRate:.11,lfoToFilter:.11,lfoToPWM:.22,xyX:.72,xyY:.26},
+dark:{cutoff:1100,res:4.8,attack:.03,decay:.62,sustain:.58,release:1.9,chorusMix:.36,chorusRate:.24,chorusDepth:.005,saw:.72,pulse:.34,sub:.66,noise:.03,pw:.38,detune:3.8,width:.42,lfoRate:.17,lfoToFilter:.14,lfoToPWM:.10,xyX:.34,xyY:.68}
+};
+const p=map[name];
+Object.entries(p).forEach(([k,v])=>{if(k===‘xyX’||k===‘xyY’)return;const el=document.getElementById(k);if(el)el.value=v;});
+state.xyX=p.xyX;state.xyY=p.xyY;
+$(’#xyDot’).style.left=p.xyX*100+’%’;$(’#xyDot’).style.top=p.xyY*100+’%’;
+updateReadouts();renderPads();updateDSP();
 }
 function attachUI(){
-  $('#startBtn').addEventListener('click',async()=>{await initAudio();updateDSP();});
-  $('#holdBtn').addEventListener('click',()=>{
-    state.hold=!state.hold;$('#holdBtn').classList.toggle('on',state.hold);
-    if(!state.hold&&!state.arp&&!state.seqRunning)releaseCurrent();
-  });
-  $('#arpBtn').addEventListener('click',()=>{
-    state.arp=!state.arp;$('#arpBtn').classList.toggle('on',state.arp);
-    if(state.arp)startArp();else stopArp();
-  });
-  $('#seqPlayBtn').addEventListener('click',async()=>{
-    if(!state.audioReady)await initAudio();
-    state.seqRunning=!state.seqRunning;
-    $('#seqPlayBtn').textContent=state.seqRunning?'SEQ ■':'SEQ ▶';
-    $('#seqPlayBtn').classList.toggle('on-green',state.seqRunning);
-    if(state.seqRunning)startSeq();else stopSeq();
-  });
-  $('#panicBtn').addEventListener('click',()=>releaseCurrent());
-  $('#keySelect').addEventListener('change',e=>{state.key=+e.target.value;renderPads();updateReadouts();refreshAllStepCells();});
-  $('#scaleSelect').addEventListener('change',e=>{state.scale=e.target.value;renderPads();updateReadouts();refreshAllStepCells();});
-  $('#octaveSelect').addEventListener('change',()=>updateReadouts());
-  $('#presetSelect').addEventListener('change',e=>applyPreset(e.target.value));
-  $('#seqLenSelect').addEventListener('change',onSeqLenChange);
-  $('#tempo').addEventListener('input',()=>{
-    $('#bpmDisplay').textContent=$('#tempo').value;
-    if(state.seqRunning){stopSeq();startSeq();}
-    if(state.arp){stopArp();startArp();}
-  });
-  $('#rateSelect').addEventListener('change',()=>{if(state.seqRunning){stopSeq();startSeq();}if(state.arp){stopArp();startArp();}});
-  $('#seqClearBtn').addEventListener('click',()=>{state.seqSteps.fill(0);refreshAllStepCells();});
-  $('#seqFillBtn').addEventListener('click',()=>{
-    const pats=[
-      [1,0,5,0,4,0,6,0,1,0,5,0,4,6,0,0],
-      [1,0,0,4,0,0,5,0,6,0,0,4,0,5,0,0],
-      [1,0,2,0,4,0,5,0,1,0,2,0,4,5,0,0],
-      [1,0,6,0,4,0,5,0,1,0,6,0,5,4,0,0]
-    ];
-    const pat=choice(pats);
-    state.seqSteps=Array.from({length:state.seqLen},(_,i)=>pat[i%pat.length]);
-    refreshAllStepCells();
-  });
-  $('#seqShiftLBtn').addEventListener('click',()=>{const f=state.seqSteps.shift();state.seqSteps.push(f);refreshAllStepCells();});
-  $('#seqShiftRBtn').addEventListener('click',()=>{const l=state.seqSteps.pop();state.seqSteps.unshift(l);refreshAllStepCells();});
-  const noDSP=['keySelect','scaleSelect','octaveSelect','presetSelect','seqLenSelect','rateSelect','dirSelect','arpDirSelect','gateSelect','swingSelect'];
-  document.querySelectorAll('input[type="range"],select').forEach(el=>{if(!noDSP.includes(el.id))el.addEventListener('input',updateDSP);});
-  window.addEventListener('keydown',async e=>{
-    const map={'1':1,'2':2,'3':3,'4':4,'5':5,'6':6,'7':7};
-    if(e.code==='Space'){e.preventDefault();if(!state.audioReady)await initAudio();state.hold=!state.hold;$('#holdBtn').classList.toggle('on',state.hold);return;}
-    if(map[e.key]){if(!state.audioReady)await initAudio();state.currentDegree=map[e.key];renderPads();updateReadouts();triggerDeg(map[e.key]);}
-  });
-  window.addEventListener('keyup',e=>{if('1234567'.includes(e.key)&&!state.hold&&!state.arp)releaseCurrent();});
+$(’#startBtn’).addEventListener(‘click’,async()=>{await initAudio();updateDSP();});
+$(’#holdBtn’).addEventListener(‘click’,()=>{
+state.hold=!state.hold;$(’#holdBtn’).classList.toggle(‘on’,state.hold);
+if(!state.hold&&!state.arp&&!state.seqRunning)releaseCurrent();
+});
+$(’#arpBtn’).addEventListener(‘click’,()=>{
+state.arp=!state.arp;$(’#arpBtn’).classList.toggle(‘on’,state.arp);
+if(state.arp)startArp();else stopArp();
+});
+$(’#seqPlayBtn’).addEventListener(‘click’,async()=>{
+if(!state.audioReady)await initAudio();
+state.seqRunning=!state.seqRunning;
+$(’#seqPlayBtn’).textContent=state.seqRunning?‘SEQ ■’:‘SEQ ▶’;
+$(’#seqPlayBtn’).classList.toggle(‘on-green’,state.seqRunning);
+if(state.seqRunning)startSeq();else stopSeq();
+});
+$(’#panicBtn’).addEventListener(‘click’,()=>{state.heldDegree=0;releaseCurrent();});
+$(’#keySelect’).addEventListener(‘change’,e=>{state.key=+e.target.value;renderPads();updateReadouts();refreshAllStepCells();});
+$(’#scaleSelect’).addEventListener(‘change’,e=>{state.scale=e.target.value;renderPads();updateReadouts();refreshAllStepCells();});
+$(’#octaveSelect’).addEventListener(‘change’,()=>updateReadouts());
+$(’#presetSelect’).addEventListener(‘change’,e=>applyPreset(e.target.value));
+$(’#seqLenSelect’).addEventListener(‘change’,onSeqLenChange);
+$(’#tempo’).addEventListener(‘input’,()=>{
+$(’#bpmDisplay’).textContent=$(’#tempo’).value;
+if(state.seqRunning){stopSeq();startSeq();}
+if(state.arp){stopArp();startArp();}
+});
+$(’#rateSelect’).addEventListener(‘change’,()=>{if(state.seqRunning){stopSeq();startSeq();}if(state.arp){stopArp();startArp();}});
+$(’#seqClearBtn’).addEventListener(‘click’,()=>{state.seqSteps.fill(0);refreshAllStepCells();});
+$(’#seqFillBtn’).addEventListener(‘click’,()=>{
+const pats=[
+[1,0,5,0,4,0,6,0,1,0,5,0,4,6,0,0],
+[1,0,0,4,0,0,5,0,6,0,0,4,0,5,0,0],
+[1,0,2,0,4,0,5,0,1,0,2,0,4,5,0,0],
+[1,0,6,0,4,0,5,0,1,0,6,0,5,4,0,0]
+];
+const pat=choice(pats);
+state.seqSteps=Array.from({length:state.seqLen},(_,i)=>pat[i%pat.length]);
+refreshAllStepCells();
+});
+$(’#seqShiftLBtn’).addEventListener(‘click’,()=>{const f=state.seqSteps.shift();state.seqSteps.push(f);refreshAllStepCells();});
+$(’#seqShiftRBtn’).addEventListener(‘click’,()=>{const l=state.seqSteps.pop();state.seqSteps.unshift(l);refreshAllStepCells();});
+const noDSP=[‘keySelect’,‘scaleSelect’,‘octaveSelect’,‘presetSelect’,‘seqLenSelect’,‘rateSelect’,‘dirSelect’,‘arpDirSelect’,‘gateSelect’,‘swingSelect’,‘glideSelect’];
+document.querySelectorAll(‘input[type=“range”],select’).forEach(el=>{if(!noDSP.includes(el.id))el.addEventListener(‘input’,updateDSP);});
+window.addEventListener(‘keydown’,async e=>{
+const map={‘1’:1,‘2’:2,‘3’:3,‘4’:4,‘5’:5,‘6’:6,‘7’:7};
+if(e.code===‘Space’){e.preventDefault();if(!state.audioReady)await initAudio();state.hold=!state.hold;$(’#holdBtn’).classList.toggle(‘on’,state.hold);return;}
+if(map[e.key]){
+if(!state.audioReady)await initAudio();
+state.currentDegree=map[e.key];
+// keyboard: also mark held & snapshot zone
+state.heldDegree=map[e.key];
+state.lastVoicingZone=voicingZone();
+renderPads();updateReadouts();triggerDeg(map[e.key]);
+}
+});
+window.addEventListener(‘keyup’,e=>{
+if(‘1234567’.includes(e.key)){
+state.heldDegree=0;
+if(!state.hold&&!state.arp)releaseCurrent();
+}
+});
 }
 populateSelects();buildStepGrid();attachXY();attachUI();
-applyPreset('neo');renderPads();updateReadouts();
+applyPreset(‘neo’);renderPads();updateReadouts();
 })();
 </script>
+
 </body>
 </html>
-
-J’ai corrigé les caractères typographiques cassés dans le CSS, qui étaient la cause du rendu clair sur Safari.
