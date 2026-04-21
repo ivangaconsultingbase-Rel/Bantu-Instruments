@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
@@ -289,6 +290,7 @@ input[type="range"]::-moz-range-thumb{
           <select id="presetSelect">
             <option value="neo">Neo Soul</option><option value="house">Deep House</option>
             <option value="dream">Dream Pop</option><option value="dark">Dark Dorian</option>
+            <option value="choir">Choir / Vox</option>
           </select>
         </div>
       </div>
@@ -319,6 +321,7 @@ input[type="range"]::-moz-range-thumb{
       <select id="engineSelect">
         <option value="kr106" selected>KR-106 · Analog</option>
         <option value="plaits">Plaits · Virtual Analog</option>
+        <option value="formant">Plaits · Formant / Vox</option>
       </select>
     </div>
     <div class="sec-hd" id="krOscHd">OSCILLATORS · KR-106</div>
@@ -336,6 +339,13 @@ input[type="range"]::-moz-range-thumb{
       <div class="param"><span class="pname">TIMBRE</span><input id="plTimbre" type="range" min="0" max="1" step="0.01" value="0.45"></div>
       <div class="param"><span class="pname">MORPH</span><input id="plMorph" type="range" min="0" max="1" step="0.01" value="0.5"></div>
       <div class="param"><span class="pname">XY → H·T</span><input id="plXyAmt" type="range" min="0" max="1" step="0.01" value="0.55"></div>
+    </div>
+    <div class="sec-hd" id="formantOscHd" style="display:none">OSCILLATORS · FORMANT / VOX</div>
+    <div class="param-list" id="formantOscList" style="display:none">
+      <div class="param"><span class="pname">VOWEL</span><input id="fmVowel" type="range" min="0" max="1" step="0.01" value="0.35"></div>
+      <div class="param"><span class="pname">RESONANCE</span><input id="fmReso" type="range" min="0" max="1" step="0.01" value="0.55"></div>
+      <div class="param"><span class="pname">MORPH</span><input id="fmMorph" type="range" min="0" max="1" step="0.01" value="0.5"></div>
+      <div class="param"><span class="pname">XY → V·R</span><input id="fmXyAmt" type="range" min="0" max="1" step="0.01" value="0.7"></div>
     </div>
     <div class="sec-hd">FILTER</div>
     <div class="param-list">
@@ -473,20 +483,10 @@ input[type="range"]::-moz-range-thumb{
 // ============================================================
 // Plaits-inspired Virtual Analog oscillator (original implementation)
 // ============================================================
-// Emulates the spirit of the Mutable Instruments Plaits "Virtual
-// Analog" model using publicly documented behaviour only.
-//  - Master oscillator: sawtooth at the note's fundamental
-//  - Slave oscillator: square, hard-synced to the master phase
-//    reset. Its independent frequency is set by HARMONICS and
-//    produces sync-lead timbres when detuned above the master.
-//  - Wavefolder: tanh-based folder driven by TIMBRE reshapes the
-//    summed signal into a brighter, buzzier tone with odd harmonics.
-//  - MORPH: crossfades between a sub-octave square and a detuned
-//    second saw, giving a body vs chorus-y character continuum.
-//
-// Anti-aliasing: uses polyBLEP (1-sample correction) on the saw
-// edges to soften the worst of the aliasing without needing full
-// oversampling. Not as clean as real Plaits but usable.
+//  - Master saw + slave square hard-synced (HARMONICS = ratio)
+//  - Wavefolder driven by TIMBRE
+//  - MORPH crossfades sub-octave square <-> detuned saw body
+//  - polyBLEP anti-aliasing on the saw edges
 class PlaitsVAProcessor extends AudioWorkletProcessor {
   static get parameterDescriptors() {
     return [
@@ -498,29 +498,19 @@ class PlaitsVAProcessor extends AudioWorkletProcessor {
   }
   constructor() {
     super();
-    this.phaseMaster = Math.random();   // [0,1)
+    this.phaseMaster = Math.random();
     this.phaseSlave  = Math.random();
     this.phaseSaw2   = Math.random();
     this.phaseSub    = Math.random();
   }
-  // polyBLEP correction for sawtooth wrap-around to reduce aliasing.
-  // phase in [0,1), dt is phase increment per sample.
   polyBlep(phase, dt) {
-    if (phase < dt) {
-      const t = phase / dt;
-      return t + t - t*t - 1;
-    } else if (phase > 1 - dt) {
-      const t = (phase - 1) / dt;
-      return t*t + t + t + 1;
-    }
+    if (phase < dt) { const t = phase / dt; return t + t - t*t - 1; }
+    if (phase > 1 - dt) { const t = (phase - 1) / dt; return t*t + t + t + 1; }
     return 0;
   }
-  // Soft wavefolder — tanh-based, driven by TIMBRE.
-  // 0 = pass-through, 1 = heavily folded.
   fold(x, drive) {
-    const g = 1 + drive * 4;        // 1..5 gain into folder
+    const g = 1 + drive * 4;
     const y = Math.tanh(x * g);
-    // Mix dry/folded according to drive so very low timbre stays clean
     return y * (0.45 + drive * 0.55);
   }
   process(inputs, outputs, params) {
@@ -531,12 +521,9 @@ class PlaitsVAProcessor extends AudioWorkletProcessor {
     const timbre    = params.timbre[0];
     const morph     = params.morph[0];
     const sr = sampleRate;
-    // HARMONICS maps to slave/master ratio between 1.0 and 4.0
     const syncRatio = 1.0 + harmonics * 3.0;
-    // MORPH: 0 -> sub dominates, 1 -> detuned saw2 dominates
     const subGain   = Math.cos(morph * Math.PI * 0.5);
     const saw2Gain  = Math.sin(morph * Math.PI * 0.5);
-    // detuned saw2 sits ~7 cents sharp for a chorused body
     const detuneRatio = Math.pow(2, 7 / 1200);
     for (let i = 0; i < out.length; i++) {
       const f = freqArr.length > 1 ? freqArr[i] : freqArr[0];
@@ -545,43 +532,171 @@ class PlaitsVAProcessor extends AudioWorkletProcessor {
       const dt2 = (f * detuneRatio) / sr;
       const dtSub = (f * 0.5) / sr;
 
-      // --- Master saw with polyBLEP ---
       let saw = (this.phaseMaster * 2 - 1);
       saw -= this.polyBlep(this.phaseMaster, dtM);
       this.phaseMaster += dtM;
       const wrapped = this.phaseMaster >= 1;
       if (wrapped) this.phaseMaster -= 1;
 
-      // --- Slave square, hard-synced on master wrap ---
       if (wrapped) this.phaseSlave = 0;
       this.phaseSlave += dtS;
       if (this.phaseSlave >= 1) this.phaseSlave -= 1;
       const slaveSq = this.phaseSlave < 0.5 ? 1 : -1;
 
-      // --- Detuned saw2 (body layer, MORPH-controlled) ---
       let saw2 = (this.phaseSaw2 * 2 - 1);
       saw2 -= this.polyBlep(this.phaseSaw2, dt2);
       this.phaseSaw2 += dt2;
       if (this.phaseSaw2 >= 1) this.phaseSaw2 -= 1;
 
-      // --- Sub square, one octave below ---
       this.phaseSub += dtSub;
       if (this.phaseSub >= 1) this.phaseSub -= 1;
       const sub = this.phaseSub < 0.5 ? 0.9 : -0.9;
 
-      // Mix: master + slave on one hand, body layer on the other
       const core = saw * 0.55 + slaveSq * 0.35;
       const body = saw2 * saw2Gain * 0.55 + sub * subGain * 0.45;
 
-      // Wavefolder on the combined signal, driven by TIMBRE
-      const folded = this.fold(core + body * 0.9, timbre);
-
-      out[i] = folded * 0.72;
+      out[i] = this.fold(core + body * 0.9, timbre) * 0.72;
     }
     return true;
   }
 }
 registerProcessor('plaits-va', PlaitsVAProcessor);
+</script>
+
+<script id="formantWorklet" type="text/worklet">
+// ============================================================
+// Plaits-inspired FORMANT oscillator (original implementation)
+// ============================================================
+// FOF-ish (Formant-Wave-Function) synthesis. For each fundamental
+// period, we trigger a windowed grain whose carrier sits at the
+// chosen formant frequency. The result is a strong resonance peak
+// at the formant centre that tracks the played note's pitch — the
+// signature "vocal" sound (vowels: AH / EE / OO etc.).
+//
+// Three Plaits-like params:
+//  - VOWEL    -> picks a base formant ratio relative to fundamental
+//                (1.4x = OO/U, 2.5x = AH/A, 4.0x = EE/I, 5.5x = AE)
+//  - RESONANCE-> grain decay shape (low = soft, high = sharp/buzzy)
+//  - MORPH    -> crossfade between the chosen vowel and the next one
+//                up the list, allowing OO->AH->EE-style sweeps.
+//
+// Two formants are mixed (F1 & F2) for a more vowel-like timbre,
+// not just a single resonance peak. Both follow the fundamental.
+class PlaitsFormantProcessor extends AudioWorkletProcessor {
+  static get parameterDescriptors() {
+    return [
+      { name: 'frequency', defaultValue: 220, minValue: 20, maxValue: 8000, automationRate: 'a-rate' },
+      { name: 'vowel',     defaultValue: 0.35,minValue: 0,  maxValue: 1,    automationRate: 'k-rate' },
+      { name: 'resonance', defaultValue: 0.55,minValue: 0,  maxValue: 1,    automationRate: 'k-rate' },
+      { name: 'morph',     defaultValue: 0.5, minValue: 0,  maxValue: 1,    automationRate: 'k-rate' }
+    ];
+  }
+  constructor() {
+    super();
+    this.phaseFund = Math.random();
+    // Two carriers (F1 = formant 1, F2 = formant 2) phase accumulators
+    this.phaseF1 = 0;
+    this.phaseF2 = 0;
+    // Time since last fundamental period start, in samples
+    this.grainAge = 1e6;
+    this.grainPeriod = 1;
+  }
+  // Five rough vowel formant ratios (F1, F2) relative to fundamental.
+  // Real human vowels have absolute Hz formants; tying them to the
+  // fundamental makes the timbre track pitch musically. We fake the
+  // vocal-tract resonance by placing two pure-tone carriers with a
+  // shared exponential window.
+  vowelRatios(t) {
+    // t in [0,1] picks between vowels via interpolation
+    // Order: U(OO) -> O -> A(AH) -> E -> I(EE)
+    const table = [
+      [1.4, 2.4],   // U / OO
+      [1.8, 2.8],   // O
+      [2.5, 3.4],   // A / AH
+      [3.2, 4.6],   // E (open)
+      [4.0, 5.5]    // I / EE
+    ];
+    const idx = t * (table.length - 1);
+    const i0 = Math.floor(idx);
+    const i1 = Math.min(table.length - 1, i0 + 1);
+    const frac = idx - i0;
+    return [
+      table[i0][0] + (table[i1][0] - table[i0][0]) * frac,
+      table[i0][1] + (table[i1][1] - table[i0][1]) * frac
+    ];
+  }
+  process(inputs, outputs, params) {
+    const out = outputs[0][0];
+    if (!out) return true;
+    const freqArr = params.frequency;
+    const vowel = params.vowel[0];
+    const resonance = params.resonance[0];
+    const morph = params.morph[0];
+    const sr = sampleRate;
+
+    // Vowel selection with morph: blend current vowel with next one
+    const vSel = vowel * 0.85 + morph * 0.15;          // morph nudges vowel
+    const [r1, r2]   = this.vowelRatios(vSel);
+    const [r1n, r2n] = this.vowelRatios(Math.min(1, vSel + 0.15));
+    // morph also crossfades between the two adjacent vowels
+    const mw = morph;
+    const ratio1 = r1 * (1 - mw * 0.5) + r1n * mw * 0.5;
+    const ratio2 = r2 * (1 - mw * 0.5) + r2n * mw * 0.5;
+
+    // Grain decay rate: higher resonance = slower decay = sharper formant
+    // Tuned so that resonance=0 -> ~very damped, resonance=1 -> rings ~3 periods
+    const decayBase = 0.0006;                          // sec, very damped
+    const decayMax  = 0.012;                           // sec, ringing
+    const decay = decayBase + (decayMax - decayBase) * resonance;
+    const decayCoeff = Math.exp(-1 / (decay * sr));    // per-sample multiply
+
+    // Grain envelope state lives across blocks via this.grainAge.
+    // We use one running window value and update it each sample.
+    // For simplicity track its current amplitude here:
+    if (this._winAmp === undefined) this._winAmp = 0;
+
+    for (let i = 0; i < out.length; i++) {
+      const f = freqArr.length > 1 ? freqArr[i] : freqArr[0];
+      const dtFund = f / sr;
+      const period = 1 / dtFund;                       // samples per fundamental cycle
+      this.grainPeriod = period;
+
+      // Advance fundamental phase, detect wrap = new grain trigger.
+      this.phaseFund += dtFund;
+      if (this.phaseFund >= 1) {
+        this.phaseFund -= 1;
+        this.grainAge = 0;
+        this._winAmp = 1;                              // reset envelope to full
+        // Re-align carrier phases to the grain start so successive grains
+        // sum coherently (otherwise inter-grain phase scrambles the formant).
+        this.phaseF1 = 0;
+        this.phaseF2 = 0;
+      } else {
+        this._winAmp *= decayCoeff;                    // exponential decay
+        this.grainAge++;
+      }
+
+      // Two carrier sines at the formant frequencies
+      const f1 = f * ratio1;
+      const f2 = f * ratio2;
+      this.phaseF1 += f1 / sr;
+      this.phaseF2 += f2 / sr;
+      if (this.phaseF1 >= 1) this.phaseF1 -= 1;
+      if (this.phaseF2 >= 1) this.phaseF2 -= 1;
+
+      const c1 = Math.sin(this.phaseF1 * 2 * Math.PI);
+      const c2 = Math.sin(this.phaseF2 * 2 * Math.PI);
+
+      // F1 louder than F2 (matches human voice: F1 typically > F2 in loudness)
+      const carrier = c1 * 0.65 + c2 * 0.45;
+
+      // Apply windowing envelope (the FOF "grain")
+      out[i] = carrier * this._winAmp * 0.55;
+    }
+    return true;
+  }
+}
+registerProcessor('plaits-formant', PlaitsFormantProcessor);
 </script>
 
 <script>
@@ -611,7 +726,8 @@ const state={
   ctx:null,master:null,dryBus:null,chorusWet:null,chorusDry:null,
   globalHPF:null,chorusLFO:null,chorusDepthGains:null,
   noiseBuffer:null,audioReady:false,
-  plaitsLoaded:false,      // true once the AudioWorklet module is registered
+  plaitsLoaded:false,
+  formantLoaded:false,
   key:0,scale:'major',octave:3,xyX:.5,xyY:.5,
   hold:false,arp:false,arpPhase:0,latchedChord:null,
   activeNotes:new Map(),currentDegree:1,
@@ -676,29 +792,36 @@ function shortChordName(deg){
   const ext=vp.extension||'';
   return `${info.rootName}${tn}${ext}`.trim().replace('add','').replace(' ','').slice(0,5);
 }
-function driftDepthCents(){
-  const p=P();
-  return lerp(0,8,p.drift);
-}
-function cutoffDriftAmount(baseCutoff){
-  const p=P();
-  return baseCutoff * lerp(0,0.035,p.drift);
-}
+function driftDepthCents(){const p=P();return lerp(0,8,p.drift);}
+function cutoffDriftAmount(baseCutoff){const p=P();return baseCutoff * lerp(0,0.035,p.drift);}
 
-// ── Effective Plaits params, blending slider + XY-pad modulation ──
-// X (brightness) tweaks HARMONICS (more bright = more sync),
-// Y (density, inverted) tweaks TIMBRE (more dense = more fold).
-// The amount of XY influence is set by the XY → H·T slider.
+// Effective Plaits VA params, with optional XY modulation
 function plaitsParams(){
   const amt = +$('#plXyAmt').value;
   const baseH = +$('#plHarmonics').value;
   const baseT = +$('#plTimbre').value;
   const m = +$('#plMorph').value;
-  const xyH = state.xyX;           // 0..1
-  const xyT = 1 - state.xyY;       // 0..1 (density)
+  const xyH = state.xyX, xyT = 1 - state.xyY;
   return {
     harmonics: clamp(lerp(baseH, xyH, amt), 0, 1),
     timbre:    clamp(lerp(baseT, xyT, amt), 0, 1),
+    morph:     clamp(m, 0, 1)
+  };
+}
+
+// Effective Formant params with XY modulation.
+// XY.X (brightness) tweaks VOWEL (sweeps toward EE), XY.Y (density)
+// tweaks RESONANCE (more density = more rings/buzz). MORPH stays
+// independent so you can sit on a stable inter-vowel position.
+function formantParams(){
+  const amt = +$('#fmXyAmt').value;
+  const baseV = +$('#fmVowel').value;
+  const baseR = +$('#fmReso').value;
+  const m = +$('#fmMorph').value;
+  const xyV = state.xyX, xyR = 1 - state.xyY;
+  return {
+    vowel:     clamp(lerp(baseV, xyV, amt), 0, 1),
+    resonance: clamp(lerp(baseR, xyR, amt), 0, 1),
     morph:     clamp(m, 0, 1)
   };
 }
@@ -796,8 +919,7 @@ function onSeqLenChange(){
   if(newLen!==state.seqLen){
     state.seqLen=newLen;
     state.seqSteps=Array.from({length:newLen},(_,i)=>state.seqSteps[i]||0);
-    state.seqPos=-1;
-    state.seqDir=1;
+    state.seqPos=-1; state.seqDir=1;
     buildStepGrid();
   }
 }
@@ -808,34 +930,65 @@ function stepMs(){
 function dynamicCutoff(baseCutoff){
   return clamp(baseCutoff*lerp(.72,1.28,state.xyX)*lerp(.95,.62,state.xyY),80,12000);
 }
-function glideSeconds(){
-  return +$('#glideTime').value;
-}
+function glideSeconds(){return +$('#glideTime').value;}
 
-// Load the Plaits AudioWorklet module from the inline <script> tag.
-// We encode the source as a data: URL because Blob URLs are blocked
-// for AudioWorklet.addModule() when the page is served from file://
-// in some Chromium builds. data: URLs work across all browsers
-// (Safari iOS 14.5+, Chrome, Firefox) and on all origins, while
-// keeping the project single-file. Falls back gracefully to KR-106
-// if loading fails for any reason.
-async function loadPlaitsWorklet(){
-  if (state.plaitsLoaded) return true;
+// Generic loader for an inline-script worklet. AudioWorklet.addModule()
+// has frustratingly different security rules across browsers:
+//  - Chromium file://     → Blob URL blocked, data: URL works
+//  - Safari iOS           → Blob URL works, data: URL blocked by CSP
+//  - Most other contexts  → both work
+// We try Blob first (Safari friendly), data: URL second (Chromium file://
+// friendly), and finally give up gracefully so the engine select reverts
+// to KR-106 with a clear console message.
+async function loadWorklet(scriptId, stateFlag){
+  if (state[stateFlag]) return true;
+  const source = document.getElementById(scriptId).textContent;
+
+  // Strategy 1 — Blob URL with explicit MIME type. blob: inherits the
+  // document origin, so Safari's worklet CSP usually allows it.
   try {
-    const source = document.getElementById('plaitsWorklet').textContent;
-    // encodeURIComponent handles any unicode in the worklet source
-    // (comments with accents, math symbols). data: URL works on
-    // every origin including file://.
+    const blob = new Blob([source], { type: 'application/javascript' });
+    const blobUrl = URL.createObjectURL(blob);
+    try {
+      await state.ctx.audioWorklet.addModule(blobUrl);
+      URL.revokeObjectURL(blobUrl);
+      state[stateFlag] = true;
+      return true;
+    } catch (errBlob) {
+      URL.revokeObjectURL(blobUrl);
+      // fall through to data: URL strategy
+    }
+  } catch (e) { /* Blob constructor unlikely to throw, but be safe */ }
+
+  // Strategy 2 — data: URL. Necessary for Chromium when the page is
+  // opened directly from file:// (some Chromium versions block blob:
+  // URLs for AudioWorklet on file:// origin).
+  try {
     const url = 'data:application/javascript,' + encodeURIComponent(source);
     await state.ctx.audioWorklet.addModule(url);
-    state.plaitsLoaded = true;
+    state[stateFlag] = true;
     return true;
-  } catch (err) {
-    console.warn('Plaits worklet load failed:', err);
-    const eng = $('#engineSelect');
-    if (eng.value === 'plaits') { eng.value = 'kr106'; updateEngineVisibility(); }
+  } catch (errData) {
+    console.warn(scriptId + ' load failed (both Blob and data: URL strategies blocked):', errData);
     return false;
   }
+}
+
+async function loadPlaitsWorklet(){
+  const ok = await loadWorklet('plaitsWorklet', 'plaitsLoaded');
+  if (!ok) {
+    const eng = $('#engineSelect');
+    if (eng.value === 'plaits') { eng.value = 'kr106'; updateEngineVisibility(); }
+  }
+  return ok;
+}
+async function loadFormantWorklet(){
+  const ok = await loadWorklet('formantWorklet', 'formantLoaded');
+  if (!ok) {
+    const eng = $('#engineSelect');
+    if (eng.value === 'formant') { eng.value = 'kr106'; updateEngineVisibility(); }
+  }
+  return ok;
 }
 
 async function initAudio(){
@@ -888,9 +1041,9 @@ async function initAudio(){
   state.audioReady=true;
   makePinkNoise();
 
-  // Preload Plaits worklet in the background so first hit on the
-  // engine switch doesn't incur a visible latency.
+  // Preload both worklets in the background — first switch is instant.
   loadPlaitsWorklet();
+  loadFormantWorklet();
 
   $('#audioDot').classList.add('on');
   $('#audioState').textContent='ON';
@@ -942,9 +1095,6 @@ function updateDSP(){
 }
 
 function voiceForNote(midi,when,vel=.9){
-  // Transient voice, used by sequencer + arpeggiator. Always KR-106
-  // for simplicity and CPU — the Plaits worklet is reserved for
-  // sustained manual chord voices where its richness pays off.
   const ctx=state.ctx,p=P(),rf=midiToFreq(midi);
   const cutoff=dynamicCutoff(p.cutoff);
   const pan=ctx.createStereoPanner();pan.pan.value=(Math.random()*2-1)*p.width*.7;
@@ -988,7 +1138,6 @@ function voiceForNote(midi,when,vel=.9){
   };
 }
 
-// ── KR-106 persistent voice (unchanged behaviour) ─────────────────
 function createKR106Voice(midi,when,vel=.9){
   const ctx=state.ctx,p=P(),rf=midiToFreq(midi);
   const pan=ctx.createStereoPanner();
@@ -1012,17 +1161,11 @@ function createKR106Voice(midi,when,vel=.9){
   const cutoffDriftGain=ctx.createGain();
 
   const sg=ctx.createGain(),pg=ctx.createGain(),sbg=ctx.createGain(),ng=ctx.createGain();
-
   const panBase=(Math.random()*2-1);
 
-  saw.type='sawtooth';
-  pls.type='square';
-  sub.type='square';
-  nse.buffer=state.noiseBuffer;
-  nse.loop=true;
-  lfo.type='triangle';
-  driftOsc.type='sine';
-  cutoffDriftOsc.type='sine';
+  saw.type='sawtooth'; pls.type='square'; sub.type='square';
+  nse.buffer=state.noiseBuffer; nse.loop=true;
+  lfo.type='triangle'; driftOsc.type='sine'; cutoffDriftOsc.type='sine';
 
   saw.frequency.setValueAtTime(rf,when);
   pls.frequency.setValueAtTime(rf,when);
@@ -1053,42 +1196,30 @@ function createKR106Voice(midi,when,vel=.9){
   nse.connect(ng).connect(mix);
   mix.connect(flt).connect(gain).connect(pan).connect(state.dryBus);
 
-  saw.start(when);
-  pls.start(when);
-  sub.start(when);
-  nse.start(when);
-  lfo.start(when);
-  driftOsc.start(when);
-  cutoffDriftOsc.start(when);
+  saw.start(when); pls.start(when); sub.start(when); nse.start(when);
+  lfo.start(when); driftOsc.start(when); cutoffDriftOsc.start(when);
 
-  const voice={
+  return{
     engine:'kr106',
-    midi,
-    active:true,
+    midi, active:true,
     gain,flt,saw,pls,sub,nse,lfo,ltf,sg,pg,sbg,ng,pan,panBase,
     driftOsc,driftSaw,driftPulse,driftSub,
     cutoffDriftOsc,cutoffDriftGain,
     refresh(t=ctx.currentTime){
-      const p=P();
-      const cutoff=dynamicCutoff(p.cutoff);
-      const drift=driftDepthCents();
-      const cfDrift=cutoffDriftAmount(cutoff);
-
+      const p=P(); const cutoff=dynamicCutoff(p.cutoff);
+      const drift=driftDepthCents(); const cfDrift=cutoffDriftAmount(cutoff);
       this.sg.gain.setTargetAtTime(p.saw*.22,t,.03);
       this.pg.gain.setTargetAtTime(p.pulse*.15,t,.03);
       this.sbg.gain.setTargetAtTime(p.sub*.16,t,.03);
       this.ng.gain.setTargetAtTime(p.noise*.032,t,.03);
-
       this.flt.Q.setTargetAtTime(p.res,t,.05);
       this.flt.frequency.setTargetAtTime(cutoff,t,.08);
       this.lfo.frequency.setTargetAtTime(p.lfoRate,t,.06);
       this.ltf.gain.setTargetAtTime(cutoff*.35*p.lfoToFilter,t,.06);
       this.pan.pan.setTargetAtTime(this.panBase*p.width*.7,t,.05);
-
       this.driftSaw.gain.setTargetAtTime(drift,t,.2);
       this.driftPulse.gain.setTargetAtTime(drift*.82,t,.2);
       this.driftSub.gain.setTargetAtTime(drift*.45,t,.25);
-
       this.cutoffDriftGain.gain.setTargetAtTime(cfDrift,t,.25);
     },
     noteOn(v=.9,t=ctx.currentTime,soft=false){
@@ -1097,10 +1228,8 @@ function createKR106Voice(midi,when,vel=.9){
       const d=soft ? Math.max(.09,p.decay*.8) : p.decay;
       const s=Math.max(.0001,p.sustain*v);
       const cutoff=dynamicCutoff(p.cutoff);
-
       this.gain.gain.cancelScheduledValues(t);
       this.gain.gain.setValueAtTime(Math.max(.0001,this.gain.gain.value),t);
-
       if(soft){
         this.gain.gain.linearRampToValueAtTime(v*.82,t+a);
         this.gain.gain.setTargetAtTime(s,t+a,0.12);
@@ -1108,9 +1237,7 @@ function createKR106Voice(midi,when,vel=.9){
         this.gain.gain.linearRampToValueAtTime(v,t+a);
         this.gain.gain.exponentialRampToValueAtTime(s,t+a+d);
       }
-
       this.flt.frequency.cancelScheduledValues(t);
-
       if(soft){
         this.flt.frequency.setTargetAtTime(cutoff,t,.14);
       }else{
@@ -1119,27 +1246,21 @@ function createKR106Voice(midi,when,vel=.9){
         this.flt.frequency.exponentialRampToValueAtTime(Math.max(100,cutoff*ed),t+a+.03);
         this.flt.frequency.exponentialRampToValueAtTime(Math.max(80,cutoff*.78),t+a+d+.03);
       }
-
       this.refresh(t);
     },
     glideToMidi(newMidi,glideTime=.14,t=ctx.currentTime,retrigger=false){
       const newFreq=midiToFreq(newMidi);
       const tc=Math.max(.03,glideTime*.72);
-
       this.saw.frequency.cancelScheduledValues(t);
       this.pls.frequency.cancelScheduledValues(t);
       this.sub.frequency.cancelScheduledValues(t);
-
       this.saw.frequency.setTargetAtTime(newFreq,t,tc);
       this.pls.frequency.setTargetAtTime(newFreq,t,tc);
       this.sub.frequency.setTargetAtTime(newFreq/2,t,tc);
-
       this.midi=newMidi;
       this.refresh(t);
-
-      if(retrigger){
-        this.noteOn(.82,t,true);
-      }else{
+      if(retrigger){this.noteOn(.82,t,true);}
+      else{
         const holdLevel=Math.max(.0001,this.gain.gain.value);
         this.gain.gain.cancelScheduledValues(t);
         this.gain.gain.setTargetAtTime(holdLevel,t,.08);
@@ -1165,33 +1286,31 @@ function createKR106Voice(midi,when,vel=.9){
       try{this.cutoffDriftOsc.stop(t+rel+.08);}catch(e){}
     }
   };
-  return voice;
 }
 
-// ── Plaits VA persistent voice ───────────────────────────────────
-// Uses the AudioWorkletNode for raw synthesis, then routes through
-// the SAME filter/LFO/drift/pan/chorus chain as KR-106 for tonal
-// consistency. The worklet node's `frequency` AudioParam is glidable
-// via setTargetAtTime just like any other OscillatorNode.
-function createPlaitsVoice(midi,when,vel=.9){
+// ── Worklet voice factory used by both Plaits VA and Formant ──
+// Both engines share the same downstream chain (filter + LFO +
+// drift + pan + chorus). The only differences are which AudioWorklet
+// processor they instantiate, which AudioParams they expose, and
+// the "engine" tag for compatibility checks during glide.
+function createWorkletVoice(midi, when, vel, processorName, paramsFn, engineTag){
   const ctx=state.ctx,p=P(),rf=midiToFreq(midi);
-  const pp=plaitsParams();
+  const pp=paramsFn();
 
-  const osc = new AudioWorkletNode(ctx, 'plaits-va', {
-    numberOfInputs: 0,
-    numberOfOutputs: 1,
-    outputChannelCount: [1]
+  const osc = new AudioWorkletNode(ctx, processorName, {
+    numberOfInputs: 0, numberOfOutputs: 1, outputChannelCount: [1]
   });
   osc.parameters.get('frequency').setValueAtTime(rf, when);
-  osc.parameters.get('harmonics').setValueAtTime(pp.harmonics, when);
-  osc.parameters.get('timbre').setValueAtTime(pp.timbre, when);
-  osc.parameters.get('morph').setValueAtTime(pp.morph, when);
+  // Apply any other params the engine exposes (harmonics/timbre/morph
+  // for Plaits VA; vowel/resonance/morph for Formant).
+  for (const [k,v] of Object.entries(pp)) {
+    const par = osc.parameters.get(k);
+    if (par) par.setValueAtTime(v, when);
+  }
 
-  // Shared chain nodes (mirrors KR-106 voice)
   const pan=ctx.createStereoPanner();
   const gain=ctx.createGain();
   const flt=ctx.createBiquadFilter();
-
   const lfo=ctx.createOscillator();
   const ltf=ctx.createGain();
   const cutoffDriftOsc=ctx.createOscillator();
@@ -1219,22 +1338,21 @@ function createPlaitsVoice(midi,when,vel=.9){
   lfo.start(when);
   cutoffDriftOsc.start(when);
 
-  const voice={
-    engine:'plaits',
-    midi,
-    active:true,
+  return {
+    engine: engineTag,
+    midi, active: true,
     osc, gain, flt, lfo, ltf, pan, panBase,
     cutoffDriftOsc, cutoffDriftGain,
+    paramsFn,
     refresh(t=ctx.currentTime){
       const p=P();
-      const pp=plaitsParams();
+      const pp=this.paramsFn();
       const cutoff=dynamicCutoff(p.cutoff);
       const cfDrift=cutoffDriftAmount(cutoff);
-
-      this.osc.parameters.get('harmonics').setTargetAtTime(pp.harmonics,t,.05);
-      this.osc.parameters.get('timbre').setTargetAtTime(pp.timbre,t,.05);
-      this.osc.parameters.get('morph').setTargetAtTime(pp.morph,t,.08);
-
+      for (const [k,v] of Object.entries(pp)) {
+        const par = this.osc.parameters.get(k);
+        if (par) par.setTargetAtTime(v, t, .05);
+      }
       this.flt.Q.setTargetAtTime(p.res,t,.05);
       this.flt.frequency.setTargetAtTime(cutoff,t,.08);
       this.lfo.frequency.setTargetAtTime(p.lfoRate,t,.06);
@@ -1248,7 +1366,6 @@ function createPlaitsVoice(midi,when,vel=.9){
       const d=soft ? Math.max(.09,p.decay*.8) : p.decay;
       const s=Math.max(.0001,p.sustain*v);
       const cutoff=dynamicCutoff(p.cutoff);
-
       this.gain.gain.cancelScheduledValues(t);
       this.gain.gain.setValueAtTime(Math.max(.0001,this.gain.gain.value),t);
       if(soft){
@@ -1258,7 +1375,6 @@ function createPlaitsVoice(midi,when,vel=.9){
         this.gain.gain.linearRampToValueAtTime(v,t+a);
         this.gain.gain.exponentialRampToValueAtTime(s,t+a+d);
       }
-
       this.flt.frequency.cancelScheduledValues(t);
       if(soft){
         this.flt.frequency.setTargetAtTime(cutoff,t,.14);
@@ -1278,9 +1394,8 @@ function createPlaitsVoice(midi,when,vel=.9){
       f.setTargetAtTime(newFreq, t, tc);
       this.midi=newMidi;
       this.refresh(t);
-      if(retrigger){
-        this.noteOn(.82,t,true);
-      }else{
+      if(retrigger){this.noteOn(.82,t,true);}
+      else{
         const holdLevel=Math.max(.0001,this.gain.gain.value);
         this.gain.gain.cancelScheduledValues(t);
         this.gain.gain.setTargetAtTime(holdLevel,t,.08);
@@ -1297,7 +1412,6 @@ function createPlaitsVoice(midi,when,vel=.9){
       this.gain.gain.exponentialRampToValueAtTime(.0001,t+rel);
       this.flt.frequency.cancelScheduledValues(t);
       this.flt.frequency.setTargetAtTime(Math.max(70,P().cutoff*.55),t,rel*.25+.01);
-      // Worklet nodes have no .stop(); disconnect after the tail.
       setTimeout(()=>{
         try{this.osc.disconnect();}catch(e){}
         try{this.lfo.stop();}catch(e){}
@@ -1305,14 +1419,22 @@ function createPlaitsVoice(midi,when,vel=.9){
       }, (rel+0.2)*1000);
     }
   };
-  return voice;
 }
 
-// Router — picks the right voice factory based on current engine.
+function createPlaitsVoice(midi,when,vel=.9){
+  return createWorkletVoice(midi, when, vel, 'plaits-va', plaitsParams, 'plaits');
+}
+function createFormantVoice(midi,when,vel=.9){
+  return createWorkletVoice(midi, when, vel, 'plaits-formant', formantParams, 'formant');
+}
+
+// Router — picks the right factory based on the current engine
+// AND the worklet load status. Falls back to KR-106 if a worklet
+// engine is selected but its module hasn't loaded successfully.
 function createPersistentVoice(midi,when,vel=.9){
-  if (getEngine() === 'plaits' && state.plaitsLoaded) {
-    return createPlaitsVoice(midi,when,vel);
-  }
+  const eng = getEngine();
+  if (eng === 'plaits' && state.plaitsLoaded) return createPlaitsVoice(midi,when,vel);
+  if (eng === 'formant' && state.formantLoaded) return createFormantVoice(midi,when,vel);
   return createKR106Voice(midi,when,vel);
 }
 
@@ -1329,15 +1451,12 @@ function nearestAssignment(voices,targetNotes){
   const remainingVoices=voices.slice();
   const remainingTargets=targetNotes.slice();
   const pairs=[];
-
   while(remainingVoices.length&&remainingTargets.length){
     let bestV=0,bestT=0,bestD=Infinity;
     for(let vi=0;vi<remainingVoices.length;vi++){
       for(let ti=0;ti<remainingTargets.length;ti++){
         const d=Math.abs(remainingVoices[vi].midi-remainingTargets[ti]);
-        if(d<bestD){
-          bestD=d;bestV=vi;bestT=ti;
-        }
+        if(d<bestD){bestD=d;bestV=vi;bestT=ti;}
       }
     }
     pairs.push({voice:remainingVoices[bestV],midi:remainingTargets[bestT]});
@@ -1361,16 +1480,22 @@ function releaseAll(){
   releaseManualChord();
 }
 
+// Resolve the engine the next voice will be created with, accounting
+// for worklet load status. Used to detect engine-mismatch in glide.
+function resolveActiveEngine(){
+  const eng = getEngine();
+  if (eng === 'plaits' && state.plaitsLoaded) return 'plaits';
+  if (eng === 'formant' && state.formantLoaded) return 'formant';
+  return 'kr106';
+}
+
 function glideToNotes(targetNotes,retrigger=false){
   if(!state.audioReady)return;
   const t=state.ctx.currentTime+.005;
   const glideTime=glideSeconds();
   const live=state.glideVoices.filter(v=>v&&v.active);
 
-  // If engine switched mid-play, the live voices will be the old engine.
-  // Release them and start fresh on the new engine instead of trying
-  // to glide across incompatible voice types.
-  const targetEngine = (getEngine()==='plaits' && state.plaitsLoaded) ? 'plaits' : 'kr106';
+  const targetEngine = resolveActiveEngine();
   const engineMismatch = live.length && live[0].engine !== targetEngine;
 
   if(!live.length || engineMismatch){
@@ -1395,21 +1520,17 @@ function glideToNotes(targetNotes,retrigger=false){
     const tt=t+i*.008;
     const vv=clamp(.76-i*.03,.42,1);
     const v=createPersistentVoice(midi,tt,vv);
-
     v.gain.gain.cancelScheduledValues(tt);
     v.gain.gain.setValueAtTime(.0001,tt);
     v.gain.gain.linearRampToValueAtTime(vv*.78,tt+Math.max(.05,glideTime*.75));
     v.gain.gain.setTargetAtTime(Math.max(.0001,P().sustain*vv),tt+Math.max(.05,glideTime*.75),0.14);
-
     v.flt.frequency.cancelScheduledValues(tt);
     v.flt.frequency.setTargetAtTime(dynamicCutoff(P().cutoff),tt,.16);
     v.refresh(tt);
-
     state.glideVoices.push(v);
   });
 
   leftVoices.forEach(v=>v.release(t));
-
   state.glideVoices=state.glideVoices.filter(v=>v.active);
   state.glideVoices.forEach(v=>v.refresh(t));
 }
@@ -1418,14 +1539,9 @@ function triggerDeg(deg,forceAttack=false){
   if(!state.audioReady)return;
   state.currentDegree=deg;
   updatePadClasses();updatePadLabels();updateReadouts();
-
   const chord=computeChord(deg);
   state.latchedChord={deg,notes:chord.notes};
-
-  if(state.arp){
-    releaseManualChord();
-    return;
-  }
+  if(state.arp){releaseManualChord();return;}
   glideToNotes(chord.notes,forceAttack);
 }
 function triggerDegSeq(deg){
@@ -1454,23 +1570,15 @@ function refreshHeldChordFromXY(){
   state.xyRefreshQueued=false;
   if(!state.audioReady)return;
   if(state.seqRunning)return;
-
   const shouldRefresh=state.padHeld||state.hold||state.arp||state.glideVoices.length>0;
   if(!shouldRefresh)return;
-
   const deg=state.heldPadDegree||state.currentDegree;
   if(!deg)return;
-
   state.currentDegree=deg;
   updatePadClasses();updatePadLabels();updateReadouts();
-
   const chord=computeChord(deg);
   state.latchedChord={deg,notes:chord.notes};
-
-  if(state.arp){
-    releaseManualChord();
-    return;
-  }
+  if(state.arp){releaseManualChord();return;}
   glideToNotes(chord.notes,false);
 }
 function scheduleHeldChordRefresh(){
@@ -1504,19 +1612,14 @@ function tickSeq(){
   state.seqTimer=setTimeout(tickSeq,delay);
 }
 function startSeq(){
-  stopSeq();
-  releaseAll();
-  state.seqPos=-1;
-  state.seqDir=1;
-  state.seqSwingToggle=false;
+  stopSeq(); releaseAll();
+  state.seqPos=-1; state.seqDir=1; state.seqSwingToggle=false;
   state.seqTimer=setTimeout(tickSeq,0);
 }
 function stopSeq(){
   if(state.seqTimer){clearTimeout(state.seqTimer);state.seqTimer=null;}
-  const oldPos=state.seqPos;
-  state.seqPos=-1;
-  updateSeqPlayhead(oldPos,-1);
-  releaseTransientVoices();
+  const oldPos=state.seqPos; state.seqPos=-1;
+  updateSeqPlayhead(oldPos,-1); releaseTransientVoices();
 }
 function arpOrder(notes){
   const dir=$('#arpDirSelect').value,s=notes.slice().sort((a,b)=>a-b);
@@ -1536,14 +1639,11 @@ function tickArp(){
   state.arpTimer=setTimeout(tickArp,ms);
 }
 function startArp(){
-  stopArp();
-  releaseManualChord();
+  stopArp(); releaseManualChord();
   state.arpPhase=0;
   state.arpTimer=setTimeout(tickArp,0);
 }
-function stopArp(){
-  if(state.arpTimer){clearTimeout(state.arpTimer);state.arpTimer=null;}
-}
+function stopArp(){if(state.arpTimer){clearTimeout(state.arpTimer);state.arpTimer=null;}}
 
 function setXY(cx,cy){
   const r=$('#xyPad').getBoundingClientRect();
@@ -1559,8 +1659,7 @@ function setXY(cx,cy){
 function attachXY(){
   const pad=$('#xyPad');let drag=false;
   pad.addEventListener('pointerdown',e=>{
-    drag=true;
-    pad.setPointerCapture(e.pointerId);
+    drag=true; pad.setPointerCapture(e.pointerId);
     setXY(e.clientX,e.clientY);
   });
   pad.addEventListener('pointermove',e=>{if(drag)setXY(e.clientX,e.clientY);});
@@ -1570,19 +1669,24 @@ function attachXY(){
 
 function updateEngineVisibility(){
   const eng = getEngine();
-  const isPlaits = eng === 'plaits';
-  $('#krOscHd').style.display = isPlaits ? 'none' : '';
-  $('#krOscList').style.display = isPlaits ? 'none' : '';
-  $('#plaitsOscHd').style.display = isPlaits ? '' : 'none';
-  $('#plaitsOscList').style.display = isPlaits ? '' : 'none';
+  $('#krOscHd').style.display      = eng === 'kr106'   ? '' : 'none';
+  $('#krOscList').style.display    = eng === 'kr106'   ? '' : 'none';
+  $('#plaitsOscHd').style.display  = eng === 'plaits'  ? '' : 'none';
+  $('#plaitsOscList').style.display= eng === 'plaits'  ? '' : 'none';
+  $('#formantOscHd').style.display = eng === 'formant' ? '' : 'none';
+  $('#formantOscList').style.display=eng === 'formant' ? '' : 'none';
 }
 
 function applyPreset(name){
   const map={
-    neo:{engine:'kr106',cutoff:1900,res:2.2,attack:.02,decay:.45,sustain:.72,release:1.65,chorusMix:.45,chorusRate:.32,chorusDepth:.006,saw:.82,pulse:.30,sub:.52,noise:.05,pw:.48,detune:4.5,width:.55,lfoRate:.22,lfoToFilter:.08,lfoToPWM:.18,xyX:.66,xyY:.38,glideTime:.14,drift:.22,plHarmonics:.3,plTimbre:.45,plMorph:.5,plXyAmt:.55},
-    house:{engine:'kr106',cutoff:2400,res:1.8,attack:.01,decay:.28,sustain:.65,release:.90,chorusMix:.28,chorusRate:.42,chorusDepth:.004,saw:.88,pulse:.22,sub:.60,noise:.01,pw:.50,detune:2.5,width:.35,lfoRate:.16,lfoToFilter:.04,lfoToPWM:.08,xyX:.58,xyY:.50,glideTime:.11,drift:.14,plHarmonics:.2,plTimbre:.3,plMorph:.6,plXyAmt:.4},
-    dream:{engine:'plaits',cutoff:1500,res:3.4,attack:.12,decay:1.2,sustain:.76,release:2.8,chorusMix:.62,chorusRate:.18,chorusDepth:.009,saw:.76,pulse:.42,sub:.34,noise:.06,pw:.42,detune:6.2,width:.78,lfoRate:.11,lfoToFilter:.11,lfoToPWM:.22,xyX:.72,xyY:.26,glideTime:.20,drift:.32,plHarmonics:.45,plTimbre:.55,plMorph:.7,plXyAmt:.7},
-    dark:{engine:'kr106',cutoff:1100,res:4.8,attack:.03,decay:.62,sustain:.58,release:1.9,chorusMix:.36,chorusRate:.24,chorusDepth:.005,saw:.72,pulse:.34,sub:.66,noise:.03,pw:.38,detune:3.8,width:.42,lfoRate:.17,lfoToFilter:.14,lfoToPWM:.10,xyX:.34,xyY:.68,glideTime:.16,drift:.18,plHarmonics:.6,plTimbre:.7,plMorph:.3,plXyAmt:.5}
+    neo:{engine:'kr106',cutoff:1900,res:2.2,attack:.02,decay:.45,sustain:.72,release:1.65,chorusMix:.45,chorusRate:.32,chorusDepth:.006,saw:.82,pulse:.30,sub:.52,noise:.05,pw:.48,detune:4.5,width:.55,lfoRate:.22,lfoToFilter:.08,lfoToPWM:.18,xyX:.66,xyY:.38,glideTime:.14,drift:.22,plHarmonics:.3,plTimbre:.45,plMorph:.5,plXyAmt:.55,fmVowel:.35,fmReso:.55,fmMorph:.5,fmXyAmt:.7},
+    house:{engine:'kr106',cutoff:2400,res:1.8,attack:.01,decay:.28,sustain:.65,release:.90,chorusMix:.28,chorusRate:.42,chorusDepth:.004,saw:.88,pulse:.22,sub:.60,noise:.01,pw:.50,detune:2.5,width:.35,lfoRate:.16,lfoToFilter:.04,lfoToPWM:.08,xyX:.58,xyY:.50,glideTime:.11,drift:.14,plHarmonics:.2,plTimbre:.3,plMorph:.6,plXyAmt:.4,fmVowel:.4,fmReso:.5,fmMorph:.5,fmXyAmt:.6},
+    dream:{engine:'plaits',cutoff:1500,res:3.4,attack:.12,decay:1.2,sustain:.76,release:2.8,chorusMix:.62,chorusRate:.18,chorusDepth:.009,saw:.76,pulse:.42,sub:.34,noise:.06,pw:.42,detune:6.2,width:.78,lfoRate:.11,lfoToFilter:.11,lfoToPWM:.22,xyX:.72,xyY:.26,glideTime:.20,drift:.32,plHarmonics:.45,plTimbre:.55,plMorph:.7,plXyAmt:.7,fmVowel:.5,fmReso:.6,fmMorph:.5,fmXyAmt:.65},
+    dark:{engine:'kr106',cutoff:1100,res:4.8,attack:.03,decay:.62,sustain:.58,release:1.9,chorusMix:.36,chorusRate:.24,chorusDepth:.005,saw:.72,pulse:.34,sub:.66,noise:.03,pw:.38,detune:3.8,width:.42,lfoRate:.17,lfoToFilter:.14,lfoToPWM:.10,xyX:.34,xyY:.68,glideTime:.16,drift:.18,plHarmonics:.6,plTimbre:.7,plMorph:.3,plXyAmt:.5,fmVowel:.2,fmReso:.7,fmMorph:.3,fmXyAmt:.55},
+    // CHOIR / VOX preset — defaults the new Formant engine with a
+    // soft attack, generous chorus, wide stereo and a balanced
+    // OO/AH vowel position so an entry chord lands musically.
+    choir:{engine:'formant',cutoff:3200,res:1.4,attack:.18,decay:.9,sustain:.78,release:2.4,chorusMix:.55,chorusRate:.22,chorusDepth:.008,saw:.6,pulse:.2,sub:.3,noise:.02,pw:.5,detune:3.0,width:.85,lfoRate:.14,lfoToFilter:.05,lfoToPWM:.06,xyX:.55,xyY:.40,glideTime:.22,drift:.42,plHarmonics:.4,plTimbre:.4,plMorph:.5,plXyAmt:.5,fmVowel:.45,fmReso:.6,fmMorph:.45,fmXyAmt:.75}
   };
   const p=map[name];
   Object.entries(p).forEach(([k,v])=>{
@@ -1639,16 +1743,17 @@ function attachUI(){
 
   $('#panicBtn').addEventListener('click',()=>releaseAll());
 
-  // Engine switch — make sure the worklet is loaded before accepting
-  // "plaits", otherwise revert to kr106 with a brief console warning.
+  // Engine switch — load the right worklet on demand, gracefully
+  // fall back to KR-106 if the worklet fails. If a chord is held,
+  // swap to the new engine immediately so you hear the change.
   $('#engineSelect').addEventListener('change',async e=>{
-    if (e.target.value === 'plaits') {
+    const v = e.target.value;
+    if (v === 'plaits' || v === 'formant') {
       if (!state.audioReady) await initAudio();
-      const ok = await loadPlaitsWorklet();
-      if (!ok) return; // loadPlaitsWorklet already reset the select
+      const ok = v === 'plaits' ? await loadPlaitsWorklet() : await loadFormantWorklet();
+      if (!ok) return;
     }
     updateEngineVisibility();
-    // If a chord is currently held, swap its voices to the new engine
     if (state.padHeld || state.hold) {
       releaseManualChord();
       if (state.heldPadDegree || state.currentDegree) {
@@ -1666,10 +1771,19 @@ function attachUI(){
     renderPads();updateReadouts();refreshAllStepCells();scheduleHeldChordRefresh();
   });
   $('#octaveSelect').addEventListener('change',()=>{
-    updateReadouts();
-    scheduleHeldChordRefresh();
+    updateReadouts(); scheduleHeldChordRefresh();
   });
-  $('#presetSelect').addEventListener('change',e=>applyPreset(e.target.value));
+  // Choir preset needs the formant worklet — pre-load it before applying
+  $('#presetSelect').addEventListener('change',async e=>{
+    const name = e.target.value;
+    if (name === 'choir' && state.audioReady && !state.formantLoaded) {
+      await loadFormantWorklet();
+    }
+    if (name === 'dream' && state.audioReady && !state.plaitsLoaded) {
+      await loadPlaitsWorklet();
+    }
+    applyPreset(name);
+  });
   $('#seqLenSelect').addEventListener('change',onSeqLenChange);
 
   $('#tempo').addEventListener('input',()=>{
@@ -1683,8 +1797,7 @@ function attachUI(){
   });
 
   $('#seqClearBtn').addEventListener('click',()=>{
-    state.seqSteps.fill(0);
-    refreshAllStepCells();
+    state.seqSteps.fill(0); refreshAllStepCells();
   });
   $('#seqFillBtn').addEventListener('click',()=>{
     const pats=[
@@ -1698,14 +1811,10 @@ function attachUI(){
     refreshAllStepCells();
   });
   $('#seqShiftLBtn').addEventListener('click',()=>{
-    const f=state.seqSteps.shift();
-    state.seqSteps.push(f);
-    refreshAllStepCells();
+    const f=state.seqSteps.shift(); state.seqSteps.push(f); refreshAllStepCells();
   });
   $('#seqShiftRBtn').addEventListener('click',()=>{
-    const l=state.seqSteps.pop();
-    state.seqSteps.unshift(l);
-    refreshAllStepCells();
+    const l=state.seqSteps.pop(); state.seqSteps.unshift(l); refreshAllStepCells();
   });
 
   const noDSP=['keySelect','scaleSelect','octaveSelect','presetSelect','seqLenSelect','rateSelect','dirSelect','arpDirSelect','gateSelect','swingSelect','engineSelect'];
@@ -1713,7 +1822,7 @@ function attachUI(){
     if(!noDSP.includes(el.id)){
       el.addEventListener('input',()=>{
         updateDSP();
-        if(['cutoff','res','attack','decay','sustain','release','saw','pulse','sub','noise','pw','detune','width','lfoRate','lfoToFilter','lfoToPWM','glideTime','drift','plHarmonics','plTimbre','plMorph','plXyAmt'].includes(el.id)){
+        if(['cutoff','res','attack','decay','sustain','release','saw','pulse','sub','noise','pw','detune','width','lfoRate','lfoToFilter','lfoToPWM','glideTime','drift','plHarmonics','plTimbre','plMorph','plXyAmt','fmVowel','fmReso','fmMorph','fmXyAmt'].includes(el.id)){
           scheduleHeldChordRefresh();
         }
       });
@@ -1747,7 +1856,6 @@ function attachUI(){
   });
 }
 
-// ── boot ──
 populateSelects();
 buildStepGrid();
 renderPads();
