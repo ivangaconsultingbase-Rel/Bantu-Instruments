@@ -240,6 +240,17 @@ input[type="range"]::-moz-range-thumb{
 .sact:last-child{border-right:none}
 .sact.hi{color:var(--acc);background:var(--acc-dim)}
 .sact:active{background:var(--s2)}
+.turing-panel{border-bottom:1px solid var(--line);background:var(--s1)}
+.turing-top{display:grid;grid-template-columns:1fr 1fr;border-bottom:1px solid var(--line)}
+.turing-top .ssf{background:var(--s1)}
+.turing-actions{display:grid;grid-template-columns:repeat(4,1fr);border-bottom:1px solid var(--line)}
+.turing-actions .sact.on{color:var(--green);background:var(--grn-dim)}
+.turing-strip{display:grid;grid-template-columns:repeat(16,1fr);height:24px;background:var(--bg)}
+.tbit{border-right:1px solid var(--line);position:relative}
+.tbit:last-child{border-right:none}
+.tbit::after{content:'';position:absolute;left:50%;top:50%;width:6px;height:6px;border-radius:50%;background:var(--dim);transform:translate(-50%,-50%)}
+.tbit.on::after{background:var(--acc);box-shadow:0 0 8px var(--acc-glow)}
+.tbit.head::before{content:'';position:absolute;left:0;right:0;top:0;height:3px;background:var(--green);box-shadow:0 2px 8px var(--grn-glow)}
 .tabbar{
   flex-shrink:0;display:grid;grid-template-columns:repeat(4,1fr);
   border-top:1px solid var(--line);background:var(--s1);padding-bottom:var(--safe-b)
@@ -422,6 +433,25 @@ input[type="range"]::-moz-range-thumb{
       <button class="sact hi" id="seqFillBtn">FILL</button>
       <button class="sact" id="seqShiftLBtn">◀ SHIFT</button>
       <button class="sact" id="seqShiftRBtn">SHIFT ▶</button>
+    </div>
+    <div class="sec-hd">TURING MACHINE · GENERATIVE</div>
+    <div class="turing-panel">
+      <div class="turing-top">
+        <div class="ssf"><span class="flbl">PROB</span><select id="tmProbSelect">
+          <option value="0">LOCK</option><option value="0.08">8%</option><option value="0.16">16%</option>
+          <option value="0.25" selected>25%</option><option value="0.5">50%</option><option value="1">RAND</option>
+        </select></div>
+        <div class="ssf"><span class="flbl">DENSITY</span><select id="tmDensitySelect">
+          <option value="0.35">35%</option><option value="0.5" selected>50%</option><option value="0.65">65%</option><option value="0.8">80%</option>
+        </select></div>
+      </div>
+      <div class="turing-actions">
+        <button class="sact" id="tmToggleBtn">TM OFF</button>
+        <button class="sact" id="tmLockBtn">LOCK</button>
+        <button class="sact hi" id="tmSeedBtn">SEED</button>
+        <button class="sact" id="tmWriteBtn">WRITE</button>
+      </div>
+      <div class="turing-strip" id="tmStrip"></div>
     </div>
     <div class="seq-settings" style="grid-template-columns:1fr 1fr">
       <div class="ssf"><span class="flbl">DIRECTION</span>
@@ -732,6 +762,7 @@ const state={
   hold:false,arp:false,arpPhase:0,latchedChord:null,
   activeNotes:new Map(),currentDegree:1,
   seqRunning:false,seqSteps:new Array(16).fill(0),seqLen:16,
+  tmEnabled:false,tmLocked:false,tmRegister:[],tmHead:0,tmLastPattern:null,
   seqPos:-1,seqDir:1,seqTimer:null,seqSwingToggle:false,arpTimer:null,
   padHeld:false,heldPadDegree:null,
   glideVoices:[],maxVoices:6,
@@ -899,6 +930,74 @@ function buildStepGrid(){
     grid.appendChild(btn);
   }
 }
+
+function initTuringRegister(force=false){
+  if(!force && state.tmRegister.length===state.seqLen)return;
+  const dens=+(document.getElementById('tmDensitySelect')?.value||0.5);
+  state.tmRegister=Array.from({length:state.seqLen},()=>Math.random()<dens?1:0);
+  state.tmHead=0;
+  renderTuringStrip();
+}
+function renderTuringStrip(){
+  const strip=$('#tmStrip');
+  if(!strip)return;
+  strip.innerHTML='';
+  strip.style.gridTemplateColumns=`repeat(${state.seqLen},1fr)`;
+  initTuringRegister(false);
+  for(let i=0;i<state.seqLen;i++){
+    const b=document.createElement('div');
+    b.className='tbit'+(state.tmRegister[i]?' on':'')+(i===state.tmHead?' head':'');
+    strip.appendChild(b);
+  }
+}
+function turingGeneratePattern(){
+  initTuringRegister(false);
+  const dens=+$('#tmDensitySelect').value;
+  const prob=state.tmLocked?0:+$('#tmProbSelect').value;
+  const old=state.seqSteps.slice();
+  const out=[];
+  let lastDeg=state.currentDegree||1;
+  for(let i=0;i<state.seqLen;i++){
+    const read=(state.tmHead+i)%state.seqLen;
+    let bit=state.tmRegister[read];
+    if(Math.random()<prob)bit=bit?0:1;
+    state.tmRegister[read]=bit;
+    if(bit){
+      const neighbour=(state.tmRegister[(read+state.seqLen-1)%state.seqLen]?1:0)+(state.tmRegister[(read+1)%state.seqLen]?1:0);
+      const jump=(Math.random()<0.35)?2:1;
+      lastDeg=clamp(((lastDeg-1)+(bit?jump:0)+neighbour)%7+1,1,7);
+      out[i]=lastDeg;
+    }else{
+      out[i]=Math.random()<dens*.25?lastDeg:0;
+    }
+  }
+  state.tmHead=(state.tmHead+1)%state.seqLen;
+  state.tmLastPattern=old;
+  state.seqSteps=out;
+  refreshAllStepCells();
+  renderTuringStrip();
+}
+function turingStepWrite(pos){
+  if(!state.tmEnabled)return;
+  initTuringRegister(false);
+  const prob=state.tmLocked?0:+$('#tmProbSelect').value;
+  const len=state.seqLen;
+  const prev=state.tmRegister[(state.tmHead+len-1)%len]||0;
+  const mutate=Math.random()<prob;
+  const bit=mutate?1-prev:prev;
+  state.tmRegister[state.tmHead]=bit;
+  if(bit){
+    const prevDeg=state.seqSteps[(pos-1+len)%len]||state.currentDegree||1;
+    const delta=choice([-2,-1,1,2,3]);
+    state.seqSteps[pos]=((prevDeg-1+delta+7)%7)+1;
+  }else{
+    state.seqSteps[pos]=0;
+  }
+  state.tmHead=(state.tmHead+1)%len;
+  refreshStepCell(pos);
+  renderTuringStrip();
+}
+
 function refreshStepCell(i){
   const grid=$('#stepGrid');
   if(i<0||i>=grid.children.length)return;
@@ -921,6 +1020,8 @@ function onSeqLenChange(){
     state.seqSteps=Array.from({length:newLen},(_,i)=>state.seqSteps[i]||0);
     state.seqPos=-1; state.seqDir=1;
     buildStepGrid();
+    initTuringRegister(true);
+    renderTuringStrip();
   }
 }
 function stepMs(){
@@ -1604,6 +1705,7 @@ function tickSeq(){
   const oldPos=state.seqPos;
   state.seqPos=nextSeqPos();
   updateSeqPlayhead(oldPos,state.seqPos);
+  if(state.tmEnabled)turingStepWrite(state.seqPos);
   const deg=state.seqSteps[state.seqPos];
   if(deg>0)triggerDegSeq(deg);
   const ms=stepMs(),swing=+$('#swingSelect').value;
@@ -1817,6 +1919,25 @@ function attachUI(){
     const l=state.seqSteps.pop(); state.seqSteps.unshift(l); refreshAllStepCells();
   });
 
+  $('#tmToggleBtn').addEventListener('click',()=>{
+    state.tmEnabled=!state.tmEnabled;
+    $('#tmToggleBtn').textContent=state.tmEnabled?'TM ON':'TM OFF';
+    $('#tmToggleBtn').classList.toggle('on',state.tmEnabled);
+    initTuringRegister(false); renderTuringStrip();
+  });
+  $('#tmLockBtn').addEventListener('click',()=>{
+    state.tmLocked=!state.tmLocked;
+    $('#tmLockBtn').classList.toggle('on',state.tmLocked);
+  });
+  $('#tmSeedBtn').addEventListener('click',()=>{
+    initTuringRegister(true); turingGeneratePattern();
+  });
+  $('#tmWriteBtn').addEventListener('click',()=>{
+    turingGeneratePattern();
+  });
+  $('#tmProbSelect').addEventListener('change',()=>{ if(state.tmLocked){state.tmLocked=false;$('#tmLockBtn').classList.remove('on');} });
+  $('#tmDensitySelect').addEventListener('change',()=>{ initTuringRegister(true); renderTuringStrip(); });
+
   const noDSP=['keySelect','scaleSelect','octaveSelect','presetSelect','seqLenSelect','rateSelect','dirSelect','arpDirSelect','gateSelect','swingSelect','engineSelect'];
   document.querySelectorAll('input[type="range"],select').forEach(el=>{
     if(!noDSP.includes(el.id)){
@@ -1858,6 +1979,8 @@ function attachUI(){
 
 populateSelects();
 buildStepGrid();
+initTuringRegister(true);
+renderTuringStrip();
 renderPads();
 attachXY();
 attachUI();
