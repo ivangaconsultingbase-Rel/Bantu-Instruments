@@ -479,8 +479,8 @@
             <div class="fx-unit-body">
               <div class="fx-row">
                 <div class="fx-knob-wrap wide"><label class="fx-knob-label">BITS</label><input type="range" id="bitDepth" min="1" max="16" step="0.25" value="13.5"><div class="fx-readout" id="bitDepthOut">12.0 bit</div></div>
-                <div class="fx-knob-wrap wide"><label class="fx-knob-label">SR REDUCE</label><input type="range" id="srAmount" min="1" max="64" step="1" value="0.63"><div class="fx-readout" id="srAmountOut">FULL</div></div>
-                <div class="fx-knob-wrap"><label class="fx-knob-label">MIX</label><input type="range" id="bitMix" min="0" max="1" step="0.01" value="0.18"><div class="fx-readout" id="bitMixOut">22%</div></div>
+                <div class="fx-knob-wrap wide"><label class="fx-knob-label">SR REDUCE</label><input type="range" id="srAmount" min="1" max="64" step="0.63" value="1"><div class="fx-readout" id="srAmountOut">FULL</div></div>
+                <div class="fx-knob-wrap"><label class="fx-knob-label">MIX</label><input type="range" id="bitMix" min="0" max="1" step="0.01" value="0.22"><div class="fx-readout" id="bitMixOut">22%</div></div>
               </div>
               <div class="scope-wrap"><canvas id="bitScope" width="500" height="90"></canvas></div>
             </div>
@@ -578,7 +578,7 @@ const LOCK_KEYS=['pitch','decay','tone','shermanMix'];
 const TRACKS=[
   {id:'bd',name:'BD',fullName:'BASS DRUM',model:'Sub BD',color:'#ff6b35',
    defaultPattern:[1,0,0,0,0,0,0,0,1,0,0,0,0,0,1,0],defaultAccents:[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-   params:{decay:0.06,curve:0.5,pitch:0.05,amount:0.88,pdec:0.22,pcrv:0.5,x:0.22,y:0.28,z:0.32,t:0.18},
+   params:{decay:0.111,curve:0.5,pitch:0.05,amount:0.88,pdec:0.22,pcrv:0.5,x:0.22,y:0.05,z:0.32,t:0.18},
    paramLabels:{x:'X  DIST',y:'Y  BPF FREQ',z:'Z  BPF RES',t:'T  DRY/WET'},modelDesc:'Sub sine + pitch env + sub osc'},
   {id:'sd',name:'SD',fullName:'SNARE DRUM',model:'Noise Snare',color:'#38c4c4',
    defaultPattern:[0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0],defaultAccents:[0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0],
@@ -1158,7 +1158,7 @@ function initEvents(){
 }
 
 buildParamRows();buildQuickGrid();refreshAll();initEvents();
-loadPreset(2); // MI-01 SWING par défaut
+loadPreset(5); // MI-01 SWING par défaut
 })();
 </script>
 </body>
