@@ -1,516 +1,670 @@
 <!DOCTYPE html>
-
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>TROIS / Lofi Sampler</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-html,body{height:100%;background:#0a0b0d;color:#e8eaed;font-family:'IBM Plex Mono',ui-monospace,'SF Mono',Menlo,Monaco,Consolas,monospace;font-size:11px;letter-spacing:.02em;-webkit-font-smoothing:antialiased;overflow-x:hidden;overscroll-behavior:none}
-body{background:
-  radial-gradient(ellipse at top left, #131418 0%, #0a0b0d 50%),
-  #0a0b0d;
-  min-height:100vh;padding:8px;padding-bottom:48px}
+html,body{height:100%;background:#08090b;color:#e8eaed;font-family:'IBM Plex Mono',ui-monospace,'SF Mono',Menlo,Monaco,Consolas,monospace;font-size:11px;letter-spacing:.02em;-webkit-font-smoothing:antialiased;overscroll-behavior:none}
+body{min-height:100vh;padding:0;display:flex;flex-direction:column}
 button,input,select{font-family:inherit;font-size:inherit;color:inherit;border:0;background:transparent;-webkit-appearance:none !important;appearance:none !important;outline:none}
 button{cursor:pointer;-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none}
+input[type=range]{-webkit-appearance:none !important;appearance:none !important}
 
-/* ================ LAYOUT ================ */
-.shell{max-width:980px;margin:0 auto;display:flex;flex-direction:column;gap:8px}
-.row{display:grid;gap:8px}
-@media(min-width:760px){
-.row.two{grid-template-columns:1fr 1fr}
-.row.three{grid-template-columns:1fr 1fr 1fr}
-}
+/* ============================ APP SHELL ============================ */
+.app{max-width:980px;margin:0 auto;width:100%;display:flex;flex-direction:column;flex:1}
 
-/* ================ HEADER ================ */
+/* ============================ HEADER (sticky) ============================ */
 .head{
-background:linear-gradient(180deg,#16181c 0%,#101216 100%);
-border:1px solid #2a2d34;
-border-radius:6px;
-padding:10px 12px;
-display:flex;flex-direction:column;gap:8px;
-position:relative;overflow:hidden
+  position:sticky;top:0;z-index:30;
+  background:#0d0e11;
+  border-bottom:1px solid #1c1e23;
+  padding:8px 10px 0
 }
-.head::before{content:””;position:absolute;inset:0;background:repeating-linear-gradient(0deg,transparent 0,transparent 2px,rgba(255,255,255,.012) 2px,rgba(255,255,255,.012) 3px);pointer-events:none}
-.brand{display:flex;align-items:baseline;justify-content:space-between;gap:12px}
-.logo{font-size:18px;font-weight:700;letter-spacing:.3em;color:#e8eaed}
-.logo-dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:#ff8c42;margin:0 4px;vertical-align:middle;box-shadow:0 0 8px #ff8c42}
-.subtitle{font-size:9px;letter-spacing:.4em;color:#5e636e;text-transform:uppercase}
-.transport{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
-.tbtn{
-background:#1a1d22;border:1px solid #2a2d34;border-radius:4px;
-padding:8px 12px;font-size:10px;font-weight:600;letter-spacing:.15em;
-color:#a8adb8;text-transform:uppercase;
-transition:all .12s ease;
-display:inline-flex;align-items:center;gap:6px;min-height:34px
-}
-.tbtn:hover{border-color:#3a3d44;color:#e8eaed}
-.tbtn:active{transform:translateY(1px)}
-.tbtn.on{background:#ff8c42;border-color:#ff8c42;color:#0a0b0d}
-.tbtn.rec{background:#1a1d22;border-color:#ff5c5c;color:#ff5c5c}
-.tbtn.rec.armed{background:#ff5c5c;color:#0a0b0d;animation:pulse 1s ease-in-out infinite}
-@keyframes pulse{50%{opacity:.6}}
-.led{display:inline-block;width:7px;height:7px;border-radius:50%;background:#2a2d34;box-shadow:inset 0 0 0 1px rgba(0,0,0,.4)}
-.led.on{background:#ff8c42;box-shadow:0 0 6px #ff8c42,inset 0 0 0 1px rgba(255,255,255,.2)}
+.brand-row{display:flex;align-items:center;justify-content:space-between;gap:6px;height:32px}
+.brand{font-size:14px;font-weight:700;letter-spacing:.32em;color:#e8eaed;display:flex;align-items:center;gap:2px;line-height:1}
+.brand-dot{display:inline-block;width:5px;height:5px;border-radius:50%;background:#ff8c42;margin:0 4px;box-shadow:0 0 6px #ff8c42}
+.brand-sub{font-size:8px;letter-spacing:.3em;color:#4a4f59;text-transform:uppercase;margin-left:8px}
 
-/* ================ PANELS ================ */
+.bpm-cluster{display:flex;align-items:center;gap:4px}
+.bpm-box{
+  display:flex;align-items:baseline;gap:4px;padding:0 8px;height:26px;
+  background:#08090b;border:1px solid #1c1e23;border-radius:3px;
+  cursor:ns-resize;touch-action:none;line-height:1
+}
+.bpm-label{font-size:8px;color:#4a4f59;letter-spacing:.2em}
+.bpm-val{font-size:14px;font-weight:600;color:#e8eaed;font-variant-numeric:tabular-nums;align-self:center}
+.beat-led{display:inline-block;width:6px;height:6px;border-radius:50%;background:#1c1e23}
+.beat-led.on{background:#ff8c42;box-shadow:0 0 6px #ff8c42}
+
+.transport{display:flex;align-items:center;gap:4px}
+.tbtn{
+  background:#13151a;border:1px solid #1c1e23;border-radius:3px;
+  padding:0 10px;height:26px;font-size:9px;font-weight:600;letter-spacing:.15em;
+  color:#a8adb8;text-transform:uppercase;
+  display:inline-flex;align-items:center;justify-content:center;gap:4px;
+  transition:background .1s ease,color .1s ease,border-color .1s ease;
+  min-width:26px
+}
+.tbtn:hover{border-color:#2a2d34;color:#e8eaed}
+.tbtn:active{background:#1c1e23}
+.tbtn.on{background:#ff8c42;border-color:#ff8c42;color:#08090b}
+.tbtn.rec{border-color:#ff5c5c;color:#ff5c5c}
+.tbtn.rec.armed{background:#ff5c5c;color:#08090b;animation:pulse 1s ease-in-out infinite}
+.tbtn.lg{height:30px;padding:0 14px;font-size:10px}
+@keyframes pulse{50%{opacity:.55}}
+
+.file-row{display:flex;align-items:center;gap:6px;padding:6px 0 8px}
+.file-name{flex:1;font-size:9px;color:#6e737e;background:#08090b;border:1px solid #1c1e23;padding:6px 8px;border-radius:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;letter-spacing:.05em}
+
+/* ============================ TABS ============================ */
+.tabs{
+  display:grid;grid-template-columns:repeat(6,1fr);gap:0;
+  background:#0d0e11;
+  border-top:1px solid #1c1e23;
+  border-bottom:1px solid #1c1e23;
+  position:sticky;top:74px;z-index:29
+}
+.tab{
+  height:36px;
+  padding:4px 2px;
+  background:transparent;
+  font-size:9px;font-weight:600;letter-spacing:.18em;color:#4a4f59;
+  border-right:1px solid #1c1e23;
+  border-bottom:2px solid transparent;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;
+  text-align:center
+}
+.tab:last-child{border-right:0}
+.tab .tab-num{font-size:7px;color:#3a3d44;letter-spacing:.1em}
+.tab.on{color:#e8eaed;background:#08090b}
+.tab.on .tab-num{color:currentColor;opacity:.6}
+.tab-sample.on{border-bottom-color:#ff8c42;color:#ff8c42}
+.tab-tex.on{border-bottom-color:#ff5cb1;color:#ff5cb1}
+.tab-delay.on{border-bottom-color:#4ac4ff;color:#4ac4ff}
+.tab-mod.on{border-bottom-color:#c489ff;color:#c489ff}
+.tab-loop.on{border-bottom-color:#ff5c5c;color:#ff5c5c}
+.tab-perf.on{border-bottom-color:#b8ff5c;color:#b8ff5c}
+
+/* ============================ PAGES ============================ */
+.pages{flex:1;padding:10px;display:flex;flex-direction:column;gap:8px;padding-bottom:48px}
+.page{display:flex;flex-direction:column;gap:8px}
+.page[hidden]{display:none}
+
+/* ============================ PANELS ============================ */
 .panel{
-background:#13151a;border:1px solid #2a2d34;border-radius:6px;
-overflow:hidden;position:relative
+  background:#0d0e11;
+  border:1px solid #1c1e23;
+  border-radius:4px;
+  overflow:hidden
 }
 .panel-head{
-display:flex;align-items:center;justify-content:space-between;
-padding:8px 10px;
-border-bottom:1px solid #1f2228;
-background:linear-gradient(180deg,#191c21 0%,#13151a 100%)
+  display:flex;align-items:center;justify-content:space-between;
+  padding:8px 10px;
+  border-bottom:1px solid #1c1e23;
+  min-height:36px
 }
 .panel-title{display:flex;align-items:center;gap:8px}
 .tag{
-display:inline-block;font-size:9px;font-weight:700;letter-spacing:.2em;
-padding:3px 6px;border-radius:3px;
-background:#0a0b0d;border:1px solid currentColor
+  display:inline-block;font-size:8px;font-weight:700;letter-spacing:.2em;
+  padding:3px 5px;border-radius:2px;
+  background:transparent;border:1px solid currentColor;line-height:1
 }
-.panel-name{font-size:10px;font-weight:600;letter-spacing:.2em;text-transform:uppercase;color:#a8adb8}
-.panel-body{padding:12px 10px;display:flex;flex-direction:column;gap:10px}
+.panel-name{font-size:10px;font-weight:600;letter-spacing:.22em;text-transform:uppercase;color:#a8adb8}
+.panel-body{padding:10px;display:flex;flex-direction:column;gap:10px}
 
 /* color tags */
 .c-sample{color:#ff8c42}
-.c-delay{color:#4ac4ff}
 .c-tex{color:#ff5cb1}
+.c-delay{color:#4ac4ff}
 .c-out{color:#b8ff5c}
 .c-loop{color:#ff5c5c}
 .c-m1{color:#c489ff}
 .c-m2{color:#5cffd8}
 
-/* ================ KNOB ================ */
-.grid{display:grid;gap:10px}
+/* ============================ KNOB ============================ */
+.grid{display:grid;gap:8px}
 .grid.g2{grid-template-columns:repeat(2,1fr)}
 .grid.g3{grid-template-columns:repeat(3,1fr)}
 .grid.g4{grid-template-columns:repeat(4,1fr)}
 .grid.g5{grid-template-columns:repeat(5,1fr)}
-@media(max-width:480px){.grid.g5{grid-template-columns:repeat(3,1fr)}.grid.g4{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:480px){.grid.g5{grid-template-columns:repeat(3,1fr)}.grid.g4{grid-template-columns:repeat(4,1fr)}}
 
-.ctrl{display:flex;flex-direction:column;align-items:center;gap:4px;position:relative}
+.ctrl{display:flex;flex-direction:column;align-items:center;gap:3px;position:relative;padding:2px 0}
 .knob{
-width:46px;height:46px;border-radius:50%;
-background:radial-gradient(circle at 30% 30%,#2a2d34 0%,#16181c 60%,#0a0b0d 100%);
-border:1px solid #2a2d34;
-position:relative;cursor:ns-resize;
-touch-action:none;
-box-shadow:inset 0 1px 0 rgba(255,255,255,.05),0 2px 4px rgba(0,0,0,.3)
+  width:42px;height:42px;border-radius:50%;
+  background:#13151a;
+  border:1px solid #1c1e23;
+  position:relative;cursor:ns-resize;
+  touch-action:none;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.04)
 }
 .knob::after{
-content:””;position:absolute;left:50%;top:5px;
-width:2px;height:14px;background:currentColor;
-transform-origin:50% 18px;
-border-radius:1px;
-box-shadow:0 0 4px currentColor
+  content:"";position:absolute;left:50%;top:4px;
+  width:2px;height:13px;background:currentColor;
+  transform-origin:50% 17px;
+  border-radius:1px
 }
-.knob-track{
-position:absolute;inset:-4px;border-radius:50%;
-pointer-events:none
-}
-.ctrl-label{font-size:9px;letter-spacing:.15em;color:#6e737e;text-transform:uppercase;text-align:center}
-.ctrl-val{font-size:9px;color:#a8adb8;font-variant-numeric:tabular-nums;min-height:11px}
+.ctrl-label{font-size:8px;letter-spacing:.18em;color:#5e636e;text-transform:uppercase;text-align:center;font-weight:500}
+.ctrl-val{font-size:9px;color:#a8adb8;font-variant-numeric:tabular-nums;line-height:1.1;min-height:11px;text-align:center}
 .ctrl.modable{cursor:pointer}
-.mod-pick{position:absolute;top:-3px;right:-3px;width:11px;height:11px;border-radius:50%;background:#0a0b0d;border:1px solid #2a2d34;display:flex;align-items:center;justify-content:center;font-size:7px;color:#5e636e;line-height:1}
+.mod-pick{position:absolute;top:0;right:50%;transform:translateX(28px);width:11px;height:11px;border-radius:50%;background:#08090b;border:1px solid #1c1e23;display:flex;align-items:center;justify-content:center;font-size:7px;color:#5e636e;line-height:1;font-weight:700}
 .mod-pick.m1{border-color:#c489ff;color:#c489ff}
 .mod-pick.m2{border-color:#5cffd8;color:#5cffd8}
-.mod-pick.both{background:linear-gradient(135deg,#c489ff 0%,#c489ff 50%,#5cffd8 50%,#5cffd8 100%);color:#0a0b0d;border-color:transparent}
-.assigning .ctrl.modable .knob{box-shadow:0 0 0 1px #c489ff,inset 0 1px 0 rgba(255,255,255,.05);animation:pickflash 1s ease-in-out infinite}
-.assigning.m2-pick .ctrl.modable .knob{box-shadow:0 0 0 1px #5cffd8,inset 0 1px 0 rgba(255,255,255,.05)}
-@keyframes pickflash{50%{opacity:.6}}
+.mod-pick.both{background:#c489ff;color:#08090b;border-color:#c489ff}
+body.assigning .ctrl.modable .knob{box-shadow:0 0 0 1px #c489ff,inset 0 1px 0 rgba(255,255,255,.04);animation:assignflash .8s ease-in-out infinite}
+body.assigning.m2-pick .ctrl.modable .knob{box-shadow:0 0 0 1px #5cffd8,inset 0 1px 0 rgba(255,255,255,.04)}
+@keyframes assignflash{50%{opacity:.55}}
 
-/* ================ TOGGLES & SELECTS ================ */
-.seg{display:flex;background:#0a0b0d;border:1px solid #2a2d34;border-radius:4px;overflow:hidden}
-.seg button{flex:1;padding:7px 8px;font-size:9px;letter-spacing:.18em;color:#6e737e;text-transform:uppercase;font-weight:600}
-.seg button.on{background:#1f2228;color:#e8eaed}
+/* ============================ TOGGLES & SELECTS ============================ */
+.seg{display:flex;background:#08090b;border:1px solid #1c1e23;border-radius:3px;overflow:hidden}
+.seg button{flex:1;padding:7px 6px;font-size:9px;letter-spacing:.18em;color:#5e636e;text-transform:uppercase;font-weight:600;border-right:1px solid #1c1e23}
+.seg button:last-child{border-right:0}
+.seg button.on{background:#13151a;color:#e8eaed}
 .seg.c-sample button.on{color:#ff8c42}
-.seg.c-delay button.on{color:#4ac4ff}
 .seg.c-tex button.on{color:#ff5cb1}
+.seg.c-delay button.on{color:#4ac4ff}
 .seg.c-out button.on{color:#b8ff5c}
 .seg.c-loop button.on{color:#ff5c5c}
 .seg.c-m1 button.on{color:#c489ff}
 .seg.c-m2 button.on{color:#5cffd8}
 
-.row-hdr{font-size:9px;letter-spacing:.2em;color:#5e636e;text-transform:uppercase;padding-bottom:2px;border-bottom:1px dashed #2a2d34;margin-bottom:2px}
+.row-hdr{font-size:8px;letter-spacing:.22em;color:#4a4f59;text-transform:uppercase;padding:4px 0 2px;border-bottom:1px dashed #1c1e23;margin-bottom:4px;font-weight:600}
 
-/* ================ WAVEFORM / DISPLAY ================ */
+/* ============================ DISPLAYS / SCOPES ============================ */
 .scope{
-background:#0a0b0d;border:1px solid #2a2d34;border-radius:4px;
-height:60px;position:relative;overflow:hidden
+  background:#08090b;border:1px solid #1c1e23;border-radius:3px;
+  height:54px;position:relative;overflow:hidden
 }
 .scope canvas{width:100%;height:100%;display:block}
-.scope-overlay{position:absolute;top:4px;left:6px;font-size:9px;color:#5e636e;letter-spacing:.15em;text-transform:uppercase;z-index:2;pointer-events:none}
+.scope-overlay{position:absolute;top:4px;left:6px;font-size:8px;color:#4a4f59;letter-spacing:.2em;text-transform:uppercase;z-index:2;pointer-events:none;font-weight:600}
+.scope-overlay.right{left:auto;right:6px}
 
-/* ================ STEP SEQ ================ */
+/* ============================ SAMPLE SEQUENCER ============================ */
+.seq-section{display:flex;flex-direction:column;gap:6px}
+.seq-bar{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.seq-bar .seg{flex:0 0 auto}
+.seq-grid{display:grid;grid-template-columns:repeat(16,1fr);gap:2px}
+.seq-cell{
+  height:30px;background:#08090b;border:1px solid #1c1e23;border-radius:2px;
+  position:relative;cursor:pointer;touch-action:none;
+  display:flex;align-items:center;justify-content:center
+}
+.seq-cell.on{background:#1f1107;border-color:#ff8c42}
+.seq-cell.playing{box-shadow:0 0 0 1px #ff8c42}
+.seq-cell-num{position:absolute;top:1px;left:2px;font-size:7px;color:#3a3d44;line-height:1}
+.seq-cell.on .seq-cell-num{color:#ff8c42;opacity:.6}
+.seq-cell.beat{border-color:#2a2d34}
+.seq-cell.disabled{opacity:.3}
+
+.pitch-grid{display:grid;grid-template-columns:repeat(16,1fr);gap:2px}
+.pitch-cell{
+  height:32px;background:#08090b;border:1px solid #1c1e23;border-radius:2px;
+  position:relative;cursor:ns-resize;touch-action:none;overflow:hidden
+}
+.pitch-bar{position:absolute;left:0;right:0;background:#ff8c42;opacity:.55}
+.pitch-zero{position:absolute;left:0;right:0;height:1px;top:50%;background:#1c1e23}
+.pitch-val{position:absolute;bottom:1px;right:2px;font-size:7px;color:#5e636e;font-variant-numeric:tabular-nums;line-height:1}
+.seq-cell.disabled,.pitch-cell.disabled{opacity:.25;pointer-events:none}
+
+/* ============================ MOD STEPS ============================ */
 .steps{display:grid;grid-template-columns:repeat(16,1fr);gap:2px}
 .step{
-height:22px;background:#0f1115;border:1px solid #1f2228;border-radius:2px;
-position:relative;cursor:ns-resize;touch-action:none
+  height:24px;background:#0f1115;border:1px solid #1c1e23;border-radius:2px;
+  position:relative;cursor:ns-resize;touch-action:none
 }
-.step-fill{position:absolute;left:0;right:0;bottom:0;background:currentColor;border-radius:1px;opacity:.7}
-.step.active{box-shadow:0 0 0 1px currentColor;background:#1a1d22}
+.step-fill{position:absolute;left:0;right:0;bottom:0;background:currentColor;border-radius:1px;opacity:.65}
+.step.active{box-shadow:0 0 0 1px currentColor}
 
-/* ================ HEADS / FRAGS LIST ================ */
-.heads{display:flex;flex-direction:column;gap:4px;max-height:140px;overflow:auto}
-.head-row{
-display:grid;grid-template-columns:auto 1fr 1fr 1fr auto;gap:6px;align-items:center;
-padding:5px 6px;background:#0f1115;border:1px solid #1f2228;border-radius:3px
+/* ============================ LISTS (heads / dpd) ============================ */
+.list-rows{display:flex;flex-direction:column;gap:4px;max-height:200px;overflow:auto}
+.list-row{
+  display:grid;grid-template-columns:auto 1fr 1fr 1fr auto;gap:6px;align-items:center;
+  padding:5px 6px;background:#08090b;border:1px solid #1c1e23;border-radius:3px
 }
-.head-num{font-size:9px;color:#ff5cb1;font-weight:700;letter-spacing:.1em}
-.mini{font-size:9px;color:#a8adb8;display:flex;flex-direction:column;gap:2px}
-.mini-label{font-size:8px;color:#5e636e;letter-spacing:.1em;text-transform:uppercase}
-.mini-input{background:#0a0b0d;border:1px solid #2a2d34;border-radius:2px;padding:3px 4px;font-size:9px;width:100%;color:#e8eaed}
-.iconbtn{width:22px;height:22px;border-radius:3px;background:#1a1d22;border:1px solid #2a2d34;color:#a8adb8;display:flex;align-items:center;justify-content:center;font-size:11px}
-.iconbtn:hover{color:#e8eaed;border-color:#3a3d44}
-.iconbtn.danger:hover{color:#ff5c5c;border-color:#ff5c5c}
+.list-num{font-size:9px;font-weight:700;letter-spacing:.1em;color:#ff5cb1;min-width:22px}
+.mini{display:flex;flex-direction:column;gap:2px}
+.mini-label{font-size:7px;color:#4a4f59;letter-spacing:.18em;text-transform:uppercase;font-weight:600}
+.mini-input{background:#0d0e11;border:1px solid #1c1e23;border-radius:2px;padding:3px 4px;font-size:9px;width:100%;color:#e8eaed;height:22px}
+input[type=range].mini-input{-webkit-appearance:none !important;height:22px;padding:0 4px;background:#0d0e11}
+input[type=range].mini-input::-webkit-slider-runnable-track{height:2px;background:#2a2d34;border-radius:1px}
+input[type=range].mini-input::-webkit-slider-thumb{-webkit-appearance:none;width:10px;height:14px;background:currentColor;border-radius:1px;margin-top:-6px}
+.iconbtn{width:24px;height:24px;border-radius:3px;background:#0d0e11;border:1px solid #1c1e23;color:#a8adb8;display:flex;align-items:center;justify-content:center;font-size:11px;line-height:1}
+.iconbtn:hover{color:#e8eaed;border-color:#2a2d34}
 
-/* ================ FILE INPUT ================ */
-.filebar{display:flex;gap:6px;align-items:center}
-.file-name{flex:1;font-size:10px;color:#8a8f99;background:#0a0b0d;border:1px solid #2a2d34;padding:6px 8px;border-radius:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-
-/* ================ MOD ASSIGN UI ================ */
+/* ============================ ASSIGN BAR ============================ */
 .assignbar{
-display:flex;align-items:center;gap:6px;
-padding:4px 6px;
-background:#0f1115;border:1px solid #2a2d34;border-radius:3px;
-font-size:9px;letter-spacing:.1em;color:#a8adb8
+  display:none;align-items:center;gap:8px;
+  padding:6px 10px;
+  background:#13151a;border:1px solid #c489ff;border-radius:3px;
+  font-size:9px;letter-spacing:.15em;color:#c489ff;
+  margin-bottom:0
 }
-.assigning .assignbar{border-color:#c489ff;color:#c489ff}
-.assigning.m2-pick .assignbar{border-color:#5cffd8;color:#5cffd8}
+body.assigning .assignbar{display:flex}
+body.assigning.m2-pick .assignbar{border-color:#5cffd8;color:#5cffd8}
 
-/* ================ NOTICE ================ */
-.notice{font-size:9px;color:#5e636e;letter-spacing:.05em;line-height:1.5;padding:6px 8px;background:#0a0b0d;border:1px dashed #2a2d34;border-radius:3px}
+/* ============================ NOTICE ============================ */
+.notice{font-size:9px;color:#5e636e;letter-spacing:.05em;line-height:1.5;padding:6px 8px;background:#08090b;border:1px dashed #1c1e23;border-radius:3px}
 
-/* ================ SCROLLBARS ================ */
-.heads::-webkit-scrollbar{width:4px}
-.heads::-webkit-scrollbar-track{background:#0a0b0d}
-.heads::-webkit-scrollbar-thumb{background:#2a2d34;border-radius:2px}
+/* ============================ MOD ASSIGN TARGET DISPLAY ============================ */
+.targets{font-size:8px;color:#4a4f59;letter-spacing:.1em;padding:6px 8px;background:#08090b;border:1px dashed #1c1e23;border-radius:3px;line-height:1.5;text-transform:uppercase}
+.targets b{color:inherit;font-weight:700;letter-spacing:.05em}
 
-/* arrow indicators */
-.arrow-fwd::before{content:“▶”;font-size:8px}
-.arrow-rev::before{content:“◀”;font-size:8px}
+/* ============================ ENGINE ROW (perf) ============================ */
+.engine-row{display:flex;align-items:center;gap:8px;padding:6px 8px;background:#08090b;border:1px solid #1c1e23;border-radius:3px}
+.engine-row .name{flex:1;font-size:9px;letter-spacing:.2em;font-weight:600;text-transform:uppercase}
+.engine-row .ms-toggle{display:flex;gap:2px}
+.ms-toggle button{width:26px;height:22px;background:#0d0e11;border:1px solid #1c1e23;border-radius:2px;font-size:8px;letter-spacing:.1em;color:#5e636e;font-weight:700}
+.ms-toggle button.on{color:#08090b}
+.ms-toggle button.mute.on{background:#ff5c5c;border-color:#ff5c5c}
+.ms-toggle button.solo.on{background:#ffd84a;border-color:#ffd84a}
+
+/* ============================ SCROLLBARS ============================ */
+.list-rows::-webkit-scrollbar{width:4px}
+.list-rows::-webkit-scrollbar-track{background:#08090b}
+.list-rows::-webkit-scrollbar-thumb{background:#2a2d34;border-radius:2px}
+
+/* ============================ ARROW ICON BUTTONS ============================ */
+.dir-toggle{display:flex;flex-direction:column;width:42px;height:42px;background:#08090b;border:1px solid #1c1e23;border-radius:3px;overflow:hidden}
+.dir-toggle button{flex:1;font-size:9px;color:#5e636e;border-bottom:1px solid #1c1e23;letter-spacing:0;padding:0}
+.dir-toggle button:last-child{border-bottom:0}
+.dir-toggle button.on{background:#13151a;color:currentColor}
+
+/* ============================ FOOTER ============================ */
+.foot{padding:12px;text-align:center;font-size:8px;color:#3a3d44;letter-spacing:.2em;text-transform:uppercase}
 </style>
-
 </head>
 <body>
-<div class="shell">
+<div class="app">
 
-  <!-- ============== HEADER ============== -->
-
-  <div class="head">
-    <div class="brand">
-      <div>
-        <div class="logo">TROIS<span class="logo-dot"></span>3</div>
-        <div class="subtitle">Triple Engine · Lofi Sampler</div>
+  <!-- ============================ HEADER ============================ -->
+  <header class="head">
+    <div class="brand-row">
+      <div class="brand">TROIS<span class="brand-dot"></span>3</div>
+      <div class="bpm-cluster">
+        <div class="bpm-box" id="bpmBox">
+          <span class="bpm-label">BPM</span>
+          <span class="bpm-val" id="bpmVal">90</span>
+        </div>
+        <button class="tbtn" id="bpmTap">TAP</button>
+        <span class="beat-led" id="beatLed"></span>
       </div>
       <div class="transport">
-        <button class="tbtn" id="loadBtn">⤓ LOAD</button>
+        <button class="tbtn" id="loadBtn">⤓</button>
         <input type="file" id="fileIn" accept="audio/*,.wav,.wave,.mp3,.m4a,.aac,.aif,.aiff,.caf" style="display:none">
-        <button class="tbtn" id="playBtn"><span class="led" id="playLed"></span>PLAY</button>
-        <button class="tbtn" id="stopBtn">STOP</button>
+        <button class="tbtn lg" id="playBtn">▶</button>
+        <button class="tbtn" id="stopBtn">■</button>
       </div>
     </div>
-    <div class="filebar">
-      <div class="file-name" id="fileName">— aucun échantillon chargé —</div>
+    <div class="file-row">
+      <div class="file-name" id="fileName">— aucun échantillon —</div>
       <button class="tbtn" id="genBtn">◇ GEN</button>
     </div>
-    <div class="scope">
-      <canvas id="scope"></canvas>
-      <div class="scope-overlay" id="scopeLbl">SOURCE</div>
-    </div>
-  </div>
+  </header>
 
-  <!-- ============== MODULATION ASSIGN BAR ============== -->
+  <!-- ============================ TABS ============================ -->
+  <nav class="tabs">
+    <button class="tab tab-sample on" data-tab="sample"><span class="tab-num">01</span><span>SAMPLE</span></button>
+    <button class="tab tab-tex" data-tab="texture"><span class="tab-num">02</span><span>TEXTURE</span></button>
+    <button class="tab tab-delay" data-tab="delay"><span class="tab-num">03</span><span>DELAY</span></button>
+    <button class="tab tab-mod" data-tab="mod"><span class="tab-num">04</span><span>MOD</span></button>
+    <button class="tab tab-loop" data-tab="loop"><span class="tab-num">05</span><span>LOOP</span></button>
+    <button class="tab tab-perf" data-tab="perf"><span class="tab-num">06</span><span>PERF</span></button>
+  </nav>
 
-  <div class="assignbar" id="assignBar">
-    <span>MOD ASSIGN —</span>
-    <span id="assignStatus">tape sur un contrôle puis sur MOD1 / MOD2</span>
-    <button class="tbtn" id="assignCancel" style="margin-left:auto;display:none;padding:4px 8px">ANNULER</button>
-  </div>
+  <main class="pages">
 
-  <!-- ============== ROW : SAMPLE + DELAY ============== -->
+    <!-- ============================ ASSIGN BAR (global) ============================ -->
+    <div class="assignbar" id="assignBar">
+      <span id="assignStatus">tape sur un contrôle pour l'assigner</span>
+      <button class="tbtn" id="assignCancel" style="margin-left:auto;padding:4px 8px;height:22px">ANNULER</button>
+    </div>
 
-  <div class="row two">
-
-```
-<!-- SAMPLE ENGINE -->
-<div class="panel">
-  <div class="panel-head">
-    <div class="panel-title">
-      <span class="tag c-sample">01</span>
-      <span class="panel-name">SAMPLE</span>
-    </div>
-    <div class="seg c-sample" id="sampleMode">
-      <button data-v="oneshot" class="on">ONE</button>
-      <button data-v="loop">LOOP</button>
-    </div>
-  </div>
-  <div class="panel-body">
-    <div class="grid g5">
-      <div class="ctrl modable" data-param="sample.start"><div class="knob c-sample" data-min="0" data-max="1" data-val="0"></div><div class="ctrl-label">START</div><div class="ctrl-val">0%</div></div>
-      <div class="ctrl modable" data-param="sample.end"><div class="knob c-sample" data-min="0" data-max="1" data-val="1"></div><div class="ctrl-label">END</div><div class="ctrl-val">100%</div></div>
-      <div class="ctrl modable" data-param="sample.pitch"><div class="knob c-sample" data-min="-12" data-max="12" data-val="0"></div><div class="ctrl-label">PITCH</div><div class="ctrl-val">0 st</div></div>
-      <div class="ctrl modable" data-param="sample.flutter"><div class="knob c-sample" data-min="0" data-max="1" data-val="0.15"></div><div class="ctrl-label">FLUTTER</div><div class="ctrl-val">15%</div></div>
-      <div class="ctrl modable" data-param="sample.gain"><div class="knob c-sample" data-min="0" data-max="1.5" data-val="1"></div><div class="ctrl-label">GAIN</div><div class="ctrl-val">100%</div></div>
-    </div>
-    <div class="seg c-sample" id="sampleDir">
-      <button data-v="fwd" class="on">▶ FORWARD</button>
-      <button data-v="rev">◀ REVERSE</button>
-    </div>
-  </div>
-</div>
-
-<!-- DELAY ENGINE -->
-<div class="panel">
-  <div class="panel-head">
-    <div class="panel-title">
-      <span class="tag c-delay">02</span>
-      <span class="panel-name">STEREO DELAY</span>
-    </div>
-    <div class="seg c-delay" id="delaySync">
-      <button data-v="free" class="on">FREE</button>
-      <button data-v="sync">SYNC</button>
-    </div>
-  </div>
-  <div class="panel-body">
-    <div class="row-hdr">L · LEFT LINE</div>
-    <div class="grid g3">
-      <div class="ctrl modable" data-param="delay.timeL"><div class="knob c-delay" data-min="0.005" data-max="2" data-val="0.375"></div><div class="ctrl-label">TIME L</div><div class="ctrl-val">375 ms</div></div>
-      <div class="ctrl"><div class="seg c-delay" id="delayDirL" style="height:46px;width:46px;flex-direction:column"><button data-v="fwd" class="on arrow-fwd" style="font-size:0"></button><button data-v="rev" class="arrow-rev" style="font-size:0"></button></div><div class="ctrl-label">DIR L</div><div class="ctrl-val">▶</div></div>
-      <div class="ctrl modable" data-param="delay.panL"><div class="knob c-delay" data-min="-1" data-max="1" data-val="-0.7"></div><div class="ctrl-label">PAN L</div><div class="ctrl-val">L70</div></div>
-    </div>
-    <div class="row-hdr">R · RIGHT LINE</div>
-    <div class="grid g3">
-      <div class="ctrl modable" data-param="delay.timeR"><div class="knob c-delay" data-min="0.005" data-max="2" data-val="0.5"></div><div class="ctrl-label">TIME R</div><div class="ctrl-val">500 ms</div></div>
-      <div class="ctrl"><div class="seg c-delay" id="delayDirR" style="height:46px;width:46px;flex-direction:column"><button data-v="fwd" class="on arrow-fwd" style="font-size:0"></button><button data-v="rev" class="arrow-rev" style="font-size:0"></button></div><div class="ctrl-label">DIR R</div><div class="ctrl-val">▶</div></div>
-      <div class="ctrl modable" data-param="delay.panR"><div class="knob c-delay" data-min="-1" data-max="1" data-val="0.7"></div><div class="ctrl-label">PAN R</div><div class="ctrl-val">R70</div></div>
-    </div>
-    <div class="row-hdr">FEEDBACK & FILTERS</div>
-    <div class="grid g4">
-      <div class="ctrl modable" data-param="delay.fb"><div class="knob c-delay" data-min="0" data-max="1" data-val="0"></div><div class="ctrl-label">FEEDBK</div><div class="ctrl-val">0%</div></div>
-      <div class="ctrl modable" data-param="delay.hp"><div class="knob c-delay" data-min="20" data-max="2000" data-val="120"></div><div class="ctrl-label">HP</div><div class="ctrl-val">120 Hz</div></div>
-      <div class="ctrl modable" data-param="delay.lp"><div class="knob c-delay" data-min="500" data-max="20000" data-val="6000"></div><div class="ctrl-label">LP</div><div class="ctrl-val">6 kHz</div></div>
-      <div class="ctrl modable" data-param="delay.mix"><div class="knob c-delay" data-min="0" data-max="1" data-val="0.4"></div><div class="ctrl-label">MIX</div><div class="ctrl-val">40%</div></div>
-    </div>
-  </div>
-</div>
-```
-
-  </div>
-
-  <!-- ============== ROW : TEXTURES ============== -->
-
-  <div class="panel">
-    <div class="panel-head">
-      <div class="panel-title">
-        <span class="tag c-tex">03</span>
-        <span class="panel-name">TEXTURES</span>
-      </div>
-      <div class="seg c-tex" id="texMode">
-        <button data-v="multi" class="on">MULTI</button>
-        <button data-v="frag">FRAG</button>
-        <button data-v="dpd">DPD</button>
-      </div>
-    </div>
-    <div class="panel-body">
-      <!-- MULTI MODE -->
-      <div id="texMulti" class="tex-mode">
-        <div class="row-hdr">MULTIHEAD · jusqu'à 8 têtes · vitesses ×2ⁿ</div>
-        <div class="grid g4">
-          <div class="ctrl modable" data-param="tex.density"><div class="knob c-tex" data-min="1" data-max="8" data-val="4" data-step="1"></div><div class="ctrl-label">HEADS</div><div class="ctrl-val">4</div></div>
-          <div class="ctrl modable" data-param="tex.spread"><div class="knob c-tex" data-min="0" data-max="1" data-val="0.7"></div><div class="ctrl-label">SPREAD</div><div class="ctrl-val">70%</div></div>
-          <div class="ctrl modable" data-param="tex.gain"><div class="knob c-tex" data-min="0" data-max="1" data-val="0.5"></div><div class="ctrl-label">GAIN</div><div class="ctrl-val">50%</div></div>
-          <div class="ctrl"><button class="tbtn" id="multiRand" style="height:46px;font-size:9px">↻ RAND</button><div class="ctrl-label">SEED</div><div class="ctrl-val">—</div></div>
+    <!-- ============================ PAGE SAMPLE ============================ -->
+    <section class="page" data-page="sample">
+      <div class="panel">
+        <div class="panel-head">
+          <div class="panel-title">
+            <span class="tag c-sample">01</span>
+            <span class="panel-name">SAMPLE</span>
+          </div>
+          <div class="seg c-sample" id="sampleMode">
+            <button data-v="oneshot" class="on">ONE</button>
+            <button data-v="loop">LOOP</button>
+          </div>
         </div>
-        <div class="heads" id="headsList"></div>
-      </div>
-      <!-- FRAG MODE -->
-      <div id="texFrag" class="tex-mode" style="display:none">
-        <div class="row-hdr">FRAGMENT · taille / nombre / dispersion</div>
-        <div class="grid g4">
-          <div class="ctrl modable" data-param="tex.fragCount"><div class="knob c-tex" data-min="1" data-max="16" data-val="6" data-step="1"></div><div class="ctrl-label">COUNT</div><div class="ctrl-val">6</div></div>
-          <div class="ctrl modable" data-param="tex.fragSize"><div class="knob c-tex" data-min="0.02" data-max="0.5" data-val="0.12"></div><div class="ctrl-label">SIZE</div><div class="ctrl-val">120 ms</div></div>
-          <div class="ctrl modable" data-param="tex.fragJitter"><div class="knob c-tex" data-min="0" data-max="1" data-val="0.5"></div><div class="ctrl-label">JITTER</div><div class="ctrl-val">50%</div></div>
-          <div class="ctrl modable" data-param="tex.fragGain"><div class="knob c-tex" data-min="0" data-max="1" data-val="0.5"></div><div class="ctrl-label">GAIN</div><div class="ctrl-val">50%</div></div>
-        </div>
-        <div class="grid g3">
-          <div class="ctrl modable" data-param="tex.fragRate"><div class="knob c-tex" data-min="1" data-max="40" data-val="8"></div><div class="ctrl-label">RATE</div><div class="ctrl-val">8 Hz</div></div>
-          <div class="ctrl modable" data-param="tex.fragSpread"><div class="knob c-tex" data-min="0" data-max="1" data-val="0.8"></div><div class="ctrl-label">SPREAD</div><div class="ctrl-val">80%</div></div>
-          <div class="ctrl modable" data-param="tex.fragRev"><div class="knob c-tex" data-min="0" data-max="1" data-val="0.3"></div><div class="ctrl-label">REV PROB</div><div class="ctrl-val">30%</div></div>
+        <div class="panel-body">
+          <div class="scope">
+            <canvas id="scope"></canvas>
+            <div class="scope-overlay">SOURCE</div>
+            <div class="scope-overlay right" id="srcInfo"></div>
+          </div>
+          <div class="grid g5">
+            <div class="ctrl modable" data-param="sample.start"><div class="knob c-sample" data-min="0" data-max="1" data-val="0"></div><div class="ctrl-label">START</div><div class="ctrl-val">0%</div></div>
+            <div class="ctrl modable" data-param="sample.end"><div class="knob c-sample" data-min="0" data-max="1" data-val="1"></div><div class="ctrl-label">END</div><div class="ctrl-val">100%</div></div>
+            <div class="ctrl modable" data-param="sample.pitch"><div class="knob c-sample" data-min="-12" data-max="12" data-val="0"></div><div class="ctrl-label">PITCH</div><div class="ctrl-val">0 st</div></div>
+            <div class="ctrl modable" data-param="sample.flutter"><div class="knob c-sample" data-min="0" data-max="1" data-val="0.15"></div><div class="ctrl-label">FLUTTER</div><div class="ctrl-val">15%</div></div>
+            <div class="ctrl modable" data-param="sample.gain"><div class="knob c-sample" data-min="0" data-max="1.5" data-val="1"></div><div class="ctrl-label">GAIN</div><div class="ctrl-val">100%</div></div>
+          </div>
+          <div class="seg c-sample" id="sampleDir">
+            <button data-v="fwd" class="on">▶ FORWARD</button>
+            <button data-v="rev">◀ REVERSE</button>
+          </div>
         </div>
       </div>
-      <!-- DPD MODE -->
-      <div id="texDpd" class="tex-mode" style="display:none">
-        <div class="row-hdr">DPD · 4 IMPULSIONS · 2 PAR CANAL</div>
-        <div id="dpdList"></div>
-        <div class="grid g2">
-          <div class="ctrl modable" data-param="tex.dpdGain"><div class="knob c-tex" data-min="0" data-max="1" data-val="0.6"></div><div class="ctrl-label">GAIN</div><div class="ctrl-val">60%</div></div>
-          <div class="ctrl modable" data-param="tex.dpdRate"><div class="knob c-tex" data-min="0.1" data-max="4" data-val="0.5"></div><div class="ctrl-label">PERIOD</div><div class="ctrl-val">500 ms</div></div>
+
+      <!-- SAMPLE SEQUENCER -->
+      <div class="panel">
+        <div class="panel-head">
+          <div class="panel-title">
+            <span class="tag c-sample">SEQ</span>
+            <span class="panel-name">SAMPLE SEQUENCER · 16 PAS</span>
+          </div>
+          <div class="seg c-sample" id="seqOn">
+            <button data-v="off" class="on">OFF</button>
+            <button data-v="on">ON</button>
+          </div>
+        </div>
+        <div class="panel-body">
+          <div class="seq-section">
+            <div class="row-hdr c-sample" style="color:#ff8c42">GATES · TAPE POUR ACTIVER</div>
+            <div class="seq-grid" id="seqGates"></div>
+            <div class="row-hdr c-sample" style="color:#ff8c42">PITCH PAR PAS · DRAG VERTICAL · −12 / +12 ST</div>
+            <div class="pitch-grid" id="seqPitches"></div>
+          </div>
+          <div class="grid g4">
+            <div class="ctrl"><div class="knob c-sample" data-param="seq.length" data-min="1" data-max="16" data-val="16" data-step="1"></div><div class="ctrl-label">LENGTH</div><div class="ctrl-val">16</div></div>
+            <div class="ctrl"><div class="knob c-sample" data-param="seq.div" data-min="0" data-max="6" data-val="3" data-step="1"></div><div class="ctrl-label">DIV</div><div class="ctrl-val">1/16</div></div>
+            <div class="ctrl"><div class="knob c-sample" data-param="seq.gateLen" data-min="0.05" data-max="1" data-val="0.5"></div><div class="ctrl-label">GATE LEN</div><div class="ctrl-val">50%</div></div>
+            <div class="ctrl"><div class="knob c-sample" data-param="seq.swing" data-min="0" data-max="0.4" data-val="0"></div><div class="ctrl-label">SWING</div><div class="ctrl-val">0%</div></div>
+          </div>
+          <div class="seq-bar">
+            <button class="tbtn" id="seqClear">CLEAR</button>
+            <button class="tbtn" id="seqEvery2">EVERY 2</button>
+            <button class="tbtn" id="seqEvery4">EVERY 4</button>
+            <button class="tbtn" id="seqRandPitch">RAND PITCH</button>
+            <button class="tbtn" id="seqResetPitch">RESET PITCH</button>
+          </div>
         </div>
       </div>
-    </div>
-  </div>
+    </section>
 
-  <!-- ============== ROW : OUTPUT ============== -->
-
-  <div class="panel">
-    <div class="panel-head">
-      <div class="panel-title">
-        <span class="tag c-out">→</span>
-        <span class="panel-name">OUTPUT · FILTER + EXCITER</span>
+    <!-- ============================ PAGE TEXTURE ============================ -->
+    <section class="page" data-page="texture" hidden>
+      <div class="panel">
+        <div class="panel-head">
+          <div class="panel-title">
+            <span class="tag c-tex">02</span>
+            <span class="panel-name">TEXTURE</span>
+          </div>
+          <div class="seg c-tex" id="texMode">
+            <button data-v="multi" class="on">MULTI</button>
+            <button data-v="frag">FRAG</button>
+            <button data-v="dpd">DPD</button>
+          </div>
+        </div>
+        <div class="panel-body">
+          <!-- MULTI -->
+          <div id="texMulti" class="tex-mode">
+            <div class="row-hdr">MULTIHEAD · jusqu'à 8 têtes · vitesses ×2ⁿ</div>
+            <div class="grid g4">
+              <div class="ctrl modable" data-param="tex.density"><div class="knob c-tex" data-min="1" data-max="8" data-val="4" data-step="1"></div><div class="ctrl-label">HEADS</div><div class="ctrl-val">4</div></div>
+              <div class="ctrl modable" data-param="tex.spread"><div class="knob c-tex" data-min="0" data-max="1" data-val="0.7"></div><div class="ctrl-label">SPREAD</div><div class="ctrl-val">70%</div></div>
+              <div class="ctrl modable" data-param="tex.gain"><div class="knob c-tex" data-min="0" data-max="1" data-val="0.5"></div><div class="ctrl-label">GAIN</div><div class="ctrl-val">50%</div></div>
+              <div class="ctrl"><button class="tbtn" id="multiRand" style="height:42px;width:42px">↻</button><div class="ctrl-label">RAND</div><div class="ctrl-val">—</div></div>
+            </div>
+            <div class="list-rows" id="headsList"></div>
+          </div>
+          <!-- FRAG -->
+          <div id="texFrag" class="tex-mode" hidden>
+            <div class="row-hdr">FRAGMENT · taille / nombre / dispersion</div>
+            <div class="grid g4">
+              <div class="ctrl modable" data-param="tex.fragCount"><div class="knob c-tex" data-min="1" data-max="16" data-val="6" data-step="1"></div><div class="ctrl-label">COUNT</div><div class="ctrl-val">6</div></div>
+              <div class="ctrl modable" data-param="tex.fragSize"><div class="knob c-tex" data-min="0.02" data-max="0.5" data-val="0.12"></div><div class="ctrl-label">SIZE</div><div class="ctrl-val">120 ms</div></div>
+              <div class="ctrl modable" data-param="tex.fragJitter"><div class="knob c-tex" data-min="0" data-max="1" data-val="0.5"></div><div class="ctrl-label">JITTER</div><div class="ctrl-val">50%</div></div>
+              <div class="ctrl modable" data-param="tex.fragGain"><div class="knob c-tex" data-min="0" data-max="1" data-val="0.5"></div><div class="ctrl-label">GAIN</div><div class="ctrl-val">50%</div></div>
+            </div>
+            <div class="grid g3">
+              <div class="ctrl modable" data-param="tex.fragRate"><div class="knob c-tex" data-min="1" data-max="40" data-val="8"></div><div class="ctrl-label">RATE</div><div class="ctrl-val">8 Hz</div></div>
+              <div class="ctrl modable" data-param="tex.fragSpread"><div class="knob c-tex" data-min="0" data-max="1" data-val="0.8"></div><div class="ctrl-label">SPREAD</div><div class="ctrl-val">80%</div></div>
+              <div class="ctrl modable" data-param="tex.fragRev"><div class="knob c-tex" data-min="0" data-max="1" data-val="0.3"></div><div class="ctrl-label">REV PROB</div><div class="ctrl-val">30%</div></div>
+            </div>
+          </div>
+          <!-- DPD -->
+          <div id="texDpd" class="tex-mode" hidden>
+            <div class="row-hdr">DPD · 4 IMPULSIONS · 2 PAR CANAL</div>
+            <div class="list-rows" id="dpdList"></div>
+            <div class="grid g2">
+              <div class="ctrl modable" data-param="tex.dpdGain"><div class="knob c-tex" data-min="0" data-max="1" data-val="0.6"></div><div class="ctrl-label">GAIN</div><div class="ctrl-val">60%</div></div>
+              <div class="ctrl modable" data-param="tex.dpdRate"><div class="knob c-tex" data-min="0.1" data-max="4" data-val="0.5"></div><div class="ctrl-label">PERIOD</div><div class="ctrl-val">500 ms</div></div>
+            </div>
+          </div>
+        </div>
       </div>
-      <div class="seg c-out" id="filterType">
-        <button data-v="lp" class="on">LP</button>
-        <button data-v="hp">HP</button>
-        <button data-v="bp">BP</button>
-      </div>
-    </div>
-    <div class="panel-body">
-      <div class="grid g5">
-        <div class="ctrl modable" data-param="out.cutoff"><div class="knob c-out" data-min="40" data-max="20000" data-val="14000"></div><div class="ctrl-label">CUTOFF</div><div class="ctrl-val">14k</div></div>
-        <div class="ctrl modable" data-param="out.q"><div class="knob c-out" data-min="0.3" data-max="20" data-val="0.7"></div><div class="ctrl-label">RESO</div><div class="ctrl-val">0.7</div></div>
-        <div class="ctrl modable" data-param="out.drive"><div class="knob c-out" data-min="0" data-max="1" data-val="0.2"></div><div class="ctrl-label">DRIVE</div><div class="ctrl-val">20%</div></div>
-        <div class="ctrl modable" data-param="out.tone"><div class="knob c-out" data-min="0" data-max="1" data-val="0.5"></div><div class="ctrl-label">TONE</div><div class="ctrl-val">50%</div></div>
-        <div class="ctrl modable" data-param="out.master"><div class="knob c-out" data-min="0" data-max="1.2" data-val="0.85"></div><div class="ctrl-label">MASTER</div><div class="ctrl-val">85%</div></div>
-      </div>
-    </div>
-  </div>
+    </section>
 
-  <!-- ============== ROW : LOOPER ============== -->
-
-  <div class="panel">
-    <div class="panel-head">
-      <div class="panel-title">
-        <span class="tag c-loop">⟲</span>
-        <span class="panel-name">LOOPER</span>
+    <!-- ============================ PAGE DELAY ============================ -->
+    <section class="page" data-page="delay" hidden>
+      <div class="panel">
+        <div class="panel-head">
+          <div class="panel-title">
+            <span class="tag c-delay">03</span>
+            <span class="panel-name">STEREO DELAY</span>
+          </div>
+          <div class="seg c-delay" id="delaySync">
+            <button data-v="free" class="on">FREE</button>
+            <button data-v="sync">SYNC</button>
+          </div>
+        </div>
+        <div class="panel-body">
+          <div class="row-hdr">L · LEFT LINE</div>
+          <div class="grid g3">
+            <div class="ctrl modable" data-param="delay.timeL"><div class="knob c-delay" data-min="0.005" data-max="2" data-val="0.375"></div><div class="ctrl-label">TIME L</div><div class="ctrl-val">375 ms</div></div>
+            <div class="ctrl">
+              <div class="dir-toggle c-delay" id="delayDirL"><button data-v="fwd" class="on">▶</button><button data-v="rev">◀</button></div>
+              <div class="ctrl-label">DIR L</div><div class="ctrl-val">FWD</div>
+            </div>
+            <div class="ctrl modable" data-param="delay.panL"><div class="knob c-delay" data-min="-1" data-max="1" data-val="-0.7"></div><div class="ctrl-label">PAN L</div><div class="ctrl-val">L70</div></div>
+          </div>
+          <div class="row-hdr">R · RIGHT LINE</div>
+          <div class="grid g3">
+            <div class="ctrl modable" data-param="delay.timeR"><div class="knob c-delay" data-min="0.005" data-max="2" data-val="0.5"></div><div class="ctrl-label">TIME R</div><div class="ctrl-val">500 ms</div></div>
+            <div class="ctrl">
+              <div class="dir-toggle c-delay" id="delayDirR"><button data-v="fwd" class="on">▶</button><button data-v="rev">◀</button></div>
+              <div class="ctrl-label">DIR R</div><div class="ctrl-val">FWD</div>
+            </div>
+            <div class="ctrl modable" data-param="delay.panR"><div class="knob c-delay" data-min="-1" data-max="1" data-val="0.7"></div><div class="ctrl-label">PAN R</div><div class="ctrl-val">R70</div></div>
+          </div>
+          <div class="row-hdr">FEEDBACK & FILTERS</div>
+          <div class="grid g4">
+            <div class="ctrl modable" data-param="delay.fb"><div class="knob c-delay" data-min="0" data-max="1" data-val="0"></div><div class="ctrl-label">FEEDBK</div><div class="ctrl-val">0%</div></div>
+            <div class="ctrl modable" data-param="delay.hp"><div class="knob c-delay" data-min="20" data-max="2000" data-val="120"></div><div class="ctrl-label">HP</div><div class="ctrl-val">120 Hz</div></div>
+            <div class="ctrl modable" data-param="delay.lp"><div class="knob c-delay" data-min="500" data-max="20000" data-val="6000"></div><div class="ctrl-label">LP</div><div class="ctrl-val">6 kHz</div></div>
+            <div class="ctrl modable" data-param="delay.mix"><div class="knob c-delay" data-min="0" data-max="1" data-val="0.4"></div><div class="ctrl-label">MIX</div><div class="ctrl-val">40%</div></div>
+          </div>
+        </div>
       </div>
-      <div class="transport">
-        <button class="tbtn rec" id="loopRec">● REC</button>
-        <button class="tbtn" id="loopPlay">▶ PLAY</button>
-        <button class="tbtn" id="loopStop">■</button>
-        <button class="tbtn" id="loopUndo">↶ UNDO</button>
-        <button class="tbtn" id="loopRedo">↷ REDO</button>
-        <button class="tbtn" id="loopClear">CLR</button>
+    </section>
+
+    <!-- ============================ PAGE MOD ============================ -->
+    <section class="page" data-page="mod" hidden>
+      <!-- M1 -->
+      <div class="panel">
+        <div class="panel-head">
+          <div class="panel-title">
+            <span class="tag c-m1">M1</span>
+            <span class="panel-name">MODULATOR 1</span>
+          </div>
+          <div class="transport">
+            <button class="tbtn" id="m1Pick" style="border-color:#c489ff;color:#c489ff">+ ASSIGN</button>
+          </div>
+        </div>
+        <div class="panel-body">
+          <div class="seg c-m1" id="m1Type">
+            <button data-v="lfo" class="on">LFO</button>
+            <button data-v="step">STEP</button>
+          </div>
+          <div class="seg c-m1" id="m1Sync">
+            <button data-v="free" class="on">FREE</button>
+            <button data-v="sync">SYNC</button>
+          </div>
+          <div class="grid g4" id="m1Lfo">
+            <div class="ctrl"><div class="seg c-m1" id="m1Wave" style="height:42px;flex-wrap:wrap"><button data-v="sin" class="on">∿</button><button data-v="tri">△</button><button data-v="saw">⩘</button><button data-v="sqr">⊓</button></div><div class="ctrl-label">WAVE</div><div class="ctrl-val">SIN</div></div>
+            <div class="ctrl"><div class="knob c-m1" data-param="m1.rate" data-min="0.05" data-max="20" data-val="1"></div><div class="ctrl-label" id="m1RateLbl">RATE</div><div class="ctrl-val">1.00 Hz</div></div>
+            <div class="ctrl"><div class="knob c-m1" data-param="m1.depth" data-min="0" data-max="1" data-val="0.5"></div><div class="ctrl-label">DEPTH</div><div class="ctrl-val">50%</div></div>
+            <div class="ctrl"><div class="knob c-m1" data-param="m1.offset" data-min="-1" data-max="1" data-val="0"></div><div class="ctrl-label">OFFSET</div><div class="ctrl-val">0</div></div>
+          </div>
+          <div id="m1Step" hidden>
+            <div class="grid g4" style="margin-bottom:8px">
+              <div class="ctrl"><div class="knob c-m1" data-param="m1.stepRate" data-min="0.5" data-max="32" data-val="8"></div><div class="ctrl-label" id="m1StepRateLbl">RATE</div><div class="ctrl-val">8 Hz</div></div>
+              <div class="ctrl"><div class="knob c-m1" data-param="m1.stepCount" data-min="2" data-max="16" data-val="8" data-step="1"></div><div class="ctrl-label">STEPS</div><div class="ctrl-val">8</div></div>
+              <div class="ctrl"><div class="knob c-m1" data-param="m1.stepGlide" data-min="0" data-max="1" data-val="0"></div><div class="ctrl-label">GLIDE</div><div class="ctrl-val">0%</div></div>
+              <div class="ctrl"><div class="knob c-m1" data-param="m1.stepDepth" data-min="0" data-max="1" data-val="0.7"></div><div class="ctrl-label">DEPTH</div><div class="ctrl-val">70%</div></div>
+            </div>
+            <div class="steps c-m1" id="m1Steps"></div>
+          </div>
+          <div class="targets" id="m1Targets">CIBLES : —</div>
+        </div>
       </div>
-    </div>
-    <div class="panel-body">
-      <div class="scope" style="height:48px">
-        <canvas id="loopScope"></canvas>
-        <div class="scope-overlay" id="loopLbl">LOOP · 0.0 s · 0/0</div>
+      <!-- M2 -->
+      <div class="panel">
+        <div class="panel-head">
+          <div class="panel-title">
+            <span class="tag c-m2">M2</span>
+            <span class="panel-name">MODULATOR 2</span>
+          </div>
+          <div class="transport">
+            <button class="tbtn" id="m2Pick" style="border-color:#5cffd8;color:#5cffd8">+ ASSIGN</button>
+          </div>
+        </div>
+        <div class="panel-body">
+          <div class="seg c-m2" id="m2Type">
+            <button data-v="lfo" class="on">LFO</button>
+            <button data-v="step">STEP</button>
+          </div>
+          <div class="seg c-m2" id="m2Sync">
+            <button data-v="free" class="on">FREE</button>
+            <button data-v="sync">SYNC</button>
+          </div>
+          <div class="grid g4" id="m2Lfo">
+            <div class="ctrl"><div class="seg c-m2" id="m2Wave" style="height:42px;flex-wrap:wrap"><button data-v="sin" class="on">∿</button><button data-v="tri">△</button><button data-v="saw">⩘</button><button data-v="sqr">⊓</button></div><div class="ctrl-label">WAVE</div><div class="ctrl-val">SIN</div></div>
+            <div class="ctrl"><div class="knob c-m2" data-param="m2.rate" data-min="0.05" data-max="20" data-val="0.3"></div><div class="ctrl-label" id="m2RateLbl">RATE</div><div class="ctrl-val">0.30 Hz</div></div>
+            <div class="ctrl"><div class="knob c-m2" data-param="m2.depth" data-min="0" data-max="1" data-val="0.4"></div><div class="ctrl-label">DEPTH</div><div class="ctrl-val">40%</div></div>
+            <div class="ctrl"><div class="knob c-m2" data-param="m2.offset" data-min="-1" data-max="1" data-val="0"></div><div class="ctrl-label">OFFSET</div><div class="ctrl-val">0</div></div>
+          </div>
+          <div id="m2Step" hidden>
+            <div class="grid g4" style="margin-bottom:8px">
+              <div class="ctrl"><div class="knob c-m2" data-param="m2.stepRate" data-min="0.5" data-max="32" data-val="4"></div><div class="ctrl-label" id="m2StepRateLbl">RATE</div><div class="ctrl-val">4 Hz</div></div>
+              <div class="ctrl"><div class="knob c-m2" data-param="m2.stepCount" data-min="2" data-max="16" data-val="8" data-step="1"></div><div class="ctrl-label">STEPS</div><div class="ctrl-val">8</div></div>
+              <div class="ctrl"><div class="knob c-m2" data-param="m2.stepGlide" data-min="0" data-max="1" data-val="0.3"></div><div class="ctrl-label">GLIDE</div><div class="ctrl-val">30%</div></div>
+              <div class="ctrl"><div class="knob c-m2" data-param="m2.stepDepth" data-min="0" data-max="1" data-val="0.6"></div><div class="ctrl-label">DEPTH</div><div class="ctrl-val">60%</div></div>
+            </div>
+            <div class="steps c-m2" id="m2Steps"></div>
+          </div>
+          <div class="targets" id="m2Targets">CIBLES : —</div>
+        </div>
       </div>
-      <div class="grid g4">
-        <div class="ctrl modable" data-param="loop.length"><div class="knob c-loop" data-min="0.5" data-max="16" data-val="4"></div><div class="ctrl-label">LENGTH</div><div class="ctrl-val">4.0 s</div></div>
-        <div class="ctrl modable" data-param="loop.speed"><div class="knob c-loop" data-min="0.25" data-max="2" data-val="1"></div><div class="ctrl-label">SPEED</div><div class="ctrl-val">1.00x</div></div>
-        <div class="ctrl modable" data-param="loop.pitch"><div class="knob c-loop" data-min="-12" data-max="12" data-val="0"></div><div class="ctrl-label">PITCH</div><div class="ctrl-val">0 st</div></div>
-        <div class="ctrl modable" data-param="loop.fb"><div class="knob c-loop" data-min="0" data-max="1.05" data-val="0.95"></div><div class="ctrl-label">DECAY</div><div class="ctrl-val">95%</div></div>
+    </section>
+
+    <!-- ============================ PAGE LOOP ============================ -->
+    <section class="page" data-page="loop" hidden>
+      <div class="panel">
+        <div class="panel-head">
+          <div class="panel-title">
+            <span class="tag c-loop">05</span>
+            <span class="panel-name">LOOPER</span>
+          </div>
+          <div class="transport">
+            <button class="tbtn rec" id="loopRec">● REC</button>
+            <button class="tbtn" id="loopPlay">▶</button>
+            <button class="tbtn" id="loopStop">■</button>
+          </div>
+        </div>
+        <div class="panel-body">
+          <div class="scope" style="height:48px">
+            <canvas id="loopScope"></canvas>
+            <div class="scope-overlay" id="loopLbl">LOOP · 0.0 s · 0/0</div>
+          </div>
+          <div class="grid g4">
+            <div class="ctrl modable" data-param="loop.length"><div class="knob c-loop" data-min="0.5" data-max="16" data-val="4"></div><div class="ctrl-label">LENGTH</div><div class="ctrl-val">4.0 s</div></div>
+            <div class="ctrl modable" data-param="loop.speed"><div class="knob c-loop" data-min="0.25" data-max="2" data-val="1"></div><div class="ctrl-label">SPEED</div><div class="ctrl-val">1.00x</div></div>
+            <div class="ctrl modable" data-param="loop.pitch"><div class="knob c-loop" data-min="-12" data-max="12" data-val="0"></div><div class="ctrl-label">PITCH</div><div class="ctrl-val">0 st</div></div>
+            <div class="ctrl modable" data-param="loop.fb"><div class="knob c-loop" data-min="0" data-max="1.05" data-val="0.95"></div><div class="ctrl-label">DECAY</div><div class="ctrl-val">95%</div></div>
+          </div>
+          <div class="seg c-loop" id="loopDir">
+            <button data-v="fwd" class="on">▶ FORWARD</button>
+            <button data-v="rev">◀ REVERSE</button>
+          </div>
+          <div class="seq-bar">
+            <button class="tbtn" id="loopUndo">↶ UNDO</button>
+            <button class="tbtn" id="loopRedo">↷ REDO</button>
+            <button class="tbtn" id="loopClear">CLR</button>
+          </div>
+        </div>
       </div>
-      <div class="seg c-loop" id="loopDir">
-        <button data-v="fwd" class="on">▶ FORWARD</button>
-        <button data-v="rev">◀ REVERSE</button>
+    </section>
+
+    <!-- ============================ PAGE PERF ============================ -->
+    <section class="page" data-page="perf" hidden>
+      <div class="panel">
+        <div class="panel-head">
+          <div class="panel-title">
+            <span class="tag c-out">OUT</span>
+            <span class="panel-name">FILTER + EXCITER + MASTER</span>
+          </div>
+          <div class="seg c-out" id="filterType">
+            <button data-v="lp" class="on">LP</button>
+            <button data-v="hp">HP</button>
+            <button data-v="bp">BP</button>
+          </div>
+        </div>
+        <div class="panel-body">
+          <div class="grid g5">
+            <div class="ctrl modable" data-param="out.cutoff"><div class="knob c-out" data-min="40" data-max="20000" data-val="14000"></div><div class="ctrl-label">CUTOFF</div><div class="ctrl-val">14k</div></div>
+            <div class="ctrl modable" data-param="out.q"><div class="knob c-out" data-min="0.3" data-max="20" data-val="0.7"></div><div class="ctrl-label">RESO</div><div class="ctrl-val">0.7</div></div>
+            <div class="ctrl modable" data-param="out.drive"><div class="knob c-out" data-min="0" data-max="1" data-val="0.2"></div><div class="ctrl-label">DRIVE</div><div class="ctrl-val">20%</div></div>
+            <div class="ctrl modable" data-param="out.tone"><div class="knob c-out" data-min="0" data-max="1" data-val="0.5"></div><div class="ctrl-label">TONE</div><div class="ctrl-val">50%</div></div>
+            <div class="ctrl modable" data-param="out.master"><div class="knob c-out" data-min="0" data-max="1.2" data-val="0.85"></div><div class="ctrl-label">MASTER</div><div class="ctrl-val">85%</div></div>
+          </div>
+        </div>
       </div>
-    </div>
-  </div>
 
-  <!-- ============== ROW : MODULATION ============== -->
-
-  <div class="row two">
-
-```
-<!-- MOD 1 -->
-<div class="panel">
-  <div class="panel-head">
-    <div class="panel-title">
-      <span class="tag c-m1">M1</span>
-      <span class="panel-name">MODULATOR 1</span>
-    </div>
-    <div class="transport">
-      <button class="tbtn" id="m1Pick" style="border-color:#c489ff;color:#c489ff">+ ASSIGN</button>
-    </div>
-  </div>
-  <div class="panel-body">
-    <div class="seg c-m1" id="m1Type">
-      <button data-v="lfo" class="on">LFO</button>
-      <button data-v="step">STEP</button>
-    </div>
-    <div class="grid g4" id="m1Lfo">
-      <div class="ctrl"><div class="seg c-m1" id="m1Wave" style="height:46px;width:46px;flex-wrap:wrap"><button data-v="sin" class="on">∿</button><button data-v="tri">△</button><button data-v="saw">⩘</button><button data-v="sqr">⊓</button></div><div class="ctrl-label">WAVE</div><div class="ctrl-val">SIN</div></div>
-      <div class="ctrl"><div class="knob c-m1" data-param="m1.rate" data-min="0.05" data-max="20" data-val="1"></div><div class="ctrl-label">RATE</div><div class="ctrl-val">1.00 Hz</div></div>
-      <div class="ctrl"><div class="knob c-m1" data-param="m1.depth" data-min="0" data-max="1" data-val="0.5"></div><div class="ctrl-label">DEPTH</div><div class="ctrl-val">50%</div></div>
-      <div class="ctrl"><div class="knob c-m1" data-param="m1.offset" data-min="-1" data-max="1" data-val="0"></div><div class="ctrl-label">OFFSET</div><div class="ctrl-val">0</div></div>
-    </div>
-    <div id="m1Step" style="display:none">
-      <div class="grid g4" style="margin-bottom:8px">
-        <div class="ctrl"><div class="knob c-m1" data-param="m1.stepRate" data-min="0.5" data-max="32" data-val="8"></div><div class="ctrl-label">RATE</div><div class="ctrl-val">8 Hz</div></div>
-        <div class="ctrl"><div class="knob c-m1" data-param="m1.stepCount" data-min="2" data-max="16" data-val="8" data-step="1"></div><div class="ctrl-label">STEPS</div><div class="ctrl-val">8</div></div>
-        <div class="ctrl"><div class="knob c-m1" data-param="m1.stepGlide" data-min="0" data-max="1" data-val="0"></div><div class="ctrl-label">GLIDE</div><div class="ctrl-val">0%</div></div>
-        <div class="ctrl"><div class="knob c-m1" data-param="m1.stepDepth" data-min="0" data-max="1" data-val="0.7"></div><div class="ctrl-label">DEPTH</div><div class="ctrl-val">70%</div></div>
+      <div class="panel">
+        <div class="panel-head">
+          <div class="panel-title">
+            <span class="tag c-out">MIX</span>
+            <span class="panel-name">ENGINE MUTE / SOLO</span>
+          </div>
+        </div>
+        <div class="panel-body" id="engineMixer"></div>
       </div>
-      <div class="steps c-m1" id="m1Steps"></div>
-    </div>
-    <div class="notice" id="m1Targets">cible : —</div>
-  </div>
-</div>
 
-<!-- MOD 2 -->
-<div class="panel">
-  <div class="panel-head">
-    <div class="panel-title">
-      <span class="tag c-m2">M2</span>
-      <span class="panel-name">MODULATOR 2</span>
-    </div>
-    <div class="transport">
-      <button class="tbtn" id="m2Pick" style="border-color:#5cffd8;color:#5cffd8">+ ASSIGN</button>
-    </div>
-  </div>
-  <div class="panel-body">
-    <div class="seg c-m2" id="m2Type">
-      <button data-v="lfo" class="on">LFO</button>
-      <button data-v="step">STEP</button>
-    </div>
-    <div class="grid g4" id="m2Lfo">
-      <div class="ctrl"><div class="seg c-m2" id="m2Wave" style="height:46px;width:46px;flex-wrap:wrap"><button data-v="sin" class="on">∿</button><button data-v="tri">△</button><button data-v="saw">⩘</button><button data-v="sqr">⊓</button></div><div class="ctrl-label">WAVE</div><div class="ctrl-val">SIN</div></div>
-      <div class="ctrl"><div class="knob c-m2" data-param="m2.rate" data-min="0.05" data-max="20" data-val="0.3"></div><div class="ctrl-label">RATE</div><div class="ctrl-val">0.30 Hz</div></div>
-      <div class="ctrl"><div class="knob c-m2" data-param="m2.depth" data-min="0" data-max="1" data-val="0.4"></div><div class="ctrl-label">DEPTH</div><div class="ctrl-val">40%</div></div>
-      <div class="ctrl"><div class="knob c-m2" data-param="m2.offset" data-min="-1" data-max="1" data-val="0"></div><div class="ctrl-label">OFFSET</div><div class="ctrl-val">0</div></div>
-    </div>
-    <div id="m2Step" style="display:none">
-      <div class="grid g4" style="margin-bottom:8px">
-        <div class="ctrl"><div class="knob c-m2" data-param="m2.stepRate" data-min="0.5" data-max="32" data-val="4"></div><div class="ctrl-label">RATE</div><div class="ctrl-val">4 Hz</div></div>
-        <div class="ctrl"><div class="knob c-m2" data-param="m2.stepCount" data-min="2" data-max="16" data-val="8" data-step="1"></div><div class="ctrl-label">STEPS</div><div class="ctrl-val">8</div></div>
-        <div class="ctrl"><div class="knob c-m2" data-param="m2.stepGlide" data-min="0" data-max="1" data-val="0.3"></div><div class="ctrl-label">GLIDE</div><div class="ctrl-val">30%</div></div>
-        <div class="ctrl"><div class="knob c-m2" data-param="m2.stepDepth" data-min="0" data-max="1" data-val="0.6"></div><div class="ctrl-label">DEPTH</div><div class="ctrl-val">60%</div></div>
-      </div>
-      <div class="steps c-m2" id="m2Steps"></div>
-    </div>
-    <div class="notice" id="m2Targets">cible : —</div>
-  </div>
-</div>
-```
+      <div class="notice">PANIC : appuie sur ■ STOP pour couper toutes les voix actives. Le looper continue indépendamment.</div>
+    </section>
 
-  </div>
+  </main>
 
-  <div class="notice" style="text-align:center">TROIS · v0.1 · charge un fichier audio (ou ◇GEN pour synthétiser une source) · tape sur un knob puis sur ASSIGN MOD pour le moduler</div>
-
+  <div class="foot">TROIS · v0.3 · Lofi Sampler</div>
 </div>
 
 <script>
 // ===================================================================
-// TROIS · Lofi Sampler · v0.1
+// TROIS · Lofi Sampler · v0.3
 // ===================================================================
 const $ = sel => document.querySelector(sel);
 const $$ = sel => Array.from(document.querySelectorAll(sel));
 const clamp = (v,a,b) => Math.max(a, Math.min(b, v));
-const log = (...a) => console.log('[TROIS]', ...a);
 
-// ----- Audio context (lazy) -----
+// ----- AudioContext (lazy) -----
 let ctx = null;
 let sourceBuffer = null;
+let reversedBuffer = null;
 const AC = () => {
   if(!ctx){
     ctx = new (window.AudioContext || window.webkitAudioContext)({latencyHint:'interactive'});
@@ -521,32 +675,80 @@ const AC = () => {
 };
 
 // ===================================================================
+// SYNC DIVISIONS
+// ===================================================================
+// Used for delay sync, mod sync, sequencer step division
+const DIVISIONS = [
+  {label:'1/1',  beats:4},
+  {label:'1/2.', beats:3},
+  {label:'1/2',  beats:2},
+  {label:'1/4.', beats:1.5},
+  {label:'1/4',  beats:1},
+  {label:'1/4T', beats:2/3},
+  {label:'1/8.', beats:0.75},
+  {label:'1/8',  beats:0.5},
+  {label:'1/8T', beats:1/3},
+  {label:'1/16', beats:0.25},
+  {label:'1/16T',beats:1/6},
+  {label:'1/32', beats:0.125}
+];
+// Sequencer step divisions (sub-beat)
+const SEQ_DIVS = [
+  {label:'1/4',  beats:1},
+  {label:'1/8.', beats:0.75},
+  {label:'1/8',  beats:0.5},
+  {label:'1/16.',beats:0.375},
+  {label:'1/16', beats:0.25},
+  {label:'1/16T',beats:1/6},
+  {label:'1/32', beats:0.125}
+];
+const beatSec = () => 60 / state.bpm;
+
+// ===================================================================
 // STATE
 // ===================================================================
 const state = {
+  bpm:90,
   playing:false,
-  sample:{ mode:'oneshot', dir:'fwd', start:0, end:1, pitch:0, gain:1, flutter:0.15 },
+
+  sample:{ mode:'oneshot', dir:'fwd', start:0, end:1, pitch:0, gain:1, flutter:0.15, mute:false, solo:false },
+
+  seq:{
+    on:false, length:16, div:3, gateLen:0.5, swing:0,
+    gates:Array(16).fill(false),
+    pitches:Array(16).fill(0),
+    playStep:0
+  },
+
   delay:{ sync:'free', timeL:0.375, timeR:0.5, dirL:'fwd', dirR:'fwd',
-          panL:-0.7, panR:0.7, fb:0, hp:120, lp:6000, mix:0.4 },
+          panL:-0.7, panR:0.7, fb:0, hp:120, lp:6000, mix:0.4,
+          syncIdxL:7, syncIdxR:9, mute:false, solo:false },
+
   tex:{ mode:'multi',
-        density:4, spread:0.7, gain:0.5,
+        density:4, spread:0.7, gain:0.5, mute:false, solo:false,
         heads:[],
         fragCount:6, fragSize:0.12, fragJitter:0.5, fragGain:0.5, fragRate:8, fragSpread:0.8, fragRev:0.3,
         dpd:[], dpdGain:0.6, dpdRate:0.5 },
+
   out:{ filtType:'lp', cutoff:14000, q:0.7, drive:0.2, tone:0.5, master:0.85 },
+
   loop:{ length:4, speed:1, pitch:0, fb:0.95, dir:'fwd', recording:false, playing:false,
          buffer:null, history:[], future:[] },
-  m1:{ type:'lfo', wave:'sin', rate:1, depth:0.5, offset:0,
+
+  m1:{ type:'lfo', sync:'free', wave:'sin', rate:1, depth:0.5, offset:0,
        stepRate:8, stepCount:8, stepGlide:0, stepDepth:0.7, steps:Array(16).fill(0.5),
-       phase:0, value:0, targets:[] },
-  m2:{ type:'lfo', wave:'sin', rate:0.3, depth:0.4, offset:0,
+       syncDiv:7, syncStepDiv:9,
+       phase:0, value:0 },
+
+  m2:{ type:'lfo', sync:'free', wave:'sin', rate:0.3, depth:0.4, offset:0,
        stepRate:4, stepCount:8, stepGlide:0.3, stepDepth:0.6, steps:Array(16).fill(0.5),
-       phase:0, value:0, targets:[] },
-  assignMode:null, // null | 'm1' | 'm2'
-  pendingParam:null
+       syncDiv:5, syncStepDiv:7,
+       phase:0, value:0 },
+
+  assignMode:null,
+  beatPos:0
 };
 
-// init heads / dpd
 for(let i=0;i<8;i++){
   state.tex.heads.push({
     on:i<4, rate:[0.25,0.5,1,2][i%4], dir:i%2?'rev':'fwd',
@@ -560,7 +762,6 @@ state.tex.dpd = [
   {channel:'R', delay:0.43, dir:'rev'}
 ];
 
-// modulatable params metadata
 const PARAM_META = {
   'sample.start':{path:['sample','start']}, 'sample.end':{path:['sample','end']},
   'sample.pitch':{path:['sample','pitch']}, 'sample.gain':{path:['sample','gain']},
@@ -582,20 +783,18 @@ const PARAM_META = {
   'loop.length':{path:['loop','length']}, 'loop.speed':{path:['loop','speed']},
   'loop.pitch':{path:['loop','pitch']}, 'loop.fb':{path:['loop','fb']}
 };
-// modulation depth per param (0..1)
-const modDepths = {}; // {paramKey: {m1:depth, m2:depth}}
-const modBaseValues = {}; // base value for modulated params
+const modDepths = {};
+const modBaseValues = {};
 
 // ===================================================================
-// AUDIO ENGINE
+// AUDIO ENGINE SETUP
 // ===================================================================
 let nodes = {};
 function setupAudio(){
   const c = ctx;
-
-  // Output chain
   nodes.master = c.createGain();
   nodes.master.gain.value = state.out.master;
+
   nodes.exciterDry = c.createGain();
   nodes.exciterWet = c.createGain();
   nodes.shaper = c.createWaveShaper();
@@ -613,19 +812,13 @@ function setupAudio(){
   nodes.filter.frequency.value = state.out.cutoff;
   nodes.filter.Q.value = state.out.q;
 
-  // bus where engines mix
   nodes.bus = c.createGain();
   nodes.bus.gain.value = 1;
-
-  // Routing: bus -> filter -> [dry path + exciter path] -> master -> destination
   nodes.bus.connect(nodes.filter);
 
-  // dry
   nodes.exciterDry.gain.value = 1 - state.out.tone * 0.5;
   nodes.filter.connect(nodes.exciterDry);
   nodes.exciterDry.connect(nodes.master);
-
-  // exciter (harmonic enhancer): HP -> waveshaper -> LP -> wet gain
   nodes.filter.connect(nodes.shaperHP);
   nodes.shaperHP.connect(nodes.shaper);
   nodes.shaper.connect(nodes.shaperLP);
@@ -633,19 +826,15 @@ function setupAudio(){
   nodes.exciterWet.gain.value = state.out.tone * 0.6;
   nodes.exciterWet.connect(nodes.master);
 
-  // looper tap : prend depuis le master
   nodes.loopIn = c.createGain();
   nodes.master.connect(nodes.loopIn);
-  // Looper output reinjecte sur master via une autre ligne
   nodes.loopOut = c.createGain();
   nodes.loopOut.gain.value = 1;
-  nodes.loopOut.connect(nodes.master); // re-inject into master after looper sums
+  nodes.loopOut.connect(nodes.master);
 
-  // Master -> destination
   nodes.master.connect(c.destination);
 
-  // === DELAY ENGINE ===
-  // L line
+  // Delay
   nodes.delayInL = c.createGain();
   nodes.delayInR = c.createGain();
   nodes.delayL = c.createDelay(3);
@@ -659,42 +848,52 @@ function setupAudio(){
   nodes.delayPanL = c.createStereoPanner(); nodes.delayPanL.pan.value = state.delay.panL;
   nodes.delayPanR = c.createStereoPanner(); nodes.delayPanR.pan.value = state.delay.panR;
   nodes.delayMix = c.createGain(); nodes.delayMix.gain.value = state.delay.mix;
-  // Routage L
   nodes.delayInL.connect(nodes.delayL);
   nodes.delayL.connect(nodes.delayHP);
   nodes.delayHP.connect(nodes.delayLP);
   nodes.delayLP.connect(nodes.delayFbL);
-  nodes.delayFbL.connect(nodes.delayL); // feedback
+  nodes.delayFbL.connect(nodes.delayL);
   nodes.delayLP.connect(nodes.delayPanL);
   nodes.delayPanL.connect(nodes.delayMix);
-  // Routage R (feedback indépendant + filtre commun)
   nodes.delayInR.connect(nodes.delayR);
-  nodes.delayR.connect(nodes.delayHP); // partage filtre
+  nodes.delayR.connect(nodes.delayHP);
   nodes.delayLP.connect(nodes.delayFbR);
   nodes.delayFbR.connect(nodes.delayR);
   nodes.delayLP.connect(nodes.delayPanR);
   nodes.delayPanR.connect(nodes.delayMix);
   nodes.delayMix.connect(nodes.bus);
 
-  // === SAMPLE ENGINE ===
+  // Sample
   nodes.sampleGain = c.createGain();
   nodes.sampleGain.gain.value = state.sample.gain;
-  nodes.sampleGain.connect(nodes.bus);
-  nodes.sampleGain.connect(nodes.delayInL);
-  nodes.sampleGain.connect(nodes.delayInR);
+  nodes.sampleMute = c.createGain();
+  nodes.sampleMute.gain.value = 1;
+  nodes.sampleGain.connect(nodes.sampleMute);
+  nodes.sampleMute.connect(nodes.bus);
+  nodes.sampleMute.connect(nodes.delayInL);
+  nodes.sampleMute.connect(nodes.delayInR);
 
-  // === TEXTURE ENGINE ===
+  // Texture
   nodes.texGain = c.createGain();
   nodes.texGain.gain.value = state.tex.gain;
-  nodes.texGain.connect(nodes.bus);
-  nodes.texGain.connect(nodes.delayInL);
-  nodes.texGain.connect(nodes.delayInR);
+  nodes.texMute = c.createGain();
+  nodes.texMute.gain.value = 1;
+  nodes.texGain.connect(nodes.texMute);
+  nodes.texMute.connect(nodes.bus);
+  nodes.texMute.connect(nodes.delayInL);
+  nodes.texMute.connect(nodes.delayInR);
 
-  log('Audio engine ready');
+  // Delay mute (after the delay path summed)
+  nodes.delayMuteCtl = c.createGain();
+  nodes.delayMuteCtl.gain.value = 1;
+  // re-route: delayMix already connects to bus directly. Add mute control:
+  // Actually we'll insert delayMuteCtl between delayMix and bus
+  nodes.delayMix.disconnect();
+  nodes.delayMix.connect(nodes.delayMuteCtl);
+  nodes.delayMuteCtl.connect(nodes.bus);
 }
 
 function makeShaperCurve(amount){
-  // Gentler tube-like saturation. amount 0..1 → k 0.1..14
   const k = 0.1 + amount * amount * 14;
   const n = 2048;
   const arr = new Float32Array(n);
@@ -716,8 +915,6 @@ function reverseBuffer(buf){
   }
   return r;
 }
-
-let reversedBuffer = null;
 function getBuffer(dir){
   if(dir === 'rev'){
     if(!reversedBuffer && sourceBuffer) reversedBuffer = reverseBuffer(sourceBuffer);
@@ -727,13 +924,13 @@ function getBuffer(dir){
 }
 
 // ===================================================================
-// PLAYBACK : SAMPLE
+// SAMPLE PLAYBACK
 // ===================================================================
 let sampleSrc = null, sampleEnv = null, sampleFlutter = null, sampleFlutterDepth = null;
 function playSample(){
   if(!sourceBuffer) return;
   AC();
-  stopSample(true); // immediate stop, we're starting fresh
+  stopSample(true);
   const buf = getBuffer(state.sample.dir);
   if(!buf) return;
   const src = ctx.createBufferSource();
@@ -744,16 +941,14 @@ function playSample(){
     src.loopStart = state.sample.start * buf.duration;
     src.loopEnd = state.sample.end * buf.duration;
   }
-  // Anti-click envelope
   const env = ctx.createGain();
   const t = ctx.currentTime;
   env.gain.setValueAtTime(0.0001, t);
   env.gain.exponentialRampToValueAtTime(1, t + 0.012);
-  // Flutter / wow (subtle pitch wobble for tape-like character)
   if(state.sample.flutter > 0){
     const lfo = ctx.createOscillator();
     lfo.type = 'sine';
-    lfo.frequency.value = 4.5; // wow ~5Hz
+    lfo.frequency.value = 4.5;
     const depth = ctx.createGain();
     depth.gain.value = state.sample.flutter * 0.04 * src.playbackRate.value;
     lfo.connect(depth);
@@ -791,8 +986,43 @@ function stopSample(immediate){
   }, immediate ? 20 : 40);
 }
 
+// Schedule a sample shot at a given audio-time (used by sequencer)
+function scheduleSampleShot(time, pitchOffset, gateDur){
+  if(!sourceBuffer) return;
+  const buf = getBuffer(state.sample.dir);
+  if(!buf) return;
+  const src = ctx.createBufferSource();
+  src.buffer = buf;
+  const rate = Math.pow(2, (state.sample.pitch + pitchOffset) / 12);
+  src.playbackRate.value = rate;
+  const env = ctx.createGain();
+  // ADSR-ish: 4ms attack, hold, 20ms release
+  const att = 0.004, rel = 0.02;
+  const len = Math.max(att + rel + 0.005, gateDur);
+  env.gain.setValueAtTime(0.0001, time);
+  env.gain.exponentialRampToValueAtTime(1, time + att);
+  env.gain.setValueAtTime(1, time + len - rel);
+  env.gain.linearRampToValueAtTime(0, time + len);
+  // Optional flutter LFO scheduled on this voice
+  if(state.sample.flutter > 0){
+    const lfo = ctx.createOscillator();
+    lfo.type = 'sine';
+    lfo.frequency.value = 4.5;
+    const dep = ctx.createGain();
+    dep.gain.value = state.sample.flutter * 0.04 * rate;
+    lfo.connect(dep).connect(src.playbackRate);
+    lfo.start(time);
+    lfo.stop(time + len + 0.05);
+  }
+  src.connect(env).connect(nodes.sampleGain);
+  const startSec = state.sample.start * buf.duration;
+  const playDur = (state.sample.end - state.sample.start) * buf.duration;
+  src.start(time, startSec, Math.min(len + 0.1, Math.max(0.01, playDur)));
+  src.stop(time + len + 0.05);
+}
+
 // ===================================================================
-// PLAYBACK : TEXTURES
+// TEXTURES PLAYBACK
 // ===================================================================
 const texSources = [];
 let texTimer = null;
@@ -806,7 +1036,6 @@ function startTextures(){
 function stopTextures(){
   if(!ctx){ texSources.length = 0; return; }
   const t = ctx.currentTime;
-  // Fade out any GainNode envelopes still alive
   texSources.forEach(s => {
     if(s.gain && typeof s.gain.cancelScheduledValues === 'function'){
       try{
@@ -826,7 +1055,6 @@ function stopTextures(){
   }, 60);
   if(texTimer){ clearTimeout(texTimer); texTimer = null; }
 }
-
 function startMulti(){
   const n = Math.round(state.tex.density);
   for(let i=0;i<n;i++){
@@ -845,7 +1073,6 @@ function spawnHead(h){
   src.loop = true;
   src.loopStart = 0;
   src.loopEnd = buf.duration;
-  // Anti-click envelope (longer fade for smooth texture entry)
   const env = ctx.createGain();
   const t = ctx.currentTime;
   env.gain.setValueAtTime(0, t);
@@ -853,14 +1080,10 @@ function spawnHead(h){
   const pan = ctx.createStereoPanner();
   pan.pan.value = h.pan * state.tex.spread;
   src.connect(env).connect(pan).connect(nodes.texGain);
-  const off = h.pos * buf.duration;
-  src.start(t, off);
+  src.start(t, h.pos * buf.duration);
   texSources.push(src, env, pan);
 }
-
-function startFragments(){
-  scheduleNextFragment();
-}
+function startFragments(){ scheduleNextFragment(); }
 function scheduleNextFragment(){
   if(state.tex.mode !== 'frag' || !state.playing) return;
   const cnt = Math.round(state.tex.fragCount);
@@ -875,19 +1098,17 @@ function spawnFragment(){
   if(!buf) return;
   const src = ctx.createBufferSource();
   src.buffer = buf;
-  src.playbackRate.value = 1;
   const size = state.tex.fragSize;
   const jitter = state.tex.fragJitter;
-  const start = Math.random() * buf.duration * (1 - size);
   const dur = size * (0.7 + 0.6 * jitter * Math.random());
+  const start = Math.random() * Math.max(0.001, buf.duration - dur - 0.01);
   const env = ctx.createGain();
-  env.gain.value = 0;
   const t = ctx.currentTime;
-  const attack = Math.min(0.01, dur * 0.2);
-  const release = Math.min(0.05, dur * 0.4);
+  const att = Math.min(0.01, dur * 0.2);
+  const rel = Math.min(0.05, dur * 0.4);
   env.gain.setValueAtTime(0, t);
-  env.gain.linearRampToValueAtTime(state.tex.fragGain, t + attack);
-  env.gain.setValueAtTime(state.tex.fragGain, t + dur - release);
+  env.gain.linearRampToValueAtTime(state.tex.fragGain, t + att);
+  env.gain.setValueAtTime(state.tex.fragGain, t + dur - rel);
   env.gain.linearRampToValueAtTime(0, t + dur);
   const pan = ctx.createStereoPanner();
   pan.pan.value = (Math.random() * 2 - 1) * state.tex.fragSpread;
@@ -895,17 +1116,13 @@ function spawnFragment(){
   src.start(t, start, dur);
   src.stop(t + dur + 0.05);
   texSources.push(src, env, pan);
-  // cleanup
   setTimeout(() => {
     try{ src.disconnect(); }catch(e){}
     try{ env.disconnect(); }catch(e){}
     try{ pan.disconnect(); }catch(e){}
   }, (dur + 0.1) * 1000);
 }
-
-function startDpd(){
-  scheduleNextDpd();
-}
+function startDpd(){ scheduleNextDpd(); }
 function scheduleNextDpd(){
   if(state.tex.mode !== 'dpd' || !state.playing) return;
   state.tex.dpd.forEach(p => {
@@ -919,7 +1136,6 @@ function spawnDpd(p){
   if(!buf) return;
   const src = ctx.createBufferSource();
   src.buffer = buf;
-  src.playbackRate.value = 1;
   const dur = 0.18;
   const env = ctx.createGain();
   const t = ctx.currentTime;
@@ -928,7 +1144,7 @@ function spawnDpd(p){
   env.gain.exponentialRampToValueAtTime(0.0001, t + dur);
   const pan = ctx.createStereoPanner();
   pan.pan.value = p.channel === 'L' ? -0.85 : 0.85;
-  const start = Math.random() * (buf.duration - dur);
+  const start = Math.random() * Math.max(0.001, buf.duration - dur - 0.01);
   src.connect(env).connect(pan).connect(nodes.texGain);
   src.start(t, start, dur);
   src.stop(t + dur + 0.02);
@@ -942,11 +1158,9 @@ let loopProcessor = null;
 let loopRecBuffer = null;
 let loopRecOffset = 0;
 let loopSrc = null;
-
-async function loopStartRec(){
+function loopStartRec(){
   AC();
   if(state.loop.recording) return;
-  // Use ScriptProcessor for broad compatibility (alternative: AudioWorklet)
   const len = Math.ceil(state.loop.length * ctx.sampleRate);
   loopRecBuffer = ctx.createBuffer(2, len, ctx.sampleRate);
   loopRecOffset = 0;
@@ -966,7 +1180,7 @@ async function loopStartRec(){
       }
     };
     nodes.loopIn.connect(loopProcessor);
-    loopProcessor.connect(ctx.destination); // dummy sink (required by SP)
+    loopProcessor.connect(ctx.destination);
   }
   state.loop.recording = true;
   $('#loopRec').classList.add('armed');
@@ -992,8 +1206,6 @@ function loopPlay(){
   src.buffer = buf;
   src.loop = true;
   src.playbackRate.value = state.loop.speed * Math.pow(2, state.loop.pitch/12);
-  const fb = ctx.createGain();
-  fb.gain.value = state.loop.fb;
   src.connect(nodes.loopOut);
   src.start();
   loopSrc = src;
@@ -1039,15 +1251,96 @@ function updateLoopLabel(){
 }
 
 // ===================================================================
+// MASTER CLOCK & SEQUENCER
+// ===================================================================
+const SCHED_AHEAD = 0.12;
+const SCHED_INTERVAL = 25;
+let nextStepTime = 0;
+let stepIndex = 0;
+let schedulerTimer = null;
+let lastBeatPos = 0;
+
+function startClock(){
+  if(!ctx) return;
+  nextStepTime = ctx.currentTime + 0.05;
+  stepIndex = 0;
+  state.beatPos = 0;
+  if(schedulerTimer) clearInterval(schedulerTimer);
+  schedulerTimer = setInterval(scheduler, SCHED_INTERVAL);
+}
+function stopClock(){
+  if(schedulerTimer){ clearInterval(schedulerTimer); schedulerTimer = null; }
+  $('#beatLed').classList.remove('on');
+}
+function stepDuration(){
+  const div = SEQ_DIVS[clamp(state.seq.div, 0, SEQ_DIVS.length-1)];
+  return div.beats * beatSec();
+}
+function scheduler(){
+  if(!ctx) return;
+  while(nextStepTime < ctx.currentTime + SCHED_AHEAD){
+    scheduleStep(stepIndex, nextStepTime);
+    advanceStep();
+  }
+  // Update beat display from currentTime
+  const elapsedBeats = (ctx.currentTime - (nextStepTime - stepDuration())) / beatSec();
+  state.beatPos = (state.beatPos + (ctx.currentTime - lastBeatPos) / beatSec()) % 4;
+  lastBeatPos = ctx.currentTime;
+}
+function scheduleStep(idx, time){
+  // Active step display
+  const len = state.seq.length;
+  const realIdx = idx % len;
+  // schedule visual flash
+  setTimeout(() => updatePlayingStep(realIdx), Math.max(0, (time - ctx.currentTime) * 1000));
+
+  // Beat 1 LED
+  const beatIdx = Math.floor(idx * SEQ_DIVS[state.seq.div].beats);
+  // approximate: light LED on beat boundaries
+  // (we just flash based on step time)
+  setTimeout(() => {
+    $('#beatLed').classList.add('on');
+    setTimeout(() => $('#beatLed').classList.remove('on'), 60);
+  }, Math.max(0, (time - ctx.currentTime) * 1000));
+
+  // Sequencer trigger
+  if(state.seq.on && state.sample.mode !== 'loop' && state.playing && !state.sample.mute){
+    const g = state.seq.gates[realIdx];
+    if(g){
+      const stepDur = stepDuration();
+      const gateLen = stepDur * state.seq.gateLen;
+      // Apply swing on odd steps
+      let t = time;
+      if(idx % 2 === 1) t += stepDur * state.seq.swing;
+      scheduleSampleShot(t, state.seq.pitches[realIdx], gateLen);
+    }
+  }
+}
+function advanceStep(){
+  nextStepTime += stepDuration();
+  stepIndex++;
+}
+function updatePlayingStep(idx){
+  state.seq.playStep = idx;
+  $$('#seqGates .seq-cell').forEach((el,i) => el.classList.toggle('playing', i === idx));
+}
+
+// ===================================================================
 // MODULATION
 // ===================================================================
-function tickModulation(now){
-  // Update each modulator
+function tickModulation(dt){
   ['m1','m2'].forEach(k => {
     const m = state[k];
     let val = 0;
     if(m.type === 'lfo'){
-      m.phase += (m.rate * 1/60); // approx 60 fps
+      let rateHz;
+      if(m.sync === 'sync'){
+        const div = DIVISIONS[clamp(m.syncDiv, 0, DIVISIONS.length-1)];
+        rateHz = 1 / (div.beats * beatSec());
+      } else {
+        rateHz = m.rate;
+      }
+      m.phase += rateHz * dt;
       m.phase %= 1;
       switch(m.wave){
         case 'sin': val = Math.sin(m.phase * Math.PI * 2); break;
@@ -1056,8 +1349,15 @@ function tickModulation(now){
         case 'sqr': val = m.phase < 0.5 ? 1 : -1; break;
       }
       val = val * m.depth + m.offset;
-    } else { // step
-      m.phase += (m.stepRate * 1/60);
+    } else {
+      let stepHz;
+      if(m.sync === 'sync'){
+        const div = DIVISIONS[clamp(m.syncStepDiv, 0, DIVISIONS.length-1)];
+        stepHz = 1 / (div.beats * beatSec());
+      } else {
+        stepHz = m.stepRate;
+      }
+      m.phase += stepHz * dt;
       const cnt = Math.round(m.stepCount);
       const idx = Math.floor(m.phase) % cnt;
       const nextIdx = (idx + 1) % cnt;
@@ -1066,13 +1366,10 @@ function tickModulation(now){
       const b = (m.steps[nextIdx] - 0.5) * 2;
       val = a + (b - a) * Math.min(1, frac / Math.max(0.0001, 1 - m.stepGlide));
       val = clamp(val, -1, 1) * m.stepDepth;
-      // visual highlight
-      $$(`#${k}Steps .step`).forEach((el, i) => el.classList.toggle('active', i === idx));
+      $$(`#${k}Steps .step`).forEach((el, i) => el.classList.toggle('active', i === idx && i < cnt));
     }
     m.value = val;
   });
-
-  // Apply to params
   Object.keys(modDepths).forEach(key => {
     const meta = PARAM_META[key];
     if(!meta) return;
@@ -1090,19 +1387,11 @@ function tickModulation(now){
     applyParam(key, v);
   });
 }
-function getStateVal(path){
-  let o = state;
-  for(const p of path) o = o[p];
-  return o;
-}
-function setStateVal(path, v){
-  let o = state;
-  for(let i=0;i<path.length-1;i++) o = o[path[i]];
-  o[path[path.length-1]] = v;
-}
+function getStateVal(path){ let o = state; for(const p of path) o = o[p]; return o; }
+function setStateVal(path, v){ let o = state; for(let i=0;i<path.length-1;i++) o = o[path[i]]; o[path[path.length-1]] = v; }
 
 // ===================================================================
-// APPLY PARAMS TO AUDIO NODES
+// APPLY PARAMS
 // ===================================================================
 function applyParam(key, v){
   if(!nodes.master) return;
@@ -1116,12 +1405,16 @@ function applyParam(key, v){
     case 'sample.pitch':
       if(sampleSrc){
         const r = Math.pow(2, v / 12);
-        sampleSrc.playbackRate.linearRampToValueAtTime(r, ctx.currentTime + 0.05);
+        try{ sampleSrc.playbackRate.linearRampToValueAtTime(r, ctx.currentTime + 0.05); }catch(e){}
         if(sampleFlutterDepth) sampleFlutterDepth.gain.value = state.sample.flutter * 0.04 * r;
       }
       break;
-    case 'delay.timeL': nodes.delayL.delayTime.linearRampToValueAtTime(v, ctx.currentTime + 0.02); break;
-    case 'delay.timeR': nodes.delayR.delayTime.linearRampToValueAtTime(v, ctx.currentTime + 0.02); break;
+    case 'delay.timeL':
+      try{ nodes.delayL.delayTime.linearRampToValueAtTime(v, ctx.currentTime + 0.02); }catch(e){}
+      break;
+    case 'delay.timeR':
+      try{ nodes.delayR.delayTime.linearRampToValueAtTime(v, ctx.currentTime + 0.02); }catch(e){}
+      break;
     case 'delay.panL': nodes.delayPanL.pan.value = v; break;
     case 'delay.panR': nodes.delayPanR.pan.value = v; break;
     case 'delay.fb': nodes.delayFbL.gain.value = nodes.delayFbR.gain.value = v; break;
@@ -1146,23 +1439,27 @@ function applyParam(key, v){
     case 'loop.fb': if(nodes.loopOut) nodes.loopOut.gain.value = v; break;
   }
 }
-function applyAllParams(){
+
+// ===================================================================
+// MUTE / SOLO
+// ===================================================================
+function applyMuteSolo(){
   if(!nodes.master) return;
-  applyParam('sample.gain', state.sample.gain);
-  applyParam('delay.timeL', state.delay.timeL);
-  applyParam('delay.timeR', state.delay.timeR);
-  applyParam('delay.panL', state.delay.panL);
-  applyParam('delay.panR', state.delay.panR);
-  applyParam('delay.fb', state.delay.fb);
-  applyParam('delay.hp', state.delay.hp);
-  applyParam('delay.lp', state.delay.lp);
-  applyParam('delay.mix', state.delay.mix);
-  applyParam('tex.gain', state.tex.gain);
-  applyParam('out.cutoff', state.out.cutoff);
-  applyParam('out.q', state.out.q);
-  applyParam('out.drive', state.out.drive);
-  applyParam('out.tone', state.out.tone);
-  applyParam('out.master', state.out.master);
+  const anySolo = state.sample.solo || state.tex.solo || state.delay.solo;
+  const sampleAudible = anySolo ? state.sample.solo : !state.sample.mute;
+  const texAudible = anySolo ? state.tex.solo : !state.tex.mute;
+  const delayAudible = anySolo ? state.delay.solo : !state.delay.mute;
+  const t = ctx.currentTime;
+  const ramp = (g, target) => {
+    try{
+      g.gain.cancelScheduledValues(t);
+      g.gain.setValueAtTime(g.gain.value, t);
+      g.gain.linearRampToValueAtTime(target, t + 0.03);
+    }catch(e){}
+  };
+  ramp(nodes.sampleMute, sampleAudible ? 1 : 0);
+  ramp(nodes.texMute, texAudible ? 1 : 0);
+  ramp(nodes.delayMuteCtl, delayAudible ? 1 : 0);
 }
 
 // ===================================================================
@@ -1173,7 +1470,6 @@ function setupKnob(el){
   const max = parseFloat(el.dataset.max || 1);
   const step = parseFloat(el.dataset.step || 0);
   let val = parseFloat(el.dataset.val);
-
   const update = (v, propagate=true) => {
     v = clamp(v, min, max);
     if(step > 0) v = Math.round(v / step) * step;
@@ -1181,29 +1477,23 @@ function setupKnob(el){
     el.dataset.val = v;
     const norm = (v - min) / (max - min);
     el.style.transform = `rotate(${(norm - 0.5) * 270}deg)`;
-    el.dataset.norm = norm;
-    // value label
     const ctrl = el.closest('.ctrl');
+    const p = ctrl?.dataset.param || el.dataset.param;
     if(ctrl){
       const lbl = ctrl.querySelector('.ctrl-val');
-      if(lbl) lbl.textContent = formatVal(ctrl.dataset.param || el.dataset.param, v);
+      if(lbl) lbl.textContent = formatVal(p, v);
     }
     if(propagate){
-      const p = ctrl?.dataset.param || el.dataset.param;
       if(p && PARAM_META[p]){
         modBaseValues[p] = v;
         setStateVal(PARAM_META[p].path, v);
         applyParam(p, v);
       } else if(p){
-        // local-only param (m1.*, m2.*, sample state...)
         applyLocalParam(p, v);
       }
     }
   };
-
   update(val, false);
-
-  // Drag interaction
   let startY = 0, startVal = 0;
   const onMove = e => {
     const y = (e.touches ? e.touches[0].clientY : e.clientY);
@@ -1220,7 +1510,6 @@ function setupKnob(el){
   };
   const onDown = e => {
     e.preventDefault();
-    // assignment intercept ?
     const ctrl = el.closest('.ctrl');
     if(state.assignMode && ctrl?.classList.contains('modable')){
       handleAssignTap(ctrl);
@@ -1235,31 +1524,50 @@ function setupKnob(el){
   };
   el.addEventListener('mousedown', onDown);
   el.addEventListener('touchstart', onDown, {passive:false});
-
   el._update = update;
   return update;
 }
-
 function applyLocalParam(p, v){
-  // m1/m2/sample state etc.
   const [bucket, key] = p.split('.');
-  if(state[bucket] !== undefined && key in state[bucket]){
-    state[bucket][key] = v;
-  }
+  if(state[bucket] !== undefined && key in state[bucket]) state[bucket][key] = v;
+  // Refresh sync labels if relevant
+  if(p === 'seq.div') refreshSeqDiv();
 }
 
 function formatVal(p, v){
   if(!p) return v.toFixed(2);
+  // Sequencer DIV
+  if(p === 'seq.div'){
+    const idx = clamp(Math.round(v), 0, SEQ_DIVS.length-1);
+    return SEQ_DIVS[idx].label;
+  }
+  if(p === 'seq.length' || p === 'm1.stepCount' || p === 'm2.stepCount' || p === 'tex.density' || p === 'tex.fragCount'){
+    return Math.round(v);
+  }
+  if(p === 'seq.gateLen' || p === 'seq.swing') return `${(v*100).toFixed(0)}%`;
+  // Mod sync rates
+  if((p === 'm1.rate' || p === 'm2.rate') && state[p.split('.')[0]]?.sync === 'sync'){
+    const idx = clamp(Math.round(v / 20 * (DIVISIONS.length-1)), 0, DIVISIONS.length-1);
+    return DIVISIONS[idx].label;
+  }
+  if((p === 'm1.stepRate' || p === 'm2.stepRate') && state[p.split('.')[0]]?.sync === 'sync'){
+    const idx = clamp(Math.round((v-0.5) / 31.5 * (DIVISIONS.length-1)), 0, DIVISIONS.length-1);
+    return DIVISIONS[idx].label;
+  }
+  // Delay sync
+  if((p === 'delay.timeL' || p === 'delay.timeR') && state.delay.sync === 'sync'){
+    const idx = clamp(Math.round((v-0.005) / 1.995 * (DIVISIONS.length-1)), 0, DIVISIONS.length-1);
+    return DIVISIONS[idx].label;
+  }
   if(p.includes('time') || p === 'tex.fragSize') return `${(v*1000).toFixed(0)} ms`;
   if(p.includes('cutoff') || p === 'delay.hp' || p === 'delay.lp')
     return v >= 1000 ? `${(v/1000).toFixed(1)}k` : `${v.toFixed(0)} Hz`;
   if(p.includes('pitch')) return `${v >= 0 ? '+' : ''}${v.toFixed(1)} st`;
-  if(p === 'tex.density' || p === 'tex.fragCount' || p.includes('stepCount')) return Math.round(v);
   if(p === 'm1.rate' || p === 'm2.rate') return `${v.toFixed(2)} Hz`;
   if(p.includes('Rate')) return `${v.toFixed(1)} Hz`;
   if(p === 'loop.length') return `${v.toFixed(1)} s`;
   if(p === 'loop.speed') return `${v.toFixed(2)}x`;
-  if(p === 'sample.start' || p === 'sample.end' || p.includes('depth') || p.includes('gain') || p.includes('mix') || p.includes('fb') || p.includes('drive') || p.includes('tone') || p.includes('master') || p.includes('spread') || p.includes('jitter') || p === 'tex.fragRev')
+  if(p === 'sample.start' || p === 'sample.end' || p.includes('depth') || p.includes('gain') || p.includes('mix') || p.includes('fb') || p.includes('drive') || p.includes('tone') || p.includes('master') || p.includes('spread') || p.includes('jitter') || p === 'tex.fragRev' || p.includes('flutter'))
     return `${(v*100).toFixed(0)}%`;
   if(p === 'delay.panL' || p === 'delay.panR'){
     if(v < 0) return `L${Math.round(-v*100)}`;
@@ -1271,35 +1579,49 @@ function formatVal(p, v){
 }
 
 // ===================================================================
+// Resolve effective time/rate for synced params (used internally for audio)
+// ===================================================================
+function effectiveDelayTime(side){
+  if(state.delay.sync === 'free') return state.delay['time'+side];
+  // Map knob value 0.005..2 to division index
+  const knobV = state.delay['time'+side];
+  const idx = clamp(Math.round((knobV-0.005) / 1.995 * (DIVISIONS.length-1)), 0, DIVISIONS.length-1);
+  return DIVISIONS[idx].beats * beatSec();
+}
+function applyDelaySyncFromKnob(){
+  // Called when sync mode toggles or BPM changes
+  if(!nodes.delayL) return;
+  const tL = effectiveDelayTime('L');
+  const tR = effectiveDelayTime('R');
+  try{
+    nodes.delayL.delayTime.linearRampToValueAtTime(clamp(tL, 0.005, 2.99), ctx.currentTime + 0.05);
+    nodes.delayR.delayTime.linearRampToValueAtTime(clamp(tR, 0.005, 2.99), ctx.currentTime + 0.05);
+  }catch(e){}
+}
+function refreshSeqDiv(){
+  // Called when seq.div changes - just affects scheduler timing on next step
+}
+
+// ===================================================================
 // ASSIGN MODE
 // ===================================================================
 function enterAssign(which){
   state.assignMode = which;
-  state.pendingParam = null;
   document.body.classList.add('assigning');
   document.body.classList.toggle('m2-pick', which === 'm2');
   $('#assignStatus').textContent = `tape sur un contrôle pour l'assigner à ${which.toUpperCase()}`;
-  $('#assignCancel').style.display = '';
 }
 function exitAssign(){
   state.assignMode = null;
-  state.pendingParam = null;
   document.body.classList.remove('assigning','m2-pick');
-  $('#assignStatus').textContent = 'tape sur un contrôle puis sur MOD1 / MOD2';
-  $('#assignCancel').style.display = 'none';
 }
 function handleAssignTap(ctrl){
   const p = ctrl.dataset.param;
   if(!p || !PARAM_META[p]) return;
   if(!modDepths[p]) modDepths[p] = {m1:0, m2:0};
   const which = state.assignMode;
-  // toggle: if already assigned -> remove; else assign with default depth
-  if(modDepths[p][which] !== 0){
-    modDepths[p][which] = 0;
-  } else {
-    modDepths[p][which] = 0.5; // default depth
-    if(modBaseValues[p] === undefined) modBaseValues[p] = getStateVal(PARAM_META[p].path);
-  }
+  if(modDepths[p][which] !== 0) modDepths[p][which] = 0;
+  else { modDepths[p][which] = 0.5; if(modBaseValues[p] === undefined) modBaseValues[p] = getStateVal(PARAM_META[p].path); }
   refreshModPickups();
   refreshModTargets();
   exitAssign();
@@ -1310,238 +1632,141 @@ function refreshModPickups(){
     let pick = ctrl.querySelector('.mod-pick');
     const md = modDepths[p];
     if(md && (md.m1 || md.m2)){
-      if(!pick){
-        pick = document.createElement('div');
-        pick.className = 'mod-pick';
-        ctrl.appendChild(pick);
-      }
+      if(!pick){ pick = document.createElement('div'); pick.className = 'mod-pick'; ctrl.appendChild(pick); }
       const hasM1 = !!md.m1, hasM2 = !!md.m2;
       pick.classList.toggle('m1', hasM1 && !hasM2);
       pick.classList.toggle('m2', hasM2 && !hasM1);
       pick.classList.toggle('both', hasM1 && hasM2);
       pick.textContent = (hasM1 && hasM2) ? '⬩' : (hasM1 ? '1' : '2');
-    } else if(pick){
-      pick.remove();
-    }
+    } else if(pick){ pick.remove(); }
   });
 }
 function refreshModTargets(){
   ['m1','m2'].forEach(k => {
     const tgs = Object.keys(modDepths).filter(p => modDepths[p][k]);
-    $(`#${k}Targets`).textContent = tgs.length ? `cible : ${tgs.join(' · ')}` : 'cible : —';
+    $(`#${k}Targets`).innerHTML = tgs.length ? `<b>CIBLES :</b> ${tgs.join(' · ')}` : '<b>CIBLES :</b> —';
   });
 }
 
 // ===================================================================
-// UI BINDINGS
+// UI : SAMPLE SEQUENCER
 // ===================================================================
-function bindSeg(elId, onChange){
-  const el = $(elId);
-  el.querySelectorAll('button').forEach(b => {
-    b.addEventListener('click', () => {
-      el.querySelectorAll('button').forEach(x => x.classList.remove('on'));
-      b.classList.add('on');
-      onChange(b.dataset.v);
+function buildSequencer(){
+  const gates = $('#seqGates');
+  gates.innerHTML = '';
+  const pitches = $('#seqPitches');
+  pitches.innerHTML = '';
+  for(let i=0;i<16;i++){
+    // Gate cell
+    const g = document.createElement('div');
+    g.className = 'seq-cell';
+    if(i % 4 === 0) g.classList.add('beat');
+    g.innerHTML = `<span class="seq-cell-num">${i+1}</span>`;
+    g.addEventListener('click', () => {
+      state.seq.gates[i] = !state.seq.gates[i];
+      g.classList.toggle('on', state.seq.gates[i]);
     });
+    gates.appendChild(g);
+
+    // Pitch cell
+    const p = document.createElement('div');
+    p.className = 'pitch-cell';
+    p.innerHTML = `<div class="pitch-zero"></div><div class="pitch-bar"></div><div class="pitch-val">0</div>`;
+    const bar = p.querySelector('.pitch-bar');
+    const valLbl = p.querySelector('.pitch-val');
+    const updateVis = () => {
+      const v = state.seq.pitches[i];
+      const norm = (v + 12) / 24;
+      const h = Math.abs(v) / 24 * 100;
+      bar.style.height = `${h}%`;
+      if(v >= 0){ bar.style.bottom = '50%'; bar.style.top = 'auto'; }
+      else { bar.style.top = '50%'; bar.style.bottom = 'auto'; }
+      valLbl.textContent = v >= 0 ? `+${v}` : `${v}`;
+    };
+    updateVis();
+    let dragging = false, sy = 0, sv = 0;
+    const onMove = e => {
+      if(!dragging) return;
+      const y = e.touches ? e.touches[0].clientY : e.clientY;
+      const v = clamp(Math.round(sv + (sy - y) / 4), -12, 12);
+      state.seq.pitches[i] = v;
+      updateVis();
+    };
+    const onUp = () => {
+      dragging = false;
+      document.removeEventListener('mousemove', onMove);
+      document.removeEventListener('mouseup', onUp);
+      document.removeEventListener('touchmove', onMove);
+      document.removeEventListener('touchend', onUp);
+    };
+    p.addEventListener('mousedown', e => {
+      e.preventDefault();
+      dragging = true; sy = e.clientY; sv = state.seq.pitches[i];
+      document.addEventListener('mousemove', onMove);
+      document.addEventListener('mouseup', onUp);
+    });
+    p.addEventListener('touchstart', e => {
+      e.preventDefault();
+      dragging = true; sy = e.touches[0].clientY; sv = state.seq.pitches[i];
+      document.addEventListener('touchmove', onMove, {passive:false});
+      document.addEventListener('touchend', onUp);
+    }, {passive:false});
+    pitches.appendChild(p);
+    p._update = updateVis;
+  }
+  refreshSequencerView();
+}
+function refreshSequencerView(){
+  $$('#seqGates .seq-cell').forEach((el,i) => {
+    el.classList.toggle('on', state.seq.gates[i]);
+    el.classList.toggle('disabled', i >= state.seq.length);
+  });
+  $$('#seqPitches .pitch-cell').forEach((el,i) => {
+    el.classList.toggle('disabled', i >= state.seq.length);
+    el._update?.();
   });
 }
 
-document.addEventListener('DOMContentLoaded', () => {
-  // Knobs
-  $$('.knob').forEach(setupKnob);
-
-  // Sample
-  bindSeg('#sampleMode', v => { state.sample.mode = v; });
-  bindSeg('#sampleDir', v => {
-    state.sample.dir = v;
-    if(state.playing) playSample();
-  });
-
-  // Delay
-  bindSeg('#delaySync', v => state.delay.sync = v);
-  bindSeg('#delayDirL', v => state.delay.dirL = v);
-  bindSeg('#delayDirR', v => state.delay.dirR = v);
-
-  // Texture mode
-  bindSeg('#texMode', v => {
-    state.tex.mode = v;
-    $('#texMulti').style.display = v === 'multi' ? '' : 'none';
-    $('#texFrag').style.display = v === 'frag' ? '' : 'none';
-    $('#texDpd').style.display = v === 'dpd' ? '' : 'none';
-    if(state.playing){ stopTextures(); startTextures(); }
-  });
-  $('#multiRand').addEventListener('click', () => {
-    state.tex.heads.forEach(h => {
-      h.rate = [0.25, 0.5, 1, 2, 4][Math.floor(Math.random()*5)];
-      h.dir = Math.random() < 0.5 ? 'fwd' : 'rev';
-      h.pan = Math.random()*2 - 1;
-      h.pos = Math.random();
+// ===================================================================
+// MOD STEPS UI
+// ===================================================================
+function renderSteps(which){
+  const wrap = $(`#${which}Steps`);
+  wrap.innerHTML = '';
+  state[which].steps.forEach((v, i) => {
+    const s = document.createElement('div');
+    s.className = 'step';
+    s.style.color = which === 'm1' ? '#c489ff' : '#5cffd8';
+    const fill = document.createElement('div');
+    fill.className = 'step-fill';
+    fill.style.height = `${v*100}%`;
+    s.appendChild(fill);
+    let dragging = false, sy = 0, sv = v;
+    const onMove = (e) => {
+      if(!dragging) return;
+      const y = e.touches ? e.touches[0].clientY : e.clientY;
+      const nv = clamp(sv + (sy - y) / 100, 0, 1);
+      state[which].steps[i] = nv;
+      fill.style.height = `${nv*100}%`;
+    };
+    const onUp = () => {
+      dragging = false;
+      document.removeEventListener('mousemove', onMove);
+      document.removeEventListener('mouseup', onUp);
+      document.removeEventListener('touchmove', onMove);
+      document.removeEventListener('touchend', onUp);
+    };
+    s.addEventListener('mousedown', e => {
+      e.preventDefault(); dragging = true; sy = e.clientY; sv = state[which].steps[i];
+      document.addEventListener('mousemove', onMove); document.addEventListener('mouseup', onUp);
     });
-    renderHeads();
-    if(state.playing && state.tex.mode === 'multi'){ stopTextures(); startTextures(); }
+    s.addEventListener('touchstart', e => {
+      e.preventDefault(); dragging = true; sy = e.touches[0].clientY; sv = state[which].steps[i];
+      document.addEventListener('touchmove', onMove, {passive:false}); document.addEventListener('touchend', onUp);
+    }, {passive:false});
+    wrap.appendChild(s);
   });
-
-  // Output
-  bindSeg('#filterType', v => {
-    state.out.filtType = v;
-    if(nodes.filter) nodes.filter.type = v === 'lp' ? 'lowpass' : (v === 'hp' ? 'highpass' : 'bandpass');
-  });
-
-  // Looper
-  $('#loopRec').addEventListener('click', () => {
-    AC();
-    if(state.loop.recording){ loopFinishRec(); }
-    else { loopStartRec(); }
-  });
-  $('#loopPlay').addEventListener('click', () => { AC(); loopPlay(); });
-  $('#loopStop').addEventListener('click', loopStop);
-  $('#loopUndo').addEventListener('click', loopUndo);
-  $('#loopRedo').addEventListener('click', loopRedo);
-  $('#loopClear').addEventListener('click', loopClear);
-  bindSeg('#loopDir', v => {
-    state.loop.dir = v;
-    if(state.loop.playing) loopPlay();
-  });
-
-  // Modulation
-  bindSeg('#m1Type', v => {
-    state.m1.type = v;
-    $('#m1Lfo').style.display = v === 'lfo' ? '' : 'none';
-    $('#m1Step').style.display = v === 'step' ? '' : 'none';
-  });
-  bindSeg('#m2Type', v => {
-    state.m2.type = v;
-    $('#m2Lfo').style.display = v === 'lfo' ? '' : 'none';
-    $('#m2Step').style.display = v === 'step' ? '' : 'none';
-  });
-  bindSeg('#m1Wave', v => state.m1.wave = v);
-  bindSeg('#m2Wave', v => state.m2.wave = v);
-
-  $('#m1Pick').addEventListener('click', () => enterAssign('m1'));
-  $('#m2Pick').addEventListener('click', () => enterAssign('m2'));
-  $('#assignCancel').addEventListener('click', exitAssign);
-
-  // tap on modable controls also triggers assign
-  $$('.ctrl.modable').forEach(ctrl => {
-    ctrl.addEventListener('click', e => {
-      if(state.assignMode){
-        e.stopPropagation();
-        handleAssignTap(ctrl);
-      }
-    }, true);
-  });
-
-  // Transport
-  $('#playBtn').addEventListener('click', () => {
-    AC();
-    state.playing = !state.playing;
-    $('#playBtn').classList.toggle('on', state.playing);
-    $('#playLed').classList.toggle('on', state.playing);
-    if(state.playing){
-      playSample();
-      startTextures();
-    } else {
-      stopSample();
-      stopTextures();
-    }
-  });
-  $('#stopBtn').addEventListener('click', () => {
-    state.playing = false;
-    $('#playBtn').classList.remove('on');
-    $('#playLed').classList.remove('on');
-    stopSample();
-    stopTextures();
-  });
-
-  // File loading
-  // iOS/Safari peut renvoyer un type MIME vide ou trop générique depuis l'app Fichiers.
-  // On accepte donc explicitement les extensions audio courantes et on décode sans filtrage MIME.
-  const readAudioFileAsArrayBuffer = (file) => {
-    if(file.arrayBuffer) return file.arrayBuffer();
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => resolve(reader.result);
-      reader.onerror = () => reject(reader.error || new Error('FileReader failed'));
-      reader.readAsArrayBuffer(file);
-    });
-  };
-  const decodeAudioArrayBuffer = async (arrayBuffer) => {
-    // decodeAudioData peut détacher l'ArrayBuffer sur Safari : toujours fournir une copie fraîche.
-    const copyForPromise = arrayBuffer.slice(0);
-    try{
-      return await ctx.decodeAudioData(copyForPromise);
-    } catch(modernErr){
-      return await new Promise((resolve, reject) => {
-        try{
-          ctx.decodeAudioData(arrayBuffer.slice(0), resolve, reject);
-        } catch(callbackErr){
-          reject(callbackErr);
-        }
-      });
-    }
-  };
-
-  $('#loadBtn').addEventListener('click', () => {
-    const input = $('#fileIn');
-    // Permet de recharger le même fichier sur iOS, qui ne déclenche pas toujours "change" sinon.
-    input.value = '';
-    input.click();
-  });
-  $('#fileIn').addEventListener('change', async (e) => {
-    const f = e.target.files && e.target.files[0];
-    if(!f) return;
-    AC();
-    const fn = $('#fileName');
-    fn.textContent = `chargement · ${f.name}…`;
-    try{
-      const ab = await readAudioFileAsArrayBuffer(f);
-      const buf = await decodeAudioArrayBuffer(ab);
-      sourceBuffer = buf;
-      reversedBuffer = null;
-      fn.textContent = `${f.name} · ${buf.duration.toFixed(2)}s · ${buf.sampleRate}Hz · ${buf.numberOfChannels}ch`;
-      drawSourceScope();
-    } catch(err){
-      console.error('[TROIS] Decode failed:', err);
-      const ext = (f.name.split('.').pop() || '').toLowerCase();
-      const isIos = /iPhone|iPad|iPod/.test(navigator.userAgent) ||
-        (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-      let hint = '';
-      if(['ogg','opus','flac','webm'].includes(ext)){
-        hint = isIos
-          ? ` — Safari iOS ne décode généralement pas .${ext}. Essaie MP3 / WAV / M4A / AAC / AIFF`
-          : ` — format .${ext} non décodable, essaie MP3 / WAV / M4A`;
-      } else if(ext){
-        hint = ` — fichier non décodable par ce navigateur. Sur iOS, privilégier MP3, WAV PCM, M4A/AAC ou AIFF`;
-      } else {
-        hint = ` — extension absente/non reconnue. Essaie MP3, WAV PCM, M4A/AAC ou AIFF`;
-      }
-      fn.textContent = `❌ ${f.name}${hint}`;
-    }
-    // Reset input so re-selecting the same file fires change
-    e.target.value = '';
-  });
-  $('#genBtn').addEventListener('click', () => {
-    AC();
-    sourceBuffer = generateSource();
-    reversedBuffer = null;
-    $('#fileName').textContent = '◇ source synthétisée';
-    drawSourceScope();
-  });
-
-  // Build heads UI
-  renderHeads();
-  renderDpd();
-  // Build steps UI
-  renderSteps('m1');
-  renderSteps('m2');
-  applyAllParams();
-
-  // Initial source: generated
-  AC();
-  sourceBuffer = generateSource();
-  $('#fileName').textContent = '◇ source synthétisée (par défaut)';
-  drawSourceScope();
-});
+}
 
 // ===================================================================
 // HEADS / DPD UI
@@ -1551,13 +1776,13 @@ function renderHeads(){
   list.innerHTML = '';
   state.tex.heads.forEach((h, i) => {
     const row = document.createElement('div');
-    row.className = 'head-row';
+    row.className = 'list-row';
     row.innerHTML = `
-      <div class="head-num">H${i+1}</div>
+      <div class="list-num">H${i+1}</div>
       <div class="mini">
         <span class="mini-label">RATE</span>
         <select class="mini-input">
-          ${[0.0625, 0.125, 0.25, 0.5, 1, 2, 4, 8, 16].map(r => `<option value="${r}" ${h.rate===r?'selected':''}>×${r}</option>`).join('')}
+          ${[0.0625, 0.125, 0.25, 0.5, 1, 2, 4, 8].map(r => `<option value="${r}" ${h.rate===r?'selected':''}>×${r}</option>`).join('')}
         </select>
       </div>
       <div class="mini">
@@ -1569,28 +1794,30 @@ function renderHeads(){
       </div>
       <div class="mini">
         <span class="mini-label">PAN</span>
-        <input type="range" min="-1" max="1" step="0.05" value="${h.pan}" class="mini-input">
+        <input type="range" min="-1" max="1" step="0.05" value="${h.pan}" class="mini-input" style="color:#ff5cb1">
       </div>
-      <button class="iconbtn ${h.on?'':'danger'}">${h.on?'●':'○'}</button>
+      <button class="iconbtn">${h.on?'●':'○'}</button>
     `;
-    const [rateSel, dirSel, panRange, onBtn] = row.querySelectorAll('.mini-input, .iconbtn');
-    rateSel.addEventListener('change', () => { h.rate = parseFloat(rateSel.value); if(state.playing && state.tex.mode==='multi'){ stopTextures(); startTextures(); }});
-    dirSel.addEventListener('change', () => { h.dir = dirSel.value; if(state.playing && state.tex.mode==='multi'){ stopTextures(); startTextures(); }});
+    const inputs = row.querySelectorAll('.mini-input');
+    const [rateSel, dirSel, panRange] = inputs;
+    const onBtn = row.querySelector('.iconbtn');
+    rateSel.addEventListener('change', () => { h.rate = parseFloat(rateSel.value); restartIfMulti(); });
+    dirSel.addEventListener('change', () => { h.dir = dirSel.value; restartIfMulti(); });
     panRange.addEventListener('input', () => { h.pan = parseFloat(panRange.value); });
-    onBtn.addEventListener('click', () => { h.on = !h.on; renderHeads(); if(state.playing && state.tex.mode==='multi'){ stopTextures(); startTextures(); }});
+    onBtn.addEventListener('click', () => { h.on = !h.on; onBtn.textContent = h.on?'●':'○'; restartIfMulti(); });
     list.appendChild(row);
   });
 }
-
+function restartIfMulti(){ if(state.playing && state.tex.mode === 'multi'){ stopTextures(); startTextures(); } }
 function renderDpd(){
   const list = $('#dpdList');
   list.innerHTML = '';
   state.tex.dpd.forEach((p, i) => {
     const row = document.createElement('div');
-    row.className = 'head-row';
+    row.className = 'list-row';
     row.style.gridTemplateColumns = 'auto 1fr 1fr 1fr';
     row.innerHTML = `
-      <div class="head-num">P${i+1}</div>
+      <div class="list-num">P${i+1}</div>
       <div class="mini">
         <span class="mini-label">CH</span>
         <select class="mini-input">
@@ -1600,7 +1827,7 @@ function renderDpd(){
       </div>
       <div class="mini">
         <span class="mini-label">DELAY</span>
-        <input type="range" min="0" max="1" step="0.01" value="${p.delay}" class="mini-input">
+        <input type="range" min="0" max="1" step="0.01" value="${p.delay}" class="mini-input" style="color:#ff5cb1">
       </div>
       <div class="mini">
         <span class="mini-label">DIR</span>
@@ -1619,86 +1846,64 @@ function renderDpd(){
 }
 
 // ===================================================================
-// STEP SEQ UI
+// ENGINE MIXER (PERF page)
 // ===================================================================
-function renderSteps(which){
-  const wrap = $(`#${which}Steps`);
+function renderEngineMixer(){
+  const wrap = $('#engineMixer');
   wrap.innerHTML = '';
-  state[which].steps.forEach((v, i) => {
-    const s = document.createElement('div');
-    s.className = 'step';
-    s.style.color = which === 'm1' ? '#c489ff' : '#5cffd8';
-    const fill = document.createElement('div');
-    fill.className = 'step-fill';
-    fill.style.height = `${v*100}%`;
-    s.appendChild(fill);
-    let dragging = false, startY = 0, startV = v;
-    const onMove = (e) => {
-      if(!dragging) return;
-      const y = e.touches ? e.touches[0].clientY : e.clientY;
-      const nv = clamp(startV + (startY - y) / 100, 0, 1);
-      state[which].steps[i] = nv;
-      fill.style.height = `${nv*100}%`;
+  const engines = [
+    {key:'sample', name:'SAMPLE', color:'#ff8c42'},
+    {key:'tex', name:'TEXTURE', color:'#ff5cb1'},
+    {key:'delay', name:'DELAY', color:'#4ac4ff'}
+  ];
+  engines.forEach(en => {
+    const row = document.createElement('div');
+    row.className = 'engine-row';
+    row.innerHTML = `
+      <div class="name" style="color:${en.color}">${en.name}</div>
+      <div class="ms-toggle">
+        <button class="mute" data-action="mute">M</button>
+        <button class="solo" data-action="solo">S</button>
+      </div>
+    `;
+    const muteBtn = row.querySelector('button.mute');
+    const soloBtn = row.querySelector('button.solo');
+    const refresh = () => {
+      muteBtn.classList.toggle('on', state[en.key].mute);
+      soloBtn.classList.toggle('on', state[en.key].solo);
     };
-    const onUp = () => {
-      dragging = false;
-      document.removeEventListener('mousemove', onMove);
-      document.removeEventListener('mouseup', onUp);
-      document.removeEventListener('touchmove', onMove);
-      document.removeEventListener('touchend', onUp);
-    };
-    s.addEventListener('mousedown', e => {
-      e.preventDefault();
-      dragging = true;
-      startY = e.clientY;
-      startV = state[which].steps[i];
-      document.addEventListener('mousemove', onMove);
-      document.addEventListener('mouseup', onUp);
-    });
-    s.addEventListener('touchstart', e => {
-      e.preventDefault();
-      dragging = true;
-      startY = e.touches[0].clientY;
-      startV = state[which].steps[i];
-      document.addEventListener('touchmove', onMove, {passive:false});
-      document.addEventListener('touchend', onUp);
-    }, {passive:false});
-    wrap.appendChild(s);
+    muteBtn.addEventListener('click', () => { state[en.key].mute = !state[en.key].mute; if(state[en.key].mute) state[en.key].solo = false; refresh(); applyMuteSolo(); });
+    soloBtn.addEventListener('click', () => { state[en.key].solo = !state[en.key].solo; if(state[en.key].solo) state[en.key].mute = false; refresh(); applyMuteSolo(); });
+    refresh();
+    wrap.appendChild(row);
   });
 }
 
 // ===================================================================
-// SOURCE GENERATION (default test signal)
+// SOURCE GENERATION
 // ===================================================================
 function generateSource(){
   const sr = ctx.sampleRate;
   const dur = 4;
   const buf = ctx.createBuffer(2, sr * dur, sr);
-  const root = 220; // A3
+  const root = 220;
   for(let ch = 0; ch < 2; ch++){
     const data = buf.getChannelData(ch);
-    const detune = ch === 0 ? 0.997 : 1.003; // stereo width via slight detune
+    const detune = ch === 0 ? 0.997 : 1.003;
     for(let i = 0; i < data.length; i++){
       const t = i / sr;
-      // pluck-like envelope
       const env = (Math.exp(-t * 1.1) * 0.7 + Math.exp(-t * 0.28) * 0.3) * (1 - Math.exp(-t * 90));
-      // vibrato
       const vib = 1 + 0.0035 * Math.sin(2 * Math.PI * 4.7 * t);
       const f = root * detune * vib;
       const w = 2 * Math.PI * f * t;
-      // Rhodes-ish stack : fundamental + 2nd (decays fast) + 3rd + bell partials
       const h1 = Math.sin(w);
       const h2 = Math.sin(2 * w) * 0.42 * Math.exp(-t * 2.8);
       const h3 = Math.sin(3 * w) * 0.18 * Math.exp(-t * 5);
       const h4 = Math.sin(4 * w) * 0.07 * Math.exp(-t * 8);
-      // bell beating (inharmonic shimmer)
       const bell = Math.sin(2 * Math.PI * (f * 2.13) * t) * 0.08 * Math.exp(-t * 4);
-      // pluck transient
       const pluck = (Math.random() * 2 - 1) * 0.22 * Math.exp(-t * 60);
-      // tape hiss tail
       const hiss = (Math.random() * 2 - 1) * 0.006;
       const tone = (h1 + h2 + h3 + h4 + bell) * 0.32 + pluck + hiss;
-      // gentle tape saturation
       data[i] = Math.tanh(tone * 1.3) * env * 0.65;
     }
   }
@@ -1708,18 +1913,18 @@ function generateSource(){
 // ===================================================================
 // SCOPES
 // ===================================================================
-function drawSourceScope(){
-  const cv = $('#scope');
+function drawScope(canvasId, buf, color){
+  const cv = $(`#${canvasId}`);
   if(!cv) return;
   cv.width = cv.clientWidth * (window.devicePixelRatio || 1);
   cv.height = cv.clientHeight * (window.devicePixelRatio || 1);
   const c = cv.getContext('2d');
-  c.fillStyle = '#0a0b0d';
+  c.fillStyle = '#08090b';
   c.fillRect(0, 0, cv.width, cv.height);
-  if(!sourceBuffer){ return; }
-  const data = sourceBuffer.getChannelData(0);
+  if(!buf){ return; }
+  const data = buf.getChannelData(0);
   const step = Math.ceil(data.length / cv.width);
-  c.strokeStyle = '#ff8c42';
+  c.strokeStyle = color;
   c.lineWidth = 1;
   c.beginPath();
   for(let x = 0; x < cv.width; x++){
@@ -1734,51 +1939,296 @@ function drawSourceScope(){
   }
   c.stroke();
 }
-
-function drawLoopScope(){
-  const cv = $('#loopScope');
-  if(!cv) return;
-  cv.width = cv.clientWidth * (window.devicePixelRatio || 1);
-  cv.height = cv.clientHeight * (window.devicePixelRatio || 1);
-  const c = cv.getContext('2d');
-  c.fillStyle = '#0a0b0d';
-  c.fillRect(0, 0, cv.width, cv.height);
-  const buf = state.loop.buffer || loopRecBuffer;
-  if(!buf){ updateLoopLabel(); return; }
-  const data = buf.getChannelData(0);
-  const step = Math.ceil(data.length / cv.width);
-  c.strokeStyle = '#ff5c5c';
-  c.lineWidth = 1;
-  c.beginPath();
-  for(let x = 0; x < cv.width; x++){
-    let min = 1, max = -1;
-    for(let j = 0; j < step; j++){
-      const v = data[x*step + j] || 0;
-      if(v < min) min = v;
-      if(v > max) max = v;
-    }
-    c.moveTo(x, cv.height/2 + min * cv.height/2);
-    c.lineTo(x, cv.height/2 + max * cv.height/2);
+function drawSourceScope(){
+  drawScope('scope', sourceBuffer, '#ff8c42');
+  if(sourceBuffer){
+    $('#srcInfo').textContent = `${sourceBuffer.duration.toFixed(2)}s · ${sourceBuffer.sampleRate}Hz`;
   }
-  c.stroke();
+}
+function drawLoopScope(){
+  drawScope('loopScope', state.loop.buffer || loopRecBuffer, '#ff5c5c');
   updateLoopLabel();
 }
 
-window.addEventListener('resize', () => {
-  drawSourceScope();
-  drawLoopScope();
-});
+// ===================================================================
+// TAP TEMPO
+// ===================================================================
+let tapTimes = [];
+function tapTempo(){
+  const now = performance.now();
+  tapTimes.push(now);
+  if(tapTimes.length > 4) tapTimes.shift();
+  // Reset if last tap was > 2s ago
+  if(tapTimes.length >= 2 && now - tapTimes[tapTimes.length-2] > 2000){
+    tapTimes = [now];
+  }
+  if(tapTimes.length >= 2){
+    let sum = 0, n = 0;
+    for(let i=1;i<tapTimes.length;i++){ sum += tapTimes[i] - tapTimes[i-1]; n++; }
+    const avgMs = sum / n;
+    const bpm = 60000 / avgMs;
+    setBpm(clamp(Math.round(bpm), 30, 300));
+  }
+}
+function setBpm(b){
+  state.bpm = b;
+  $('#bpmVal').textContent = b;
+  // Refresh delay sync timing
+  if(state.delay.sync === 'sync') applyDelaySyncFromKnob();
+}
 
 // ===================================================================
-// MAIN LOOP
+// UI BINDINGS
 // ===================================================================
-function loop(){
-  tickModulation(performance.now());
+function bindSeg(elId, onChange){
+  const el = typeof elId === 'string' ? $(elId) : elId;
+  el.querySelectorAll('button').forEach(b => {
+    b.addEventListener('click', () => {
+      el.querySelectorAll('button').forEach(x => x.classList.remove('on'));
+      b.classList.add('on');
+      onChange(b.dataset.v);
+    });
+  });
+}
+function showTab(name){
+  $$('.tab').forEach(t => t.classList.toggle('on', t.dataset.tab === name));
+  $$('.page').forEach(p => p.hidden = p.dataset.page !== name);
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  // Tab navigation
+  $$('.tab').forEach(t => t.addEventListener('click', () => showTab(t.dataset.tab)));
+  showTab('sample');
+
+  // Knobs
+  $$('.knob').forEach(setupKnob);
+
+  // BPM box drag
+  const bpmBox = $('#bpmBox');
+  let bpmStartY = 0, bpmStartV = 0;
+  const bpmMove = e => {
+    const y = e.touches ? e.touches[0].clientY : e.clientY;
+    const dy = bpmStartY - y;
+    setBpm(clamp(Math.round(bpmStartV + dy * 0.3), 30, 300));
+  };
+  const bpmUp = () => {
+    document.removeEventListener('mousemove', bpmMove);
+    document.removeEventListener('mouseup', bpmUp);
+    document.removeEventListener('touchmove', bpmMove);
+    document.removeEventListener('touchend', bpmUp);
+  };
+  bpmBox.addEventListener('mousedown', e => {
+    e.preventDefault();
+    bpmStartY = e.clientY; bpmStartV = state.bpm;
+    document.addEventListener('mousemove', bpmMove);
+    document.addEventListener('mouseup', bpmUp);
+  });
+  bpmBox.addEventListener('touchstart', e => {
+    e.preventDefault();
+    bpmStartY = e.touches[0].clientY; bpmStartV = state.bpm;
+    document.addEventListener('touchmove', bpmMove, {passive:false});
+    document.addEventListener('touchend', bpmUp);
+  }, {passive:false});
+  $('#bpmTap').addEventListener('click', tapTempo);
+
+  // Sample
+  bindSeg('#sampleMode', v => { state.sample.mode = v; });
+  bindSeg('#sampleDir', v => {
+    state.sample.dir = v;
+    if(state.playing && state.sample.mode === 'loop') playSample();
+  });
+
+  // Sample sequencer
+  bindSeg('#seqOn', v => { state.seq.on = v === 'on'; });
+  $('#seqClear').addEventListener('click', () => { state.seq.gates.fill(false); refreshSequencerView(); });
+  $('#seqEvery2').addEventListener('click', () => {
+    for(let i=0;i<16;i++) state.seq.gates[i] = i % 2 === 0;
+    refreshSequencerView();
+  });
+  $('#seqEvery4').addEventListener('click', () => {
+    for(let i=0;i<16;i++) state.seq.gates[i] = i % 4 === 0;
+    refreshSequencerView();
+  });
+  $('#seqRandPitch').addEventListener('click', () => {
+    const scale = [0,2,3,5,7,8,10,12]; // minor pentatonic-ish
+    for(let i=0;i<16;i++){
+      state.seq.pitches[i] = scale[Math.floor(Math.random()*scale.length)] - 7 + Math.floor(Math.random()*2)*12;
+    }
+    buildSequencer();
+  });
+  $('#seqResetPitch').addEventListener('click', () => {
+    state.seq.pitches.fill(0);
+    buildSequencer();
+  });
+
+  // Delay
+  bindSeg('#delaySync', v => {
+    state.delay.sync = v;
+    applyDelaySyncFromKnob();
+    // Refresh time labels
+    refreshAllValueLabels();
+  });
+  bindSeg('#delayDirL', v => state.delay.dirL = v);
+  bindSeg('#delayDirR', v => state.delay.dirR = v);
+
+  // Texture mode
+  bindSeg('#texMode', v => {
+    state.tex.mode = v;
+    $('#texMulti').hidden = v !== 'multi';
+    $('#texFrag').hidden = v !== 'frag';
+    $('#texDpd').hidden = v !== 'dpd';
+    if(state.playing){ stopTextures(); startTextures(); }
+  });
+  $('#multiRand').addEventListener('click', () => {
+    state.tex.heads.forEach(h => {
+      h.rate = [0.25, 0.5, 1, 2, 4][Math.floor(Math.random()*5)];
+      h.dir = Math.random() < 0.5 ? 'fwd' : 'rev';
+      h.pan = Math.random()*2 - 1;
+      h.pos = Math.random();
+    });
+    renderHeads();
+    restartIfMulti();
+  });
+
+  // Output
+  bindSeg('#filterType', v => {
+    state.out.filtType = v;
+    if(nodes.filter) nodes.filter.type = v === 'lp' ? 'lowpass' : (v === 'hp' ? 'highpass' : 'bandpass');
+  });
+
+  // Looper
+  $('#loopRec').addEventListener('click', () => { AC(); if(state.loop.recording){ loopFinishRec(); } else { loopStartRec(); } });
+  $('#loopPlay').addEventListener('click', () => { AC(); loopPlay(); });
+  $('#loopStop').addEventListener('click', loopStop);
+  $('#loopUndo').addEventListener('click', loopUndo);
+  $('#loopRedo').addEventListener('click', loopRedo);
+  $('#loopClear').addEventListener('click', loopClear);
+  bindSeg('#loopDir', v => { state.loop.dir = v; if(state.loop.playing) loopPlay(); });
+
+  // Modulation
+  bindSeg('#m1Type', v => { state.m1.type = v; $('#m1Lfo').hidden = v !== 'lfo'; $('#m1Step').hidden = v !== 'step'; });
+  bindSeg('#m2Type', v => { state.m2.type = v; $('#m2Lfo').hidden = v !== 'lfo'; $('#m2Step').hidden = v !== 'step'; });
+  bindSeg('#m1Sync', v => { state.m1.sync = v; refreshAllValueLabels(); });
+  bindSeg('#m2Sync', v => { state.m2.sync = v; refreshAllValueLabels(); });
+  bindSeg('#m1Wave', v => state.m1.wave = v);
+  bindSeg('#m2Wave', v => state.m2.wave = v);
+  $('#m1Pick').addEventListener('click', () => enterAssign('m1'));
+  $('#m2Pick').addEventListener('click', () => enterAssign('m2'));
+  $('#assignCancel').addEventListener('click', exitAssign);
+  $$('.ctrl.modable').forEach(ctrl => {
+    ctrl.addEventListener('click', e => {
+      if(state.assignMode){ e.stopPropagation(); handleAssignTap(ctrl); }
+    }, true);
+  });
+
+  // Transport
+  $('#playBtn').addEventListener('click', () => {
+    AC();
+    state.playing = !state.playing;
+    $('#playBtn').classList.toggle('on', state.playing);
+    $('#playBtn').textContent = state.playing ? '❚❚' : '▶';
+    if(state.playing){
+      startClock();
+      if(!state.seq.on) playSample();
+      startTextures();
+    } else {
+      stopClock();
+      stopSample();
+      stopTextures();
+    }
+  });
+  $('#stopBtn').addEventListener('click', () => {
+    state.playing = false;
+    $('#playBtn').classList.remove('on');
+    $('#playBtn').textContent = '▶';
+    stopClock();
+    stopSample();
+    stopTextures();
+  });
+
+  // File loading
+  $('#loadBtn').addEventListener('click', () => $('#fileIn').click());
+  $('#fileIn').addEventListener('change', async (e) => {
+    const f = e.target.files[0];
+    if(!f) return;
+    AC();
+    const fn = $('#fileName');
+    fn.textContent = `chargement · ${f.name}…`;
+    try{
+      const ab = await f.arrayBuffer();
+      let buf;
+      try{
+        buf = await ctx.decodeAudioData(ab.slice(0));
+      } catch(modernErr){
+        buf = await new Promise((resolve, reject) => ctx.decodeAudioData(ab.slice(0), resolve, reject));
+      }
+      sourceBuffer = buf;
+      reversedBuffer = null;
+      fn.textContent = `${f.name} · ${buf.duration.toFixed(2)}s · ${buf.sampleRate}Hz · ${buf.numberOfChannels}ch`;
+      drawSourceScope();
+    } catch(err){
+      console.error('[TROIS] Decode failed:', err);
+      const ext = (f.name.split('.').pop() || '').toLowerCase();
+      const isIos = /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+      let hint = '';
+      if(['ogg','opus','flac','webm'].includes(ext)){
+        hint = isIos ? ` — Safari iOS ne décode pas .${ext}. Convertis en MP3 / WAV / M4A` : ` — format .${ext} non décodable, essaie MP3 / WAV / M4A`;
+      } else if(ext){
+        hint = ` — .${ext} non décodable. Formats iOS supportés : MP3, WAV (PCM), M4A, AAC, AIFF`;
+      }
+      fn.textContent = `❌ ${f.name}${hint}`;
+    }
+    e.target.value = '';
+  });
+  $('#genBtn').addEventListener('click', () => {
+    AC();
+    sourceBuffer = generateSource();
+    reversedBuffer = null;
+    $('#fileName').textContent = '◇ source synthétisée';
+    drawSourceScope();
+  });
+
+  // Build dynamic UI
+  buildSequencer();
+  renderHeads();
+  renderDpd();
+  renderSteps('m1');
+  renderSteps('m2');
+  renderEngineMixer();
+
+  // Init audio + default source
+  AC();
+  sourceBuffer = generateSource();
+  $('#fileName').textContent = '◇ source synthétisée (par défaut)';
+  drawSourceScope();
+});
+
+function refreshAllValueLabels(){
+  $$('.knob').forEach(k => {
+    const ctrl = k.closest('.ctrl');
+    const p = ctrl?.dataset.param || k.dataset.param;
+    if(!p) return;
+    const v = parseFloat(k.dataset.val);
+    const lbl = ctrl?.querySelector('.ctrl-val');
+    if(lbl) lbl.textContent = formatVal(p, v);
+  });
+}
+
+// ===================================================================
+// MAIN LOOP (modulation + visuals)
+// ===================================================================
+let lastFrameTime = 0;
+function loop(t){
+  if(lastFrameTime === 0) lastFrameTime = t;
+  const dt = Math.min(0.05, (t - lastFrameTime) / 1000);
+  lastFrameTime = t;
+  tickModulation(dt);
   if(state.loop.recording) drawLoopScope();
   requestAnimationFrame(loop);
 }
 requestAnimationFrame(loop);
-</script>
 
+window.addEventListener('resize', () => { drawSourceScope(); drawLoopScope(); });
+</script>
 </body>
 </html>
