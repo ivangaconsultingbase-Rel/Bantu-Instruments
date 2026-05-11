@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
@@ -16,42 +17,19 @@ body{min-height:100vh;padding:0;display:flex;flex-direction:column}
 button,input,select{font-family:inherit;font-size:inherit;color:inherit;border:0;background:transparent;-webkit-appearance:none !important;appearance:none !important;outline:none}
 button{cursor:pointer;-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none}
 input[type=range]{-webkit-appearance:none !important;appearance:none !important}
-
-/* ============================ APP SHELL ============================ */
 .app{max-width:980px;margin:0 auto;width:100%;display:flex;flex-direction:column;flex:1}
-
-/* ============================ HEADER (sticky) ============================ */
-.head{
-  position:sticky;top:0;z-index:30;
-  background:#0d0e11;
-  border-bottom:1px solid #1c1e23;
-  padding:8px 10px 0
-}
+.head{position:sticky;top:0;z-index:30;background:#0d0e11;border-bottom:1px solid #1c1e23;padding:8px 10px 0}
 .brand-row{display:flex;align-items:center;justify-content:space-between;gap:6px;height:32px}
 .brand{font-size:14px;font-weight:700;letter-spacing:.32em;color:#e8eaed;display:flex;align-items:center;gap:2px;line-height:1}
 .brand-dot{display:inline-block;width:5px;height:5px;border-radius:50%;background:#ff8c42;margin:0 4px;box-shadow:0 0 6px #ff8c42}
-.brand-sub{font-size:8px;letter-spacing:.3em;color:#4a4f59;text-transform:uppercase;margin-left:8px}
-
 .bpm-cluster{display:flex;align-items:center;gap:4px}
-.bpm-box{
-  display:flex;align-items:baseline;gap:4px;padding:0 8px;height:26px;
-  background:#08090b;border:1px solid #1c1e23;border-radius:3px;
-  cursor:ns-resize;touch-action:none;line-height:1
-}
+.bpm-box{display:flex;align-items:baseline;gap:4px;padding:0 8px;height:26px;background:#08090b;border:1px solid #1c1e23;border-radius:3px;cursor:ns-resize;touch-action:none;line-height:1}
 .bpm-label{font-size:8px;color:#4a4f59;letter-spacing:.2em}
 .bpm-val{font-size:14px;font-weight:600;color:#e8eaed;font-variant-numeric:tabular-nums;align-self:center}
 .beat-led{display:inline-block;width:6px;height:6px;border-radius:50%;background:#1c1e23}
 .beat-led.on{background:#ff8c42;box-shadow:0 0 6px #ff8c42}
-
 .transport{display:flex;align-items:center;gap:4px}
-.tbtn{
-  background:#13151a;border:1px solid #1c1e23;border-radius:3px;
-  padding:0 10px;height:26px;font-size:9px;font-weight:600;letter-spacing:.15em;
-  color:#a8adb8;text-transform:uppercase;
-  display:inline-flex;align-items:center;justify-content:center;gap:4px;
-  transition:background .1s ease,color .1s ease,border-color .1s ease;
-  min-width:26px
-}
+.tbtn{background:#13151a;border:1px solid #1c1e23;border-radius:3px;padding:0 10px;height:26px;font-size:9px;font-weight:600;letter-spacing:.15em;color:#a8adb8;text-transform:uppercase;display:inline-flex;align-items:center;justify-content:center;gap:4px;transition:background .1s ease,color .1s ease,border-color .1s ease;min-width:26px}
 .tbtn:hover{border-color:#2a2d34;color:#e8eaed}
 .tbtn:active{background:#1c1e23}
 .tbtn.on{background:#ff8c42;border-color:#ff8c42;color:#08090b}
@@ -59,28 +37,10 @@ input[type=range]{-webkit-appearance:none !important;appearance:none !important}
 .tbtn.rec.armed{background:#ff5c5c;color:#08090b;animation:pulse 1s ease-in-out infinite}
 .tbtn.lg{height:30px;padding:0 14px;font-size:10px}
 @keyframes pulse{50%{opacity:.55}}
-
 .file-row{display:flex;align-items:center;gap:6px;padding:6px 0 8px}
 .file-name{flex:1;font-size:9px;color:#6e737e;background:#08090b;border:1px solid #1c1e23;padding:6px 8px;border-radius:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;letter-spacing:.05em}
-
-/* ============================ TABS ============================ */
-.tabs{
-  display:grid;grid-template-columns:repeat(6,1fr);gap:0;
-  background:#0d0e11;
-  border-top:1px solid #1c1e23;
-  border-bottom:1px solid #1c1e23;
-  position:sticky;top:74px;z-index:29
-}
-.tab{
-  height:36px;
-  padding:4px 2px;
-  background:transparent;
-  font-size:9px;font-weight:600;letter-spacing:.18em;color:#4a4f59;
-  border-right:1px solid #1c1e23;
-  border-bottom:2px solid transparent;
-  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;
-  text-align:center
-}
+.tabs{display:grid;grid-template-columns:repeat(6,1fr);gap:0;background:#0d0e11;border-top:1px solid #1c1e23;border-bottom:1px solid #1c1e23;position:sticky;top:74px;z-index:29}
+.tab{height:36px;padding:4px 2px;background:transparent;font-size:9px;font-weight:600;letter-spacing:.18em;color:#4a4f59;border-right:1px solid #1c1e23;border-bottom:2px solid transparent;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;text-align:center}
 .tab:last-child{border-right:0}
 .tab .tab-num{font-size:7px;color:#3a3d44;letter-spacing:.1em}
 .tab.on{color:#e8eaed;background:#08090b}
@@ -91,35 +51,15 @@ input[type=range]{-webkit-appearance:none !important;appearance:none !important}
 .tab-mod.on{border-bottom-color:#c489ff;color:#c489ff}
 .tab-loop.on{border-bottom-color:#ff5c5c;color:#ff5c5c}
 .tab-perf.on{border-bottom-color:#b8ff5c;color:#b8ff5c}
-
-/* ============================ PAGES ============================ */
 .pages{flex:1;padding:10px;display:flex;flex-direction:column;gap:8px;padding-bottom:48px}
 .page{display:flex;flex-direction:column;gap:8px}
 .page[hidden]{display:none}
-
-/* ============================ PANELS ============================ */
-.panel{
-  background:#0d0e11;
-  border:1px solid #1c1e23;
-  border-radius:4px;
-  overflow:hidden
-}
-.panel-head{
-  display:flex;align-items:center;justify-content:space-between;
-  padding:8px 10px;
-  border-bottom:1px solid #1c1e23;
-  min-height:36px
-}
+.panel{background:#0d0e11;border:1px solid #1c1e23;border-radius:4px;overflow:hidden}
+.panel-head{display:flex;align-items:center;justify-content:space-between;padding:8px 10px;border-bottom:1px solid #1c1e23;min-height:36px}
 .panel-title{display:flex;align-items:center;gap:8px}
-.tag{
-  display:inline-block;font-size:8px;font-weight:700;letter-spacing:.2em;
-  padding:3px 5px;border-radius:2px;
-  background:transparent;border:1px solid currentColor;line-height:1
-}
+.tag{display:inline-block;font-size:8px;font-weight:700;letter-spacing:.2em;padding:3px 5px;border-radius:2px;background:transparent;border:1px solid currentColor;line-height:1}
 .panel-name{font-size:10px;font-weight:600;letter-spacing:.22em;text-transform:uppercase;color:#a8adb8}
 .panel-body{padding:10px;display:flex;flex-direction:column;gap:10px}
-
-/* color tags */
 .c-sample{color:#ff8c42}
 .c-tex{color:#ff5cb1}
 .c-delay{color:#4ac4ff}
@@ -127,30 +67,15 @@ input[type=range]{-webkit-appearance:none !important;appearance:none !important}
 .c-loop{color:#ff5c5c}
 .c-m1{color:#c489ff}
 .c-m2{color:#5cffd8}
-
-/* ============================ KNOB ============================ */
 .grid{display:grid;gap:8px}
 .grid.g2{grid-template-columns:repeat(2,1fr)}
 .grid.g3{grid-template-columns:repeat(3,1fr)}
 .grid.g4{grid-template-columns:repeat(4,1fr)}
 .grid.g5{grid-template-columns:repeat(5,1fr)}
 @media(max-width:480px){.grid.g5{grid-template-columns:repeat(3,1fr)}.grid.g4{grid-template-columns:repeat(4,1fr)}}
-
 .ctrl{display:flex;flex-direction:column;align-items:center;gap:3px;position:relative;padding:2px 0}
-.knob{
-  width:42px;height:42px;border-radius:50%;
-  background:#13151a;
-  border:1px solid #1c1e23;
-  position:relative;cursor:ns-resize;
-  touch-action:none;
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.04)
-}
-.knob::after{
-  content:"";position:absolute;left:50%;top:4px;
-  width:2px;height:13px;background:currentColor;
-  transform-origin:50% 17px;
-  border-radius:1px
-}
+.knob{width:42px;height:42px;border-radius:50%;background:#13151a;border:1px solid #1c1e23;position:relative;cursor:ns-resize;touch-action:none;box-shadow:inset 0 1px 0 rgba(255,255,255,.04)}
+.knob::after{content:"";position:absolute;left:50%;top:4px;width:2px;height:13px;background:currentColor;transform-origin:50% 17px;border-radius:1px}
 .ctrl-label{font-size:8px;letter-spacing:.18em;color:#5e636e;text-transform:uppercase;text-align:center;font-weight:500}
 .ctrl-val{font-size:9px;color:#a8adb8;font-variant-numeric:tabular-nums;line-height:1.1;min-height:11px;text-align:center}
 .ctrl.modable{cursor:pointer}
@@ -161,8 +86,6 @@ input[type=range]{-webkit-appearance:none !important;appearance:none !important}
 body.assigning .ctrl.modable .knob{box-shadow:0 0 0 1px #c489ff,inset 0 1px 0 rgba(255,255,255,.04);animation:assignflash .8s ease-in-out infinite}
 body.assigning.m2-pick .ctrl.modable .knob{box-shadow:0 0 0 1px #5cffd8,inset 0 1px 0 rgba(255,255,255,.04)}
 @keyframes assignflash{50%{opacity:.55}}
-
-/* ============================ TOGGLES & SELECTS ============================ */
 .seg{display:flex;background:#08090b;border:1px solid #1c1e23;border-radius:3px;overflow:hidden}
 .seg button{flex:1;padding:7px 6px;font-size:9px;letter-spacing:.18em;color:#5e636e;text-transform:uppercase;font-weight:600;border-right:1px solid #1c1e23}
 .seg button:last-child{border-right:0}
@@ -174,60 +97,34 @@ body.assigning.m2-pick .ctrl.modable .knob{box-shadow:0 0 0 1px #5cffd8,inset 0 
 .seg.c-loop button.on{color:#ff5c5c}
 .seg.c-m1 button.on{color:#c489ff}
 .seg.c-m2 button.on{color:#5cffd8}
-
 .row-hdr{font-size:8px;letter-spacing:.22em;color:#4a4f59;text-transform:uppercase;padding:4px 0 2px;border-bottom:1px dashed #1c1e23;margin-bottom:4px;font-weight:600}
-
-/* ============================ DISPLAYS / SCOPES ============================ */
-.scope{
-  background:#08090b;border:1px solid #1c1e23;border-radius:3px;
-  height:54px;position:relative;overflow:hidden
-}
+.scope{background:#08090b;border:1px solid #1c1e23;border-radius:3px;height:54px;position:relative;overflow:hidden}
 .scope canvas{width:100%;height:100%;display:block}
 .scope-overlay{position:absolute;top:4px;left:6px;font-size:8px;color:#4a4f59;letter-spacing:.2em;text-transform:uppercase;z-index:2;pointer-events:none;font-weight:600}
 .scope-overlay.right{left:auto;right:6px}
-
-/* ============================ SAMPLE SEQUENCER ============================ */
 .seq-section{display:flex;flex-direction:column;gap:6px}
 .seq-bar{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
 .seq-bar .seg{flex:0 0 auto}
 .seq-grid{display:grid;grid-template-columns:repeat(16,1fr);gap:2px}
-.seq-cell{
-  height:30px;background:#08090b;border:1px solid #1c1e23;border-radius:2px;
-  position:relative;cursor:pointer;touch-action:none;
-  display:flex;align-items:center;justify-content:center
-}
+.seq-cell{height:30px;background:#08090b;border:1px solid #1c1e23;border-radius:2px;position:relative;cursor:pointer;touch-action:none;display:flex;align-items:center;justify-content:center}
 .seq-cell.on{background:#1f1107;border-color:#ff8c42}
 .seq-cell.playing{box-shadow:0 0 0 1px #ff8c42}
 .seq-cell-num{position:absolute;top:1px;left:2px;font-size:7px;color:#3a3d44;line-height:1}
 .seq-cell.on .seq-cell-num{color:#ff8c42;opacity:.6}
 .seq-cell.beat{border-color:#2a2d34}
 .seq-cell.disabled{opacity:.3}
-
 .pitch-grid{display:grid;grid-template-columns:repeat(16,1fr);gap:2px}
-.pitch-cell{
-  height:32px;background:#08090b;border:1px solid #1c1e23;border-radius:2px;
-  position:relative;cursor:ns-resize;touch-action:none;overflow:hidden
-}
+.pitch-cell{height:32px;background:#08090b;border:1px solid #1c1e23;border-radius:2px;position:relative;cursor:ns-resize;touch-action:none;overflow:hidden}
 .pitch-bar{position:absolute;left:0;right:0;background:#ff8c42;opacity:.55}
 .pitch-zero{position:absolute;left:0;right:0;height:1px;top:50%;background:#1c1e23}
 .pitch-val{position:absolute;bottom:1px;right:2px;font-size:7px;color:#5e636e;font-variant-numeric:tabular-nums;line-height:1}
 .seq-cell.disabled,.pitch-cell.disabled{opacity:.25;pointer-events:none}
-
-/* ============================ MOD STEPS ============================ */
 .steps{display:grid;grid-template-columns:repeat(16,1fr);gap:2px}
-.step{
-  height:24px;background:#0f1115;border:1px solid #1c1e23;border-radius:2px;
-  position:relative;cursor:ns-resize;touch-action:none
-}
+.step{height:24px;background:#0f1115;border:1px solid #1c1e23;border-radius:2px;position:relative;cursor:ns-resize;touch-action:none}
 .step-fill{position:absolute;left:0;right:0;bottom:0;background:currentColor;border-radius:1px;opacity:.65}
 .step.active{box-shadow:0 0 0 1px currentColor}
-
-/* ============================ LISTS (heads / dpd) ============================ */
 .list-rows{display:flex;flex-direction:column;gap:4px;max-height:200px;overflow:auto}
-.list-row{
-  display:grid;grid-template-columns:auto 1fr 1fr 1fr auto;gap:6px;align-items:center;
-  padding:5px 6px;background:#08090b;border:1px solid #1c1e23;border-radius:3px
-}
+.list-row{display:grid;grid-template-columns:auto 1fr 1fr 1fr auto;gap:6px;align-items:center;padding:5px 6px;background:#08090b;border:1px solid #1c1e23;border-radius:3px}
 .list-num{font-size:9px;font-weight:700;letter-spacing:.1em;color:#ff5cb1;min-width:22px}
 .mini{display:flex;flex-direction:column;gap:2px}
 .mini-label{font-size:7px;color:#4a4f59;letter-spacing:.18em;text-transform:uppercase;font-weight:600}
@@ -237,26 +134,12 @@ input[type=range].mini-input::-webkit-slider-runnable-track{height:2px;backgroun
 input[type=range].mini-input::-webkit-slider-thumb{-webkit-appearance:none;width:10px;height:14px;background:currentColor;border-radius:1px;margin-top:-6px}
 .iconbtn{width:24px;height:24px;border-radius:3px;background:#0d0e11;border:1px solid #1c1e23;color:#a8adb8;display:flex;align-items:center;justify-content:center;font-size:11px;line-height:1}
 .iconbtn:hover{color:#e8eaed;border-color:#2a2d34}
-
-/* ============================ ASSIGN BAR ============================ */
-.assignbar{
-  display:none;align-items:center;gap:8px;
-  padding:6px 10px;
-  background:#13151a;border:1px solid #c489ff;border-radius:3px;
-  font-size:9px;letter-spacing:.15em;color:#c489ff;
-  margin-bottom:0
-}
+.assignbar{display:none;align-items:center;gap:8px;padding:6px 10px;background:#13151a;border:1px solid #c489ff;border-radius:3px;font-size:9px;letter-spacing:.15em;color:#c489ff;margin-bottom:0}
 body.assigning .assignbar{display:flex}
 body.assigning.m2-pick .assignbar{border-color:#5cffd8;color:#5cffd8}
-
-/* ============================ NOTICE ============================ */
 .notice{font-size:9px;color:#5e636e;letter-spacing:.05em;line-height:1.5;padding:6px 8px;background:#08090b;border:1px dashed #1c1e23;border-radius:3px}
-
-/* ============================ MOD ASSIGN TARGET DISPLAY ============================ */
 .targets{font-size:8px;color:#4a4f59;letter-spacing:.1em;padding:6px 8px;background:#08090b;border:1px dashed #1c1e23;border-radius:3px;line-height:1.5;text-transform:uppercase}
 .targets b{color:inherit;font-weight:700;letter-spacing:.05em}
-
-/* ============================ ENGINE ROW (perf) ============================ */
 .engine-row{display:flex;align-items:center;gap:8px;padding:6px 8px;background:#08090b;border:1px solid #1c1e23;border-radius:3px}
 .engine-row .name{flex:1;font-size:9px;letter-spacing:.2em;font-weight:600;text-transform:uppercase}
 .engine-row .ms-toggle{display:flex;gap:2px}
@@ -264,34 +147,48 @@ body.assigning.m2-pick .assignbar{border-color:#5cffd8;color:#5cffd8}
 .ms-toggle button.on{color:#08090b}
 .ms-toggle button.mute.on{background:#ff5c5c;border-color:#ff5c5c}
 .ms-toggle button.solo.on{background:#ffd84a;border-color:#ffd84a}
-
-/* ============================ SCROLLBARS ============================ */
 .list-rows::-webkit-scrollbar{width:4px}
 .list-rows::-webkit-scrollbar-track{background:#08090b}
 .list-rows::-webkit-scrollbar-thumb{background:#2a2d34;border-radius:2px}
-
-/* ============================ ARROW ICON BUTTONS ============================ */
 .dir-toggle{display:flex;flex-direction:column;width:42px;height:42px;background:#08090b;border:1px solid #1c1e23;border-radius:3px;overflow:hidden}
 .dir-toggle button{flex:1;font-size:9px;color:#5e636e;border-bottom:1px solid #1c1e23;letter-spacing:0;padding:0}
 .dir-toggle button:last-child{border-bottom:0}
 .dir-toggle button.on{background:#13151a;color:currentColor}
-
-/* ============================ FOOTER ============================ */
 .foot{padding:12px;text-align:center;font-size:8px;color:#3a3d44;letter-spacing:.2em;text-transform:uppercase}
+/* DPD voices musical */
+.dpd-bar-display{display:grid;gap:1px;height:14px;margin:4px 0;grid-auto-flow:column;grid-auto-columns:1fr}
+.dpd-bar-cell{background:#08090b;border:1px solid #1c1e23;border-radius:1px;position:relative;overflow:hidden}
+.dpd-bar-cell.beat{border-color:#2a2d34}
+.dpd-bar-cell.playing{background:#ff5cb1}
+.dpd-bar-cell .mark{position:absolute;left:0;right:0;height:2px;background:#ff5cb1}
+.dpd-voices{display:flex;flex-direction:column;gap:6px}
+.dpd-voice{background:#08090b;border:1px solid #1c1e23;border-radius:3px;overflow:hidden;transition:box-shadow .08s ease}
+.dpd-voice.firing{box-shadow:0 0 0 1px #ff5cb1,inset 0 0 12px rgba(255,92,177,.18)}
+.dpd-voice-head{display:flex;align-items:center;gap:6px;padding:5px 8px;background:#0d0e11;border-bottom:1px solid #1c1e23}
+.dpd-voice-num{font-size:10px;font-weight:700;color:#ff5cb1;letter-spacing:.15em;min-width:24px}
+.dpd-voice-info{font-size:9px;color:#a8adb8;letter-spacing:.08em;flex:1;font-variant-numeric:tabular-nums}
+.dpd-voice-info b{color:#e8eaed;font-weight:600}
+.dpd-seg2{display:flex;background:#08090b;border:1px solid #1c1e23;border-radius:2px;overflow:hidden;height:22px}
+.dpd-seg2 button{padding:0 8px;font-size:9px;font-weight:600;color:#5e636e;border-right:1px solid #1c1e23}
+.dpd-seg2 button:last-child{border-right:0}
+.dpd-seg2 button.on{background:#13151a;color:#ff5cb1}
+.dpd-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;padding:8px}
+.dpd-row{display:flex;align-items:center;gap:6px;min-width:0}
+.dpd-row .mini-label{flex:0 0 34px}
+.dpd-row .mini-val{font-size:9px;color:#e8eaed;min-width:34px;text-align:right;font-variant-numeric:tabular-nums}
+.dpd-row select.mini-input{height:22px;font-size:9px}
+input[type=range].dpd-input{-webkit-appearance:none !important;height:18px;padding:0;background:#08090b;border:1px solid #1c1e23;border-radius:2px;flex:1;min-width:0}
+input[type=range].dpd-input::-webkit-slider-runnable-track{height:2px;background:#2a2d34;border-radius:1px}
+input[type=range].dpd-input::-webkit-slider-thumb{-webkit-appearance:none;width:8px;height:12px;background:#ff5cb1;border-radius:1px;margin-top:-5px}
 </style>
 </head>
 <body>
 <div class="app">
-
-  <!-- ============================ HEADER ============================ -->
   <header class="head">
     <div class="brand-row">
       <div class="brand">TROIS<span class="brand-dot"></span>3</div>
       <div class="bpm-cluster">
-        <div class="bpm-box" id="bpmBox">
-          <span class="bpm-label">BPM</span>
-          <span class="bpm-val" id="bpmVal">90</span>
-        </div>
+        <div class="bpm-box" id="bpmBox"><span class="bpm-label">BPM</span><span class="bpm-val" id="bpmVal">90</span></div>
         <button class="tbtn" id="bpmTap">TAP</button>
         <span class="beat-led" id="beatLed"></span>
       </div>
@@ -307,8 +204,6 @@ body.assigning.m2-pick .assignbar{border-color:#5cffd8;color:#5cffd8}
       <button class="tbtn" id="genBtn">◇ GEN</button>
     </div>
   </header>
-
-  <!-- ============================ TABS ============================ -->
   <nav class="tabs">
     <button class="tab tab-sample on" data-tab="sample"><span class="tab-num">01</span><span>SAMPLE</span></button>
     <button class="tab tab-tex" data-tab="texture"><span class="tab-num">02</span><span>TEXTURE</span></button>
@@ -317,34 +212,19 @@ body.assigning.m2-pick .assignbar{border-color:#5cffd8;color:#5cffd8}
     <button class="tab tab-loop" data-tab="loop"><span class="tab-num">05</span><span>LOOP</span></button>
     <button class="tab tab-perf" data-tab="perf"><span class="tab-num">06</span><span>PERF</span></button>
   </nav>
-
   <main class="pages">
-
-    <!-- ============================ ASSIGN BAR (global) ============================ -->
     <div class="assignbar" id="assignBar">
       <span id="assignStatus">tape sur un contrôle pour l'assigner</span>
       <button class="tbtn" id="assignCancel" style="margin-left:auto;padding:4px 8px;height:22px">ANNULER</button>
     </div>
-
-    <!-- ============================ PAGE SAMPLE ============================ -->
     <section class="page" data-page="sample">
       <div class="panel">
         <div class="panel-head">
-          <div class="panel-title">
-            <span class="tag c-sample">01</span>
-            <span class="panel-name">SAMPLE</span>
-          </div>
-          <div class="seg c-sample" id="sampleMode">
-            <button data-v="oneshot" class="on">ONE</button>
-            <button data-v="loop">LOOP</button>
-          </div>
+          <div class="panel-title"><span class="tag c-sample">01</span><span class="panel-name">SAMPLE</span></div>
+          <div class="seg c-sample" id="sampleMode"><button data-v="oneshot" class="on">ONE</button><button data-v="loop">LOOP</button></div>
         </div>
         <div class="panel-body">
-          <div class="scope">
-            <canvas id="scope"></canvas>
-            <div class="scope-overlay">SOURCE</div>
-            <div class="scope-overlay right" id="srcInfo"></div>
-          </div>
+          <div class="scope"><canvas id="scope"></canvas><div class="scope-overlay">SOURCE</div><div class="scope-overlay right" id="srcInfo"></div></div>
           <div class="grid g5">
             <div class="ctrl modable" data-param="sample.start"><div class="knob c-sample" data-min="0" data-max="1" data-val="0"></div><div class="ctrl-label">START</div><div class="ctrl-val">0%</div></div>
             <div class="ctrl modable" data-param="sample.end"><div class="knob c-sample" data-min="0" data-max="1" data-val="1"></div><div class="ctrl-label">END</div><div class="ctrl-val">100%</div></div>
@@ -352,24 +232,13 @@ body.assigning.m2-pick .assignbar{border-color:#5cffd8;color:#5cffd8}
             <div class="ctrl modable" data-param="sample.flutter"><div class="knob c-sample" data-min="0" data-max="1" data-val="0.15"></div><div class="ctrl-label">FLUTTER</div><div class="ctrl-val">15%</div></div>
             <div class="ctrl modable" data-param="sample.gain"><div class="knob c-sample" data-min="0" data-max="1.5" data-val="1"></div><div class="ctrl-label">GAIN</div><div class="ctrl-val">100%</div></div>
           </div>
-          <div class="seg c-sample" id="sampleDir">
-            <button data-v="fwd" class="on">▶ FORWARD</button>
-            <button data-v="rev">◀ REVERSE</button>
-          </div>
+          <div class="seg c-sample" id="sampleDir"><button data-v="fwd" class="on">▶ FORWARD</button><button data-v="rev">◀ REVERSE</button></div>
         </div>
       </div>
-
-      <!-- SAMPLE SEQUENCER -->
       <div class="panel">
         <div class="panel-head">
-          <div class="panel-title">
-            <span class="tag c-sample">SEQ</span>
-            <span class="panel-name">SAMPLE SEQUENCER · 16 PAS</span>
-          </div>
-          <div class="seg c-sample" id="seqOn">
-            <button data-v="off" class="on">OFF</button>
-            <button data-v="on">ON</button>
-          </div>
+          <div class="panel-title"><span class="tag c-sample">SEQ</span><span class="panel-name">SAMPLE SEQUENCER · 16 PAS</span></div>
+          <div class="seg c-sample" id="seqOn"><button data-v="off" class="on">OFF</button><button data-v="on">ON</button></div>
         </div>
         <div class="panel-body">
           <div class="seq-section">
@@ -394,23 +263,13 @@ body.assigning.m2-pick .assignbar{border-color:#5cffd8;color:#5cffd8}
         </div>
       </div>
     </section>
-
-    <!-- ============================ PAGE TEXTURE ============================ -->
     <section class="page" data-page="texture" hidden>
       <div class="panel">
         <div class="panel-head">
-          <div class="panel-title">
-            <span class="tag c-tex">02</span>
-            <span class="panel-name">TEXTURE</span>
-          </div>
-          <div class="seg c-tex" id="texMode">
-            <button data-v="multi" class="on">MULTI</button>
-            <button data-v="frag">FRAG</button>
-            <button data-v="dpd">DPD</button>
-          </div>
+          <div class="panel-title"><span class="tag c-tex">02</span><span class="panel-name">TEXTURE</span></div>
+          <div class="seg c-tex" id="texMode"><button data-v="multi" class="on">MULTI</button><button data-v="frag">FRAG</button><button data-v="dpd">DPD</button></div>
         </div>
         <div class="panel-body">
-          <!-- MULTI -->
           <div id="texMulti" class="tex-mode">
             <div class="row-hdr">MULTIHEAD · jusqu'à 8 têtes · vitesses ×2ⁿ</div>
             <div class="grid g4">
@@ -421,7 +280,6 @@ body.assigning.m2-pick .assignbar{border-color:#5cffd8;color:#5cffd8}
             </div>
             <div class="list-rows" id="headsList"></div>
           </div>
-          <!-- FRAG -->
           <div id="texFrag" class="tex-mode" hidden>
             <div class="row-hdr">FRAGMENT · taille / nombre / dispersion</div>
             <div class="grid g4">
@@ -436,49 +294,42 @@ body.assigning.m2-pick .assignbar{border-color:#5cffd8;color:#5cffd8}
               <div class="ctrl modable" data-param="tex.fragRev"><div class="knob c-tex" data-min="0" data-max="1" data-val="0.3"></div><div class="ctrl-label">REV PROB</div><div class="ctrl-val">30%</div></div>
             </div>
           </div>
-          <!-- DPD -->
           <div id="texDpd" class="tex-mode" hidden>
-            <div class="row-hdr">DPD · 4 IMPULSIONS · 2 PAR CANAL</div>
-            <div class="list-rows" id="dpdList"></div>
-            <div class="grid g2">
-              <div class="ctrl modable" data-param="tex.dpdGain"><div class="knob c-tex" data-min="0" data-max="1" data-val="0.6"></div><div class="ctrl-label">GAIN</div><div class="ctrl-val">60%</div></div>
-              <div class="ctrl modable" data-param="tex.dpdRate"><div class="knob c-tex" data-min="0.1" data-max="4" data-val="0.5"></div><div class="ctrl-label">PERIOD</div><div class="ctrl-val">500 ms</div></div>
+            <div class="row-hdr">DPD · 4 GHOST ECHOES · VERROUILLÉS SUR L'HORLOGE</div>
+            <div class="grid g3">
+              <div class="ctrl"><div class="knob c-tex" data-param="tex.dpdBars" data-min="1" data-max="4" data-val="1" data-step="1"></div><div class="ctrl-label">BARS</div><div class="ctrl-val">1</div></div>
+              <div class="ctrl modable" data-param="tex.dpdGain"><div class="knob c-tex" data-min="0" data-max="1" data-val="0.7"></div><div class="ctrl-label">GAIN</div><div class="ctrl-val">70%</div></div>
+              <div class="ctrl"><button class="tbtn" id="dpdRand" style="height:42px;width:42px">↻</button><div class="ctrl-label">RAND</div><div class="ctrl-val">—</div></div>
+            </div>
+            <div class="dpd-bar-display" id="dpdBarDisplay"></div>
+            <div class="dpd-voices" id="dpdVoices"></div>
+            <div class="seq-bar" style="margin-top:6px">
+              <button class="tbtn" data-preset="ghost">GHOST</button>
+              <button class="tbtn" data-preset="stutter">STUTTER</button>
+              <button class="tbtn" data-preset="roll">ROLL</button>
+              <button class="tbtn" data-preset="sparse">SPARSE</button>
             </div>
           </div>
         </div>
       </div>
     </section>
-
-    <!-- ============================ PAGE DELAY ============================ -->
     <section class="page" data-page="delay" hidden>
       <div class="panel">
         <div class="panel-head">
-          <div class="panel-title">
-            <span class="tag c-delay">03</span>
-            <span class="panel-name">STEREO DELAY</span>
-          </div>
-          <div class="seg c-delay" id="delaySync">
-            <button data-v="free" class="on">FREE</button>
-            <button data-v="sync">SYNC</button>
-          </div>
+          <div class="panel-title"><span class="tag c-delay">03</span><span class="panel-name">STEREO DELAY</span></div>
+          <div class="seg c-delay" id="delaySync"><button data-v="free" class="on">FREE</button><button data-v="sync">SYNC</button></div>
         </div>
         <div class="panel-body">
           <div class="row-hdr">L · LEFT LINE</div>
           <div class="grid g3">
             <div class="ctrl modable" data-param="delay.timeL"><div class="knob c-delay" data-min="0.005" data-max="2" data-val="0.375"></div><div class="ctrl-label">TIME L</div><div class="ctrl-val">375 ms</div></div>
-            <div class="ctrl">
-              <div class="dir-toggle c-delay" id="delayDirL"><button data-v="fwd" class="on">▶</button><button data-v="rev">◀</button></div>
-              <div class="ctrl-label">DIR L</div><div class="ctrl-val">FWD</div>
-            </div>
+            <div class="ctrl"><div class="dir-toggle c-delay" id="delayDirL"><button data-v="fwd" class="on">▶</button><button data-v="rev">◀</button></div><div class="ctrl-label">DIR L</div><div class="ctrl-val">FWD</div></div>
             <div class="ctrl modable" data-param="delay.panL"><div class="knob c-delay" data-min="-1" data-max="1" data-val="-0.7"></div><div class="ctrl-label">PAN L</div><div class="ctrl-val">L70</div></div>
           </div>
           <div class="row-hdr">R · RIGHT LINE</div>
           <div class="grid g3">
             <div class="ctrl modable" data-param="delay.timeR"><div class="knob c-delay" data-min="0.005" data-max="2" data-val="0.5"></div><div class="ctrl-label">TIME R</div><div class="ctrl-val">500 ms</div></div>
-            <div class="ctrl">
-              <div class="dir-toggle c-delay" id="delayDirR"><button data-v="fwd" class="on">▶</button><button data-v="rev">◀</button></div>
-              <div class="ctrl-label">DIR R</div><div class="ctrl-val">FWD</div>
-            </div>
+            <div class="ctrl"><div class="dir-toggle c-delay" id="delayDirR"><button data-v="fwd" class="on">▶</button><button data-v="rev">◀</button></div><div class="ctrl-label">DIR R</div><div class="ctrl-val">FWD</div></div>
             <div class="ctrl modable" data-param="delay.panR"><div class="knob c-delay" data-min="-1" data-max="1" data-val="0.7"></div><div class="ctrl-label">PAN R</div><div class="ctrl-val">R70</div></div>
           </div>
           <div class="row-hdr">FEEDBACK & FILTERS</div>
@@ -491,29 +342,15 @@ body.assigning.m2-pick .assignbar{border-color:#5cffd8;color:#5cffd8}
         </div>
       </div>
     </section>
-
-    <!-- ============================ PAGE MOD ============================ -->
     <section class="page" data-page="mod" hidden>
-      <!-- M1 -->
       <div class="panel">
         <div class="panel-head">
-          <div class="panel-title">
-            <span class="tag c-m1">M1</span>
-            <span class="panel-name">MODULATOR 1</span>
-          </div>
-          <div class="transport">
-            <button class="tbtn" id="m1Pick" style="border-color:#c489ff;color:#c489ff">+ ASSIGN</button>
-          </div>
+          <div class="panel-title"><span class="tag c-m1">M1</span><span class="panel-name">MODULATOR 1</span></div>
+          <div class="transport"><button class="tbtn" id="m1Pick" style="border-color:#c489ff;color:#c489ff">+ ASSIGN</button></div>
         </div>
         <div class="panel-body">
-          <div class="seg c-m1" id="m1Type">
-            <button data-v="lfo" class="on">LFO</button>
-            <button data-v="step">STEP</button>
-          </div>
-          <div class="seg c-m1" id="m1Sync">
-            <button data-v="free" class="on">FREE</button>
-            <button data-v="sync">SYNC</button>
-          </div>
+          <div class="seg c-m1" id="m1Type"><button data-v="lfo" class="on">LFO</button><button data-v="step">STEP</button></div>
+          <div class="seg c-m1" id="m1Sync"><button data-v="free" class="on">FREE</button><button data-v="sync">SYNC</button></div>
           <div class="grid g4" id="m1Lfo">
             <div class="ctrl"><div class="seg c-m1" id="m1Wave" style="height:42px;flex-wrap:wrap"><button data-v="sin" class="on">∿</button><button data-v="tri">△</button><button data-v="saw">⩘</button><button data-v="sqr">⊓</button></div><div class="ctrl-label">WAVE</div><div class="ctrl-val">SIN</div></div>
             <div class="ctrl"><div class="knob c-m1" data-param="m1.rate" data-min="0.05" data-max="20" data-val="1"></div><div class="ctrl-label" id="m1RateLbl">RATE</div><div class="ctrl-val">1.00 Hz</div></div>
@@ -532,26 +369,14 @@ body.assigning.m2-pick .assignbar{border-color:#5cffd8;color:#5cffd8}
           <div class="targets" id="m1Targets">CIBLES : —</div>
         </div>
       </div>
-      <!-- M2 -->
       <div class="panel">
         <div class="panel-head">
-          <div class="panel-title">
-            <span class="tag c-m2">M2</span>
-            <span class="panel-name">MODULATOR 2</span>
-          </div>
-          <div class="transport">
-            <button class="tbtn" id="m2Pick" style="border-color:#5cffd8;color:#5cffd8">+ ASSIGN</button>
-          </div>
+          <div class="panel-title"><span class="tag c-m2">M2</span><span class="panel-name">MODULATOR 2</span></div>
+          <div class="transport"><button class="tbtn" id="m2Pick" style="border-color:#5cffd8;color:#5cffd8">+ ASSIGN</button></div>
         </div>
         <div class="panel-body">
-          <div class="seg c-m2" id="m2Type">
-            <button data-v="lfo" class="on">LFO</button>
-            <button data-v="step">STEP</button>
-          </div>
-          <div class="seg c-m2" id="m2Sync">
-            <button data-v="free" class="on">FREE</button>
-            <button data-v="sync">SYNC</button>
-          </div>
+          <div class="seg c-m2" id="m2Type"><button data-v="lfo" class="on">LFO</button><button data-v="step">STEP</button></div>
+          <div class="seg c-m2" id="m2Sync"><button data-v="free" class="on">FREE</button><button data-v="sync">SYNC</button></div>
           <div class="grid g4" id="m2Lfo">
             <div class="ctrl"><div class="seg c-m2" id="m2Wave" style="height:42px;flex-wrap:wrap"><button data-v="sin" class="on">∿</button><button data-v="tri">△</button><button data-v="saw">⩘</button><button data-v="sqr">⊓</button></div><div class="ctrl-label">WAVE</div><div class="ctrl-val">SIN</div></div>
             <div class="ctrl"><div class="knob c-m2" data-param="m2.rate" data-min="0.05" data-max="20" data-val="0.3"></div><div class="ctrl-label" id="m2RateLbl">RATE</div><div class="ctrl-val">0.30 Hz</div></div>
@@ -571,58 +396,30 @@ body.assigning.m2-pick .assignbar{border-color:#5cffd8;color:#5cffd8}
         </div>
       </div>
     </section>
-
-    <!-- ============================ PAGE LOOP ============================ -->
     <section class="page" data-page="loop" hidden>
       <div class="panel">
         <div class="panel-head">
-          <div class="panel-title">
-            <span class="tag c-loop">05</span>
-            <span class="panel-name">LOOPER</span>
-          </div>
-          <div class="transport">
-            <button class="tbtn rec" id="loopRec">● REC</button>
-            <button class="tbtn" id="loopPlay">▶</button>
-            <button class="tbtn" id="loopStop">■</button>
-          </div>
+          <div class="panel-title"><span class="tag c-loop">05</span><span class="panel-name">LOOPER</span></div>
+          <div class="transport"><button class="tbtn rec" id="loopRec">● REC</button><button class="tbtn" id="loopPlay">▶</button><button class="tbtn" id="loopStop">■</button></div>
         </div>
         <div class="panel-body">
-          <div class="scope" style="height:48px">
-            <canvas id="loopScope"></canvas>
-            <div class="scope-overlay" id="loopLbl">LOOP · 0.0 s · 0/0</div>
-          </div>
+          <div class="scope" style="height:48px"><canvas id="loopScope"></canvas><div class="scope-overlay" id="loopLbl">LOOP · 0.0 s · 0/0</div></div>
           <div class="grid g4">
             <div class="ctrl modable" data-param="loop.length"><div class="knob c-loop" data-min="0.5" data-max="16" data-val="4"></div><div class="ctrl-label">LENGTH</div><div class="ctrl-val">4.0 s</div></div>
             <div class="ctrl modable" data-param="loop.speed"><div class="knob c-loop" data-min="0.25" data-max="2" data-val="1"></div><div class="ctrl-label">SPEED</div><div class="ctrl-val">1.00x</div></div>
             <div class="ctrl modable" data-param="loop.pitch"><div class="knob c-loop" data-min="-12" data-max="12" data-val="0"></div><div class="ctrl-label">PITCH</div><div class="ctrl-val">0 st</div></div>
             <div class="ctrl modable" data-param="loop.fb"><div class="knob c-loop" data-min="0" data-max="1.05" data-val="0.95"></div><div class="ctrl-label">DECAY</div><div class="ctrl-val">95%</div></div>
           </div>
-          <div class="seg c-loop" id="loopDir">
-            <button data-v="fwd" class="on">▶ FORWARD</button>
-            <button data-v="rev">◀ REVERSE</button>
-          </div>
-          <div class="seq-bar">
-            <button class="tbtn" id="loopUndo">↶ UNDO</button>
-            <button class="tbtn" id="loopRedo">↷ REDO</button>
-            <button class="tbtn" id="loopClear">CLR</button>
-          </div>
+          <div class="seg c-loop" id="loopDir"><button data-v="fwd" class="on">▶ FORWARD</button><button data-v="rev">◀ REVERSE</button></div>
+          <div class="seq-bar"><button class="tbtn" id="loopUndo">↶ UNDO</button><button class="tbtn" id="loopRedo">↷ REDO</button><button class="tbtn" id="loopClear">CLR</button></div>
         </div>
       </div>
     </section>
-
-    <!-- ============================ PAGE PERF ============================ -->
     <section class="page" data-page="perf" hidden>
       <div class="panel">
         <div class="panel-head">
-          <div class="panel-title">
-            <span class="tag c-out">OUT</span>
-            <span class="panel-name">FILTER + EXCITER + MASTER</span>
-          </div>
-          <div class="seg c-out" id="filterType">
-            <button data-v="lp" class="on">LP</button>
-            <button data-v="hp">HP</button>
-            <button data-v="bp">BP</button>
-          </div>
+          <div class="panel-title"><span class="tag c-out">OUT</span><span class="panel-name">FILTER + EXCITER + MASTER</span></div>
+          <div class="seg c-out" id="filterType"><button data-v="lp" class="on">LP</button><button data-v="hp">HP</button><button data-v="bp">BP</button></div>
         </div>
         <div class="panel-body">
           <div class="grid g5">
@@ -634,213 +431,127 @@ body.assigning.m2-pick .assignbar{border-color:#5cffd8;color:#5cffd8}
           </div>
         </div>
       </div>
-
       <div class="panel">
-        <div class="panel-head">
-          <div class="panel-title">
-            <span class="tag c-out">MIX</span>
-            <span class="panel-name">ENGINE MUTE / SOLO</span>
-          </div>
-        </div>
+        <div class="panel-head"><div class="panel-title"><span class="tag c-out">MIX</span><span class="panel-name">ENGINE MUTE / SOLO</span></div></div>
         <div class="panel-body" id="engineMixer"></div>
       </div>
-
       <div class="notice">PANIC : appuie sur ■ STOP pour couper toutes les voix actives. Le looper continue indépendamment.</div>
     </section>
-
   </main>
-
   <div class="foot">TROIS · v0.3 · Lofi Sampler</div>
 </div>
-
 <script>
-// ===================================================================
-// TROIS · Lofi Sampler · v0.3
-// ===================================================================
 const $ = sel => document.querySelector(sel);
 const $$ = sel => Array.from(document.querySelectorAll(sel));
 const clamp = (v,a,b) => Math.max(a, Math.min(b, v));
-
-// ----- AudioContext (lazy) -----
-let ctx = null;
-let sourceBuffer = null;
-let reversedBuffer = null;
+let ctx = null, sourceBuffer = null, reversedBuffer = null;
 const AC = () => {
-  if(!ctx){
-    ctx = new (window.AudioContext || window.webkitAudioContext)({latencyHint:'interactive'});
-    setupAudio();
-  }
+  if(!ctx){ ctx = new (window.AudioContext || window.webkitAudioContext)({latencyHint:'interactive'}); setupAudio(); }
   if(ctx.state === 'suspended') ctx.resume();
   return ctx;
 };
-
-// ===================================================================
-// SYNC DIVISIONS
-// ===================================================================
-// Used for delay sync, mod sync, sequencer step division
 const DIVISIONS = [
-  {label:'1/1',  beats:4},
-  {label:'1/2.', beats:3},
-  {label:'1/2',  beats:2},
-  {label:'1/4.', beats:1.5},
-  {label:'1/4',  beats:1},
-  {label:'1/4T', beats:2/3},
-  {label:'1/8.', beats:0.75},
-  {label:'1/8',  beats:0.5},
-  {label:'1/8T', beats:1/3},
-  {label:'1/16', beats:0.25},
-  {label:'1/16T',beats:1/6},
-  {label:'1/32', beats:0.125}
+  {label:'1/1',beats:4},{label:'1/2.',beats:3},{label:'1/2',beats:2},
+  {label:'1/4.',beats:1.5},{label:'1/4',beats:1},{label:'1/4T',beats:2/3},
+  {label:'1/8.',beats:0.75},{label:'1/8',beats:0.5},{label:'1/8T',beats:1/3},
+  {label:'1/16',beats:0.25},{label:'1/16T',beats:1/6},{label:'1/32',beats:0.125}
 ];
-// Sequencer step divisions (sub-beat)
 const SEQ_DIVS = [
-  {label:'1/4',  beats:1},
-  {label:'1/8.', beats:0.75},
-  {label:'1/8',  beats:0.5},
-  {label:'1/16.',beats:0.375},
-  {label:'1/16', beats:0.25},
-  {label:'1/16T',beats:1/6},
-  {label:'1/32', beats:0.125}
+  {label:'1/4',beats:1},{label:'1/8.',beats:0.75},{label:'1/8',beats:0.5},
+  {label:'1/16.',beats:0.375},{label:'1/16',beats:0.25},{label:'1/16T',beats:1/6},{label:'1/32',beats:0.125}
+];
+const DPD_LEN_DIVS = [
+  {label:'1/32',beats:0.125},{label:'1/16T',beats:1/6},{label:'1/16',beats:0.25},
+  {label:'1/8T',beats:1/3},{label:'1/8',beats:0.5},{label:'1/4',beats:1}
 ];
 const beatSec = () => 60 / state.bpm;
-
-// ===================================================================
-// STATE
-// ===================================================================
 const state = {
-  bpm:90,
-  playing:false,
-
+  bpm:90, playing:false,
   sample:{ mode:'oneshot', dir:'fwd', start:0, end:1, pitch:0, gain:1, flutter:0.15, mute:false, solo:false },
-
-  seq:{
-    on:false, length:16, div:3, gateLen:0.5, swing:0,
-    gates:Array(16).fill(false),
-    pitches:Array(16).fill(0),
-    playStep:0
-  },
-
-  delay:{ sync:'free', timeL:0.375, timeR:0.5, dirL:'fwd', dirR:'fwd',
-          panL:-0.7, panR:0.7, fb:0, hp:120, lp:6000, mix:0.4,
-          syncIdxL:7, syncIdxR:9, mute:false, solo:false },
-
-  tex:{ mode:'multi',
-        density:4, spread:0.7, gain:0.5, mute:false, solo:false,
-        heads:[],
+  seq:{ on:false, length:16, div:3, gateLen:0.5, swing:0, gates:Array(16).fill(false), pitches:Array(16).fill(0), playStep:0 },
+  delay:{ sync:'free', timeL:0.375, timeR:0.5, dirL:'fwd', dirR:'fwd', panL:-0.7, panR:0.7, fb:0, hp:120, lp:6000, mix:0.4, mute:false, solo:false },
+  tex:{ mode:'multi', density:4, spread:0.7, gain:0.5, mute:false, solo:false, heads:[],
         fragCount:6, fragSize:0.12, fragJitter:0.5, fragGain:0.5, fragRate:8, fragSpread:0.8, fragRev:0.3,
-        dpd:[], dpdGain:0.6, dpdRate:0.5 },
-
+        dpd:[], dpdBars:1, dpdGain:0.7 },
   out:{ filtType:'lp', cutoff:14000, q:0.7, drive:0.2, tone:0.5, master:0.85 },
-
-  loop:{ length:4, speed:1, pitch:0, fb:0.95, dir:'fwd', recording:false, playing:false,
-         buffer:null, history:[], future:[] },
-
-  m1:{ type:'lfo', sync:'free', wave:'sin', rate:1, depth:0.5, offset:0,
-       stepRate:8, stepCount:8, stepGlide:0, stepDepth:0.7, steps:Array(16).fill(0.5),
-       syncDiv:7, syncStepDiv:9,
-       phase:0, value:0 },
-
-  m2:{ type:'lfo', sync:'free', wave:'sin', rate:0.3, depth:0.4, offset:0,
-       stepRate:4, stepCount:8, stepGlide:0.3, stepDepth:0.6, steps:Array(16).fill(0.5),
-       syncDiv:5, syncStepDiv:7,
-       phase:0, value:0 },
-
-  assignMode:null,
-  beatPos:0
+  loop:{ length:4, speed:1, pitch:0, fb:0.95, dir:'fwd', recording:false, playing:false, buffer:null, history:[], future:[] },
+  m1:{ type:'lfo', sync:'free', wave:'sin', rate:1, depth:0.5, offset:0, stepRate:8, stepCount:8, stepGlide:0, stepDepth:0.7, steps:Array(16).fill(0.5), syncDiv:7, syncStepDiv:9, phase:0, value:0 },
+  m2:{ type:'lfo', sync:'free', wave:'sin', rate:0.3, depth:0.4, offset:0, stepRate:4, stepCount:8, stepGlide:0.3, stepDepth:0.6, steps:Array(16).fill(0.5), syncDiv:5, syncStepDiv:7, phase:0, value:0 },
+  assignMode:null, beatPos:0
 };
-
-for(let i=0;i<8;i++){
-  state.tex.heads.push({
-    on:i<4, rate:[0.25,0.5,1,2][i%4], dir:i%2?'rev':'fwd',
-    pan:(i%2?1:-1)*(0.2 + 0.7*Math.random()), pos:i/8
-  });
-}
+for(let i=0;i<8;i++) state.tex.heads.push({ on:i<4, rate:[0.25,0.5,1,2][i%4], dir:i%2?'rev':'fwd', pan:(i%2?1:-1)*(0.2 + 0.7*Math.random()), pos:i/8 });
 state.tex.dpd = [
-  {channel:'L', delay:0.13, dir:'fwd'},
-  {channel:'L', delay:0.31, dir:'rev'},
-  {channel:'R', delay:0.21, dir:'fwd'},
-  {channel:'R', delay:0.43, dir:'rev'}
+  { step:0,  pos:0.00, pitch:0,  len:0.25,  vel:0.85, prob:1.00, ch:'L', dir:'fwd' },
+  { step:6,  pos:0.30, pitch:7,  len:0.125, vel:0.55, prob:0.80, ch:'L', dir:'rev' },
+  { step:9,  pos:0.50, pitch:0,  len:0.25,  vel:0.70, prob:1.00, ch:'R', dir:'fwd' },
+  { step:13, pos:0.70, pitch:12, len:0.125, vel:0.90, prob:0.60, ch:'R', dir:'rev' }
 ];
-
-const PARAM_META = {
-  'sample.start':{path:['sample','start']}, 'sample.end':{path:['sample','end']},
-  'sample.pitch':{path:['sample','pitch']}, 'sample.gain':{path:['sample','gain']},
-  'sample.flutter':{path:['sample','flutter']},
-  'delay.timeL':{path:['delay','timeL']}, 'delay.timeR':{path:['delay','timeR']},
-  'delay.panL':{path:['delay','panL']}, 'delay.panR':{path:['delay','panR']},
-  'delay.fb':{path:['delay','fb']}, 'delay.hp':{path:['delay','hp']},
-  'delay.lp':{path:['delay','lp']}, 'delay.mix':{path:['delay','mix']},
-  'tex.density':{path:['tex','density']}, 'tex.spread':{path:['tex','spread']},
-  'tex.gain':{path:['tex','gain']},
-  'tex.fragCount':{path:['tex','fragCount']}, 'tex.fragSize':{path:['tex','fragSize']},
-  'tex.fragJitter':{path:['tex','fragJitter']}, 'tex.fragGain':{path:['tex','fragGain']},
-  'tex.fragRate':{path:['tex','fragRate']}, 'tex.fragSpread':{path:['tex','fragSpread']},
-  'tex.fragRev':{path:['tex','fragRev']},
-  'tex.dpdGain':{path:['tex','dpdGain']}, 'tex.dpdRate':{path:['tex','dpdRate']},
-  'out.cutoff':{path:['out','cutoff']}, 'out.q':{path:['out','q']},
-  'out.drive':{path:['out','drive']}, 'out.tone':{path:['out','tone']},
-  'out.master':{path:['out','master']},
-  'loop.length':{path:['loop','length']}, 'loop.speed':{path:['loop','speed']},
-  'loop.pitch':{path:['loop','pitch']}, 'loop.fb':{path:['loop','fb']}
+const DPD_PRESETS = {
+  ghost: [
+    { step:0,  pos:0.00, pitch:0,  len:0.25,  vel:0.85, prob:1.00, ch:'L', dir:'fwd' },
+    { step:6,  pos:0.30, pitch:7,  len:0.125, vel:0.55, prob:0.80, ch:'L', dir:'rev' },
+    { step:9,  pos:0.50, pitch:0,  len:0.25,  vel:0.70, prob:1.00, ch:'R', dir:'fwd' },
+    { step:13, pos:0.70, pitch:12, len:0.125, vel:0.90, prob:0.60, ch:'R', dir:'rev' }
+  ],
+  stutter: [
+    { step:2,  pos:0.10, pitch:0,  len:0.0625, vel:0.80, prob:1.00, ch:'L', dir:'fwd' },
+    { step:3,  pos:0.10, pitch:0,  len:0.0625, vel:0.65, prob:1.00, ch:'R', dir:'fwd' },
+    { step:10, pos:0.40, pitch:5,  len:0.0625, vel:0.75, prob:0.90, ch:'L', dir:'rev' },
+    { step:11, pos:0.40, pitch:5,  len:0.0625, vel:0.60, prob:0.70, ch:'R', dir:'rev' }
+  ],
+  roll: [
+    { step:4,  pos:0.20, pitch:0,  len:0.125, vel:0.70, prob:1.00, ch:'L', dir:'fwd' },
+    { step:6,  pos:0.20, pitch:5,  len:0.125, vel:0.60, prob:1.00, ch:'R', dir:'fwd' },
+    { step:8,  pos:0.20, pitch:7,  len:0.125, vel:0.65, prob:1.00, ch:'L', dir:'fwd' },
+    { step:10, pos:0.20, pitch:12, len:0.125, vel:0.80, prob:1.00, ch:'R', dir:'fwd' }
+  ],
+  sparse: [
+    { step:0,  pos:0.00, pitch:-12, len:0.5,    vel:0.90, prob:1.00, ch:'L', dir:'fwd' },
+    { step:7,  pos:0.50, pitch:0,   len:0.25,   vel:0.50, prob:0.40, ch:'R', dir:'rev' },
+    { step:12, pos:0.20, pitch:0,   len:0.25,   vel:0.60, prob:0.50, ch:'L', dir:'fwd' },
+    { step:15, pos:0.80, pitch:7,   len:0.0625, vel:0.95, prob:0.30, ch:'R', dir:'rev' }
+  ]
 };
-const modDepths = {};
-const modBaseValues = {};
-
-// ===================================================================
-// AUDIO ENGINE SETUP
-// ===================================================================
+const PARAM_META = {
+  'sample.start':{path:['sample','start']},'sample.end':{path:['sample','end']},
+  'sample.pitch':{path:['sample','pitch']},'sample.gain':{path:['sample','gain']},'sample.flutter':{path:['sample','flutter']},
+  'delay.timeL':{path:['delay','timeL']},'delay.timeR':{path:['delay','timeR']},
+  'delay.panL':{path:['delay','panL']},'delay.panR':{path:['delay','panR']},
+  'delay.fb':{path:['delay','fb']},'delay.hp':{path:['delay','hp']},'delay.lp':{path:['delay','lp']},'delay.mix':{path:['delay','mix']},
+  'tex.density':{path:['tex','density']},'tex.spread':{path:['tex','spread']},'tex.gain':{path:['tex','gain']},
+  'tex.fragCount':{path:['tex','fragCount']},'tex.fragSize':{path:['tex','fragSize']},
+  'tex.fragJitter':{path:['tex','fragJitter']},'tex.fragGain':{path:['tex','fragGain']},
+  'tex.fragRate':{path:['tex','fragRate']},'tex.fragSpread':{path:['tex','fragSpread']},'tex.fragRev':{path:['tex','fragRev']},
+  'tex.dpdGain':{path:['tex','dpdGain']},
+  'out.cutoff':{path:['out','cutoff']},'out.q':{path:['out','q']},
+  'out.drive':{path:['out','drive']},'out.tone':{path:['out','tone']},'out.master':{path:['out','master']},
+  'loop.length':{path:['loop','length']},'loop.speed':{path:['loop','speed']},
+  'loop.pitch':{path:['loop','pitch']},'loop.fb':{path:['loop','fb']}
+};
+const modDepths = {}; const modBaseValues = {};
 let nodes = {};
 function setupAudio(){
   const c = ctx;
-  nodes.master = c.createGain();
-  nodes.master.gain.value = state.out.master;
-
-  nodes.exciterDry = c.createGain();
-  nodes.exciterWet = c.createGain();
-  nodes.shaper = c.createWaveShaper();
-  nodes.shaper.curve = makeShaperCurve(state.out.drive);
-  nodes.shaper.oversample = '2x';
-  nodes.shaperHP = c.createBiquadFilter();
-  nodes.shaperHP.type = 'highpass';
-  nodes.shaperHP.frequency.value = 2200;
-  nodes.shaperHP.Q.value = 0.5;
-  nodes.shaperLP = c.createBiquadFilter();
-  nodes.shaperLP.type = 'lowpass';
-  nodes.shaperLP.frequency.value = 14000;
+  nodes.master = c.createGain(); nodes.master.gain.value = state.out.master;
+  nodes.exciterDry = c.createGain(); nodes.exciterWet = c.createGain();
+  nodes.shaper = c.createWaveShaper(); nodes.shaper.curve = makeShaperCurve(state.out.drive); nodes.shaper.oversample = '2x';
+  nodes.shaperHP = c.createBiquadFilter(); nodes.shaperHP.type = 'highpass'; nodes.shaperHP.frequency.value = 2200; nodes.shaperHP.Q.value = 0.5;
+  nodes.shaperLP = c.createBiquadFilter(); nodes.shaperLP.type = 'lowpass'; nodes.shaperLP.frequency.value = 14000;
   nodes.filter = c.createBiquadFilter();
-  nodes.filter.type = state.out.filtType === 'lp' ? 'lowpass' : (state.out.filtType === 'hp' ? 'highpass' : 'bandpass');
-  nodes.filter.frequency.value = state.out.cutoff;
-  nodes.filter.Q.value = state.out.q;
-
-  nodes.bus = c.createGain();
-  nodes.bus.gain.value = 1;
-  nodes.bus.connect(nodes.filter);
-
+  nodes.filter.type = state.out.filtType==='lp'?'lowpass':(state.out.filtType==='hp'?'highpass':'bandpass');
+  nodes.filter.frequency.value = state.out.cutoff; nodes.filter.Q.value = state.out.q;
+  nodes.bus = c.createGain(); nodes.bus.gain.value = 1; nodes.bus.connect(nodes.filter);
   nodes.exciterDry.gain.value = 1 - state.out.tone * 0.5;
-  nodes.filter.connect(nodes.exciterDry);
-  nodes.exciterDry.connect(nodes.master);
-  nodes.filter.connect(nodes.shaperHP);
-  nodes.shaperHP.connect(nodes.shaper);
-  nodes.shaper.connect(nodes.shaperLP);
-  nodes.shaperLP.connect(nodes.exciterWet);
-  nodes.exciterWet.gain.value = state.out.tone * 0.6;
-  nodes.exciterWet.connect(nodes.master);
-
-  nodes.loopIn = c.createGain();
-  nodes.master.connect(nodes.loopIn);
-  nodes.loopOut = c.createGain();
-  nodes.loopOut.gain.value = 1;
-  nodes.loopOut.connect(nodes.master);
-
+  nodes.filter.connect(nodes.exciterDry); nodes.exciterDry.connect(nodes.master);
+  nodes.filter.connect(nodes.shaperHP); nodes.shaperHP.connect(nodes.shaper);
+  nodes.shaper.connect(nodes.shaperLP); nodes.shaperLP.connect(nodes.exciterWet);
+  nodes.exciterWet.gain.value = state.out.tone * 0.6; nodes.exciterWet.connect(nodes.master);
+  nodes.loopIn = c.createGain(); nodes.master.connect(nodes.loopIn);
+  nodes.loopOut = c.createGain(); nodes.loopOut.gain.value = 1; nodes.loopOut.connect(nodes.master);
   nodes.master.connect(c.destination);
-
-  // Delay
-  nodes.delayInL = c.createGain();
-  nodes.delayInR = c.createGain();
-  nodes.delayL = c.createDelay(3);
-  nodes.delayR = c.createDelay(3);
-  nodes.delayL.delayTime.value = state.delay.timeL;
-  nodes.delayR.delayTime.value = state.delay.timeR;
+  nodes.delayInL = c.createGain(); nodes.delayInR = c.createGain();
+  nodes.delayL = c.createDelay(3); nodes.delayR = c.createDelay(3);
+  nodes.delayL.delayTime.value = state.delay.timeL; nodes.delayR.delayTime.value = state.delay.timeR;
   nodes.delayFbL = c.createGain(); nodes.delayFbL.gain.value = state.delay.fb;
   nodes.delayFbR = c.createGain(); nodes.delayFbR.gain.value = state.delay.fb;
   nodes.delayHP = c.createBiquadFilter(); nodes.delayHP.type='highpass'; nodes.delayHP.frequency.value=state.delay.hp;
@@ -848,171 +559,93 @@ function setupAudio(){
   nodes.delayPanL = c.createStereoPanner(); nodes.delayPanL.pan.value = state.delay.panL;
   nodes.delayPanR = c.createStereoPanner(); nodes.delayPanR.pan.value = state.delay.panR;
   nodes.delayMix = c.createGain(); nodes.delayMix.gain.value = state.delay.mix;
-  nodes.delayInL.connect(nodes.delayL);
-  nodes.delayL.connect(nodes.delayHP);
-  nodes.delayHP.connect(nodes.delayLP);
-  nodes.delayLP.connect(nodes.delayFbL);
-  nodes.delayFbL.connect(nodes.delayL);
-  nodes.delayLP.connect(nodes.delayPanL);
-  nodes.delayPanL.connect(nodes.delayMix);
-  nodes.delayInR.connect(nodes.delayR);
-  nodes.delayR.connect(nodes.delayHP);
-  nodes.delayLP.connect(nodes.delayFbR);
-  nodes.delayFbR.connect(nodes.delayR);
-  nodes.delayLP.connect(nodes.delayPanR);
-  nodes.delayPanR.connect(nodes.delayMix);
+  nodes.delayInL.connect(nodes.delayL); nodes.delayL.connect(nodes.delayHP);
+  nodes.delayHP.connect(nodes.delayLP); nodes.delayLP.connect(nodes.delayFbL); nodes.delayFbL.connect(nodes.delayL);
+  nodes.delayLP.connect(nodes.delayPanL); nodes.delayPanL.connect(nodes.delayMix);
+  nodes.delayInR.connect(nodes.delayR); nodes.delayR.connect(nodes.delayHP);
+  nodes.delayLP.connect(nodes.delayFbR); nodes.delayFbR.connect(nodes.delayR);
+  nodes.delayLP.connect(nodes.delayPanR); nodes.delayPanR.connect(nodes.delayMix);
   nodes.delayMix.connect(nodes.bus);
-
-  // Sample
-  nodes.sampleGain = c.createGain();
-  nodes.sampleGain.gain.value = state.sample.gain;
-  nodes.sampleMute = c.createGain();
-  nodes.sampleMute.gain.value = 1;
+  nodes.sampleGain = c.createGain(); nodes.sampleGain.gain.value = state.sample.gain;
+  nodes.sampleMute = c.createGain(); nodes.sampleMute.gain.value = 1;
   nodes.sampleGain.connect(nodes.sampleMute);
-  nodes.sampleMute.connect(nodes.bus);
-  nodes.sampleMute.connect(nodes.delayInL);
-  nodes.sampleMute.connect(nodes.delayInR);
-
-  // Texture
-  nodes.texGain = c.createGain();
-  nodes.texGain.gain.value = state.tex.gain;
-  nodes.texMute = c.createGain();
-  nodes.texMute.gain.value = 1;
+  nodes.sampleMute.connect(nodes.bus); nodes.sampleMute.connect(nodes.delayInL); nodes.sampleMute.connect(nodes.delayInR);
+  nodes.texGain = c.createGain(); nodes.texGain.gain.value = state.tex.gain;
+  nodes.texMute = c.createGain(); nodes.texMute.gain.value = 1;
   nodes.texGain.connect(nodes.texMute);
-  nodes.texMute.connect(nodes.bus);
-  nodes.texMute.connect(nodes.delayInL);
-  nodes.texMute.connect(nodes.delayInR);
-
-  // Delay mute (after the delay path summed)
-  nodes.delayMuteCtl = c.createGain();
-  nodes.delayMuteCtl.gain.value = 1;
-  // re-route: delayMix already connects to bus directly. Add mute control:
-  // Actually we'll insert delayMuteCtl between delayMix and bus
-  nodes.delayMix.disconnect();
-  nodes.delayMix.connect(nodes.delayMuteCtl);
-  nodes.delayMuteCtl.connect(nodes.bus);
+  nodes.texMute.connect(nodes.bus); nodes.texMute.connect(nodes.delayInL); nodes.texMute.connect(nodes.delayInR);
+  nodes.delayMuteCtl = c.createGain(); nodes.delayMuteCtl.gain.value = 1;
+  nodes.delayMix.disconnect(); nodes.delayMix.connect(nodes.delayMuteCtl); nodes.delayMuteCtl.connect(nodes.bus);
 }
-
 function makeShaperCurve(amount){
-  const k = 0.1 + amount * amount * 14;
-  const n = 2048;
-  const arr = new Float32Array(n);
-  const tk = Math.tanh(k);
-  for(let i=0;i<n;i++){
-    const x = (i*2)/n - 1;
-    arr[i] = Math.tanh(k * x) / tk;
-  }
+  const k = 0.1 + amount * amount * 14, n = 2048, arr = new Float32Array(n), tk = Math.tanh(k);
+  for(let i=0;i<n;i++){ const x = (i*2)/n - 1; arr[i] = Math.tanh(k * x) / tk; }
   return arr;
 }
-
 function reverseBuffer(buf){
-  const c = ctx;
-  const r = c.createBuffer(buf.numberOfChannels, buf.length, buf.sampleRate);
+  const r = ctx.createBuffer(buf.numberOfChannels, buf.length, buf.sampleRate);
   for(let ch=0; ch<buf.numberOfChannels; ch++){
-    const src = buf.getChannelData(ch);
-    const dst = r.getChannelData(ch);
+    const src = buf.getChannelData(ch), dst = r.getChannelData(ch);
     for(let i=0;i<src.length;i++) dst[i] = src[src.length-1-i];
   }
   return r;
 }
 function getBuffer(dir){
-  if(dir === 'rev'){
-    if(!reversedBuffer && sourceBuffer) reversedBuffer = reverseBuffer(sourceBuffer);
-    return reversedBuffer;
-  }
+  if(dir === 'rev'){ if(!reversedBuffer && sourceBuffer) reversedBuffer = reverseBuffer(sourceBuffer); return reversedBuffer; }
   return sourceBuffer;
 }
-
-// ===================================================================
-// SAMPLE PLAYBACK
-// ===================================================================
 let sampleSrc = null, sampleEnv = null, sampleFlutter = null, sampleFlutterDepth = null;
 function playSample(){
-  if(!sourceBuffer) return;
-  AC();
-  stopSample(true);
-  const buf = getBuffer(state.sample.dir);
-  if(!buf) return;
-  const src = ctx.createBufferSource();
-  src.buffer = buf;
+  if(!sourceBuffer) return; AC(); stopSample(true);
+  const buf = getBuffer(state.sample.dir); if(!buf) return;
+  const src = ctx.createBufferSource(); src.buffer = buf;
   src.playbackRate.value = Math.pow(2, state.sample.pitch / 12);
   src.loop = state.sample.mode === 'loop';
-  if(src.loop){
-    src.loopStart = state.sample.start * buf.duration;
-    src.loopEnd = state.sample.end * buf.duration;
-  }
-  const env = ctx.createGain();
-  const t = ctx.currentTime;
-  env.gain.setValueAtTime(0.0001, t);
-  env.gain.exponentialRampToValueAtTime(1, t + 0.012);
+  if(src.loop){ src.loopStart = state.sample.start * buf.duration; src.loopEnd = state.sample.end * buf.duration; }
+  const env = ctx.createGain(); const t = ctx.currentTime;
+  env.gain.setValueAtTime(0.0001, t); env.gain.exponentialRampToValueAtTime(1, t + 0.012);
   if(state.sample.flutter > 0){
-    const lfo = ctx.createOscillator();
-    lfo.type = 'sine';
-    lfo.frequency.value = 4.5;
-    const depth = ctx.createGain();
-    depth.gain.value = state.sample.flutter * 0.04 * src.playbackRate.value;
-    lfo.connect(depth);
-    depth.connect(src.playbackRate);
-    lfo.start(t);
-    sampleFlutter = lfo;
-    sampleFlutterDepth = depth;
+    const lfo = ctx.createOscillator(); lfo.type = 'sine'; lfo.frequency.value = 4.5;
+    const depth = ctx.createGain(); depth.gain.value = state.sample.flutter * 0.04 * src.playbackRate.value;
+    lfo.connect(depth); depth.connect(src.playbackRate); lfo.start(t);
+    sampleFlutter = lfo; sampleFlutterDepth = depth;
   }
   src.connect(env).connect(nodes.sampleGain);
   const startSec = state.sample.start * buf.duration;
   const dur = (state.sample.end - state.sample.start) * buf.duration;
   src.start(t, startSec, src.loop ? undefined : Math.max(0.01, dur));
-  sampleSrc = src;
-  sampleEnv = env;
+  sampleSrc = src; sampleEnv = env;
 }
 function stopSample(immediate){
-  if(!ctx) return;
-  const t = ctx.currentTime;
-  if(sampleEnv){
-    try{
-      sampleEnv.gain.cancelScheduledValues(t);
-      sampleEnv.gain.setValueAtTime(sampleEnv.gain.value, t);
-      sampleEnv.gain.linearRampToValueAtTime(0, t + (immediate ? 0.005 : 0.02));
-    }catch(e){}
-  }
-  const oldSrc = sampleSrc, oldEnv = sampleEnv, oldLfo = sampleFlutter, oldDep = sampleFlutterDepth;
-  sampleSrc = sampleEnv = sampleFlutter = sampleFlutterDepth = null;
+  if(!ctx) return; const t = ctx.currentTime;
+  if(sampleEnv){ try{ sampleEnv.gain.cancelScheduledValues(t); sampleEnv.gain.setValueAtTime(sampleEnv.gain.value, t); sampleEnv.gain.linearRampToValueAtTime(0, t + (immediate ? 0.005 : 0.02)); }catch(e){} }
+  const oS=sampleSrc,oE=sampleEnv,oL=sampleFlutter,oD=sampleFlutterDepth;
+  sampleSrc=sampleEnv=sampleFlutter=sampleFlutterDepth=null;
   setTimeout(() => {
-    try{ oldSrc?.stop(); }catch(e){}
-    try{ oldSrc?.disconnect(); }catch(e){}
-    try{ oldEnv?.disconnect(); }catch(e){}
-    try{ oldLfo?.stop(); }catch(e){}
-    try{ oldLfo?.disconnect(); }catch(e){}
-    try{ oldDep?.disconnect(); }catch(e){}
+    try{ oS?.stop(); }catch(e){} try{ oS?.disconnect(); }catch(e){}
+    try{ oE?.disconnect(); }catch(e){}
+    try{ oL?.stop(); }catch(e){} try{ oL?.disconnect(); }catch(e){}
+    try{ oD?.disconnect(); }catch(e){}
   }, immediate ? 20 : 40);
 }
-
-// Schedule a sample shot at a given audio-time (used by sequencer)
 function scheduleSampleShot(time, pitchOffset, gateDur){
   if(!sourceBuffer) return;
-  const buf = getBuffer(state.sample.dir);
-  if(!buf) return;
-  const src = ctx.createBufferSource();
-  src.buffer = buf;
+  const buf = getBuffer(state.sample.dir); if(!buf) return;
+  const src = ctx.createBufferSource(); src.buffer = buf;
   const rate = Math.pow(2, (state.sample.pitch + pitchOffset) / 12);
   src.playbackRate.value = rate;
   const env = ctx.createGain();
-  // ADSR-ish: 4ms attack, hold, 20ms release
   const att = 0.004, rel = 0.02;
   const len = Math.max(att + rel + 0.005, gateDur);
   env.gain.setValueAtTime(0.0001, time);
   env.gain.exponentialRampToValueAtTime(1, time + att);
   env.gain.setValueAtTime(1, time + len - rel);
   env.gain.linearRampToValueAtTime(0, time + len);
-  // Optional flutter LFO scheduled on this voice
   if(state.sample.flutter > 0){
-    const lfo = ctx.createOscillator();
-    lfo.type = 'sine';
-    lfo.frequency.value = 4.5;
-    const dep = ctx.createGain();
-    dep.gain.value = state.sample.flutter * 0.04 * rate;
+    const lfo = ctx.createOscillator(); lfo.type = 'sine'; lfo.frequency.value = 4.5;
+    const dep = ctx.createGain(); dep.gain.value = state.sample.flutter * 0.04 * rate;
     lfo.connect(dep).connect(src.playbackRate);
-    lfo.start(time);
-    lfo.stop(time + len + 0.05);
+    lfo.start(time); lfo.stop(time + len + 0.05);
   }
   src.connect(env).connect(nodes.sampleGain);
   const startSec = state.sample.start * buf.duration;
@@ -1020,10 +653,6 @@ function scheduleSampleShot(time, pitchOffset, gateDur){
   src.start(time, startSec, Math.min(len + 0.1, Math.max(0.01, playDur)));
   src.stop(time + len + 0.05);
 }
-
-// ===================================================================
-// TEXTURES PLAYBACK
-// ===================================================================
 const texSources = [];
 let texTimer = null;
 function startTextures(){
@@ -1031,54 +660,32 @@ function startTextures(){
   if(!sourceBuffer) return;
   if(state.tex.mode === 'multi') startMulti();
   else if(state.tex.mode === 'frag') startFragments();
-  else if(state.tex.mode === 'dpd') startDpd();
+  // DPD est entièrement piloté par le scheduler maître
 }
 function stopTextures(){
   if(!ctx){ texSources.length = 0; return; }
   const t = ctx.currentTime;
   texSources.forEach(s => {
     if(s.gain && typeof s.gain.cancelScheduledValues === 'function'){
-      try{
-        s.gain.cancelScheduledValues(t);
-        s.gain.setValueAtTime(s.gain.value || 0, t);
-        s.gain.linearRampToValueAtTime(0, t + 0.04);
-      }catch(e){}
+      try{ s.gain.cancelScheduledValues(t); s.gain.setValueAtTime(s.gain.value || 0, t); s.gain.linearRampToValueAtTime(0, t + 0.04); }catch(e){}
     }
   });
-  const stale = [...texSources];
-  texSources.length = 0;
-  setTimeout(() => {
-    stale.forEach(s => {
-      try{ s.stop && s.stop(); }catch(e){}
-      try{ s.disconnect(); }catch(e){}
-    });
-  }, 60);
+  const stale = [...texSources]; texSources.length = 0;
+  setTimeout(() => { stale.forEach(s => { try{ s.stop && s.stop(); }catch(e){} try{ s.disconnect(); }catch(e){} }); }, 60);
   if(texTimer){ clearTimeout(texTimer); texTimer = null; }
 }
 function startMulti(){
   const n = Math.round(state.tex.density);
-  for(let i=0;i<n;i++){
-    const h = state.tex.heads[i];
-    if(!h.on) continue;
-    spawnHead(h);
-  }
+  for(let i=0;i<n;i++){ const h = state.tex.heads[i]; if(!h.on) continue; spawnHead(h); }
 }
 function spawnHead(h){
   if(!sourceBuffer) return;
-  const buf = getBuffer(h.dir);
-  if(!buf) return;
-  const src = ctx.createBufferSource();
-  src.buffer = buf;
-  src.playbackRate.value = h.rate;
-  src.loop = true;
-  src.loopStart = 0;
-  src.loopEnd = buf.duration;
-  const env = ctx.createGain();
-  const t = ctx.currentTime;
-  env.gain.setValueAtTime(0, t);
-  env.gain.linearRampToValueAtTime(1, t + 0.025);
-  const pan = ctx.createStereoPanner();
-  pan.pan.value = h.pan * state.tex.spread;
+  const buf = getBuffer(h.dir); if(!buf) return;
+  const src = ctx.createBufferSource(); src.buffer = buf;
+  src.playbackRate.value = h.rate; src.loop = true; src.loopStart = 0; src.loopEnd = buf.duration;
+  const env = ctx.createGain(); const t = ctx.currentTime;
+  env.gain.setValueAtTime(0, t); env.gain.linearRampToValueAtTime(1, t + 0.025);
+  const pan = ctx.createStereoPanner(); pan.pan.value = h.pan * state.tex.spread;
   src.connect(env).connect(pan).connect(nodes.texGain);
   src.start(t, h.pos * buf.duration);
   texSources.push(src, env, pan);
@@ -1094,73 +701,64 @@ function scheduleNextFragment(){
 function spawnFragment(){
   if(!sourceBuffer) return;
   const useRev = Math.random() < state.tex.fragRev;
-  const buf = getBuffer(useRev ? 'rev' : 'fwd');
-  if(!buf) return;
-  const src = ctx.createBufferSource();
-  src.buffer = buf;
-  const size = state.tex.fragSize;
-  const jitter = state.tex.fragJitter;
+  const buf = getBuffer(useRev ? 'rev' : 'fwd'); if(!buf) return;
+  const src = ctx.createBufferSource(); src.buffer = buf;
+  const size = state.tex.fragSize, jitter = state.tex.fragJitter;
   const dur = size * (0.7 + 0.6 * jitter * Math.random());
   const start = Math.random() * Math.max(0.001, buf.duration - dur - 0.01);
-  const env = ctx.createGain();
-  const t = ctx.currentTime;
-  const att = Math.min(0.01, dur * 0.2);
-  const rel = Math.min(0.05, dur * 0.4);
-  env.gain.setValueAtTime(0, t);
-  env.gain.linearRampToValueAtTime(state.tex.fragGain, t + att);
-  env.gain.setValueAtTime(state.tex.fragGain, t + dur - rel);
-  env.gain.linearRampToValueAtTime(0, t + dur);
-  const pan = ctx.createStereoPanner();
-  pan.pan.value = (Math.random() * 2 - 1) * state.tex.fragSpread;
+  const env = ctx.createGain(); const t = ctx.currentTime;
+  const att = Math.min(0.01, dur * 0.2), rel = Math.min(0.05, dur * 0.4);
+  env.gain.setValueAtTime(0, t); env.gain.linearRampToValueAtTime(state.tex.fragGain, t + att);
+  env.gain.setValueAtTime(state.tex.fragGain, t + dur - rel); env.gain.linearRampToValueAtTime(0, t + dur);
+  const pan = ctx.createStereoPanner(); pan.pan.value = (Math.random() * 2 - 1) * state.tex.fragSpread;
   src.connect(env).connect(pan).connect(nodes.texGain);
-  src.start(t, start, dur);
-  src.stop(t + dur + 0.05);
+  src.start(t, start, dur); src.stop(t + dur + 0.05);
   texSources.push(src, env, pan);
-  setTimeout(() => {
-    try{ src.disconnect(); }catch(e){}
-    try{ env.disconnect(); }catch(e){}
-    try{ pan.disconnect(); }catch(e){}
-  }, (dur + 0.1) * 1000);
+  setTimeout(() => { try{ src.disconnect(); }catch(e){} try{ env.disconnect(); }catch(e){} try{ pan.disconnect(); }catch(e){} }, (dur + 0.1) * 1000);
 }
-function startDpd(){ scheduleNextDpd(); }
-function scheduleNextDpd(){
-  if(state.tex.mode !== 'dpd' || !state.playing) return;
-  state.tex.dpd.forEach(p => {
-    setTimeout(() => spawnDpd(p), p.delay * 1000);
-  });
-  texTimer = setTimeout(scheduleNextDpd, state.tex.dpdRate * 1000);
-}
-function spawnDpd(p){
+function spawnDpdAt(v, time, voiceIdx){
   if(!sourceBuffer) return;
-  const buf = getBuffer(p.dir);
-  if(!buf) return;
-  const src = ctx.createBufferSource();
-  src.buffer = buf;
-  const dur = 0.18;
+  const buf = getBuffer(v.dir); if(!buf) return;
+  const src = ctx.createBufferSource(); src.buffer = buf;
+  src.playbackRate.value = Math.pow(2, v.pitch / 12);
+  const dur = v.len * beatSec();
   const env = ctx.createGain();
-  const t = ctx.currentTime;
-  env.gain.setValueAtTime(0, t);
-  env.gain.linearRampToValueAtTime(state.tex.dpdGain, t + 0.005);
-  env.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+  const att = 0.003, rel = Math.min(0.04, dur * 0.4);
+  const peak = Math.max(0.0001, v.vel * state.tex.dpdGain);
+  env.gain.setValueAtTime(0.0001, time);
+  env.gain.exponentialRampToValueAtTime(peak, time + att);
+  env.gain.setValueAtTime(peak, time + dur - rel);
+  env.gain.exponentialRampToValueAtTime(0.0001, time + dur);
   const pan = ctx.createStereoPanner();
-  pan.pan.value = p.channel === 'L' ? -0.85 : 0.85;
-  const start = Math.random() * Math.max(0.001, buf.duration - dur - 0.01);
+  pan.pan.value = v.ch === 'L' ? -0.85 : 0.85;
+  const maxStart = Math.max(0, buf.duration - dur - 0.02);
+  const startPos = clamp(v.pos * buf.duration, 0, maxStart);
   src.connect(env).connect(pan).connect(nodes.texGain);
-  src.start(t, start, dur);
-  src.stop(t + dur + 0.02);
-  texSources.push(src, env, pan);
+  src.start(time, startPos, dur + 0.05);
+  src.stop(time + dur + 0.1);
+  const dMs = Math.max(0, (time - ctx.currentTime) * 1000);
+  setTimeout(() => flashDpdVoice(voiceIdx), dMs);
+  setTimeout(() => { try{ src.disconnect(); }catch(e){} try{ env.disconnect(); }catch(e){} try{ pan.disconnect(); }catch(e){} }, dMs + (dur + 0.3) * 1000);
 }
-
-// ===================================================================
-// LOOPER
-// ===================================================================
-let loopProcessor = null;
-let loopRecBuffer = null;
-let loopRecOffset = 0;
-let loopSrc = null;
+function flashDpdVoice(idx){
+  const el = $$('#dpdVoices .dpd-voice')[idx]; if(!el) return;
+  el.classList.add('firing'); setTimeout(() => el.classList.remove('firing'), 80);
+}
+function scheduleDpdStep(absStep, time){
+  if(state.tex.mode !== 'dpd' || !state.playing || state.tex.mute) return;
+  const barSteps = state.tex.dpdBars * 16;
+  const stepInBar = absStep % barSteps;
+  const delayMs = Math.max(0, (time - ctx.currentTime) * 1000);
+  setTimeout(() => { $$('#dpdBarDisplay .dpd-bar-cell').forEach((el, i) => el.classList.toggle('playing', i === stepInBar)); }, delayMs);
+  state.tex.dpd.forEach((v, i) => {
+    if(v.step !== stepInBar) return;
+    if(Math.random() > v.prob) return;
+    spawnDpdAt(v, time, i);
+  });
+}
+let loopProcessor = null, loopRecBuffer = null, loopRecOffset = 0, loopSrc = null;
 function loopStartRec(){
-  AC();
-  if(state.loop.recording) return;
+  AC(); if(state.loop.recording) return;
   const len = Math.ceil(state.loop.length * ctx.sampleRate);
   loopRecBuffer = ctx.createBuffer(2, len, ctx.sampleRate);
   loopRecOffset = 0;
@@ -1168,109 +766,60 @@ function loopStartRec(){
     loopProcessor = ctx.createScriptProcessor(1024, 2, 2);
     loopProcessor.onaudioprocess = e => {
       if(!state.loop.recording) return;
-      const inL = e.inputBuffer.getChannelData(0);
-      const inR = e.inputBuffer.getChannelData(1);
-      const dstL = loopRecBuffer.getChannelData(0);
-      const dstR = loopRecBuffer.getChannelData(1);
+      const inL = e.inputBuffer.getChannelData(0); const inR = e.inputBuffer.getChannelData(1);
+      const dstL = loopRecBuffer.getChannelData(0); const dstR = loopRecBuffer.getChannelData(1);
       for(let i=0;i<inL.length;i++){
         if(loopRecOffset >= dstL.length){ loopFinishRec(); return; }
-        dstL[loopRecOffset] = inL[i];
-        dstR[loopRecOffset] = inR[i];
-        loopRecOffset++;
+        dstL[loopRecOffset] = inL[i]; dstR[loopRecOffset] = inR[i]; loopRecOffset++;
       }
     };
-    nodes.loopIn.connect(loopProcessor);
-    loopProcessor.connect(ctx.destination);
+    nodes.loopIn.connect(loopProcessor); loopProcessor.connect(ctx.destination);
   }
-  state.loop.recording = true;
-  $('#loopRec').classList.add('armed');
-  drawLoopScope();
+  state.loop.recording = true; $('#loopRec').classList.add('armed'); drawLoopScope();
 }
 function loopFinishRec(){
-  state.loop.recording = false;
-  $('#loopRec').classList.remove('armed');
-  if(loopRecBuffer){
-    pushLoopHistory();
-    state.loop.buffer = loopRecBuffer;
-    loopRecBuffer = null;
-    drawLoopScope();
-    loopPlay();
-  }
+  state.loop.recording = false; $('#loopRec').classList.remove('armed');
+  if(loopRecBuffer){ pushLoopHistory(); state.loop.buffer = loopRecBuffer; loopRecBuffer = null; drawLoopScope(); loopPlay(); }
 }
 function loopPlay(){
-  if(!state.loop.buffer) return;
-  loopStop();
+  if(!state.loop.buffer) return; loopStop();
   let buf = state.loop.buffer;
   if(state.loop.dir === 'rev') buf = reverseBuffer(buf);
-  const src = ctx.createBufferSource();
-  src.buffer = buf;
-  src.loop = true;
+  const src = ctx.createBufferSource(); src.buffer = buf; src.loop = true;
   src.playbackRate.value = state.loop.speed * Math.pow(2, state.loop.pitch/12);
-  src.connect(nodes.loopOut);
-  src.start();
-  loopSrc = src;
-  state.loop.playing = true;
+  src.connect(nodes.loopOut); src.start();
+  loopSrc = src; state.loop.playing = true;
 }
 function loopStop(){
   if(loopSrc){ try{ loopSrc.stop(); }catch(e){} try{ loopSrc.disconnect(); }catch(e){} loopSrc = null; }
   state.loop.playing = false;
 }
 function pushLoopHistory(){
-  if(state.loop.buffer){
-    state.loop.history.push(state.loop.buffer);
-    if(state.loop.history.length > 16) state.loop.history.shift();
-    state.loop.future = [];
-  }
+  if(state.loop.buffer){ state.loop.history.push(state.loop.buffer); if(state.loop.history.length > 16) state.loop.history.shift(); state.loop.future = []; }
   updateLoopLabel();
 }
-function loopUndo(){
-  if(state.loop.history.length === 0) return;
-  if(state.loop.buffer) state.loop.future.push(state.loop.buffer);
-  state.loop.buffer = state.loop.history.pop();
-  drawLoopScope();
-  if(state.loop.playing) loopPlay();
-}
-function loopRedo(){
-  if(state.loop.future.length === 0) return;
-  if(state.loop.buffer) state.loop.history.push(state.loop.buffer);
-  state.loop.buffer = state.loop.future.pop();
-  drawLoopScope();
-  if(state.loop.playing) loopPlay();
-}
-function loopClear(){
-  loopStop();
-  state.loop.history = [];
-  state.loop.future = [];
-  state.loop.buffer = null;
-  drawLoopScope();
-}
+function loopUndo(){ if(!state.loop.history.length) return; if(state.loop.buffer) state.loop.future.push(state.loop.buffer); state.loop.buffer = state.loop.history.pop(); drawLoopScope(); if(state.loop.playing) loopPlay(); }
+function loopRedo(){ if(!state.loop.future.length) return; if(state.loop.buffer) state.loop.history.push(state.loop.buffer); state.loop.buffer = state.loop.future.pop(); drawLoopScope(); if(state.loop.playing) loopPlay(); }
+function loopClear(){ loopStop(); state.loop.history = []; state.loop.future = []; state.loop.buffer = null; drawLoopScope(); }
 function updateLoopLabel(){
-  const buf = state.loop.buffer;
-  const dur = buf ? buf.duration.toFixed(1) : '0.0';
+  const buf = state.loop.buffer; const dur = buf ? buf.duration.toFixed(1) : '0.0';
   $('#loopLbl').textContent = `LOOP · ${dur}s · ${state.loop.history.length}/${state.loop.history.length + state.loop.future.length}`;
 }
-
-// ===================================================================
-// MASTER CLOCK & SEQUENCER
-// ===================================================================
-const SCHED_AHEAD = 0.12;
-const SCHED_INTERVAL = 25;
-let nextStepTime = 0;
-let stepIndex = 0;
-let schedulerTimer = null;
-let lastBeatPos = 0;
-
+const SCHED_AHEAD = 0.12, SCHED_INTERVAL = 25;
+let nextStepTime = 0, stepIndex = 0, schedulerTimer = null, lastBeatPos = 0;
+let nextDpdTime = 0, dpdAbsStep = 0;
 function startClock(){
   if(!ctx) return;
-  nextStepTime = ctx.currentTime + 0.05;
-  stepIndex = 0;
-  state.beatPos = 0;
+  const t0 = ctx.currentTime + 0.05;
+  nextStepTime = t0; nextDpdTime = t0;
+  stepIndex = 0; dpdAbsStep = 0; state.beatPos = 0;
   if(schedulerTimer) clearInterval(schedulerTimer);
   schedulerTimer = setInterval(scheduler, SCHED_INTERVAL);
 }
 function stopClock(){
   if(schedulerTimer){ clearInterval(schedulerTimer); schedulerTimer = null; }
   $('#beatLed').classList.remove('on');
+  $$('#dpdBarDisplay .dpd-bar-cell').forEach(el => el.classList.remove('playing'));
 }
 function stepDuration(){
   const div = SEQ_DIVS[clamp(state.seq.div, 0, SEQ_DIVS.length-1)];
@@ -1278,70 +827,40 @@ function stepDuration(){
 }
 function scheduler(){
   if(!ctx) return;
-  while(nextStepTime < ctx.currentTime + SCHED_AHEAD){
-    scheduleStep(stepIndex, nextStepTime);
-    advanceStep();
+  while(nextStepTime < ctx.currentTime + SCHED_AHEAD){ scheduleStep(stepIndex, nextStepTime); advanceStep(); }
+  const sixteenthSec = beatSec() / 4;
+  while(nextDpdTime < ctx.currentTime + SCHED_AHEAD){
+    scheduleDpdStep(dpdAbsStep, nextDpdTime);
+    nextDpdTime += sixteenthSec; dpdAbsStep++;
   }
-  // Update beat display from currentTime
-  const elapsedBeats = (ctx.currentTime - (nextStepTime - stepDuration())) / beatSec();
   state.beatPos = (state.beatPos + (ctx.currentTime - lastBeatPos) / beatSec()) % 4;
   lastBeatPos = ctx.currentTime;
 }
 function scheduleStep(idx, time){
-  // Active step display
-  const len = state.seq.length;
-  const realIdx = idx % len;
-  // schedule visual flash
+  const len = state.seq.length; const realIdx = idx % len;
   setTimeout(() => updatePlayingStep(realIdx), Math.max(0, (time - ctx.currentTime) * 1000));
-
-  // Beat 1 LED
-  const beatIdx = Math.floor(idx * SEQ_DIVS[state.seq.div].beats);
-  // approximate: light LED on beat boundaries
-  // (we just flash based on step time)
-  setTimeout(() => {
-    $('#beatLed').classList.add('on');
-    setTimeout(() => $('#beatLed').classList.remove('on'), 60);
-  }, Math.max(0, (time - ctx.currentTime) * 1000));
-
-  // Sequencer trigger
+  setTimeout(() => { $('#beatLed').classList.add('on'); setTimeout(() => $('#beatLed').classList.remove('on'), 60); }, Math.max(0, (time - ctx.currentTime) * 1000));
   if(state.seq.on && state.sample.mode !== 'loop' && state.playing && !state.sample.mute){
     const g = state.seq.gates[realIdx];
     if(g){
-      const stepDur = stepDuration();
-      const gateLen = stepDur * state.seq.gateLen;
-      // Apply swing on odd steps
-      let t = time;
-      if(idx % 2 === 1) t += stepDur * state.seq.swing;
+      const stepDur = stepDuration(); const gateLen = stepDur * state.seq.gateLen;
+      let t = time; if(idx % 2 === 1) t += stepDur * state.seq.swing;
       scheduleSampleShot(t, state.seq.pitches[realIdx], gateLen);
     }
   }
 }
-function advanceStep(){
-  nextStepTime += stepDuration();
-  stepIndex++;
-}
+function advanceStep(){ nextStepTime += stepDuration(); stepIndex++; }
 function updatePlayingStep(idx){
   state.seq.playStep = idx;
   $$('#seqGates .seq-cell').forEach((el,i) => el.classList.toggle('playing', i === idx));
 }
-
-// ===================================================================
-// MODULATION
-// ===================================================================
 function tickModulation(dt){
   ['m1','m2'].forEach(k => {
-    const m = state[k];
-    let val = 0;
+    const m = state[k]; let val = 0;
     if(m.type === 'lfo'){
       let rateHz;
-      if(m.sync === 'sync'){
-        const div = DIVISIONS[clamp(m.syncDiv, 0, DIVISIONS.length-1)];
-        rateHz = 1 / (div.beats * beatSec());
-      } else {
-        rateHz = m.rate;
-      }
-      m.phase += rateHz * dt;
-      m.phase %= 1;
+      if(m.sync === 'sync'){ const div = DIVISIONS[clamp(m.syncDiv, 0, DIVISIONS.length-1)]; rateHz = 1 / (div.beats * beatSec()); } else rateHz = m.rate;
+      m.phase += rateHz * dt; m.phase %= 1;
       switch(m.wave){
         case 'sin': val = Math.sin(m.phase * Math.PI * 2); break;
         case 'tri': val = 4 * Math.abs(m.phase - Math.floor(m.phase + 0.5)) - 1; break;
@@ -1351,19 +870,13 @@ function tickModulation(dt){
       val = val * m.depth + m.offset;
     } else {
       let stepHz;
-      if(m.sync === 'sync'){
-        const div = DIVISIONS[clamp(m.syncStepDiv, 0, DIVISIONS.length-1)];
-        stepHz = 1 / (div.beats * beatSec());
-      } else {
-        stepHz = m.stepRate;
-      }
+      if(m.sync === 'sync'){ const div = DIVISIONS[clamp(m.syncStepDiv, 0, DIVISIONS.length-1)]; stepHz = 1 / (div.beats * beatSec()); } else stepHz = m.stepRate;
       m.phase += stepHz * dt;
       const cnt = Math.round(m.stepCount);
       const idx = Math.floor(m.phase) % cnt;
       const nextIdx = (idx + 1) % cnt;
       const frac = m.phase - Math.floor(m.phase);
-      const a = (m.steps[idx] - 0.5) * 2;
-      const b = (m.steps[nextIdx] - 0.5) * 2;
+      const a = (m.steps[idx] - 0.5) * 2; const b = (m.steps[nextIdx] - 0.5) * 2;
       val = a + (b - a) * Math.min(1, frac / Math.max(0.0001, 1 - m.stepGlide));
       val = clamp(val, -1, 1) * m.stepDepth;
       $$(`#${k}Steps .step`).forEach((el, i) => el.classList.toggle('active', i === idx && i < cnt));
@@ -1371,50 +884,25 @@ function tickModulation(dt){
     m.value = val;
   });
   Object.keys(modDepths).forEach(key => {
-    const meta = PARAM_META[key];
-    if(!meta) return;
+    const meta = PARAM_META[key]; if(!meta) return;
     const base = modBaseValues[key] !== undefined ? modBaseValues[key] : getStateVal(meta.path);
-    const m1d = modDepths[key].m1 || 0;
-    const m2d = modDepths[key].m2 || 0;
-    const knob = $(`.ctrl[data-param="${key}"] .knob`);
-    if(!knob) return;
-    const min = parseFloat(knob.dataset.min);
-    const max = parseFloat(knob.dataset.max);
-    const range = max - min;
+    const m1d = modDepths[key].m1 || 0; const m2d = modDepths[key].m2 || 0;
+    const knob = $(`.ctrl[data-param="${key}"] .knob`); if(!knob) return;
+    const min = parseFloat(knob.dataset.min); const max = parseFloat(knob.dataset.max); const range = max - min;
     let v = base + (state.m1.value * m1d + state.m2.value * m2d) * range * 0.5;
-    v = clamp(v, min, max);
-    setStateVal(meta.path, v);
-    applyParam(key, v);
+    v = clamp(v, min, max); setStateVal(meta.path, v); applyParam(key, v);
   });
 }
 function getStateVal(path){ let o = state; for(const p of path) o = o[p]; return o; }
 function setStateVal(path, v){ let o = state; for(let i=0;i<path.length-1;i++) o = o[path[i]]; o[path[path.length-1]] = v; }
-
-// ===================================================================
-// APPLY PARAMS
-// ===================================================================
 function applyParam(key, v){
   if(!nodes.master) return;
   switch(key){
     case 'sample.gain': nodes.sampleGain.gain.value = v; break;
-    case 'sample.flutter':
-      if(sampleFlutterDepth && sampleSrc){
-        sampleFlutterDepth.gain.value = v * 0.04 * sampleSrc.playbackRate.value;
-      }
-      break;
-    case 'sample.pitch':
-      if(sampleSrc){
-        const r = Math.pow(2, v / 12);
-        try{ sampleSrc.playbackRate.linearRampToValueAtTime(r, ctx.currentTime + 0.05); }catch(e){}
-        if(sampleFlutterDepth) sampleFlutterDepth.gain.value = state.sample.flutter * 0.04 * r;
-      }
-      break;
-    case 'delay.timeL':
-      try{ nodes.delayL.delayTime.linearRampToValueAtTime(v, ctx.currentTime + 0.02); }catch(e){}
-      break;
-    case 'delay.timeR':
-      try{ nodes.delayR.delayTime.linearRampToValueAtTime(v, ctx.currentTime + 0.02); }catch(e){}
-      break;
+    case 'sample.flutter': if(sampleFlutterDepth && sampleSrc){ sampleFlutterDepth.gain.value = v * 0.04 * sampleSrc.playbackRate.value; } break;
+    case 'sample.pitch': if(sampleSrc){ const r = Math.pow(2, v / 12); try{ sampleSrc.playbackRate.linearRampToValueAtTime(r, ctx.currentTime + 0.05); }catch(e){} if(sampleFlutterDepth) sampleFlutterDepth.gain.value = state.sample.flutter * 0.04 * r; } break;
+    case 'delay.timeL': try{ nodes.delayL.delayTime.linearRampToValueAtTime(v, ctx.currentTime + 0.02); }catch(e){} break;
+    case 'delay.timeR': try{ nodes.delayR.delayTime.linearRampToValueAtTime(v, ctx.currentTime + 0.02); }catch(e){} break;
     case 'delay.panL': nodes.delayPanL.pan.value = v; break;
     case 'delay.panR': nodes.delayPanR.pan.value = v; break;
     case 'delay.fb': nodes.delayFbL.gain.value = nodes.delayFbR.gain.value = v; break;
@@ -1425,218 +913,116 @@ function applyParam(key, v){
     case 'out.cutoff': nodes.filter.frequency.value = v; break;
     case 'out.q': nodes.filter.Q.value = v; break;
     case 'out.drive': nodes.shaper.curve = makeShaperCurve(v); break;
-    case 'out.tone':
-      nodes.exciterDry.gain.value = 1 - v * 0.5;
-      nodes.exciterWet.gain.value = v * 0.6;
-      break;
+    case 'out.tone': nodes.exciterDry.gain.value = 1 - v * 0.5; nodes.exciterWet.gain.value = v * 0.6; break;
     case 'out.master': nodes.master.gain.value = v; break;
-    case 'loop.speed':
-      if(loopSrc) loopSrc.playbackRate.value = v * Math.pow(2, state.loop.pitch/12);
-      break;
-    case 'loop.pitch':
-      if(loopSrc) loopSrc.playbackRate.value = state.loop.speed * Math.pow(2, v/12);
-      break;
+    case 'loop.speed': if(loopSrc) loopSrc.playbackRate.value = v * Math.pow(2, state.loop.pitch/12); break;
+    case 'loop.pitch': if(loopSrc) loopSrc.playbackRate.value = state.loop.speed * Math.pow(2, v/12); break;
     case 'loop.fb': if(nodes.loopOut) nodes.loopOut.gain.value = v; break;
   }
 }
-
-// ===================================================================
-// MUTE / SOLO
-// ===================================================================
 function applyMuteSolo(){
   if(!nodes.master) return;
   const anySolo = state.sample.solo || state.tex.solo || state.delay.solo;
-  const sampleAudible = anySolo ? state.sample.solo : !state.sample.mute;
-  const texAudible = anySolo ? state.tex.solo : !state.tex.mute;
-  const delayAudible = anySolo ? state.delay.solo : !state.delay.mute;
+  const sa = anySolo ? state.sample.solo : !state.sample.mute;
+  const ta = anySolo ? state.tex.solo : !state.tex.mute;
+  const da = anySolo ? state.delay.solo : !state.delay.mute;
   const t = ctx.currentTime;
-  const ramp = (g, target) => {
-    try{
-      g.gain.cancelScheduledValues(t);
-      g.gain.setValueAtTime(g.gain.value, t);
-      g.gain.linearRampToValueAtTime(target, t + 0.03);
-    }catch(e){}
-  };
-  ramp(nodes.sampleMute, sampleAudible ? 1 : 0);
-  ramp(nodes.texMute, texAudible ? 1 : 0);
-  ramp(nodes.delayMuteCtl, delayAudible ? 1 : 0);
+  const ramp = (g, target) => { try{ g.gain.cancelScheduledValues(t); g.gain.setValueAtTime(g.gain.value, t); g.gain.linearRampToValueAtTime(target, t + 0.03); }catch(e){} };
+  ramp(nodes.sampleMute, sa ? 1 : 0); ramp(nodes.texMute, ta ? 1 : 0); ramp(nodes.delayMuteCtl, da ? 1 : 0);
 }
-
-// ===================================================================
-// KNOB COMPONENT
-// ===================================================================
 function setupKnob(el){
-  const min = parseFloat(el.dataset.min || 0);
-  const max = parseFloat(el.dataset.max || 1);
+  const min = parseFloat(el.dataset.min || 0); const max = parseFloat(el.dataset.max || 1);
   const step = parseFloat(el.dataset.step || 0);
   let val = parseFloat(el.dataset.val);
   const update = (v, propagate=true) => {
-    v = clamp(v, min, max);
-    if(step > 0) v = Math.round(v / step) * step;
-    val = v;
-    el.dataset.val = v;
+    v = clamp(v, min, max); if(step > 0) v = Math.round(v / step) * step;
+    val = v; el.dataset.val = v;
     const norm = (v - min) / (max - min);
     el.style.transform = `rotate(${(norm - 0.5) * 270}deg)`;
     const ctrl = el.closest('.ctrl');
     const p = ctrl?.dataset.param || el.dataset.param;
-    if(ctrl){
-      const lbl = ctrl.querySelector('.ctrl-val');
-      if(lbl) lbl.textContent = formatVal(p, v);
-    }
+    if(ctrl){ const lbl = ctrl.querySelector('.ctrl-val'); if(lbl) lbl.textContent = formatVal(p, v); }
     if(propagate){
-      if(p && PARAM_META[p]){
-        modBaseValues[p] = v;
-        setStateVal(PARAM_META[p].path, v);
-        applyParam(p, v);
-      } else if(p){
-        applyLocalParam(p, v);
-      }
+      if(p && PARAM_META[p]){ modBaseValues[p] = v; setStateVal(PARAM_META[p].path, v); applyParam(p, v); }
+      else if(p){ applyLocalParam(p, v); }
     }
   };
   update(val, false);
   let startY = 0, startVal = 0;
-  const onMove = e => {
-    const y = (e.touches ? e.touches[0].clientY : e.clientY);
-    const dy = startY - y;
-    const range = max - min;
-    const sens = e.shiftKey ? 0.001 : 0.005;
-    update(startVal + dy * range * sens);
-  };
-  const onUp = () => {
-    document.removeEventListener('mousemove', onMove);
-    document.removeEventListener('mouseup', onUp);
-    document.removeEventListener('touchmove', onMove);
-    document.removeEventListener('touchend', onUp);
-  };
+  const onMove = e => { const y = (e.touches ? e.touches[0].clientY : e.clientY); const dy = startY - y; const range = max - min; const sens = e.shiftKey ? 0.001 : 0.005; update(startVal + dy * range * sens); };
+  const onUp = () => { document.removeEventListener('mousemove', onMove); document.removeEventListener('mouseup', onUp); document.removeEventListener('touchmove', onMove); document.removeEventListener('touchend', onUp); };
   const onDown = e => {
     e.preventDefault();
     const ctrl = el.closest('.ctrl');
-    if(state.assignMode && ctrl?.classList.contains('modable')){
-      handleAssignTap(ctrl);
-      return;
-    }
-    startY = (e.touches ? e.touches[0].clientY : e.clientY);
-    startVal = val;
-    document.addEventListener('mousemove', onMove);
-    document.addEventListener('mouseup', onUp);
-    document.addEventListener('touchmove', onMove, {passive:false});
-    document.addEventListener('touchend', onUp);
+    if(state.assignMode && ctrl?.classList.contains('modable')){ handleAssignTap(ctrl); return; }
+    startY = (e.touches ? e.touches[0].clientY : e.clientY); startVal = val;
+    document.addEventListener('mousemove', onMove); document.addEventListener('mouseup', onUp);
+    document.addEventListener('touchmove', onMove, {passive:false}); document.addEventListener('touchend', onUp);
   };
   el.addEventListener('mousedown', onDown);
   el.addEventListener('touchstart', onDown, {passive:false});
-  el._update = update;
-  return update;
+  el._update = update; return update;
 }
 function applyLocalParam(p, v){
   const [bucket, key] = p.split('.');
   if(state[bucket] !== undefined && key in state[bucket]) state[bucket][key] = v;
-  // Refresh sync labels if relevant
   if(p === 'seq.div') refreshSeqDiv();
+  if(p === 'tex.dpdBars') renderDpd();
 }
-
 function formatVal(p, v){
   if(!p) return v.toFixed(2);
-  // Sequencer DIV
-  if(p === 'seq.div'){
-    const idx = clamp(Math.round(v), 0, SEQ_DIVS.length-1);
-    return SEQ_DIVS[idx].label;
-  }
-  if(p === 'seq.length' || p === 'm1.stepCount' || p === 'm2.stepCount' || p === 'tex.density' || p === 'tex.fragCount'){
-    return Math.round(v);
-  }
+  if(p === 'seq.div'){ const idx = clamp(Math.round(v), 0, SEQ_DIVS.length-1); return SEQ_DIVS[idx].label; }
+  if(p === 'tex.dpdBars'){ const n = Math.round(v); return n + (n > 1 ? ' bars' : ' bar'); }
+  if(p === 'seq.length' || p === 'm1.stepCount' || p === 'm2.stepCount' || p === 'tex.density' || p === 'tex.fragCount') return Math.round(v);
   if(p === 'seq.gateLen' || p === 'seq.swing') return `${(v*100).toFixed(0)}%`;
-  // Mod sync rates
-  if((p === 'm1.rate' || p === 'm2.rate') && state[p.split('.')[0]]?.sync === 'sync'){
-    const idx = clamp(Math.round(v / 20 * (DIVISIONS.length-1)), 0, DIVISIONS.length-1);
-    return DIVISIONS[idx].label;
-  }
-  if((p === 'm1.stepRate' || p === 'm2.stepRate') && state[p.split('.')[0]]?.sync === 'sync'){
-    const idx = clamp(Math.round((v-0.5) / 31.5 * (DIVISIONS.length-1)), 0, DIVISIONS.length-1);
-    return DIVISIONS[idx].label;
-  }
-  // Delay sync
-  if((p === 'delay.timeL' || p === 'delay.timeR') && state.delay.sync === 'sync'){
-    const idx = clamp(Math.round((v-0.005) / 1.995 * (DIVISIONS.length-1)), 0, DIVISIONS.length-1);
-    return DIVISIONS[idx].label;
-  }
+  if((p === 'm1.rate' || p === 'm2.rate') && state[p.split('.')[0]]?.sync === 'sync'){ const idx = clamp(Math.round(v / 20 * (DIVISIONS.length-1)), 0, DIVISIONS.length-1); return DIVISIONS[idx].label; }
+  if((p === 'm1.stepRate' || p === 'm2.stepRate') && state[p.split('.')[0]]?.sync === 'sync'){ const idx = clamp(Math.round((v-0.5) / 31.5 * (DIVISIONS.length-1)), 0, DIVISIONS.length-1); return DIVISIONS[idx].label; }
+  if((p === 'delay.timeL' || p === 'delay.timeR') && state.delay.sync === 'sync'){ const idx = clamp(Math.round((v-0.005) / 1.995 * (DIVISIONS.length-1)), 0, DIVISIONS.length-1); return DIVISIONS[idx].label; }
   if(p.includes('time') || p === 'tex.fragSize') return `${(v*1000).toFixed(0)} ms`;
-  if(p.includes('cutoff') || p === 'delay.hp' || p === 'delay.lp')
-    return v >= 1000 ? `${(v/1000).toFixed(1)}k` : `${v.toFixed(0)} Hz`;
+  if(p.includes('cutoff') || p === 'delay.hp' || p === 'delay.lp') return v >= 1000 ? `${(v/1000).toFixed(1)}k` : `${v.toFixed(0)} Hz`;
   if(p.includes('pitch')) return `${v >= 0 ? '+' : ''}${v.toFixed(1)} st`;
   if(p === 'm1.rate' || p === 'm2.rate') return `${v.toFixed(2)} Hz`;
   if(p.includes('Rate')) return `${v.toFixed(1)} Hz`;
   if(p === 'loop.length') return `${v.toFixed(1)} s`;
   if(p === 'loop.speed') return `${v.toFixed(2)}x`;
-  if(p === 'sample.start' || p === 'sample.end' || p.includes('depth') || p.includes('gain') || p.includes('mix') || p.includes('fb') || p.includes('drive') || p.includes('tone') || p.includes('master') || p.includes('spread') || p.includes('jitter') || p === 'tex.fragRev' || p.includes('flutter'))
-    return `${(v*100).toFixed(0)}%`;
-  if(p === 'delay.panL' || p === 'delay.panR'){
-    if(v < 0) return `L${Math.round(-v*100)}`;
-    if(v > 0) return `R${Math.round(v*100)}`;
-    return 'C';
-  }
+  if(p === 'sample.start' || p === 'sample.end' || p.includes('depth') || p.includes('gain') || p.includes('mix') || p.includes('fb') || p.includes('drive') || p.includes('tone') || p.includes('master') || p.includes('spread') || p.includes('jitter') || p === 'tex.fragRev' || p.includes('flutter')) return `${(v*100).toFixed(0)}%`;
+  if(p === 'delay.panL' || p === 'delay.panR'){ if(v < 0) return `L${Math.round(-v*100)}`; if(v > 0) return `R${Math.round(v*100)}`; return 'C'; }
   if(p.includes('offset')) return v.toFixed(2);
   return v.toFixed(2);
 }
-
-// ===================================================================
-// Resolve effective time/rate for synced params (used internally for audio)
-// ===================================================================
 function effectiveDelayTime(side){
   if(state.delay.sync === 'free') return state.delay['time'+side];
-  // Map knob value 0.005..2 to division index
   const knobV = state.delay['time'+side];
   const idx = clamp(Math.round((knobV-0.005) / 1.995 * (DIVISIONS.length-1)), 0, DIVISIONS.length-1);
   return DIVISIONS[idx].beats * beatSec();
 }
 function applyDelaySyncFromKnob(){
-  // Called when sync mode toggles or BPM changes
   if(!nodes.delayL) return;
-  const tL = effectiveDelayTime('L');
-  const tR = effectiveDelayTime('R');
-  try{
-    nodes.delayL.delayTime.linearRampToValueAtTime(clamp(tL, 0.005, 2.99), ctx.currentTime + 0.05);
-    nodes.delayR.delayTime.linearRampToValueAtTime(clamp(tR, 0.005, 2.99), ctx.currentTime + 0.05);
-  }catch(e){}
+  const tL = effectiveDelayTime('L'); const tR = effectiveDelayTime('R');
+  try{ nodes.delayL.delayTime.linearRampToValueAtTime(clamp(tL, 0.005, 2.99), ctx.currentTime + 0.05); nodes.delayR.delayTime.linearRampToValueAtTime(clamp(tR, 0.005, 2.99), ctx.currentTime + 0.05); }catch(e){}
 }
-function refreshSeqDiv(){
-  // Called when seq.div changes - just affects scheduler timing on next step
-}
-
-// ===================================================================
-// ASSIGN MODE
-// ===================================================================
+function refreshSeqDiv(){}
 function enterAssign(which){
   state.assignMode = which;
-  document.body.classList.add('assigning');
-  document.body.classList.toggle('m2-pick', which === 'm2');
+  document.body.classList.add('assigning'); document.body.classList.toggle('m2-pick', which === 'm2');
   $('#assignStatus').textContent = `tape sur un contrôle pour l'assigner à ${which.toUpperCase()}`;
 }
-function exitAssign(){
-  state.assignMode = null;
-  document.body.classList.remove('assigning','m2-pick');
-}
+function exitAssign(){ state.assignMode = null; document.body.classList.remove('assigning','m2-pick'); }
 function handleAssignTap(ctrl){
-  const p = ctrl.dataset.param;
-  if(!p || !PARAM_META[p]) return;
+  const p = ctrl.dataset.param; if(!p || !PARAM_META[p]) return;
   if(!modDepths[p]) modDepths[p] = {m1:0, m2:0};
   const which = state.assignMode;
   if(modDepths[p][which] !== 0) modDepths[p][which] = 0;
   else { modDepths[p][which] = 0.5; if(modBaseValues[p] === undefined) modBaseValues[p] = getStateVal(PARAM_META[p].path); }
-  refreshModPickups();
-  refreshModTargets();
-  exitAssign();
+  refreshModPickups(); refreshModTargets(); exitAssign();
 }
 function refreshModPickups(){
   $$('.ctrl.modable').forEach(ctrl => {
-    const p = ctrl.dataset.param;
-    let pick = ctrl.querySelector('.mod-pick');
-    const md = modDepths[p];
+    const p = ctrl.dataset.param; let pick = ctrl.querySelector('.mod-pick'); const md = modDepths[p];
     if(md && (md.m1 || md.m2)){
       if(!pick){ pick = document.createElement('div'); pick.className = 'mod-pick'; ctrl.appendChild(pick); }
       const hasM1 = !!md.m1, hasM2 = !!md.m2;
-      pick.classList.toggle('m1', hasM1 && !hasM2);
-      pick.classList.toggle('m2', hasM2 && !hasM1);
-      pick.classList.toggle('both', hasM1 && hasM2);
+      pick.classList.toggle('m1', hasM1 && !hasM2); pick.classList.toggle('m2', hasM2 && !hasM1); pick.classList.toggle('both', hasM1 && hasM2);
       pick.textContent = (hasM1 && hasM2) ? '⬩' : (hasM1 ? '1' : '2');
     } else if(pick){ pick.remove(); }
   });
@@ -1647,155 +1033,59 @@ function refreshModTargets(){
     $(`#${k}Targets`).innerHTML = tgs.length ? `<b>CIBLES :</b> ${tgs.join(' · ')}` : '<b>CIBLES :</b> —';
   });
 }
-
-// ===================================================================
-// UI : SAMPLE SEQUENCER
-// ===================================================================
 function buildSequencer(){
-  const gates = $('#seqGates');
-  gates.innerHTML = '';
-  const pitches = $('#seqPitches');
-  pitches.innerHTML = '';
+  const gates = $('#seqGates'); gates.innerHTML = '';
+  const pitches = $('#seqPitches'); pitches.innerHTML = '';
   for(let i=0;i<16;i++){
-    // Gate cell
-    const g = document.createElement('div');
-    g.className = 'seq-cell';
-    if(i % 4 === 0) g.classList.add('beat');
+    const g = document.createElement('div'); g.className = 'seq-cell'; if(i % 4 === 0) g.classList.add('beat');
     g.innerHTML = `<span class="seq-cell-num">${i+1}</span>`;
-    g.addEventListener('click', () => {
-      state.seq.gates[i] = !state.seq.gates[i];
-      g.classList.toggle('on', state.seq.gates[i]);
-    });
+    g.addEventListener('click', () => { state.seq.gates[i] = !state.seq.gates[i]; g.classList.toggle('on', state.seq.gates[i]); });
     gates.appendChild(g);
-
-    // Pitch cell
-    const p = document.createElement('div');
-    p.className = 'pitch-cell';
+    const p = document.createElement('div'); p.className = 'pitch-cell';
     p.innerHTML = `<div class="pitch-zero"></div><div class="pitch-bar"></div><div class="pitch-val">0</div>`;
-    const bar = p.querySelector('.pitch-bar');
-    const valLbl = p.querySelector('.pitch-val');
+    const bar = p.querySelector('.pitch-bar'); const valLbl = p.querySelector('.pitch-val');
     const updateVis = () => {
-      const v = state.seq.pitches[i];
-      const norm = (v + 12) / 24;
-      const h = Math.abs(v) / 24 * 100;
+      const v = state.seq.pitches[i]; const h = Math.abs(v) / 24 * 100;
       bar.style.height = `${h}%`;
-      if(v >= 0){ bar.style.bottom = '50%'; bar.style.top = 'auto'; }
-      else { bar.style.top = '50%'; bar.style.bottom = 'auto'; }
+      if(v >= 0){ bar.style.bottom = '50%'; bar.style.top = 'auto'; } else { bar.style.top = '50%'; bar.style.bottom = 'auto'; }
       valLbl.textContent = v >= 0 ? `+${v}` : `${v}`;
     };
     updateVis();
     let dragging = false, sy = 0, sv = 0;
-    const onMove = e => {
-      if(!dragging) return;
-      const y = e.touches ? e.touches[0].clientY : e.clientY;
-      const v = clamp(Math.round(sv + (sy - y) / 4), -12, 12);
-      state.seq.pitches[i] = v;
-      updateVis();
-    };
-    const onUp = () => {
-      dragging = false;
-      document.removeEventListener('mousemove', onMove);
-      document.removeEventListener('mouseup', onUp);
-      document.removeEventListener('touchmove', onMove);
-      document.removeEventListener('touchend', onUp);
-    };
-    p.addEventListener('mousedown', e => {
-      e.preventDefault();
-      dragging = true; sy = e.clientY; sv = state.seq.pitches[i];
-      document.addEventListener('mousemove', onMove);
-      document.addEventListener('mouseup', onUp);
-    });
-    p.addEventListener('touchstart', e => {
-      e.preventDefault();
-      dragging = true; sy = e.touches[0].clientY; sv = state.seq.pitches[i];
-      document.addEventListener('touchmove', onMove, {passive:false});
-      document.addEventListener('touchend', onUp);
-    }, {passive:false});
-    pitches.appendChild(p);
-    p._update = updateVis;
+    const onMove = e => { if(!dragging) return; const y = e.touches ? e.touches[0].clientY : e.clientY; const v = clamp(Math.round(sv + (sy - y) / 4), -12, 12); state.seq.pitches[i] = v; updateVis(); };
+    const onUp = () => { dragging = false; document.removeEventListener('mousemove', onMove); document.removeEventListener('mouseup', onUp); document.removeEventListener('touchmove', onMove); document.removeEventListener('touchend', onUp); };
+    p.addEventListener('mousedown', e => { e.preventDefault(); dragging = true; sy = e.clientY; sv = state.seq.pitches[i]; document.addEventListener('mousemove', onMove); document.addEventListener('mouseup', onUp); });
+    p.addEventListener('touchstart', e => { e.preventDefault(); dragging = true; sy = e.touches[0].clientY; sv = state.seq.pitches[i]; document.addEventListener('touchmove', onMove, {passive:false}); document.addEventListener('touchend', onUp); }, {passive:false});
+    pitches.appendChild(p); p._update = updateVis;
   }
   refreshSequencerView();
 }
 function refreshSequencerView(){
-  $$('#seqGates .seq-cell').forEach((el,i) => {
-    el.classList.toggle('on', state.seq.gates[i]);
-    el.classList.toggle('disabled', i >= state.seq.length);
-  });
-  $$('#seqPitches .pitch-cell').forEach((el,i) => {
-    el.classList.toggle('disabled', i >= state.seq.length);
-    el._update?.();
-  });
+  $$('#seqGates .seq-cell').forEach((el,i) => { el.classList.toggle('on', state.seq.gates[i]); el.classList.toggle('disabled', i >= state.seq.length); });
+  $$('#seqPitches .pitch-cell').forEach((el,i) => { el.classList.toggle('disabled', i >= state.seq.length); el._update?.(); });
 }
-
-// ===================================================================
-// MOD STEPS UI
-// ===================================================================
 function renderSteps(which){
-  const wrap = $(`#${which}Steps`);
-  wrap.innerHTML = '';
+  const wrap = $(`#${which}Steps`); wrap.innerHTML = '';
   state[which].steps.forEach((v, i) => {
-    const s = document.createElement('div');
-    s.className = 'step';
-    s.style.color = which === 'm1' ? '#c489ff' : '#5cffd8';
-    const fill = document.createElement('div');
-    fill.className = 'step-fill';
-    fill.style.height = `${v*100}%`;
-    s.appendChild(fill);
+    const s = document.createElement('div'); s.className = 'step'; s.style.color = which === 'm1' ? '#c489ff' : '#5cffd8';
+    const fill = document.createElement('div'); fill.className = 'step-fill'; fill.style.height = `${v*100}%`; s.appendChild(fill);
     let dragging = false, sy = 0, sv = v;
-    const onMove = (e) => {
-      if(!dragging) return;
-      const y = e.touches ? e.touches[0].clientY : e.clientY;
-      const nv = clamp(sv + (sy - y) / 100, 0, 1);
-      state[which].steps[i] = nv;
-      fill.style.height = `${nv*100}%`;
-    };
-    const onUp = () => {
-      dragging = false;
-      document.removeEventListener('mousemove', onMove);
-      document.removeEventListener('mouseup', onUp);
-      document.removeEventListener('touchmove', onMove);
-      document.removeEventListener('touchend', onUp);
-    };
-    s.addEventListener('mousedown', e => {
-      e.preventDefault(); dragging = true; sy = e.clientY; sv = state[which].steps[i];
-      document.addEventListener('mousemove', onMove); document.addEventListener('mouseup', onUp);
-    });
-    s.addEventListener('touchstart', e => {
-      e.preventDefault(); dragging = true; sy = e.touches[0].clientY; sv = state[which].steps[i];
-      document.addEventListener('touchmove', onMove, {passive:false}); document.addEventListener('touchend', onUp);
-    }, {passive:false});
+    const onMove = (e) => { if(!dragging) return; const y = e.touches ? e.touches[0].clientY : e.clientY; const nv = clamp(sv + (sy - y) / 100, 0, 1); state[which].steps[i] = nv; fill.style.height = `${nv*100}%`; };
+    const onUp = () => { dragging = false; document.removeEventListener('mousemove', onMove); document.removeEventListener('mouseup', onUp); document.removeEventListener('touchmove', onMove); document.removeEventListener('touchend', onUp); };
+    s.addEventListener('mousedown', e => { e.preventDefault(); dragging = true; sy = e.clientY; sv = state[which].steps[i]; document.addEventListener('mousemove', onMove); document.addEventListener('mouseup', onUp); });
+    s.addEventListener('touchstart', e => { e.preventDefault(); dragging = true; sy = e.touches[0].clientY; sv = state[which].steps[i]; document.addEventListener('touchmove', onMove, {passive:false}); document.addEventListener('touchend', onUp); }, {passive:false});
     wrap.appendChild(s);
   });
 }
-
-// ===================================================================
-// HEADS / DPD UI
-// ===================================================================
 function renderHeads(){
-  const list = $('#headsList');
-  list.innerHTML = '';
+  const list = $('#headsList'); list.innerHTML = '';
   state.tex.heads.forEach((h, i) => {
-    const row = document.createElement('div');
-    row.className = 'list-row';
+    const row = document.createElement('div'); row.className = 'list-row';
     row.innerHTML = `
       <div class="list-num">H${i+1}</div>
-      <div class="mini">
-        <span class="mini-label">RATE</span>
-        <select class="mini-input">
-          ${[0.0625, 0.125, 0.25, 0.5, 1, 2, 4, 8].map(r => `<option value="${r}" ${h.rate===r?'selected':''}>×${r}</option>`).join('')}
-        </select>
-      </div>
-      <div class="mini">
-        <span class="mini-label">DIR</span>
-        <select class="mini-input">
-          <option value="fwd" ${h.dir==='fwd'?'selected':''}>▶ FWD</option>
-          <option value="rev" ${h.dir==='rev'?'selected':''}>◀ REV</option>
-        </select>
-      </div>
-      <div class="mini">
-        <span class="mini-label">PAN</span>
-        <input type="range" min="-1" max="1" step="0.05" value="${h.pan}" class="mini-input" style="color:#ff5cb1">
-      </div>
+      <div class="mini"><span class="mini-label">RATE</span><select class="mini-input">${[0.0625,0.125,0.25,0.5,1,2,4,8].map(r => `<option value="${r}" ${h.rate===r?'selected':''}>×${r}</option>`).join('')}</select></div>
+      <div class="mini"><span class="mini-label">DIR</span><select class="mini-input"><option value="fwd" ${h.dir==='fwd'?'selected':''}>▶ FWD</option><option value="rev" ${h.dir==='rev'?'selected':''}>◀ REV</option></select></div>
+      <div class="mini"><span class="mini-label">PAN</span><input type="range" min="-1" max="1" step="0.05" value="${h.pan}" class="mini-input" style="color:#ff5cb1"></div>
       <button class="iconbtn">${h.on?'●':'○'}</button>
     `;
     const inputs = row.querySelectorAll('.mini-input');
@@ -1809,93 +1099,119 @@ function renderHeads(){
   });
 }
 function restartIfMulti(){ if(state.playing && state.tex.mode === 'multi'){ stopTextures(); startTextures(); } }
-function renderDpd(){
-  const list = $('#dpdList');
-  list.innerHTML = '';
-  state.tex.dpd.forEach((p, i) => {
-    const row = document.createElement('div');
-    row.className = 'list-row';
-    row.style.gridTemplateColumns = 'auto 1fr 1fr 1fr';
-    row.innerHTML = `
-      <div class="list-num">P${i+1}</div>
-      <div class="mini">
-        <span class="mini-label">CH</span>
-        <select class="mini-input">
-          <option value="L" ${p.channel==='L'?'selected':''}>L</option>
-          <option value="R" ${p.channel==='R'?'selected':''}>R</option>
-        </select>
-      </div>
-      <div class="mini">
-        <span class="mini-label">DELAY</span>
-        <input type="range" min="0" max="1" step="0.01" value="${p.delay}" class="mini-input" style="color:#ff5cb1">
-      </div>
-      <div class="mini">
-        <span class="mini-label">DIR</span>
-        <select class="mini-input">
-          <option value="fwd" ${p.dir==='fwd'?'selected':''}>▶</option>
-          <option value="rev" ${p.dir==='rev'?'selected':''}>◀</option>
-        </select>
-      </div>
-    `;
-    const [chSel, delRange, dirSel] = row.querySelectorAll('.mini-input');
-    chSel.addEventListener('change', () => p.channel = chSel.value);
-    delRange.addEventListener('input', () => p.delay = parseFloat(delRange.value));
-    dirSel.addEventListener('change', () => p.dir = dirSel.value);
-    list.appendChild(row);
-  });
-}
-
-// ===================================================================
-// ENGINE MIXER (PERF page)
-// ===================================================================
-function renderEngineMixer(){
-  const wrap = $('#engineMixer');
+function buildDpdBarDisplay(){
+  const wrap = $('#dpdBarDisplay'); if(!wrap) return;
   wrap.innerHTML = '';
-  const engines = [
-    {key:'sample', name:'SAMPLE', color:'#ff8c42'},
-    {key:'tex', name:'TEXTURE', color:'#ff5cb1'},
-    {key:'delay', name:'DELAY', color:'#4ac4ff'}
-  ];
-  engines.forEach(en => {
-    const row = document.createElement('div');
-    row.className = 'engine-row';
-    row.innerHTML = `
-      <div class="name" style="color:${en.color}">${en.name}</div>
-      <div class="ms-toggle">
-        <button class="mute" data-action="mute">M</button>
-        <button class="solo" data-action="solo">S</button>
+  const total = state.tex.dpdBars * 16;
+  for(let i=0;i<total;i++){
+    const c = document.createElement('div');
+    c.className = 'dpd-bar-cell' + (i % 4 === 0 ? ' beat' : '');
+    state.tex.dpd.forEach(v => {
+      if(v.step === i){
+        const mk = document.createElement('div');
+        mk.className = 'mark';
+        mk.style.bottom = `${4 + v.vel * 60}%`;
+        mk.style.opacity = String(0.5 + 0.5 * v.prob);
+        c.appendChild(mk);
+      }
+    });
+    wrap.appendChild(c);
+  }
+}
+function renderDpd(){
+  const wrap = $('#dpdVoices'); if(!wrap) return;
+  wrap.innerHTML = '';
+  const totalSteps = state.tex.dpdBars * 16;
+  state.tex.dpd.forEach((v, i) => {
+    if(v.step >= totalSteps) v.step = v.step % totalSteps;
+    const card = document.createElement('div'); card.className = 'dpd-voice';
+    card.innerHTML = `
+      <div class="dpd-voice-head">
+        <div class="dpd-voice-num">H${i+1}</div>
+        <div class="dpd-voice-info">STEP <b>${v.step+1}</b>/${totalSteps} · POS <b>${(v.pos*100).toFixed(0)}%</b> · ${v.pitch>=0?'+':''}${v.pitch}st</div>
+        <div class="dpd-seg2" data-prop="ch"><button data-v="L" class="${v.ch==='L'?'on':''}">L</button><button data-v="R" class="${v.ch==='R'?'on':''}">R</button></div>
+        <div class="dpd-seg2" data-prop="dir"><button data-v="fwd" class="${v.dir==='fwd'?'on':''}">▶</button><button data-v="rev" class="${v.dir==='rev'?'on':''}">◀</button></div>
+      </div>
+      <div class="dpd-grid">
+        <div class="dpd-row"><span class="mini-label">STEP</span><input type="range" class="dpd-input" data-p="step" min="0" max="${totalSteps-1}" step="1" value="${v.step}"><span class="mini-val">${v.step+1}</span></div>
+        <div class="dpd-row"><span class="mini-label">LEN</span><select class="mini-input" data-p="len">${DPD_LEN_DIVS.map(d => `<option value="${d.beats}" ${Math.abs(v.len-d.beats)<0.005?'selected':''}>${d.label}</option>`).join('')}</select></div>
+        <div class="dpd-row"><span class="mini-label">POS</span><input type="range" class="dpd-input" data-p="pos" min="0" max="1" step="0.01" value="${v.pos}"><span class="mini-val">${(v.pos*100).toFixed(0)}%</span></div>
+        <div class="dpd-row"><span class="mini-label">PITCH</span><input type="range" class="dpd-input" data-p="pitch" min="-12" max="12" step="1" value="${v.pitch}"><span class="mini-val">${v.pitch>=0?'+':''}${v.pitch}</span></div>
+        <div class="dpd-row"><span class="mini-label">VEL</span><input type="range" class="dpd-input" data-p="vel" min="0" max="1" step="0.01" value="${v.vel}"><span class="mini-val">${(v.vel*100).toFixed(0)}%</span></div>
+        <div class="dpd-row"><span class="mini-label">PROB</span><input type="range" class="dpd-input" data-p="prob" min="0" max="1" step="0.01" value="${v.prob}"><span class="mini-val">${(v.prob*100).toFixed(0)}%</span></div>
       </div>
     `;
-    const muteBtn = row.querySelector('button.mute');
-    const soloBtn = row.querySelector('button.solo');
-    const refresh = () => {
-      muteBtn.classList.toggle('on', state[en.key].mute);
-      soloBtn.classList.toggle('on', state[en.key].solo);
-    };
+    card.querySelectorAll('input[type=range]').forEach(inp => {
+      inp.addEventListener('input', () => {
+        const p = inp.dataset.p, val = parseFloat(inp.value);
+        v[p] = val;
+        const span = inp.nextElementSibling;
+        if(span){
+          if(p === 'step') span.textContent = (val + 1);
+          else if(p === 'pos' || p === 'vel' || p === 'prob') span.textContent = `${(val*100).toFixed(0)}%`;
+          else if(p === 'pitch') span.textContent = (val >= 0 ? '+' : '') + val;
+        }
+        const info = card.querySelector('.dpd-voice-info');
+        if(info) info.innerHTML = `STEP <b>${v.step+1}</b>/${totalSteps} · POS <b>${(v.pos*100).toFixed(0)}%</b> · ${v.pitch>=0?'+':''}${v.pitch}st`;
+        if(p === 'step' || p === 'vel' || p === 'prob') buildDpdBarDisplay();
+      });
+    });
+    card.querySelectorAll('select.mini-input').forEach(sel => {
+      sel.addEventListener('change', () => { v[sel.dataset.p] = parseFloat(sel.value); });
+    });
+    card.querySelectorAll('.dpd-seg2').forEach(seg => {
+      const prop = seg.dataset.prop;
+      seg.querySelectorAll('button').forEach(b => b.addEventListener('click', () => {
+        seg.querySelectorAll('button').forEach(x => x.classList.remove('on'));
+        b.classList.add('on'); v[prop] = b.dataset.v;
+      }));
+    });
+    wrap.appendChild(card);
+  });
+  buildDpdBarDisplay();
+}
+function loadDpdPreset(name){
+  const p = DPD_PRESETS[name]; if(!p) return;
+  state.tex.dpd = p.map(v => ({...v}));
+  renderDpd();
+}
+function randomizeDpd(){
+  const totalSteps = state.tex.dpdBars * 16;
+  state.tex.dpd = state.tex.dpd.map((v, i) => ({
+    step: Math.floor(Math.random() * totalSteps),
+    pos: Math.random(),
+    pitch: [-12,-7,-5,0,0,0,3,5,7,12][Math.floor(Math.random()*10)],
+    len: DPD_LEN_DIVS[Math.floor(Math.random() * DPD_LEN_DIVS.length)].beats,
+    vel: 0.4 + Math.random() * 0.5,
+    prob: 0.5 + Math.random() * 0.5,
+    ch: i < 2 ? 'L' : 'R',
+    dir: Math.random() < 0.5 ? 'fwd' : 'rev'
+  }));
+  renderDpd();
+}
+function renderEngineMixer(){
+  const wrap = $('#engineMixer'); wrap.innerHTML = '';
+  const engines = [{key:'sample', name:'SAMPLE', color:'#ff8c42'},{key:'tex', name:'TEXTURE', color:'#ff5cb1'},{key:'delay', name:'DELAY', color:'#4ac4ff'}];
+  engines.forEach(en => {
+    const row = document.createElement('div'); row.className = 'engine-row';
+    row.innerHTML = `<div class="name" style="color:${en.color}">${en.name}</div><div class="ms-toggle"><button class="mute" data-action="mute">M</button><button class="solo" data-action="solo">S</button></div>`;
+    const muteBtn = row.querySelector('button.mute'); const soloBtn = row.querySelector('button.solo');
+    const refresh = () => { muteBtn.classList.toggle('on', state[en.key].mute); soloBtn.classList.toggle('on', state[en.key].solo); };
     muteBtn.addEventListener('click', () => { state[en.key].mute = !state[en.key].mute; if(state[en.key].mute) state[en.key].solo = false; refresh(); applyMuteSolo(); });
     soloBtn.addEventListener('click', () => { state[en.key].solo = !state[en.key].solo; if(state[en.key].solo) state[en.key].mute = false; refresh(); applyMuteSolo(); });
-    refresh();
-    wrap.appendChild(row);
+    refresh(); wrap.appendChild(row);
   });
 }
-
-// ===================================================================
-// SOURCE GENERATION
-// ===================================================================
 function generateSource(){
-  const sr = ctx.sampleRate;
-  const dur = 4;
-  const buf = ctx.createBuffer(2, sr * dur, sr);
-  const root = 220;
+  const sr = ctx.sampleRate; const dur = 4;
+  const buf = ctx.createBuffer(2, sr * dur, sr); const root = 220;
   for(let ch = 0; ch < 2; ch++){
-    const data = buf.getChannelData(ch);
-    const detune = ch === 0 ? 0.997 : 1.003;
+    const data = buf.getChannelData(ch); const detune = ch === 0 ? 0.997 : 1.003;
     for(let i = 0; i < data.length; i++){
       const t = i / sr;
       const env = (Math.exp(-t * 1.1) * 0.7 + Math.exp(-t * 0.28) * 0.3) * (1 - Math.exp(-t * 90));
       const vib = 1 + 0.0035 * Math.sin(2 * Math.PI * 4.7 * t);
-      const f = root * detune * vib;
-      const w = 2 * Math.PI * f * t;
+      const f = root * detune * vib; const w = 2 * Math.PI * f * t;
       const h1 = Math.sin(w);
       const h2 = Math.sin(2 * w) * 0.42 * Math.exp(-t * 2.8);
       const h3 = Math.sin(3 * w) * 0.18 * Math.exp(-t * 5);
@@ -1909,84 +1225,45 @@ function generateSource(){
   }
   return buf;
 }
-
-// ===================================================================
-// SCOPES
-// ===================================================================
 function drawScope(canvasId, buf, color){
-  const cv = $(`#${canvasId}`);
-  if(!cv) return;
+  const cv = $(`#${canvasId}`); if(!cv) return;
   cv.width = cv.clientWidth * (window.devicePixelRatio || 1);
   cv.height = cv.clientHeight * (window.devicePixelRatio || 1);
   const c = cv.getContext('2d');
-  c.fillStyle = '#08090b';
-  c.fillRect(0, 0, cv.width, cv.height);
-  if(!buf){ return; }
-  const data = buf.getChannelData(0);
-  const step = Math.ceil(data.length / cv.width);
-  c.strokeStyle = color;
-  c.lineWidth = 1;
-  c.beginPath();
+  c.fillStyle = '#08090b'; c.fillRect(0, 0, cv.width, cv.height);
+  if(!buf) return;
+  const data = buf.getChannelData(0); const step = Math.ceil(data.length / cv.width);
+  c.strokeStyle = color; c.lineWidth = 1; c.beginPath();
   for(let x = 0; x < cv.width; x++){
     let min = 1, max = -1;
-    for(let j = 0; j < step; j++){
-      const v = data[x*step + j] || 0;
-      if(v < min) min = v;
-      if(v > max) max = v;
-    }
+    for(let j = 0; j < step; j++){ const v = data[x*step + j] || 0; if(v < min) min = v; if(v > max) max = v; }
     c.moveTo(x, cv.height/2 + min * cv.height/2);
     c.lineTo(x, cv.height/2 + max * cv.height/2);
   }
   c.stroke();
 }
-function drawSourceScope(){
-  drawScope('scope', sourceBuffer, '#ff8c42');
-  if(sourceBuffer){
-    $('#srcInfo').textContent = `${sourceBuffer.duration.toFixed(2)}s · ${sourceBuffer.sampleRate}Hz`;
-  }
-}
-function drawLoopScope(){
-  drawScope('loopScope', state.loop.buffer || loopRecBuffer, '#ff5c5c');
-  updateLoopLabel();
-}
-
-// ===================================================================
-// TAP TEMPO
-// ===================================================================
+function drawSourceScope(){ drawScope('scope', sourceBuffer, '#ff8c42'); if(sourceBuffer){ $('#srcInfo').textContent = `${sourceBuffer.duration.toFixed(2)}s · ${sourceBuffer.sampleRate}Hz`; } }
+function drawLoopScope(){ drawScope('loopScope', state.loop.buffer || loopRecBuffer, '#ff5c5c'); updateLoopLabel(); }
 let tapTimes = [];
 function tapTempo(){
   const now = performance.now();
   tapTimes.push(now);
   if(tapTimes.length > 4) tapTimes.shift();
-  // Reset if last tap was > 2s ago
-  if(tapTimes.length >= 2 && now - tapTimes[tapTimes.length-2] > 2000){
-    tapTimes = [now];
-  }
+  if(tapTimes.length >= 2 && now - tapTimes[tapTimes.length-2] > 2000){ tapTimes = [now]; }
   if(tapTimes.length >= 2){
     let sum = 0, n = 0;
     for(let i=1;i<tapTimes.length;i++){ sum += tapTimes[i] - tapTimes[i-1]; n++; }
-    const avgMs = sum / n;
-    const bpm = 60000 / avgMs;
+    const avgMs = sum / n; const bpm = 60000 / avgMs;
     setBpm(clamp(Math.round(bpm), 30, 300));
   }
 }
-function setBpm(b){
-  state.bpm = b;
-  $('#bpmVal').textContent = b;
-  // Refresh delay sync timing
-  if(state.delay.sync === 'sync') applyDelaySyncFromKnob();
-}
-
-// ===================================================================
-// UI BINDINGS
-// ===================================================================
+function setBpm(b){ state.bpm = b; $('#bpmVal').textContent = b; if(state.delay.sync === 'sync') applyDelaySyncFromKnob(); }
 function bindSeg(elId, onChange){
   const el = typeof elId === 'string' ? $(elId) : elId;
   el.querySelectorAll('button').forEach(b => {
     b.addEventListener('click', () => {
       el.querySelectorAll('button').forEach(x => x.classList.remove('on'));
-      b.classList.add('on');
-      onChange(b.dataset.v);
+      b.classList.add('on'); onChange(b.dataset.v);
     });
   });
 }
@@ -1994,84 +1271,39 @@ function showTab(name){
   $$('.tab').forEach(t => t.classList.toggle('on', t.dataset.tab === name));
   $$('.page').forEach(p => p.hidden = p.dataset.page !== name);
 }
-
+function refreshAllValueLabels(){
+  $$('.knob').forEach(k => {
+    const ctrl = k.closest('.ctrl'); const p = ctrl?.dataset.param || k.dataset.param;
+    if(!p) return; const v = parseFloat(k.dataset.val);
+    const lbl = ctrl?.querySelector('.ctrl-val'); if(lbl) lbl.textContent = formatVal(p, v);
+  });
+}
 document.addEventListener('DOMContentLoaded', () => {
-  // Tab navigation
   $$('.tab').forEach(t => t.addEventListener('click', () => showTab(t.dataset.tab)));
   showTab('sample');
-
-  // Knobs
   $$('.knob').forEach(setupKnob);
-
-  // BPM box drag
   const bpmBox = $('#bpmBox');
   let bpmStartY = 0, bpmStartV = 0;
-  const bpmMove = e => {
-    const y = e.touches ? e.touches[0].clientY : e.clientY;
-    const dy = bpmStartY - y;
-    setBpm(clamp(Math.round(bpmStartV + dy * 0.3), 30, 300));
-  };
-  const bpmUp = () => {
-    document.removeEventListener('mousemove', bpmMove);
-    document.removeEventListener('mouseup', bpmUp);
-    document.removeEventListener('touchmove', bpmMove);
-    document.removeEventListener('touchend', bpmUp);
-  };
-  bpmBox.addEventListener('mousedown', e => {
-    e.preventDefault();
-    bpmStartY = e.clientY; bpmStartV = state.bpm;
-    document.addEventListener('mousemove', bpmMove);
-    document.addEventListener('mouseup', bpmUp);
-  });
-  bpmBox.addEventListener('touchstart', e => {
-    e.preventDefault();
-    bpmStartY = e.touches[0].clientY; bpmStartV = state.bpm;
-    document.addEventListener('touchmove', bpmMove, {passive:false});
-    document.addEventListener('touchend', bpmUp);
-  }, {passive:false});
+  const bpmMove = e => { const y = e.touches ? e.touches[0].clientY : e.clientY; const dy = bpmStartY - y; setBpm(clamp(Math.round(bpmStartV + dy * 0.3), 30, 300)); };
+  const bpmUp = () => { document.removeEventListener('mousemove', bpmMove); document.removeEventListener('mouseup', bpmUp); document.removeEventListener('touchmove', bpmMove); document.removeEventListener('touchend', bpmUp); };
+  bpmBox.addEventListener('mousedown', e => { e.preventDefault(); bpmStartY = e.clientY; bpmStartV = state.bpm; document.addEventListener('mousemove', bpmMove); document.addEventListener('mouseup', bpmUp); });
+  bpmBox.addEventListener('touchstart', e => { e.preventDefault(); bpmStartY = e.touches[0].clientY; bpmStartV = state.bpm; document.addEventListener('touchmove', bpmMove, {passive:false}); document.addEventListener('touchend', bpmUp); }, {passive:false});
   $('#bpmTap').addEventListener('click', tapTempo);
-
-  // Sample
   bindSeg('#sampleMode', v => { state.sample.mode = v; });
-  bindSeg('#sampleDir', v => {
-    state.sample.dir = v;
-    if(state.playing && state.sample.mode === 'loop') playSample();
-  });
-
-  // Sample sequencer
+  bindSeg('#sampleDir', v => { state.sample.dir = v; if(state.playing && state.sample.mode === 'loop') playSample(); });
   bindSeg('#seqOn', v => { state.seq.on = v === 'on'; });
   $('#seqClear').addEventListener('click', () => { state.seq.gates.fill(false); refreshSequencerView(); });
-  $('#seqEvery2').addEventListener('click', () => {
-    for(let i=0;i<16;i++) state.seq.gates[i] = i % 2 === 0;
-    refreshSequencerView();
-  });
-  $('#seqEvery4').addEventListener('click', () => {
-    for(let i=0;i<16;i++) state.seq.gates[i] = i % 4 === 0;
-    refreshSequencerView();
-  });
+  $('#seqEvery2').addEventListener('click', () => { for(let i=0;i<16;i++) state.seq.gates[i] = i % 2 === 0; refreshSequencerView(); });
+  $('#seqEvery4').addEventListener('click', () => { for(let i=0;i<16;i++) state.seq.gates[i] = i % 4 === 0; refreshSequencerView(); });
   $('#seqRandPitch').addEventListener('click', () => {
-    const scale = [0,2,3,5,7,8,10,12]; // minor pentatonic-ish
-    for(let i=0;i<16;i++){
-      state.seq.pitches[i] = scale[Math.floor(Math.random()*scale.length)] - 7 + Math.floor(Math.random()*2)*12;
-    }
+    const scale = [0,2,3,5,7,8,10,12];
+    for(let i=0;i<16;i++){ state.seq.pitches[i] = scale[Math.floor(Math.random()*scale.length)] - 7 + Math.floor(Math.random()*2)*12; }
     buildSequencer();
   });
-  $('#seqResetPitch').addEventListener('click', () => {
-    state.seq.pitches.fill(0);
-    buildSequencer();
-  });
-
-  // Delay
-  bindSeg('#delaySync', v => {
-    state.delay.sync = v;
-    applyDelaySyncFromKnob();
-    // Refresh time labels
-    refreshAllValueLabels();
-  });
+  $('#seqResetPitch').addEventListener('click', () => { state.seq.pitches.fill(0); buildSequencer(); });
+  bindSeg('#delaySync', v => { state.delay.sync = v; applyDelaySyncFromKnob(); refreshAllValueLabels(); });
   bindSeg('#delayDirL', v => state.delay.dirL = v);
   bindSeg('#delayDirR', v => state.delay.dirR = v);
-
-  // Texture mode
   bindSeg('#texMode', v => {
     state.tex.mode = v;
     $('#texMulti').hidden = v !== 'multi';
@@ -2080,23 +1312,12 @@ document.addEventListener('DOMContentLoaded', () => {
     if(state.playing){ stopTextures(); startTextures(); }
   });
   $('#multiRand').addEventListener('click', () => {
-    state.tex.heads.forEach(h => {
-      h.rate = [0.25, 0.5, 1, 2, 4][Math.floor(Math.random()*5)];
-      h.dir = Math.random() < 0.5 ? 'fwd' : 'rev';
-      h.pan = Math.random()*2 - 1;
-      h.pos = Math.random();
-    });
-    renderHeads();
-    restartIfMulti();
+    state.tex.heads.forEach(h => { h.rate = [0.25, 0.5, 1, 2, 4][Math.floor(Math.random()*5)]; h.dir = Math.random() < 0.5 ? 'fwd' : 'rev'; h.pan = Math.random()*2 - 1; h.pos = Math.random(); });
+    renderHeads(); restartIfMulti();
   });
-
-  // Output
-  bindSeg('#filterType', v => {
-    state.out.filtType = v;
-    if(nodes.filter) nodes.filter.type = v === 'lp' ? 'lowpass' : (v === 'hp' ? 'highpass' : 'bandpass');
-  });
-
-  // Looper
+  $$('[data-preset]').forEach(btn => btn.addEventListener('click', () => loadDpdPreset(btn.dataset.preset)));
+  $('#dpdRand')?.addEventListener('click', randomizeDpd);
+  bindSeg('#filterType', v => { state.out.filtType = v; if(nodes.filter) nodes.filter.type = v === 'lp' ? 'lowpass' : (v === 'hp' ? 'highpass' : 'bandpass'); });
   $('#loopRec').addEventListener('click', () => { AC(); if(state.loop.recording){ loopFinishRec(); } else { loopStartRec(); } });
   $('#loopPlay').addEventListener('click', () => { AC(); loopPlay(); });
   $('#loopStop').addEventListener('click', loopStop);
@@ -2104,8 +1325,6 @@ document.addEventListener('DOMContentLoaded', () => {
   $('#loopRedo').addEventListener('click', loopRedo);
   $('#loopClear').addEventListener('click', loopClear);
   bindSeg('#loopDir', v => { state.loop.dir = v; if(state.loop.playing) loopPlay(); });
-
-  // Modulation
   bindSeg('#m1Type', v => { state.m1.type = v; $('#m1Lfo').hidden = v !== 'lfo'; $('#m1Step').hidden = v !== 'step'; });
   bindSeg('#m2Type', v => { state.m2.type = v; $('#m2Lfo').hidden = v !== 'lfo'; $('#m2Step').hidden = v !== 'step'; });
   bindSeg('#m1Sync', v => { state.m1.sync = v; refreshAllValueLabels(); });
@@ -2115,55 +1334,29 @@ document.addEventListener('DOMContentLoaded', () => {
   $('#m1Pick').addEventListener('click', () => enterAssign('m1'));
   $('#m2Pick').addEventListener('click', () => enterAssign('m2'));
   $('#assignCancel').addEventListener('click', exitAssign);
-  $$('.ctrl.modable').forEach(ctrl => {
-    ctrl.addEventListener('click', e => {
-      if(state.assignMode){ e.stopPropagation(); handleAssignTap(ctrl); }
-    }, true);
-  });
-
-  // Transport
+  $$('.ctrl.modable').forEach(ctrl => { ctrl.addEventListener('click', e => { if(state.assignMode){ e.stopPropagation(); handleAssignTap(ctrl); } }, true); });
   $('#playBtn').addEventListener('click', () => {
     AC();
     state.playing = !state.playing;
     $('#playBtn').classList.toggle('on', state.playing);
     $('#playBtn').textContent = state.playing ? '❚❚' : '▶';
-    if(state.playing){
-      startClock();
-      if(!state.seq.on) playSample();
-      startTextures();
-    } else {
-      stopClock();
-      stopSample();
-      stopTextures();
-    }
+    if(state.playing){ startClock(); if(!state.seq.on) playSample(); startTextures(); }
+    else { stopClock(); stopSample(); stopTextures(); }
   });
   $('#stopBtn').addEventListener('click', () => {
     state.playing = false;
-    $('#playBtn').classList.remove('on');
-    $('#playBtn').textContent = '▶';
-    stopClock();
-    stopSample();
-    stopTextures();
+    $('#playBtn').classList.remove('on'); $('#playBtn').textContent = '▶';
+    stopClock(); stopSample(); stopTextures();
   });
-
-  // File loading
   $('#loadBtn').addEventListener('click', () => $('#fileIn').click());
   $('#fileIn').addEventListener('change', async (e) => {
-    const f = e.target.files[0];
-    if(!f) return;
-    AC();
-    const fn = $('#fileName');
-    fn.textContent = `chargement · ${f.name}…`;
+    const f = e.target.files[0]; if(!f) return;
+    AC(); const fn = $('#fileName'); fn.textContent = `chargement · ${f.name}…`;
     try{
-      const ab = await f.arrayBuffer();
-      let buf;
-      try{
-        buf = await ctx.decodeAudioData(ab.slice(0));
-      } catch(modernErr){
-        buf = await new Promise((resolve, reject) => ctx.decodeAudioData(ab.slice(0), resolve, reject));
-      }
-      sourceBuffer = buf;
-      reversedBuffer = null;
+      const ab = await f.arrayBuffer(); let buf;
+      try{ buf = await ctx.decodeAudioData(ab.slice(0)); }
+      catch(modernErr){ buf = await new Promise((resolve, reject) => ctx.decodeAudioData(ab.slice(0), resolve, reject)); }
+      sourceBuffer = buf; reversedBuffer = null;
       fn.textContent = `${f.name} · ${buf.duration.toFixed(2)}s · ${buf.sampleRate}Hz · ${buf.numberOfChannels}ch`;
       drawSourceScope();
     } catch(err){
@@ -2171,52 +1364,28 @@ document.addEventListener('DOMContentLoaded', () => {
       const ext = (f.name.split('.').pop() || '').toLowerCase();
       const isIos = /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
       let hint = '';
-      if(['ogg','opus','flac','webm'].includes(ext)){
-        hint = isIos ? ` — Safari iOS ne décode pas .${ext}. Convertis en MP3 / WAV / M4A` : ` — format .${ext} non décodable, essaie MP3 / WAV / M4A`;
-      } else if(ext){
-        hint = ` — .${ext} non décodable. Formats iOS supportés : MP3, WAV (PCM), M4A, AAC, AIFF`;
-      }
+      if(['ogg','opus','flac','webm'].includes(ext)){ hint = isIos ? ` — Safari iOS ne décode pas .${ext}. Convertis en MP3 / WAV / M4A` : ` — format .${ext} non décodable, essaie MP3 / WAV / M4A`; }
+      else if(ext){ hint = ` — .${ext} non décodable. Formats iOS supportés : MP3, WAV (PCM), M4A, AAC, AIFF`; }
       fn.textContent = `❌ ${f.name}${hint}`;
     }
     e.target.value = '';
   });
   $('#genBtn').addEventListener('click', () => {
-    AC();
-    sourceBuffer = generateSource();
-    reversedBuffer = null;
+    AC(); sourceBuffer = generateSource(); reversedBuffer = null;
     $('#fileName').textContent = '◇ source synthétisée';
     drawSourceScope();
   });
-
-  // Build dynamic UI
   buildSequencer();
   renderHeads();
   renderDpd();
   renderSteps('m1');
   renderSteps('m2');
   renderEngineMixer();
-
-  // Init audio + default source
   AC();
   sourceBuffer = generateSource();
   $('#fileName').textContent = '◇ source synthétisée (par défaut)';
   drawSourceScope();
 });
-
-function refreshAllValueLabels(){
-  $$('.knob').forEach(k => {
-    const ctrl = k.closest('.ctrl');
-    const p = ctrl?.dataset.param || k.dataset.param;
-    if(!p) return;
-    const v = parseFloat(k.dataset.val);
-    const lbl = ctrl?.querySelector('.ctrl-val');
-    if(lbl) lbl.textContent = formatVal(p, v);
-  });
-}
-
-// ===================================================================
-// MAIN LOOP (modulation + visuals)
-// ===================================================================
 let lastFrameTime = 0;
 function loop(t){
   if(lastFrameTime === 0) lastFrameTime = t;
@@ -2227,7 +1396,6 @@ function loop(t){
   requestAnimationFrame(loop);
 }
 requestAnimationFrame(loop);
-
 window.addEventListener('resize', () => { drawSourceScope(); drawLoopScope(); });
 </script>
 </body>
