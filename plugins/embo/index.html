@@ -340,29 +340,31 @@ function triggerSlot(slot,midi,vel,glide,delayT){
   if(slot.frozen)return;
   const ac=AC,t=ac.currentTime+(delayT||0),f=mhz(midi);
   const em=EP[curEP];
-  const ratio=clamp(2+Math.floor(f/58),1,10)*em.rm;
-  const gtc=glide?(0.042+P.flow*.10):0.004;
-  const ap=(.12+.02/Math.sqrt(SLOT_N))*vel;
+  // Ratio plus élevé = son plus métallique / electric piano
+  const ratio=clamp(4+Math.floor(f/50),1,14)*em.rm;
+  const gtc=glide?(0.042+P.flow*.10):0.003;
+  // Amplitude proche de l'original EMBO V2 (.18*vel), le compresseur gère la somme
+  const ap=.18*vel;
 
   slot.car.frequency.cancelScheduledValues(t);
   slot.mod.frequency.cancelScheduledValues(t);
   slot.car.frequency.setTargetAtTime(f,t,gtc);
   slot.mod.frequency.setTargetAtTime(f*ratio,t,gtc);
 
-  // FM bark (Rhodes / EP character)
-  const mp=f*(1.4+P.timbre*2.4)*(0.35+vel*.65);
+  // FM bark : attaque instantanée, déclin RAPIDE (~90ms) → "chime" Rhodes
+  const mp=f*(1.5+P.timbre*2.5)*(0.35+vel*.65);
   slot.me.gain.cancelScheduledValues(t);
   slot.me.gain.setValueAtTime(.001,t);
-  slot.me.gain.linearRampToValueAtTime(mp,t+.004);
-  slot.me.gain.exponentialRampToValueAtTime(Math.max(.001,mp*.05*em.mm),t+.22*em.mm);
+  slot.me.gain.linearRampToValueAtTime(mp,t+.003);
+  slot.me.gain.exponentialRampToValueAtTime(Math.max(.001,mp*.05),t+.09*em.mm);
   slot.me.gain.exponentialRampToValueAtTime(.001,t+P.decay*em.am);
 
-  // Amplitude envelope
+  // Amplitude : attaque franche, déclin semi-percussif
   slot.amp.gain.cancelScheduledValues(t);
   slot.amp.gain.setValueAtTime(.001,t);
-  slot.amp.gain.linearRampToValueAtTime(ap,t+.006);
-  slot.amp.gain.exponentialRampToValueAtTime(ap*.55,t+.14);
-  slot.amp.gain.setTargetAtTime(ap*.24,t+.6,.65);
+  slot.amp.gain.linearRampToValueAtTime(ap,t+.005);
+  slot.amp.gain.exponentialRampToValueAtTime(ap*.52,t+.14);
+  slot.amp.gain.exponentialRampToValueAtTime(ap*.22,t+.70+P.bloom*.35);
   slot.amp.gain.exponentialRampToValueAtTime(.0001,t+P.decay*em.am+.5);
 
   // Filter: EP cutoff + air + Y tension
@@ -605,7 +607,6 @@ function handlePoint(e){
 pad.addEventListener('touchstart',async e=>{
   e.preventDefault();initAC();if(AC.state==='suspended')await AC.resume();
   handlePoint(e);
-  if(!playing){playing=true;$('playBtn').classList.add('on');startSeq();}
 },{passive:false});
 pad.addEventListener('touchmove',e=>{e.preventDefault();if(AC)handlePoint(e);},{passive:false});
 pad.addEventListener('touchend',e=>{
@@ -615,7 +616,6 @@ pad.addEventListener('touchend',e=>{
 pad.addEventListener('mousedown',async e=>{
   initAC();if(AC.state==='suspended')await AC.resume();
   handlePoint(e);
-  if(!playing){playing=true;$('playBtn').classList.add('on');startSeq();}
 });
 pad.addEventListener('mousemove',e=>{if(e.buttons&&AC)handlePoint(e);});
 
