@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,maximum-scale=1,user-scalable=no" />
+<meta name="theme-color" content="#10100e" />
+<title>AURORA FLOW V1</title>
+<style>
+:root{
+  --bg:#10100e;--panel:#181815;--panel2:#20201c;--line:#333229;
+  --text:#f2ead8;--muted:#9a927f;--accent:#ffb84a;--accent2:#78a6ff;
+  --danger:#ff6b4a;--green:#8ee6a8;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none}
+html,body{margin:0;width:100%;height:100%;overflow:hidden;background:var(--bg);color:var(--text);font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono",monospace}
+button,input{font:inherit}
+.app{height:100dvh;display:flex;flex-direction:column;padding:env(safe-area-inset-top) 12px env(safe-area-inset-bottom);gap:10px;background:
+radial-gradient(circle at 30% 15%,rgba(255,184,74,.08),transparent 35%),
+linear-gradient(180deg,#13130f,#090909)}
+.header{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;padding-top:10px}
+.lcd{background:#c9c19d;color:#17160f;border:2px solid #3b392c;border-radius:14px;padding:10px 12px;box-shadow:inset 0 2px 8px rgba(0,0,0,.35);line-height:1.3}
+.title{font-weight:900;letter-spacing:.08em}
+.status{font-size:12px;opacity:.85}
+.transport{display:flex;gap:8px}
+.btn{border:1px solid var(--line);background:var(--panel2);color:var(--text);border-radius:14px;padding:12px 14px;min-width:54px}
+.btn.on{background:var(--accent);color:#17120a;border-color:#ffc96e}
+.toprow{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+.select{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:9px}
+.label{font-size:10px;color:var(--muted);letter-spacing:.08em;margin-bottom:4px}
+select{width:100%;background:transparent;color:var(--text);border:0;outline:0}
+.xywrap{position:relative;flex:1;min-height:240px;background:linear-gradient(135deg,#151512,#202017);border:1px solid var(--line);border-radius:26px;overflow:hidden;box-shadow:0 16px 45px rgba(0,0,0,.35)}
+canvas{width:100%;height:100%;display:block;touch-action:none}
+.hint{position:absolute;left:16px;bottom:14px;color:rgba(242,234,216,.55);font-size:11px;pointer-events:none}
+.chord{position:absolute;right:16px;top:14px;color:var(--accent);font-size:14px;font-weight:900;pointer-events:none}
+.macros{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.knob{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:8px}
+.knob b{display:block;font-size:10px;color:var(--muted);letter-spacing:.06em;margin-bottom:5px}
+.knob input{width:100%;accent-color:#ffb84a}
+.val{font-size:11px;color:var(--accent)}
+.steps{display:grid;grid-template-columns:repeat(8,1fr);gap:6px}
+.step{height:42px;border-radius:12px;border:1px solid var(--line);background:#171713;color:var(--muted);font-size:11px}
+.step.active{background:#2b2213;color:var(--accent);border-color:var(--accent)}
+.step.play{box-shadow:0 0 0 2px var(--accent2) inset;color:#fff}
+.footer{font-size:10px;text-align:center;color:var(--muted);padding-bottom:4px}
+@media(max-height:720px){.macros{grid-template-columns:repeat(8,1fr)}.knob{padding:6px}.steps{display:none}}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="header">
+    <div class="lcd">
+      <div class="title">AURORA FLOW V1</div>
+      <div class="status" id="status">KEY: C MINOR · STATE: FLOATING · ENGINE: HYBRID EP</div>
+    </div>
+    <div class="transport">
+      <button class="btn" id="playBtn">PLAY</button>
+      <button class="btn" id="holdBtn">HOLD</button>
+    </div>
+  </div>
+
+  <div class="toprow">
+    <div class="select"><div class="label">KEY</div><select id="keySel"></select></div>
+    <div class="select"><div class="label">MODE</div><select id="modeSel">
+      <option value="minor">Minor</option><option value="major">Major</option>
+      <option value="dorian">Dorian</option><option value="lydian">Lydian</option>
+    </select></div>
+    <div class="select"><div class="label">TEMPO</div><select id="tempoSel">
+      <option>60</option><option>72</option><option selected>84</option><option>96</option><option>108</option><option>120</option>
+    </select></div>
+  </div>
+
+  <div class="xywrap">
+    <canvas id="pad"></canvas>
+    <div class="chord" id="chordName">touch to breathe</div>
+    <div class="hint">X = évolution · Y = tension · multitouch = étirement / inversion</div>
+  </div>
+
+  <div class="steps" id="steps"></div>
+
+  <div class="macros" id="macros"></div>
+  <div class="footer">Voice Leading · Inversions · Common Tone Memory · Organic EP Synth</div>
+</div>
+
+<script>
+(() => {
+'use strict';
+
+const $ = id => document.getElementById(id);
+const AudioContext = window.AudioContext || window.webkitAudioContext;
+
+let ctx, master, delay, feedback, delayMix, comp;
+let playing=false, holding=false, seqTimer=null, seqIndex=0;
+let padX=.5, padY=.35, targetX=.5, targetY=.35;
+let activeTouches=0, stretch=0, rotation=0;
+let lastChord=[], currentVoices=[], voicePool=[];
+let trails=[];
+const MAX_VOICES=8;
+
+const notes=['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+const modes={
+  major:[0,2,4,5,7,9,11],
+  minor:[0,2,3,5,7,8,10],
+  dorian:[0,2,3,5,7,9,10],
+  lydian:[0,2,4,6,7,9,11]
+};
+const moods=[
+  {name:'WARM',deg:0,ext:[7,11],color:'maj9'},
+  {name:'OPEN',deg:3,ext:[7,9],color:'add9'},
+  {name:'FLOAT',deg:5,ext:[10,14],color:'11'},
+  {name:'DARK',deg:1,ext:[7,10,14],color:'m11'},
+  {name:'SUSP',deg:4,ext:[5,10],color:'sus'},
+  {name:'RESOLVE',deg:0,ext:[7,9],color:'6/9'},
+  {name:'FRAGILE',deg:2,ext:[7,11,14],color:'maj11'},
+  {name:'BLOOM',deg:6,ext:[10,14,17],color:'13'}
+];
+
+const params={
+  flow:.72, gravity:.55, air:.45, bloom:.52,
+  density:.62, motion:.48, fragility:.35, space:.44
+};
+
+const macroDefs=[
+  ['flow','FLOW'],['gravity','GRAVITY'],['air','AIR'],['bloom','BLOOM'],
+  ['density','DENSITY'],['motion','MOTION'],['fragility','FRAGILITY'],['space','SPACE']
+];
+
+const keySel=$('keySel'), modeSel=$('modeSel'), tempoSel=$('tempoSel'), status=$('status'), chordName=$('chordName');
+notes.forEach((n,i)=>{const o=document.createElement('option');o.value=i;o.textContent=n;if(n==='C')o.selected=true;keySel.appendChild(o);});
+
+const macros=$('macros');
+macroDefs.forEach(([k,label])=>{
+  const d=document.createElement('div');d.className='knob';
+  d.innerHTML=`<b>${label}</b><input type="range" min="0" max="1" step="0.01" value="${params[k]}"><span class="val">${Math.round(params[k]*100)}</span>`;
+  const input=d.querySelector('input'), val=d.querySelector('.val');
+  input.oninput=()=>{params[k]=+input.value;val.textContent=Math.round(params[k]*100);updateFX();};
+  macros.appendChild(d);
+});
+
+const steps=$('steps');
+for(let i=0;i<8;i++){
+  const b=document.createElement('button');b.className='step';b.textContent=moods[i].name;
+  b.onclick=()=>{seqIndex=i;triggerMood(i,true);};
+  steps.appendChild(b);
+}
+const stepEls=[...steps.children];
+
+async function initAudio(){
+  if(ctx) return;
+  ctx=new AudioContext();
+  master=ctx.createGain(); master.gain.value=.75;
+  comp=ctx.createDynamicsCompressor();
+  comp.threshold.value=-20; comp.knee.value=18; comp.ratio.value=3; comp.attack.value=.01; comp.release.value=.18;
+  delay=ctx.createDelay(.8); feedback=ctx.createGain(); delayMix=ctx.createGain();
+  delay.delayTime.value=.22; feedback.gain.value=.28; delayMix.gain.value=.18;
+  delay.connect(feedback); feedback.connect(delay); delay.connect(delayMix);
+  master.connect(comp); comp.connect(ctx.destination); master.connect(delay); delayMix.connect(comp);
+  for(let i=0;i<MAX_VOICES;i++) voicePool.push(makeVoice());
+}
+
+function makeVoice(){
+  const out=ctx.createGain(); out.gain.value=1; out.connect(master);
+  const carrier=ctx.createOscillator(), mod=ctx.createOscillator(), modGain=ctx.createGain();
+  const bright=ctx.createBiquadFilter(), pan=ctx.createStereoPanner(), amp=ctx.createGain();
+  carrier.type='sine'; mod.type='sine';
+  modGain.gain.value=0;
+  bright.type='lowpass'; bright.frequency.value=2400; bright.Q.value=.25;
+  amp.gain.value=0;
+  mod.connect(modGain); modGain.connect(carrier.frequency);
+  carrier.connect(bright); bright.connect(pan); pan.connect(amp); amp.connect(out);
+  carrier.start(); mod.start();
+  return {carrier,mod,modGain,bright,pan,amp,out,note:null,busy:false,last:0};
+}
+
+function midiToFreq(m){return 440*Math.pow(2,(m-69)/12);}
+function clamp(v,a,b){return Math.max(a,Math.min(b,v));}
+
+function buildChord(x,y){
+  const key=+keySel.value, mode=modes[modeSel.value];
+  const moodIndex=clamp(Math.floor(x*8),0,7);
+  const mood=moods[moodIndex];
+  let deg=(mood.deg + Math.round(params.motion*2*x))%7;
+  let root=48 + key + mode[deg];
+
+  const tension=Math.round(y*4);
+  let intervals=[0, mode[(deg+2)%7]-mode[deg], mode[(deg+4)%7]-mode[deg]];
+  intervals=intervals.map(v=>v<0?v+12:v);
+
+  if(y>.18) intervals.push(7);
+  if(y>.35) intervals.push(10);
+  if(y>.52) intervals.push(14);
+  if(y>.72) intervals.push(17);
+  if(params.density<.35) intervals=intervals.slice(0,3);
+  if(params.density>.7 && !intervals.includes(21)) intervals.push(21);
+
+  intervals=[...new Set(intervals)];
+  let raw=intervals.map(i=>root+i);
+
+  const inv=Math.round((rotation+stretch+params.gravity*x)*3)-1;
+  for(let i=0;i<Math.abs(inv);i++){
+    if(inv>0) raw.push(raw.shift()+12);
+    else raw.unshift(raw.pop()-12);
+  }
+
+  raw=raw.map((n,i)=>n + (i>3 && y>.6 ? 12 : 0));
+  raw=raw.filter(n=>n>=40&&n<=84).slice(0,MAX_VOICES);
+
+  const name=notes[(root%12+12)%12]+' '+mood.color;
+  return {notes:raw,name,mood:mood.name,index:moodIndex};
+}
+
+function voiceLead(target){
+  if(!lastChord.length) return target.slice();
+
+  const used = new Set();
+  const result = [];
+
+  target.forEach(t => {
+    let best = t;
+    let bestIdx = -1;
+    let bestCost = 999;
+
+    lastChord.forEach((l, idx) => {
+      if (used.has(idx)) return;
+
+      for (let shift = -24; shift <= 24; shift += 12) {
+        const cand = t + shift;
+        const cost = Math.abs(cand - l) + (cand < 38 || cand > 86 ? 50 : 0);
+
+        if (cost < bestCost) {
+          bestCost = cost;
+          best = cand;
+          bestIdx = idx;
+        }
+      }
+    });
+
+    if (bestIdx >= 0) used.add(bestIdx);
+    result.push(clamp(best, 38, 86));
+  });
+
+  return result;
+}
+
+function playChord(chord, force=false){
+  const led=voiceLead(chord.notes);
+  const now=ctx.currentTime;
+  const glide=.04 + params.flow*.38;
+  const attack=.015 + params.bloom*.08;
+  const release=.18 + params.flow*.7;
+  const modDepth=8 + params.air*36 + padY*18;
+  const cutoff=900 + params.air*4200 + padY*1800;
+
+  led.forEach((m,i)=>{
+    const v=voicePool[i];
+    const f=midiToFreq(m);
+    if(v.note!==null && Math.abs(v.note-m)<=2){
+      trails.push({from:v.note,to:m,t:performance.now(),life:420});
+    }
+    v.note=m; v.busy=true; v.last=now;
+    v.carrier.frequency.cancelScheduledValues(now);
+    v.mod.frequency.cancelScheduledValues(now);
+    v.carrier.frequency.setTargetAtTime(f,now,glide);
+    v.mod.frequency.setTargetAtTime(f*(2+.01*i),now,glide);
+    v.modGain.gain.setTargetAtTime(modDepth*(1+i*.05),now,.05);
+    v.bright.frequency.setTargetAtTime(cutoff,now,.08);
+    v.pan.pan.setTargetAtTime((i-(led.length-1)/2)*.18,now,.08);
+
+    const gain=(.13 + params.density*.035) / Math.sqrt(led.length);
+    v.amp.gain.cancelScheduledValues(now);
+    v.amp.gain.setTargetAtTime(gain,now,attack);
+  });
+
+  for(let i=led.length;i<voicePool.length;i++){
+    const v=voicePool[i];
+    v.amp.gain.setTargetAtTime(0,now,release);
+    v.note=null;
+  }
+
+  lastChord=led;
+  currentVoices=led;
+  chordName.textContent=chord.name;
+  status.textContent=`KEY: ${notes[+keySel.value]} ${modeSel.value.toUpperCase()} · STATE: ${chord.mood} · VOICES: ${led.length}`;
+}
+
+function updateFX(){
+  if(!ctx) return;
+  const now=ctx.currentTime;
+  delayMix.gain.setTargetAtTime(params.space*.42,now,.08);
+  feedback.gain.setTargetAtTime(.12+params.space*.42,now,.08);
+  delay.delayTime.setTargetAtTime(.12+params.bloom*.34,now,.12);
+}
+
+function triggerMood(i,force=false){
+  targetX=(i+.5)/8;
+  targetY=.25 + (i%4)*.16 + params.fragility*.12;
+  const c=buildChord(targetX,targetY);
+  playChord(c,force);
+  stepEls.forEach((s,idx)=>{s.classList.toggle('active',idx===i);s.classList.toggle('play',idx===i);});
+  setTimeout(()=>stepEls[i]?.classList.remove('play'),160);
+}
+
+function startSeq(){
+  if(seqTimer) clearInterval(seqTimer);
+  const ms=(60000/+tempoSel.value)*2;
+  seqTimer=setInterval(()=>{
+    if(!playing || holding) return;
+    triggerMood(seqIndex%8);
+    seqIndex++;
+  },ms);
+}
+
+$('playBtn').onclick=async()=>{
+  await initAudio(); if(ctx.state!=='running') await ctx.resume();
+  playing=!playing;
+  $('playBtn').classList.toggle('on',playing);
+  if(playing){triggerMood(seqIndex,true);startSeq();}
+};
+$('holdBtn').onclick=()=>{
+  holding=!holding;
+  $('holdBtn').classList.toggle('on',holding);
+};
+
+[keySel,modeSel].forEach(el=>el.onchange=()=>{if(ctx)playChord(buildChord(padX,padY),true);});
+tempoSel.onchange=startSeq;
+
+const canvas=$('pad'), g=canvas.getContext('2d');
+function resize(){canvas.width=canvas.clientWidth*devicePixelRatio;canvas.height=canvas.clientHeight*devicePixelRatio;}
+addEventListener('resize',resize); resize();
+
+function pointer(e){
+  const r=canvas.getBoundingClientRect();
+  const t=e.touches?e.touches[0]:e;
+  targetX=clamp((t.clientX-r.left)/r.width,0,1);
+  targetY=clamp(1-(t.clientY-r.top)/r.height,0,1);
+  activeTouches=e.touches?e.touches.length:1;
+  if(e.touches && e.touches.length>=2){
+    const a=e.touches[0],b=e.touches[1];
+    const dx=b.clientX-a.clientX,dy=b.clientY-a.clientY;
+    stretch=clamp(Math.hypot(dx,dy)/260,0,1);
+    rotation=Math.atan2(dy,dx)/Math.PI;
+  }
+  if(ctx && playing) playChord(buildChord(targetX,targetY));
+}
+canvas.addEventListener('touchstart',async e=>{e.preventDefault();await initAudio();if(ctx.state!=='running')await ctx.resume();pointer(e);},{passive:false});
+canvas.addEventListener('touchmove',e=>{e.preventDefault();pointer(e);},{passive:false});
+canvas.addEventListener('touchend',e=>{activeTouches=e.touches.length;if(!holding && !playing) voicePool.forEach(v=>v.amp.gain.setTargetAtTime(0,ctx.currentTime,.4));},{passive:false});
+canvas.addEventListener('mousedown',async e=>{await initAudio();if(ctx.state!=='running')await ctx.resume();playing=true;$('playBtn').classList.add('on');pointer(e);});
+canvas.addEventListener('mousemove',e=>{if(e.buttons)pointer(e);});
+
+function draw(){
+  padX+=(targetX-padX)*.05; padY+=(targetY-padY)*.05;
+  const w=canvas.width,h=canvas.height;
+  g.clearRect(0,0,w,h);
+  g.save(); g.scale(devicePixelRatio,devicePixelRatio);
+  const cw=canvas.clientWidth,ch=canvas.clientHeight;
+
+  g.globalAlpha=.5;
+  for(let i=1;i<8;i++){g.strokeStyle='rgba(242,234,216,.07)';g.beginPath();g.moveTo(i*cw/8,0);g.lineTo(i*cw/8,ch);g.stroke();}
+  for(let i=1;i<5;i++){g.beginPath();g.moveTo(0,i*ch/5);g.lineTo(cw,i*ch/5);g.stroke();}
+
+  const x=padX*cw,y=(1-padY)*ch;
+  const grd=g.createRadialGradient(x,y,4,x,y,180);
+  grd.addColorStop(0,'rgba(255,184,74,.45)');
+  grd.addColorStop(1,'rgba(120,166,255,0)');
+  g.fillStyle=grd;g.fillRect(0,0,cw,ch);
+
+  g.globalAlpha=1;
+  g.fillStyle='#ffb84a';
+  g.beginPath();g.arc(x,y,12+activeTouches*4,0,Math.PI*2);g.fill();
+  g.strokeStyle='rgba(255,255,255,.65)';g.lineWidth=2;g.stroke();
+
+  const now=performance.now();
+  trails=trails.filter(t=>now-t.t<t.life);
+  trails.forEach(t=>{
+    const a=1-(now-t.t)/t.life;
+    g.globalAlpha=a*.7;
+    g.strokeStyle='#78a6ff';
+    g.beginPath();
+    const yy=ch-(t.to-38)/(86-38)*ch;
+    g.moveTo(20,yy);
+    g.bezierCurveTo(cw*.3,yy-30,cw*.6,yy+30,cw-20,yy);
+    g.stroke();
+  });
+  g.globalAlpha=.85;
+  g.fillStyle='rgba(242,234,216,.75)';
+  currentVoices.forEach((m,i)=>{
+    const vx=20+i*(cw-40)/Math.max(1,currentVoices.length-1);
+    const vy=ch-(m-38)/(86-38)*ch;
+    g.beginPath();g.arc(vx,vy,4,0,Math.PI*2);g.fill();
+  });
+  g.restore();
+  requestAnimationFrame(draw);
+}
+draw();
+
+})();
+</script>
+</body>
+</html>
