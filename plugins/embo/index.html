@@ -99,9 +99,9 @@ canvas.knob{width:38px;height:38px;touch-action:none;cursor:ns-resize}
     <button class="tbtn rec" id="recBtn">REC</button>
   </div>
   <div id="perfrow">
-    <button class="pfbtn on" id="commonBtn">COMMON</button>
+    <button class="pfbtn" id="commonBtn">COMMON</button>
     <button class="pfbtn" id="lockBtn">LOCK ♭</button>
-    <button class="pfbtn" id="strumBtn">STRUM</button>
+    <button class="pfbtn on" id="strumBtn">STRUM</button>
     <button class="pfbtn morph0" id="morphBtn">SET A</button>
   </div>
   <div id="steps"></div>
@@ -115,10 +115,10 @@ const $=id=>document.getElementById(id);
    EP MODE PROFILES
 ════════════════════════════════════════════ */
 const EP={
-  rhodes:{l:'RHODES',rm:1.0,mm:1.0,am:1.0,lp:2400,lpq:.35,sd:.85,cw:.28,cd:.0018,clf:.85},
-  felt:  {l:'FELT',  rm:.50, mm:.45, am:.65,lp:700, lpq:.14,sd:.40,cw:.13,cd:.0010,clf:.55},
-  glass: {l:'GLASS', rm:2.2, mm:1.8, am:1.5,lp:5500,lpq:1.1,sd:.28,cw:.42,cd:.0030,clf:1.2},
-  tape:  {l:'TAPE',  rm:.75, mm:1.3, am:1.8,lp:1500,lpq:.55,sd:2.2,cw:.22,cd:.0038,clf:.65},
+  rhodes:{l:'RHODES',rm:1.0,mm:1.0,am:1.0,lp:2400,lpq:.35,sd:.85,cw:.28,cd:.0018,clf:.85, gain:1.00},
+  felt:  {l:'FELT',  rm:.50, mm:.45, am:.65,lp:700, lpq:.14,sd:.40,cw:.13,cd:.0010,clf:.55, gain:1.55},
+  glass: {l:'GLASS', rm:2.2, mm:1.8, am:1.5,lp:5500,lpq:1.1,sd:.28,cw:.42,cd:.0030,clf:1.2, gain:0.82},
+  tape:  {l:'TAPE',  rm:.75, mm:1.3, am:1.8,lp:1500,lpq:.55,sd:2.2,cw:.22,cd:.0038,clf:.65, gain:0.52},
 };
 const EP_KEYS=['rhodes','felt','glass','tape'];
 
@@ -219,13 +219,16 @@ let comp,rvbConv,rvbWet,rvbDry,delayN,fbG,dlWet;
 let slots=[],noiseBuf=null;
 let curEP='rhodes';
 
-const P={timbre:.62,decay:1.65,flow:.01,spread:.50,gravity:.55,bloom:.52,air:.42,tempo:.26};
+const P={timbre:.62,decay:1.65,flow:.00,spread:.50,gravity:.55,bloom:.52,air:.42,tempo:.26,tremolo:.35};
+let tremoloGain=null,tremoloLFO=null,tremoloDepthG=null;
+let flutterLFO=null,flutterDepthG=null;
+let epGainNode=null;
 let prevV=[48,55,60,63];
 let padX=.5,padY=.38,tX=.5,tY=.38;
 let playing=false,holding=false,drift=true;
 let seqTimer=null,seqIdx=0;
-let commonTones=true,lockBass=false,lockedBass=null;
-let strumMode=false;
+let commonTones=false,lockBass=false,lockedBass=null;
+let strumMode=true;
 let morphState=0,morphA=null,morphB=null,morphPhase=0;
 let loopRec=false,loopPlay=false,loopEvts=[],loopT0=0,loopTmr=null,loopLen=0;
 let breath=0,lastTS=0,trails=[];
@@ -250,7 +253,11 @@ function initAC(){
   for(let i=0;i<256;i++){const x=i*2/256-1;sc[i]=Math.tanh(x*4)/Math.tanh(4);}
   satWS.curve=sc;
   satMakeup=AC.createGain();satMakeup.gain.value=1.03;
-  masterBus.connect(satDrive);satDrive.connect(satWS);satWS.connect(satMakeup);
+  // ── Compensation de niveau par mode EP ──
+  // Placé avant satDrive : compense à la fois le niveau ET l'intensité de saturation
+  epGainNode=AC.createGain();epGainNode.gain.value=EP[curEP].gain;
+  masterBus.connect(epGainNode);
+  epGainNode.connect(satDrive);satDrive.connect(satWS);satWS.connect(satMakeup);
 
   // ── Stereo chorus (2 modulated delays, panned L/R) ──
   chorusMixG=AC.createGain();chorusMixG.gain.value=EP[curEP].cw;
@@ -275,7 +282,7 @@ function initAC(){
   delayN=AC.createDelay(.9);delayN.delayTime.value=.24;
   fbG=AC.createGain();fbG.gain.value=.24;
   dlWet=AC.createGain();dlWet.gain.value=P.bloom*.16;
-  masterBus.connect(delayN);delayN.connect(fbG);fbG.connect(delayN);
+  epGainNode.connect(delayN);delayN.connect(fbG);fbG.connect(delayN);
   delayN.connect(dlWet);dlWet.connect(comp);
 
   // ── Reverb ──
@@ -283,7 +290,24 @@ function initAC(){
   rvbConv.buffer=buildIR(2.8,2.4);
   rvbWet=AC.createGain();rvbWet.gain.value=P.air*.32+P.bloom*.18;
   rvbDry=AC.createGain();rvbDry.gain.value=1;
-  comp.connect(rvbDry);comp.connect(rvbConv);rvbConv.connect(rvbWet);
+  // ── Tremolo (post-comp, pré-reverb) ──
+  // LFO sinusoïdal → module le gain final → vibrato d'amplitude caractéristique EP
+  tremoloGain=AC.createGain();tremoloGain.gain.value=1.0;
+  tremoloLFO=AC.createOscillator();tremoloLFO.type='sine';
+  tremoloLFO.frequency.value=2+P.tremolo*5;   // 2–7 Hz
+  tremoloDepthG=AC.createGain();tremoloDepthG.gain.value=P.tremolo*.18;
+  tremoloLFO.connect(tremoloDepthG);tremoloDepthG.connect(tremoloGain.gain);
+  tremoloLFO.start();
+
+  // ── Flutter / wow (LFO très lent → detune carriers) ──
+  // Simulé transport de bande : toutes les voix fluctuent ensemble (±3.5 cents à 0.22 Hz)
+  flutterLFO=AC.createOscillator();flutterLFO.type='sine';flutterLFO.frequency.value=.22;
+  flutterDepthG=AC.createGain();flutterDepthG.gain.value=3.5;
+  flutterLFO.connect(flutterDepthG);flutterLFO.start();
+
+  comp.connect(tremoloGain);
+  tremoloGain.connect(rvbDry);tremoloGain.connect(rvbConv);
+  rvbConv.connect(rvbWet);
   rvbDry.connect(AC.destination);rvbWet.connect(AC.destination);
 
   // ── Persistent voice slot pool ──
@@ -312,9 +336,12 @@ function updateFX(){
   fbG.gain.setTargetAtTime(.12+P.bloom*.30,n,.08);
   dlWet.gain.setTargetAtTime(P.bloom*.20,n,.08);
   delayN.delayTime.setTargetAtTime(.12+P.flow*.28,n,.12);
+  if(epGainNode)epGainNode.gain.setTargetAtTime(EP[curEP].gain,n,.12);
   satDrive.gain.setTargetAtTime(EP[curEP].sd,n,.12);
   chorusMixG.gain.setTargetAtTime(EP[curEP].cw,n,.12);
   cLGs.forEach((lg,i)=>lg.gain.setTargetAtTime(EP[curEP].cd*(1+i*.15),n,.12));
+  if(tremoloLFO)tremoloLFO.frequency.setTargetAtTime(2+P.tremolo*5,n,.15);
+  if(tremoloDepthG)tremoloDepthG.gain.setTargetAtTime(P.tremolo*.18,n,.15);
 }
 
 /* ════════════════════════════════════════════
@@ -332,11 +359,15 @@ function initSlots(){
     mod.connect(me);me.connect(car.frequency);
     car.connect(lp);lp.connect(pan);pan.connect(amp);amp.connect(masterBus);
     mod.start();car.start();
+    // Détunage statique aléatoire ±5 cents par slot (épaississement naturel, pas d'artefact delay)
+    car.detune.value=(Math.random()-.5)*10;
+    // Flutter : LFO lent connecté au detune → toutes les voix respirent ensemble
+    if(flutterDepthG)flutterDepthG.connect(car.detune);
     slots.push({mod,car,me,lp,pan,amp,midi:null,active:false,frozen:false,idx:i});
   }
 }
 
-function triggerSlot(slot,midi,vel,glide,delayT){
+function triggerSlot(slot,midi,vel,glide,delayT,isStrum){
   if(slot.frozen)return;
   const ac=AC,t=ac.currentTime+(delayT||0),f=mhz(midi);
   const em=EP[curEP];
@@ -374,21 +405,21 @@ function triggerSlot(slot,midi,vel,glide,delayT){
   // Stereo pan
   slot.pan.pan.setTargetAtTime((slot.idx-1.5)*.22*P.spread,t,.08);
 
-  // Air harmonic (subtle octave, adds shimmer)
-  if(P.air>.15&&!glide){
-    const ah=ac.createOscillator();ah.type='sine';ah.frequency.value=f*2.01;
-    const ag=ac.createGain();
-    ag.gain.setValueAtTime(.001,t);ag.gain.linearRampToValueAtTime(.016*P.air*vel,t+.02);
-    ag.gain.exponentialRampToValueAtTime(.0001,t+P.decay*em.am*.8);
-    ah.connect(ag);ag.connect(masterBus);ah.start(t);ah.stop(t+P.decay*em.am+.5);
-  }
-
-  // Mechanical key noise
-  if(!glide&&noiseBuf&&P.air>.04){
-    const src=ac.createBufferSource();src.buffer=noiseBuf;
-    const nf=ac.createBiquadFilter();nf.type='bandpass';nf.frequency.value=f*1.5;nf.Q.value=.8;
-    const ng=ac.createGain();ng.gain.setValueAtTime(.08*P.air*vel,t);ng.gain.exponentialRampToValueAtTime(.001,t+.024);
-    src.connect(nf);nf.connect(ng);ng.connect(masterBus);src.start(t);
+  // Air harmonic + bruit mécanique : désactivés en strum (évite l'accumulation d'oscil.)
+  if(!isStrum){
+    if(P.air>.15&&!glide){
+      const ah=ac.createOscillator();ah.type='sine';ah.frequency.value=f*2.01;
+      const ag=ac.createGain();
+      ag.gain.setValueAtTime(.001,t);ag.gain.linearRampToValueAtTime(.016*P.air*vel,t+.02);
+      ag.gain.exponentialRampToValueAtTime(.0001,t+P.decay*em.am*.8);
+      ah.connect(ag);ag.connect(masterBus);ah.start(t);ah.stop(t+P.decay*em.am+.5);
+    }
+    if(!glide&&noiseBuf&&P.air>.04){
+      const src=ac.createBufferSource();src.buffer=noiseBuf;
+      const nf=ac.createBiquadFilter();nf.type='bandpass';nf.frequency.value=f*1.5;nf.Q.value=.8;
+      const ng=ac.createGain();ng.gain.setValueAtTime(.08*P.air*vel,t);ng.gain.exponentialRampToValueAtTime(.001,t+.024);
+      src.connect(nf);nf.connect(ng);ng.connect(masterBus);src.start(t);
+    }
   }
 
   slot.midi=midi;slot.active=true;
@@ -461,12 +492,13 @@ function playVoicing(voicing,vel){
 
 function strumVoicing(voicing,vel,dir){
   const ord=dir>0?voicing:[...voicing].reverse();
+  // Vélocité réduite pour éviter la saturation en rafale
+  const sv=vel*.55;
   ord.forEach((midi,i)=>{
-    setTimeout(()=>{
-      if(!AC)return;
-      const si=voicing.indexOf(midi);
-      if(si>=0&&si<slots.length)triggerSlot(slots[si],midi,vel*(1-i*.05),false,0);
-    },i*58);
+    const si=voicing.indexOf(midi);
+    if(si<0||si>=slots.length||slots[si].frozen)return;
+    // Scheduling WebAudio (précis, pas de jitter setTimeout)
+    triggerSlot(slots[si],midi,sv*(1-i*.06),false,i*.080,true);
   });
 }
 
@@ -818,7 +850,7 @@ function buildUI(){
   new Knob('decay','Decay',.35,4,P.decay,v=>v.toFixed(1)+'s');
   new Knob('flow','Flow',0,1,P.flow,v=>Math.round(v*100)+'%');
   new Knob('spread','Spread',0,1,P.spread,v=>v<.33?'tight':v<.66?'med':'wide');
-  new Knob('gravity','Gravity',0,1,P.gravity,v=>Math.round(v*100)+'%');
+  new Knob('tremolo','Tremolo',0,1,P.tremolo,v=>v<.04?'off':Math.round(2+v*5)+'Hz');
   new Knob('bloom','Bloom',0,1,P.bloom,v=>Math.round(v*100)+'%');
   new Knob('air','Air',0,1,P.air,v=>Math.round(v*100)+'%');
   new Knob('tempo','Tempo',0,1,P.tempo,v=>Math.round(60+v*100)+' bpm');
