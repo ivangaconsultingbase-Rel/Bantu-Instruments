@@ -252,6 +252,13 @@
     .master-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
     .mini-note{color:var(--muted);font-family:var(--mono);font-weight:500;font-size:10px;line-height:1.55;letter-spacing:.04em}
 
+    .track.frozen{border-color:#45a2ff;box-shadow:0 0 0 2px rgba(69,162,255,.18)}
+    .track.frozen .track-header{background:#0d1520}
+    .freeze-btn{min-height:32px;padding:0 10px;border-radius:6px;background:#151920;color:var(--muted);font-family:var(--mono);font-weight:700;font-size:10px;line-height:1;cursor:pointer;-webkit-appearance:none!important;appearance:none;border:1px solid var(--border2);box-shadow:0 1px 0 rgba(255,255,255,.04) inset;transition:.12s ease;white-space:nowrap;}
+    .freeze-btn:hover{transform:translateY(-1px);border-color:var(--blue);color:var(--blue)}
+    .freeze-btn.frozen{color:#e8f4ff;border-color:#2a6bcc;background:#0d1e38;box-shadow:0 0 8px rgba(69,162,255,.28)}
+    .freeze-led{display:inline-block;width:7px;height:7px;border-radius:50%;background:#4a5060;border:1px solid #666;vertical-align:middle;margin-right:4px;transition:.2s ease}
+    .freeze-btn.frozen .freeze-led{background:#45a2ff;border-color:#2060b0;box-shadow:0 0 6px rgba(69,162,255,.6)}
     .footer-hint{padding:12px 18px 16px;border-top:2px solid rgba(79,73,63,.18);text-align:center;color:var(--muted);font-family:var(--mono);font-weight:500;font-size:10px;line-height:1.5;letter-spacing:.08em;text-transform:uppercase}
 
     @media(max-width:1180px){#page-seq,#page-step,#page-synth{grid-template-columns:1fr}.fx-grid,.mix-grid{grid-template-columns:1fr}}
@@ -465,7 +472,7 @@
                 <div class="fx-knob-wrap"><label class="fx-knob-label">WOW</label><input type="range" id="tapeWow" min="0" max="1" step="0.01" value="0.06"><div class="fx-readout" id="tapeWowOut">6%</div></div>
                 <div class="fx-knob-wrap"><label class="fx-knob-label">FLUTTER</label><input type="range" id="tapeFlutter" min="0" max="1" step="0.01" value="0.04"><div class="fx-readout" id="tapeFlutterOut">4%</div></div>
                 <div class="fx-knob-wrap"><label class="fx-knob-label">TONE</label><input type="range" id="tapeTone" min="0" max="1" step="0.01" value="0.38"><div class="fx-readout" id="tapeToneOut">—</div></div>
-                <div class="fx-knob-wrap"><label class="fx-knob-label">VINYL</label><input type="range" id="tapeVinyl" min="0" max="1" step="0.01" value="0.02"><div class="fx-readout" id="tapeVinylOut">10%</div></div>
+                <div class="fx-knob-wrap"><label class="fx-knob-label">VINYL</label><input type="range" id="tapeVinyl" min="0" max="1" step="0.01" value="0.10"><div class="fx-readout" id="tapeVinylOut">10%</div></div>
               </div>
               <div class="vinyl-indicator-wrap"><div class="vinyl-dot" id="vinylDot"></div><span class="vinyl-label" id="vinylLabel">VINYL · IDLE</span></div>
             </div>
@@ -478,8 +485,8 @@
             </div>
             <div class="fx-unit-body">
               <div class="fx-row">
-                <div class="fx-knob-wrap wide"><label class="fx-knob-label">BITS</label><input type="range" id="bitDepth" min="1" max="16" step="0.25" value="13.5"><div class="fx-readout" id="bitDepthOut">12.0 bit</div></div>
-                <div class="fx-knob-wrap wide"><label class="fx-knob-label">SR REDUCE</label><input type="range" id="srAmount" min="1" max="64" step="0.63" value="1"><div class="fx-readout" id="srAmountOut">FULL</div></div>
+                <div class="fx-knob-wrap wide"><label class="fx-knob-label">BITS</label><input type="range" id="bitDepth" min="1" max="16" step="0.25" value="13.5"><div class="fx-readout" id="bitDepthOut">13.5 bit</div></div>
+                <div class="fx-knob-wrap wide"><label class="fx-knob-label">SR REDUCE</label><input type="range" id="srAmount" min="1" max="64" step="1" value="1"><div class="fx-readout" id="srAmountOut">FULL</div></div>
                 <div class="fx-knob-wrap"><label class="fx-knob-label">MIX</label><input type="range" id="bitMix" min="0" max="1" step="0.01" value="0.22"><div class="fx-readout" id="bitMixOut">22%</div></div>
               </div>
               <div class="scope-wrap"><canvas id="bitScope" width="500" height="90"></canvas></div>
@@ -605,7 +612,7 @@ function makeMeta(){return Array.from({length:STEP_COUNT},()=>({prob:1,micro:0,v
 function makePatternData(){return TRACKS.map(d=>({id:d.id,steps:[...d.defaultPattern],accents:[...d.defaultAccents],stepMeta:makeMeta()}));}
 const patterns=Array.from({length:PATTERN_COUNT},makePatternData);
 let currentPattern=0;
-const trackState=TRACKS.map(d=>({id:d.id,params:{...d.params},mute:false,solo:false,volume:0.82}));
+const trackState=TRACKS.map(d=>({id:d.id,params:{...d.params},mute:false,solo:false,volume:0.82,frozen:false,frozenBuffer:null}));
 const fxState={
   tape:{drive:0.32,sat:0.25,wow:0.06,flutter:0.04,tone:0.38,vinyl:0.10,enabled:true},
   bit:{bits:13.5,sr:1,mix:0.22,enabled:true},
@@ -616,8 +623,8 @@ let selectedTrack='bd',selectedStep=0,trackClipboard=null;
 let audioCtx=null,audioReady=false,_audioInit=null,mixBus=null,masterGain=null,finalGain=null;
 const fx={};
 let playing=false,current=-1,nextTick=0,seqTimer=null,bpm=88,swing=0.12;
-let srFactor=1,srHoldL=0,srCount=0;
-let vinylCrackleLevel=0,vinylRaf=null,scopeRaf=null,meterRaf=null;
+let srFactor=1;
+let scopeRaf=null,meterRaf=null;
 
 function getPT(id){return patterns[currentPattern].find(t=>t.id===id);}
 function getMeta(id,i){return getPT(id).stepMeta[i];}
@@ -685,6 +692,7 @@ function triggerBD(ctx,out,p,t,vel){
   preG.connect(hardSh);hardSh.connect(bpf);bpf.connect(lp);lp.connect(softSh);softSh.connect(wetG);wetG.connect(vca);
   subOsc.connect(subG);subG.connect(vca);click.connect(cVca);cVca.connect(vca);vca.connect(vo);
   osc.start(t);osc.stop(t+ampDec+0.6);subOsc.start(t);subOsc.stop(t+ampDec+0.6);click.start(t);click.stop(t+0.03);
+  setTimeout(()=>{try{vca.disconnect();vo.disconnect();}catch(_){}},Math.ceil((ampDec+0.8)*1000));
 }
 function triggerSD(ctx,out,p,t,vel){
   const toneFreq=80+p.pitch*320,ampDec=0.04+p.decay*0.9;
@@ -703,6 +711,7 @@ function triggerSD(ctx,out,p,t,vel){
     const sH=ctx.createBiquadFilter();sH.type='highpass';sH.frequency.value=3000+snap*6000;
     const sV=ctx.createGain();sV.gain.setValueAtTime(0.00001,t-0.001);applyEnv(sV.gain,t,sd,0.2,vel*snap*0.65);
     sn.connect(sH);sH.connect(sV);sV.connect(vo);sn.start(t);sn.stop(t+sd+0.05);}
+  setTimeout(()=>{try{tVca.disconnect();nVca.disconnect();vo.disconnect();}catch(_){}},Math.ceil((ampDec+0.4)*1000));
 }
 const CR=[1.0,1.3131,1.4983,1.6755,2.0,2.3741];
 function triggerHH(ctx,out,p,t,vel){
@@ -716,6 +725,7 @@ function triggerHH(ctx,out,p,t,vel){
   const hs=ctx.createBiquadFilter();hs.type='highshelf';hs.frequency.value=7000;hs.gain.value=1.5;
   const vca=ctx.createGain();vca.gain.setValueAtTime(0.00001,t-0.001);applyEnv(vca.gain,t,ampDec,p.curve,vel*0.58);
   mix.connect(bpf);bpf.connect(hpf);hpf.connect(hs);hs.connect(vca);vca.connect(vo);
+  setTimeout(()=>{try{vca.disconnect();vo.disconnect();}catch(_){}},Math.ceil((ampDec+0.2)*1000));
 }
 function triggerCP(ctx,out,p,t,vel){
   const bpfFreq=600+p.x*5500,bpfQ=0.5+p.y*9,spacing=0.004+p.z*0.026,tailDec=0.04+p.t*0.55,burstDec=0.005+p.decay*0.016;
@@ -726,6 +736,7 @@ function triggerCP(ctx,out,p,t,vel){
     const hp=ctx.createBiquadFilter();hp.type='highpass';hp.frequency.value=450;
     const vca=ctx.createGain();vca.gain.setValueAtTime(0.00001,t0-0.001);applyEnv(vca.gain,t0,dec,cv,lv);
     src.connect(bpf);bpf.connect(hp);hp.connect(vca);vca.connect(vo);src.start(t0);src.stop(t0+dec+0.1);}
+  setTimeout(()=>{try{vo.disconnect();}catch(_){}},Math.ceil((tailDec+spacing*3+0.4)*1000));
 }
 const TRIGGER={bd:triggerBD,sd:triggerSD,hh:triggerHH,cp:triggerCP};
 
@@ -752,35 +763,24 @@ function buildFxChain(){
     T.in.connect(T.preE);T.preE.connect(T.sh);T.sh.connect(T.deE);T.deE.connect(T.tone);T.tone.connect(T.wow);T.wow.connect(T.wet);
     T.in.connect(T.dry);T.out=ctx.createGain();T.dry.connect(T.out);T.wet.connect(T.out);}
 
-  // VINYL CRACKLE
-  {let b0=0,b1=0,b2=0,b3=0,b4=0,b5=0,b6=0,popCD=0;
-    try{fx.vinylNode=ctx.createScriptProcessor(2048,1,1);
-      fx.vinylNode.onaudioprocess=e=>{
-        const out=e.outputBuffer.getChannelData(0);let rms=0;
-        for(let i=0;i<out.length;i++){
-          const w=Math.random()*2-1;
-          b0=0.99886*b0+w*0.0555179;b1=0.99332*b1+w*0.0750759;b2=0.96900*b2+w*0.1538520;
-          b3=0.86650*b3+w*0.3104856;b4=0.55000*b4+w*0.5329522;b5=-0.7616*b5-w*0.0168980;
-          const pink=(b0+b1+b2+b3+b4+b5+b6+w*0.5362)*0.11;b6=w*0.115926;
-          let pop=0;
-          if(popCD<=0){if(Math.random()<0.00008){pop=(Math.random()*2-1)*0.7;popCD=Math.floor(Math.random()*12000+800);}}else popCD--;
-          const s=pink+pop;rms+=s*s;out[i]=s;}
-        vinylCrackleLevel=Math.sqrt(rms/out.length);
-      };
-    }catch(_){fx.vinylNode=ctx.createGain();}
+  // VINYL CRACKLE — buffer pré-généré + loop (zéro coût main-thread)
+  {const vLen=Math.ceil(ctx.sampleRate*6),vBuf=ctx.createBuffer(1,vLen,ctx.sampleRate),vd=vBuf.getChannelData(0);
+    let b0=0,b1=0,b2=0,b3=0,b4=0,b5=0,b6=0;
+    for(let i=0;i<vLen;i++){const w=Math.random()*2-1;b0=0.99886*b0+w*0.0555179;b1=0.99332*b1+w*0.0750759;b2=0.96900*b2+w*0.1538520;b3=0.86650*b3+w*0.3104856;b4=0.55000*b4+w*0.5329522;b5=-0.7616*b5-w*0.0168980;const pink=(b0+b1+b2+b3+b4+b5+b6+w*0.5362)*0.11;b6=w*0.115926;vd[i]=pink+(Math.random()<0.00008?(Math.random()*2-1)*0.7:0);}
+    fx.vinylSrc=ctx.createBufferSource();fx.vinylSrc.buffer=vBuf;fx.vinylSrc.loop=true;
     fx.vinylHPF=ctx.createBiquadFilter();fx.vinylHPF.type='highpass';fx.vinylHPF.frequency.value=1200;fx.vinylHPF.Q.value=0.7;
     fx.vinylHS=ctx.createBiquadFilter();fx.vinylHS.type='highshelf';fx.vinylHS.frequency.value=12000;fx.vinylHS.gain.value=-4;
     fx.vinylGain=ctx.createGain();fx.vinylGain.gain.value=fxState.tape.vinyl*0.042;
-    fx.vinylNode.connect(fx.vinylHPF);fx.vinylHPF.connect(fx.vinylHS);fx.vinylHS.connect(fx.vinylGain);fx.vinylGain.connect(mixBus);}
+    fx.vinylAnalyser=ctx.createAnalyser();fx.vinylAnalyser.fftSize=256;fx.vinylAnalyser.smoothingTimeConstant=0.85;
+    fx.vinylSrc.connect(fx.vinylHPF);fx.vinylHPF.connect(fx.vinylHS);fx.vinylHS.connect(fx.vinylGain);
+    fx.vinylGain.connect(fx.vinylAnalyser);fx.vinylGain.connect(mixBus);fx.vinylSrc.start();}
 
   // BIT CRUSH
   fx.bit={};{const B=fx.bit;
     B.in=ctx.createGain();B.dry=ctx.createGain();B.dry.gain.value=1-fxState.bit.mix;
     B.wet=ctx.createGain();B.wet.gain.value=fxState.bit.mix;
     B.bitSh=ctx.createWaveShaper();B.bitSh.curve=makeBitCurve(fxState.bit.bits);
-    try{B.srProc=ctx.createScriptProcessor(256,1,1);
-      B.srProc.onaudioprocess=e=>{const inp=e.inputBuffer.getChannelData(0),out=e.outputBuffer.getChannelData(0);for(let i=0;i<inp.length;i++){if(srCount%srFactor===0)srHoldL=inp[i];out[i]=srHoldL;srCount++;}};}
-    catch(_){B.srProc=ctx.createGain();}
+    B.srProc=ctx.createBiquadFilter();B.srProc.type="lowpass";B.srProc.frequency.value=20000;B.srProc.Q.value=0.5;
     B.aaLpf=ctx.createBiquadFilter();B.aaLpf.type='lowpass';B.aaLpf.frequency.value=20000;
     B.postLpf=ctx.createBiquadFilter();B.postLpf.type='lowpass';B.postLpf.frequency.value=20000;
     B.in.connect(B.bitSh);B.bitSh.connect(B.aaLpf);B.aaLpf.connect(B.srProc);B.srProc.connect(B.postLpf);B.postLpf.connect(B.wet);
@@ -834,9 +834,10 @@ function applyTape(){if(!audioCtx||!fx.tape)return;const T=fx.tape,p=fxState.tap
   setLed('tape',p.enabled);}
 function applyBit(){if(!audioCtx||!fx.bit)return;const B=fx.bit,p=fxState.bit,t=audioCtx.currentTime;
   B.dry.gain.setTargetAtTime(p.enabled?1-p.mix:1,t,0.03);B.wet.gain.setTargetAtTime(p.enabled?p.mix:0,t,0.03);
-  B.bitSh.curve=makeBitCurve(p.bits);srFactor=p.enabled?Math.max(1,Math.round(p.sr)):1;
-  const nyq=(audioCtx.sampleRate/2)/Math.max(1,srFactor);
-  B.aaLpf.frequency.setTargetAtTime(Math.min(nyq,20000),t,0.02);B.postLpf.frequency.setTargetAtTime(Math.min(nyq*1.5,20000),t,0.02);
+  B.bitSh.curve=makeBitCurve(p.bits);
+  const srFq=p.enabled&&p.sr>1?Math.min(20000,(audioCtx.sampleRate/2)/Math.round(p.sr)):20000;
+  B.srProc.frequency.setTargetAtTime(srFq,t,0.02);
+  B.aaLpf.frequency.setTargetAtTime(Math.min(srFq*1.4,20000),t,0.02);B.postLpf.frequency.setTargetAtTime(Math.min(srFq*1.6,20000),t,0.02);
   setLed('bit',p.enabled);}
 function applySherman(){if(!audioCtx||!fx.sh)return;const S=fx.sh,p=fxState.sherman,t=audioCtx.currentTime;
   S.dry.gain.setTargetAtTime(p.enabled?1-p.mix:1,t,0.03);S.wet.gain.setTargetAtTime(p.enabled?p.mix:0,t,0.03);
@@ -871,10 +872,14 @@ async function initAudio(){
 
 function startVinylIndicator(){
   const dot=qs('#vinylDot'),label=qs('#vinylLabel');
-  function tick(){vinylRaf=requestAnimationFrame(tick);
-    const crackling=vinylCrackleLevel*fxState.tape.vinyl>0.018&&fxState.tape.enabled;
+  const buf=new Uint8Array(fx.vinylAnalyser.fftSize);
+  function tick(){requestAnimationFrame(tick);
+    if(!fxState.tape.enabled){dot.classList.remove('crackling');label.textContent='VINYL · OFF';return;}
+    fx.vinylAnalyser.getByteTimeDomainData(buf);
+    let peak=0;for(let i=0;i<buf.length;i++)peak=Math.max(peak,Math.abs(buf[i]-128)/128);
+    const crackling=peak*fxState.tape.vinyl>0.06;
     dot.classList.toggle('crackling',crackling);
-    label.textContent=fxState.tape.enabled?(crackling?'VINYL · CRACKLE':'VINYL · ACTIVE'):'VINYL · OFF';}
+    label.textContent=crackling?'VINYL · CRACKLE':'VINYL · ACTIVE';}
   tick();
 }
 function startSeq(){if(!audioReady)return;playing=true;current=-1;nextTick=audioCtx.currentTime+0.04;
@@ -892,6 +897,30 @@ function getLockedParams(id,i){
   if(locks.tone?.enabled)params.t=locks.tone.value;
   return{params,shermanMixLocked:locks.shermanMix?.enabled?locks.shermanMix.value:null};}
 
+async function freezeTrack(id){
+  if(!audioReady)await initAudio();
+  const ts=trackState.find(t=>t.id===id);
+  const sr=audioCtx.sampleRate,dur=3.5;
+  const btn=qs('#freezeBtn_'+id);
+  if(btn){btn.textContent='...';btn.disabled=true;}
+  try{
+    const offCtx=new OfflineAudioContext(1,Math.ceil(sr*dur),sr);
+    const dest=offCtx.createGain();dest.connect(offCtx.destination);
+    TRIGGER[id]?.(offCtx,dest,ts.params,0.01,1.0);
+    const buffer=await offCtx.startRendering();
+    // trim trailing silence
+    const data=buffer.getChannelData(0);
+    let last=data.length-1;
+    while(last>0&&Math.abs(data[last])<0.00005)last--;
+    const trimmed=offCtx.createBuffer(1,last+1024,sr);
+    trimmed.getChannelData(0).set(data.subarray(0,last+1024));
+    ts.frozenBuffer=trimmed;ts.frozen=true;
+  }catch(e){console.error('Freeze error:',e);}
+  if(btn)btn.disabled=false;
+  refreshTrackClasses();updateFreezeBtn(id);
+}
+function unfreezeTrack(id){const ts=trackState.find(t=>t.id===id);ts.frozen=false;ts.frozenBuffer=null;refreshTrackClasses();updateFreezeBtn(id);}
+
 function scheduleStep(idx,when){
   TRACKS.forEach(def=>{
     const ts=trackState.find(t=>t.id===def.id),pt=getPT(def.id);
@@ -905,7 +934,14 @@ function scheduleStep(idx,when){
       const prev=fxState.sherman.mix;fxState.sherman.mix=shermanMixLocked;if(audioReady)applySherman();
       const delayMs=Math.max(0,(hitTime+0.14-audioCtx.currentTime)*1000);
       setTimeout(()=>{fxState.sherman.mix=prev;if(audioReady)applySherman();updateShermanReadouts();},delayMs);}
-    TRIGGER[def.id]?.(audioCtx,mixBus,params,hitTime,finalVel);});}
+    // frozen → AudioBufferSourceNode (ultra léger, ~0 CPU)
+    if(ts.frozen&&ts.frozenBuffer){
+      const src=audioCtx.createBufferSource();src.buffer=ts.frozenBuffer;
+      const vg=audioCtx.createGain();vg.gain.value=clamp(finalVel*1.12,0,1.4);
+      src.connect(vg);vg.connect(mixBus);src.start(hitTime);
+    }else{
+      TRIGGER[def.id]?.(audioCtx,mixBus,params,hitTime,finalVel);
+    }});}
 function previewTrack(id){if(!audioReady)return;const ts=trackState.find(t=>t.id===id);TRIGGER[id]?.(audioCtx,mixBus,ts.params,audioCtx.currentTime+0.01,ts.volume);}
 
 function buildTracks(){
@@ -922,6 +958,7 @@ function buildTracks(){
           <button class="icon-btn mute-btn${ts.mute?' muted':''}" data-track="${def.id}">M</button>
           <button class="icon-btn solo-btn${ts.solo?' soloed':''}" data-track="${def.id}">S</button>
           <button class="icon-btn preview preview-btn" data-track="${def.id}">▶</button>
+          <button class="freeze-btn${ts.frozen?' frozen':''}" data-freeze="${def.id}" id="freezeBtn_${def.id}"><span class="freeze-led"></span>${ts.frozen?'FROZEN':'FREEZE'}</button>
           <div class="track-stat"><div class="track-stat-label">STEPS</div><div class="track-stat-value" id="tSteps_${def.id}">${pt.steps.filter(Boolean).length}</div></div>
           <div class="track-stat"><div class="track-stat-label">LOCKS</div><div class="track-stat-value" id="tLocks_${def.id}">${countLocks(def.id)}</div></div>
           <div class="track-vol-wrap"><div class="track-stat-label">VOL</div><input type="range" class="track-vol" data-track="${def.id}" min="0" max="1" step="0.01" value="${ts.volume}"></div>
@@ -937,7 +974,8 @@ function buildTracks(){
     </div>`;}).join('');
   refreshTrackClasses();
 }
-function refreshTrackClasses(){qsa('.track').forEach(el=>{const id=el.dataset.id,ts=trackState.find(t=>t.id===id);el.classList.toggle('selected',id===selectedTrack);el.classList.toggle('muted',!!ts?.mute&&!ts?.solo);el.classList.toggle('soloed',!!ts?.solo);});}
+function refreshTrackClasses(){qsa('.track').forEach(el=>{const id=el.dataset.id,ts=trackState.find(t=>t.id===id);el.classList.toggle('selected',id===selectedTrack);el.classList.toggle('muted',!!ts?.mute&&!ts?.solo);el.classList.toggle('soloed',!!ts?.solo);el.classList.toggle('frozen',!!ts?.frozen);});}
+function updateFreezeBtn(id){const ts=trackState.find(t=>t.id===id),btn=qs('#freezeBtn_'+id);if(!btn)return;btn.classList.toggle('frozen',ts.frozen);btn.innerHTML=`<span class="freeze-led"></span>${ts.frozen?'FROZEN':'FREEZE'}`; btn.title=ts.frozen?'Cliquer pour dégeler et modifier les paramètres':'Geler le son actuel en buffer (CPU allégé)';}
 function buildQuickGrid(){qs('#trackQuickGrid').innerHTML=TRACKS.map(def=>`<div class="track-quick${def.id===selectedTrack?' active':''}" data-quick-track="${def.id}"><div class="track-quick-name" style="color:${def.color}">${def.name}</div><div class="track-quick-sub">${def.fullName}<br>${def.model}</div></div>`).join('');}
 function buildParamRows(){
   PARAM_DEFS.forEach(({id,label})=>{
@@ -973,7 +1011,14 @@ function drawEnvCurve(){
   const draw=(cp,col,glow)=>{const arr=dr2Arr(cp,W);c.save();c.strokeStyle=col;c.lineWidth=glow?3:1.8;c.shadowColor=col;c.shadowBlur=glow?9:0;c.beginPath();for(let i=0;i<W;i++){const y=H-6-arr[i]*(H-12);i===0?c.moveTo(i,y):c.lineTo(i,y);}c.stroke();c.restore();};
   if(ts.params.amount>0.05)draw(ts.params.pcrv,'rgba(100,200,255,.42)',false);draw(ts.params.curve,'#ff8c00',true);}
 
-function renderPlayhead(){qsa('.step-btn').forEach(b=>b.classList.toggle('playing',playing&&current===parseInt(b.dataset.step,10)));updateMonitor();}
+let _rafPH=false;
+function renderPlayhead(){
+  if(_rafPH)return;_rafPH=true;
+  requestAnimationFrame(()=>{_rafPH=false;
+    const c=current;
+    qsa('.step-btn').forEach(b=>b.classList.toggle('playing',playing&&c===parseInt(b.dataset.step,10)));
+    updateMonitor();});
+}
 function updateTrackCounters(id){const pt=getPT(id);qs('#tSteps_'+id).textContent=pt.steps.filter(Boolean).length;qs('#tLocks_'+id).textContent=countLocks(id);}
 function updateMonitor(){
   const def=TRACKS.find(t=>t.id===selectedTrack),ts=trackState.find(t=>t.id===selectedTrack),pt=getPT(selectedTrack);
@@ -1125,6 +1170,11 @@ function initEvents(){
   document.addEventListener('click',e=>{const b=e.target.closest('.mute-btn');if(!b)return;const ts=trackState.find(t=>t.id===b.dataset.track);ts.mute=!ts.mute;refreshAll();});
   document.addEventListener('click',e=>{const b=e.target.closest('.solo-btn');if(!b)return;const ts=trackState.find(t=>t.id===b.dataset.track);ts.solo=!ts.solo;refreshAll();});
   document.addEventListener('click',async e=>{const b=e.target.closest('.preview-btn');if(!b)return;await initAudio();previewTrack(b.dataset.track);});
+  document.addEventListener('click',async e=>{
+    const b=e.target.closest('.freeze-btn');if(!b)return;
+    const id=b.dataset.freeze;const ts=trackState.find(t=>t.id===id);
+    if(ts.frozen){unfreezeTrack(id);}else{await freezeTrack(id);}
+  });
   qs('#previewTrackBtn').addEventListener('click',async()=>{await initAudio();previewTrack(selectedTrack);});
   document.addEventListener('input',e=>{const el=e.target.closest('.track-vol');if(!el)return;const ts=trackState.find(t=>t.id===el.dataset.track);ts.volume=parseFloat(el.value);if(ts.id===selectedTrack)updateMonitor();});
   document.addEventListener('click',async e=>{
