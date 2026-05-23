@@ -3,36 +3,23 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
-<title>KICK · BRIDGED-T</title>
+<title>ANALOG-3 · DRUM MACHINE</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
   html, body {
-    height: 100%;
-    background-color: #0d0e11;
-    color: #e8e6e1;
+    min-height: 100%;
+    background-color: #0d0e11; color: #e8e6e1;
     font-family: 'IBM Plex Mono', ui-monospace, 'SF Mono', Menlo, Monaco, Consolas, monospace;
-    font-weight: 400;
-    -webkit-user-select: none;
-    user-select: none;
-    overscroll-behavior: none;
+    font-weight: 400; -webkit-user-select: none; user-select: none; overscroll-behavior: none;
   }
-  body {
-    min-height: 100svh;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 16px;
-  }
+  body { min-height: 100svh; display: flex; align-items: flex-start; justify-content: center; padding: 14px; }
 
-  /* ---- start overlay (iOS audio unlock) ---- */
   #overlay {
-    position: fixed; inset: 0; z-index: 50;
-    background-color: #0d0e11;
-    display: flex; flex-direction: column;
-    align-items: center; justify-content: center;
+    position: fixed; inset: 0; z-index: 50; background-color: #0d0e11;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
     gap: 18px; padding: 24px; text-align: center;
   }
   #overlay .ttl { font-size: 13px; letter-spacing: 4px; color: #6b6f76; }
@@ -40,391 +27,450 @@
   #overlay .sub { font-size: 11px; letter-spacing: 1px; color: #6b6f76; max-width: 320px; line-height: 1.6; }
   #startBtn {
     -webkit-appearance: none !important; appearance: none !important;
-    background-color: #ff8c3a; color: #0d0e11;
-    border: none; border-radius: 4px;
+    background-color: #ff8c3a; color: #0d0e11; border: none; border-radius: 4px;
     font-family: inherit; font-size: 13px; font-weight: 600; letter-spacing: 3px;
-    padding: 14px 40px; margin-top: 6px; cursor: pointer;
-    touch-action: manipulation;
+    padding: 14px 40px; margin-top: 6px; cursor: pointer; touch-action: manipulation;
   }
   #startBtn:active { background-color: #ffa75e; }
 
-  /* ---- panel ---- */
   .panel {
-    width: 100%; max-width: 440px;
-    background-color: #16181d;
-    border: 1px solid #24272e;
-    border-radius: 8px;
-    padding: 18px 18px 20px;
+    width: 100%; max-width: 480px; background-color: #16181d;
+    border: 1px solid #24272e; border-radius: 8px; padding: 16px;
     box-shadow: 0 18px 40px rgba(0,0,0,0.55);
   }
-  .head { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 4px; }
+  .head { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 14px; }
   .head .name { font-size: 15px; font-weight: 600; letter-spacing: 3px; }
-  .head .idx { font-size: 11px; color: #ff8c3a; letter-spacing: 2px; }
-  .sub-circuit { font-size: 9.5px; color: #565a61; letter-spacing: 1.5px; margin-bottom: 16px; }
+  .head .idx { font-size: 10px; color: #ff8c3a; letter-spacing: 2px; }
 
-  .knobs {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 12px 6px;
-    margin-bottom: 16px;
+  /* transport */
+  .transport { display: grid; grid-template-columns: 1.3fr 1fr 1fr 0.9fr; gap: 8px; align-items: stretch; margin-bottom: 14px; }
+  .btn {
+    -webkit-appearance: none !important; appearance: none !important;
+    background-color: #1c1f25; color: #9aa0a8; border: 1px solid #2c2f37; border-radius: 6px;
+    font-family: inherit; font-size: 11px; font-weight: 600; letter-spacing: 2px;
+    cursor: pointer; touch-action: manipulation; display: flex; align-items: center; justify-content: center; padding: 10px 0;
   }
-  .knob-wrap { display: flex; flex-direction: column; align-items: center; gap: 5px; }
-  .knob {
-    width: 100%; max-width: 76px; aspect-ratio: 1 / 1;
-    touch-action: none; cursor: ns-resize;
+  .btn.play.on { background-color: #243018; color: #b6e26a; border-color: #3c5224; }
+  .btn:active { border-color: #ff8c3a; }
+  .mini { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
+          background-color: #1c1f25; border: 1px solid #2c2f37; border-radius: 6px; padding: 5px; }
+  .mini .knob { max-width: 40px; }
+  .mini .klabel { font-size: 8px; letter-spacing: 1px; color: #9aa0a8; }
+  .mini .klabel b { color: #e8e6e1; font-weight: 500; }
+
+  /* tabs */
+  .tabs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-bottom: 12px; }
+  .tab {
+    -webkit-appearance: none !important; appearance: none !important;
+    background-color: #14161a; color: #6b6f76; border: 1px solid #24272e; border-radius: 6px;
+    font-family: inherit; font-size: 11px; font-weight: 600; letter-spacing: 2px; padding: 9px 0;
+    cursor: pointer; touch-action: manipulation;
   }
+  .tab.on { background-color: #1c1f25; color: #ff8c3a; border-color: #3a2d1d; }
+
+  /* knob panel */
+  .knobs { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px 6px; margin-bottom: 16px; min-height: 96px; }
+  .knob-wrap { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+  .knob { width: 100%; max-width: 70px; aspect-ratio: 1 / 1; touch-action: none; cursor: ns-resize; }
   .knob svg { width: 100%; height: 100%; display: block; }
   .knob .track { fill: none; stroke: #24272e; stroke-width: 6; stroke-linecap: round; }
   .knob .val   { fill: none; stroke: #ff8c3a; stroke-width: 6; stroke-linecap: round; }
   .knob .ptr   { stroke: #e8e6e1; stroke-width: 3; stroke-linecap: round; }
   .knob .hub   { fill: #1c1f25; stroke: #2c2f37; stroke-width: 1; }
-  .klabel { font-size: 9.5px; letter-spacing: 1.5px; color: #9aa0a8; }
-  .kval   { font-size: 10px; letter-spacing: 0.5px; color: #e8e6e1; }
+  .klabel { font-size: 9px; letter-spacing: 1px; color: #9aa0a8; }
+  .kval   { font-size: 9.5px; color: #e8e6e1; }
   .kval .u { color: #565a61; }
 
-  .transport {
-    display: grid;
-    grid-template-columns: 1.4fr 1fr 1fr;
-    gap: 10px;
-    align-items: stretch;
-  }
-  .pad {
+  /* sequencer */
+  .seq { display: flex; flex-direction: column; gap: 7px; }
+  .seqrow { display: flex; align-items: center; gap: 7px; }
+  .seqlabel { width: 30px; flex: none; font-size: 10px; font-weight: 600; letter-spacing: 1px; color: #9aa0a8; }
+  .cells { display: flex; gap: 3px; flex: 1; }
+  .cell {
     -webkit-appearance: none !important; appearance: none !important;
-    background-color: #1c1f25; color: #e8e6e1;
-    border: 1px solid #2c2f37; border-radius: 6px;
-    font-family: inherit; font-size: 13px; font-weight: 600; letter-spacing: 3px;
-    padding: 18px 0; cursor: pointer; touch-action: none;
-    transition: background-color 0.06s linear, border-color 0.06s linear;
+    flex: 1; aspect-ratio: 1 / 1; min-width: 0;
+    background-color: #1a1c21; border: 1px solid #26292f; border-radius: 3px;
+    cursor: pointer; touch-action: manipulation; padding: 0;
   }
-  .pad.hit { background-color: #ff8c3a; color: #0d0e11; border-color: #ff8c3a; }
-  .run {
-    -webkit-appearance: none !important; appearance: none !important;
-    background-color: #1c1f25; color: #9aa0a8;
-    border: 1px solid #2c2f37; border-radius: 6px;
-    font-family: inherit; font-size: 11px; font-weight: 600; letter-spacing: 2px;
-    cursor: pointer; touch-action: manipulation;
-    display: flex; align-items: center; justify-content: center;
-  }
-  .run.on { background-color: #243018; color: #b6e26a; border-color: #3c5224; }
-  .mini { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
-          background-color: #1c1f25; border: 1px solid #2c2f37; border-radius: 6px; padding: 6px; }
-  .mini .knob { max-width: 46px; }
-  .mini .klabel { font-size: 8.5px; }
+  .cell.g4 { margin-right: 6px; }
+  .cell.on { background-color: #ff8c3a; border-color: #ff8c3a; }
+  .cell.kk.on { background-color: #ff8c3a; border-color: #ff8c3a; }
+  .cell.sn.on { background-color: #ffb347; border-color: #ffb347; }
+  .cell.hh.on { background-color: #e0c068; border-color: #e0c068; }
+  .cell.cur { box-shadow: inset 0 0 0 2px #5a6cff; }
 </style>
 </head>
 <body>
 
   <div id="overlay">
     <div class="ttl">ERICA-INSPIRED · ANALOG MODEL</div>
-    <div class="big">KICK · BRIDGED-T</div>
-    <div class="sub">Résonateur pingé non-linéaire (SVF auto-limité). Touche pour démarrer l'audio.</div>
+    <div class="big">ANALOG-3</div>
+    <div class="sub">Trois voix analogiques modelisees (kick / snare / hi-hat) + sequenceur 16 pas. Touche pour demarrer.</div>
     <button id="startBtn">START</button>
     <div class="sub" id="errLine" style="color:#ff6b6b; display:none; white-space:pre-wrap;"></div>
   </div>
 
   <div class="panel" id="panel" style="visibility:hidden">
     <div class="head">
-      <div class="name">KICK</div>
-      <div class="idx">VOICE 01</div>
+      <div class="name">ANALOG-3</div>
+      <div class="idx">DRUM MACHINE</div>
     </div>
-    <div class="sub-circuit">BRIDGED-T RESONANT NETWORK · NONLINEAR ZDF-SVF</div>
+
+    <div class="transport">
+      <button class="btn play" id="play">PLAY</button>
+      <div class="mini"><div class="knob" id="bpmKnob"></div><div class="klabel">BPM <b id="bpmVal">90</b></div></div>
+      <div class="mini"><div class="knob" id="swingKnob"></div><div class="klabel">SWING <b id="swingVal">0</b></div></div>
+      <button class="btn" id="clear">CLEAR</button>
+    </div>
+
+    <div class="tabs" id="tabs">
+      <button class="tab on" data-tab="kick">KICK</button>
+      <button class="tab" data-tab="snare">SNARE</button>
+      <button class="tab" data-tab="hat">HI-HAT</button>
+    </div>
 
     <div class="knobs" id="knobs"></div>
 
-    <div class="transport">
-      <button class="pad" id="pad">TRIG</button>
-      <button class="run" id="run">RUN</button>
-      <div class="mini">
-        <div class="knob" id="bpmKnob"></div>
-        <div class="klabel">BPM <span id="bpmVal">120</span></div>
-      </div>
-    </div>
+    <div class="seq" id="seq"></div>
   </div>
 
-  <!-- ============ AUDIOWORKLET (loaded via Blob, keeps single-file) ============ -->
-  <script id="kick-worklet" type="text/worklet">
-    // Pinged bridged-T resonator modelled as a TPT / zero-delay-feedback
-    // state-variable filter. The op-amp/transistor limiting of the real
-    // bridged-T oscillator is modelled by soft-saturating the band-integrator
-    // state in the loop -> the resonance self-limits and grows harmonics on
-    // harder hits, instead of ringing as a pure linear sine.
-    class KickProcessor extends AudioWorkletProcessor {
-      static get parameterDescriptors() {
-        return [
-          { name: 'tune',      defaultValue: 52,    minValue: 24,    maxValue: 160,  automationRate: 'k-rate' },
-          { name: 'decay',     defaultValue: 0.50,  minValue: 0.05,  maxValue: 2.0,  automationRate: 'k-rate' },
-          { name: 'pitchAmt',  defaultValue: 220,   minValue: 0,     maxValue: 700,  automationRate: 'k-rate' },
-          { name: 'pitchTime', defaultValue: 0.05,  minValue: 0.005, maxValue: 0.25, automationRate: 'k-rate' },
-          { name: 'drive',     defaultValue: 2.2,   minValue: 1.0,   maxValue: 14.0, automationRate: 'k-rate' },
-          { name: 'click',     defaultValue: 0.35,  minValue: 0,     maxValue: 1.0,  automationRate: 'k-rate' },
-          { name: 'level',     defaultValue: 0.85,  minValue: 0,     maxValue: 1.0,  automationRate: 'k-rate' }
-        ];
-      }
-      constructor() {
-        super();
-        this.sr = sampleRate;
-        this.frame = 0;
-        this.queue = [];          // sample-accurate scheduled triggers
-        this.active = false;
-        this.t = 0;               // samples since last fire
-        this.vel = 1;
-        this.ic1 = 0; this.ic2 = 0;   // SVF integrator states
-        this.hpIn = 0; this.hpOut = 0; // 1-pole HPF for the attack click
-        this.port.onmessage = (e) => {
-          var d = e.data;
-          if (d.type === 'trig') {
-            this.queue.push({ frame: Math.round(d.time * this.sr), vel: (d.vel == null ? 1 : d.vel) });
-            this.queue.sort(function (a, b) { return a.frame - b.frame; });
-          }
-        };
-      }
-      fire(vel) {
-        this.active = true; this.t = 0; this.vel = vel;
-        this.hpIn = 0; this.hpOut = 0;
-        // states are NOT hard-reset: a re-kick of a still-ringing circuit
-        // interacts with residual energy, like the real thing.
-      }
-      process(inputs, outputs, p) {
-        var out = outputs[0][0];
-        if (!out) return true;
-        var N = out.length, sr = this.sr;
-        var tune = p.tune[0], decay = p.decay[0], pAmt = p.pitchAmt[0];
-        var pTime = p.pitchTime[0], drive = p.drive[0], click = p.click[0], level = p.level[0];
-        var piSr = Math.PI / sr;
-        var tauTrig = 0.0016;                          // ~1.6 ms excitation pulse
-        var Q = Math.max(0.5, Math.PI * tune * decay); // decay ~ e-fold ring time (s)
-        var k = 1 / Q;
-        var makeup = drive * 1.1;                      // compensate the in-loop limiter
-        var fMax = sr * 0.45;
-
-        for (var i = 0; i < N; i++) {
-          while (this.queue.length && this.queue[0].frame <= this.frame) {
-            this.fire(this.queue.shift().vel);
-          }
-          var y = 0;
-          if (this.active) {
-            var ts = this.t / sr;
-            var f = tune + pAmt * Math.exp(-ts / pTime);   // downward pitch sweep
-            if (f > fMax) f = fMax;
-            var exc = this.vel * Math.exp(-ts / tauTrig);  // trigger conditioning pulse
-
-            var g = Math.tan(piSr * f);
-            var a1 = 1 / (1 + g * (g + k));
-            var a2 = g * a1;
-            var a3 = g * a2;
-
-            var v3 = exc - this.ic2;
-            var v1 = a1 * this.ic1 + a2 * v3;              // band-pass output
-            var v2 = this.ic2 + a2 * this.ic1 + a3 * v3;
-            this.ic1 = 2 * v1 - this.ic1;
-            this.ic2 = 2 * v2 - this.ic2;
-
-            // --- nonlinear self-limiting (the heart of the analog character) ---
-            this.ic1 = Math.tanh(drive * this.ic1) / drive;
-
-            var band = v1 * makeup;
-
-            // attack click: 1-pole high-pass of the trigger transient
-            this.hpOut = 0.90 * (this.hpOut + exc - this.hpIn);
-            this.hpIn = exc;
-
-            y = Math.tanh(band + click * this.hpOut);
-
-            this.t++;
-            if (ts > 0.03 && Math.abs(this.ic1) < 1e-6 && Math.abs(this.ic2) < 1e-6) this.active = false;
-            if (ts > 4.0) this.active = false;
-          }
-          out[i] = y * level;
-          this.frame++;
-        }
-        return true;
-      }
-    }
-    registerProcessor('kick-processor', KickProcessor);
-  </script>
-
-  <!-- ============ MAIN ============ -->
+  <!-- ============ MAIN (ScriptProcessor engine: CSP blocks AudioWorklet module loading) ============ -->
   <script>
   (function () {
-    var ctx = null, node = null, started = false;
-    var velocity = 0.9, bpm = 120;
+    var ctx = null, node = null, started = false, starting = false;
+    var sr = 44100;
 
-    var KNOBS = [
-      { p:'tune',      label:'TUNE',   min:24,    max:160,  def:52,   unit:'Hz', fmt:function(v){return v.toFixed(0);} },
-      { p:'decay',     label:'DECAY',  min:0.05,  max:2.0,  def:0.50, unit:'s',  fmt:function(v){return v.toFixed(2);} },
-      { p:'pitchAmt',  label:'PITCH',  min:0,     max:700,  def:220,  unit:'Hz', fmt:function(v){return v.toFixed(0);} },
-      { p:'pitchTime', label:'P.TIME', min:0.005, max:0.25, def:0.05, unit:'ms', fmt:function(v){return (v*1000).toFixed(0);} },
-      { p:'drive',     label:'DRIVE',  min:1.0,   max:14.0, def:2.2,  unit:'',   fmt:function(v){return v.toFixed(1);} },
-      { p:'click',     label:'CLICK',  min:0,     max:1,    def:0.35, unit:'',   fmt:function(v){return v.toFixed(2);} },
-      { p:'level',     label:'LEVEL',  min:0,     max:1,    def:0.85, unit:'',   fmt:function(v){return v.toFixed(2);} },
-      { p:'vel',       label:'VEL',    min:0.1,   max:1.0,  def:0.9,  unit:'',   fmt:function(v){return v.toFixed(2);} }
-    ];
+    // ===================== parameters (validated per-voice models) =====================
+    var P = {
+      kick:  { tune:52, decay:0.50, pitchAmt:220, pitchTime:0.05, drive:2.2, click:0.35, level:0.85 },
+      snare: { tune:180, ratio:1.78, sweep:60, bDecay:0.12, noiseAmt:0.7, nTone:3000, nDecay:0.16, drive:2.0, level:0.80 },
+      hat:   { tune:1.0, spread:1.0, hpf:7000, decay:0.09, drive:3.0, tone:5000, level:0.70 }
+    };
+    var bpm = 90, swing = 0;          // swing 0..0.3
+    var STEP_VEL = 0.9;
 
-    var state = {};
-    KNOBS.forEach(function (k) { state[k.p] = k.def; });
+    // ===================== sequencer pattern =====================
+    var pattern = {
+      kick:  [1,0,0,0, 0,0,0,0, 1,0,1,0, 0,0,0,0],
+      snare: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
+      hat:   [1,0,1,0, 1,0,1,0, 1,0,1,0, 1,0,1,0]
+    };
+    var playing = false, stepCountdown = 0, currentStep = 15;
 
-    // ---------- knob rendering ----------
-    function pt(deg, r) { var a = (deg - 90) * Math.PI / 180; return [50 + r * Math.cos(a), 50 + r * Math.sin(a)]; }
-    function arcPath(r, a0, a1) {
-      var s = pt(a0, r), e = pt(a1, r);
-      var large = (a1 - a0) > 180 ? 1 : 0;
-      return 'M ' + s[0].toFixed(2) + ' ' + s[1].toFixed(2) +
-             ' A ' + r + ' ' + r + ' 0 ' + large + ' 1 ' + e[0].toFixed(2) + ' ' + e[1].toFixed(2);
+    // ===================== voice DSP state =====================
+    // kick
+    var kAct=false,kT=0,kVel=1, kic1=0,kic2=0, khpIn=0,khpOut=0;
+    // snare
+    var sAct=false,sT=0,sVel=1, si1a=0,si2a=0,si1b=0,si2b=0, sni1=0,sni2=0;
+    // hat
+    var HOS=2, HBASE=[263,400,421,474,587,845], HLOW=263;
+    var hAct=false,hT=0,hVel=1, hph=[0,0,0,0,0,0], hfr=[0,0,0,0,0,0], hh1=0,hh2=0,ht1=0,ht2=0,hd1=0,hd2=0;
+
+    function fireKick(v){ kAct=true; kT=0; kVel=v; khpIn=0; khpOut=0; }
+    function fireSnare(v){ sAct=true; sT=0; sVel=v; }
+    function fireHat(v){ hAct=true; hT=0; hVel=v; }
+
+    function polyBlep(t, dt){
+      if (t < dt) { t /= dt; return t + t - t*t - 1; }
+      if (t > 1 - dt) { t = (t - 1)/dt; return t*t + t + t + 1; }
+      return 0;
     }
-    var A0 = -135, SWEEP = 270, R = 38;
 
+    function renderBlock(out, n) {
+      var piSr = Math.PI / sr, tauTrig = 0.0016, fMax = sr * 0.45;
+
+      // ---- KICK per-block ----
+      var K = P.kick;
+      var kQ = Math.max(0.5, Math.PI * K.tune * K.decay * 1.4), kk = 1 / kQ, kPre = 28;
+      // ---- SNARE per-block ----
+      var S = P.snare;
+      var sk1 = 1 / Math.max(0.5, Math.PI * S.tune * S.bDecay);
+      var sk2 = 1 / Math.max(0.5, Math.PI * S.tune * S.ratio * S.bDecay * 0.8);
+      var sPre = 24, sNG = 0.9, sKn = 1/1.2, sSweepT = 0.035;
+      var sgn = Math.tan(piSr * Math.min(S.nTone, fMax));
+      var sna1 = 1/(1+sgn*(sgn+sKn)), sna2 = sgn*sna1, sna3 = sgn*sgn*sna1;
+      // ---- HAT per-block ----
+      var H = P.hat;
+      var Ri = HOS * sr, piRi = Math.PI / Ri, hniq = Ri * 0.45, kH = 1.2, makeup = 2.0, ta = 0.0003;
+      for (var q = 0; q < 6; q++) hfr[q] = HLOW * H.tune * Math.pow(HBASE[q] / HLOW, H.spread);
+      var gH = Math.tan(piRi*Math.min(H.hpf,hniq)), aH1=1/(1+gH*(gH+kH)), aH2=gH*aH1, aH3=gH*gH*aH1;
+      var gT = Math.tan(piRi*Math.min(H.tone,hniq)), aT1=1/(1+gT*(gT+kH)), aT2=gT*aT1, aT3=gT*gT*aT1;
+      var kD = 1.41, gD = Math.tan(piRi*Math.min(sr*0.46,hniq)), aD1=1/(1+gD*(gD+kD)), aD2=gD*aD1, aD3=gD*gD*aD1;
+
+      // ---- clock ----
+      var stepBase = (60 / bpm) * sr / 4;   // 16th-note length in samples
+
+      for (var i = 0; i < n; i++) {
+        // sequencer advance (sample-accurate)
+        if (playing) {
+          if (stepCountdown <= 0) {
+            currentStep = (currentStep + 1) % 16;
+            if (pattern.kick[currentStep])  fireKick(STEP_VEL);
+            if (pattern.snare[currentStep]) fireSnare(STEP_VEL);
+            if (pattern.hat[currentStep])   fireHat(STEP_VEL);
+            // swing: extend even steps, shorten odd -> tempo preserved
+            var swf = (currentStep % 2 === 0) ? (1 + swing) : (1 - swing);
+            stepCountdown += Math.round(stepBase * swf);
+          }
+          stepCountdown--;
+        }
+
+        var mix = 0, v1, v2, v3, ts;
+
+        // ---------- KICK ----------
+        if (kAct) {
+          ts = kT / sr;
+          var kf = K.tune + K.pitchAmt * Math.exp(-ts / K.pitchTime); if (kf > fMax) kf = fMax;
+          var kexc = kVel * Math.exp(-ts / tauTrig);
+          var kg = Math.tan(piSr * kf), ka1 = 1/(1+kg*(kg+kk)), ka2 = kg*ka1, ka3 = kg*ka2;
+          v3 = kexc - kic2; v1 = ka1*kic1 + ka2*v3; v2 = kic2 + ka2*kic1 + ka3*v3;
+          kic1 = 2*v1 - kic1; kic2 = 2*v2 - kic2;
+          var ks = v1 * kk * kPre;
+          khpOut = 0.90 * (khpOut + kexc - khpIn); khpIn = kexc;
+          mix += K.level * Math.tanh(K.drive * ks + K.click * khpOut);
+          kT++;
+          if (ts > 0.03 && Math.abs(kic1) < 1e-6 && Math.abs(kic2) < 1e-6) kAct = false;
+          if (ts > 4.0) kAct = false;
+        }
+
+        // ---------- SNARE ----------
+        if (sAct) {
+          ts = sT / sr;
+          var sexc = sVel * Math.exp(-ts / tauTrig);
+          var fenv = S.sweep * Math.exp(-ts / sSweepT);
+          var sf1 = S.tune + fenv; if (sf1 > fMax) sf1 = fMax;
+          var sf2 = sf1 * S.ratio; if (sf2 > fMax) sf2 = fMax;
+          var sg1 = Math.tan(piSr*sf1), sa11 = 1/(1+sg1*(sg1+sk1)), sa21 = sg1*sa11, sa31 = sg1*sg1*sa11;
+          v3 = sexc - si2a; v1 = sa11*si1a + sa21*v3; v2 = si2a + sa21*si1a + sa31*v3; si1a = 2*v1-si1a; si2a = 2*v2-si2a;
+          var ss1 = v1 * sk1 * sPre;
+          var sg2 = Math.tan(piSr*sf2), sa12 = 1/(1+sg2*(sg2+sk2)), sa22 = sg2*sa12, sa32 = sg2*sg2*sa12;
+          v3 = sexc - si2b; v1 = sa12*si1b + sa22*v3; v2 = si2b + sa22*si1b + sa32*v3; si1b = 2*v1-si1b; si2b = 2*v2-si2b;
+          var ss2 = v1 * sk2 * sPre;
+          var sbody = ss1 + 0.6*ss2;
+          var white = Math.random()*2 - 1;
+          v3 = white - sni2; v1 = sna1*sni1 + sna2*v3; v2 = sni2 + sna2*sni1 + sna3*v3; sni1 = 2*v1-sni1; sni2 = 2*v2-sni2;
+          var nenv = sVel * Math.exp(-ts / S.nDecay);
+          var smix = sbody + S.noiseAmt * v1 * sNG * nenv;
+          mix += S.level * Math.tanh(S.drive * smix);
+          sT++;
+          if (ts > 0.04 && Math.abs(si1a)<1e-6 && Math.abs(si2a)<1e-6 && Math.abs(si1b)<1e-6 && Math.abs(si2b)<1e-6 && nenv<1e-3) sAct = false;
+          if (ts > 4.0) sAct = false;
+        }
+
+        // ---------- HI-HAT (2x oversampled) ----------
+        if (hAct) {
+          var outv = 0;
+          for (var o = 0; o < HOS; o++) {
+            var sum = 0;
+            for (var m = 0; m < 6; m++) {
+              var dt = hfr[m] / Ri, ph = hph[m];
+              var sq = ph < 0.5 ? 1 : -1;
+              sq += polyBlep(ph, dt);
+              var p2 = ph + 0.5; if (p2 >= 1) p2 -= 1;
+              sq -= polyBlep(p2, dt);
+              sum += sq; ph += dt; if (ph >= 1) ph -= 1; hph[m] = ph;
+            }
+            sum /= 6;
+            v3 = sum - hh2; v1 = aH1*hh1 + aH2*v3; v2 = hh2 + aH2*hh1 + aH3*v3; hh1 = 2*v1-hh1; hh2 = 2*v2-hh2;
+            var preH = sum - kH*v1 - v2;
+            var od = Math.tanh(H.drive * preH);
+            v3 = od - ht2; v1 = aT1*ht1 + aT2*v3; v2 = ht2 + aT2*ht1 + aT3*v3; ht1 = 2*v1-ht1; ht2 = 2*v2-ht2;
+            var postH = od - kH*v1 - v2;
+            v3 = postH - hd2; v1 = aD1*hd1 + aD2*v3; v2 = hd2 + aD2*hd1 + aD3*v3; hd1 = 2*v1-hd1; hd2 = 2*v2-hd2;
+            outv = v2;
+          }
+          ts = hT / sr;
+          var henv = ts < ta ? ts/ta : Math.exp(-(ts-ta) / H.decay);
+          mix += H.level * Math.tanh(outv * makeup) * henv * hVel;
+          hT++;
+          if (ts > ta && henv < 5e-4) hAct = false;
+          if (ts > 5.0) hAct = false;
+        }
+
+        out[i] = Math.tanh(0.9 * mix);   // master bus glue/limit
+      }
+    }
+
+    // ===================== knob component =====================
+    function pt(deg, r) { var a = (deg - 90) * Math.PI / 180; return [50 + r*Math.cos(a), 50 + r*Math.sin(a)]; }
+    function arcPath(r, a0, a1) {
+      var s = pt(a0, r), e = pt(a1, r), large = (a1 - a0) > 180 ? 1 : 0;
+      return 'M ' + s[0].toFixed(2) + ' ' + s[1].toFixed(2) + ' A ' + r + ' ' + r + ' 0 ' + large + ' 1 ' + e[0].toFixed(2) + ' ' + e[1].toFixed(2);
+    }
+    var A0 = -135, SW = 270, R = 38;
     function buildKnob(host, cfg, onChange) {
-      host.innerHTML =
-        '<svg viewBox="0 0 100 100">' +
-        '<path class="track" d="' + arcPath(R, A0, A0 + SWEEP) + '"></path>' +
-        '<path class="val"></path>' +
-        '<line class="ptr"></line>' +
-        '<circle class="hub" cx="50" cy="50" r="13"></circle>' +
-        '</svg>';
-      var valEl = host.querySelector('.val');
-      var ptrEl = host.querySelector('.ptr');
+      host.innerHTML = '<svg viewBox="0 0 100 100"><path class="track" d="' + arcPath(R, A0, A0 + SW) + '"></path>' +
+        '<path class="val"></path><line class="ptr"></line><circle class="hub" cx="50" cy="50" r="13"></circle></svg>';
+      var valEl = host.querySelector('.val'), ptrEl = host.querySelector('.ptr');
       var norm = (cfg.def - cfg.min) / (cfg.max - cfg.min);
-
       function render() {
-        var deg = A0 + norm * SWEEP;
+        var deg = A0 + norm * SW;
         valEl.setAttribute('d', arcPath(R, A0, deg));
-        var inner = pt(deg, 16), outer = pt(deg, 33);
-        ptrEl.setAttribute('x1', inner[0].toFixed(2)); ptrEl.setAttribute('y1', inner[1].toFixed(2));
-        ptrEl.setAttribute('x2', outer[0].toFixed(2)); ptrEl.setAttribute('y2', outer[1].toFixed(2));
+        var inr = pt(deg, 16), outr = pt(deg, 33);
+        ptrEl.setAttribute('x1', inr[0].toFixed(2)); ptrEl.setAttribute('y1', inr[1].toFixed(2));
+        ptrEl.setAttribute('x2', outr[0].toFixed(2)); ptrEl.setAttribute('y2', outr[1].toFixed(2));
         onChange(cfg.min + norm * (cfg.max - cfg.min));
       }
-
-      var dragging = false, lastY = 0;
-      host.addEventListener('pointerdown', function (ev) {
-        dragging = true; lastY = ev.clientY;
-        host.setPointerCapture(ev.pointerId); ev.preventDefault();
+      var drag = false, ly = 0;
+      host.addEventListener('pointerdown', function (e) { drag = true; ly = e.clientY; host.setPointerCapture(e.pointerId); e.preventDefault(); });
+      host.addEventListener('pointermove', function (e) {
+        if (!drag) return; var dy = ly - e.clientY; ly = e.clientY;
+        norm = Math.max(0, Math.min(1, norm + dy * (e.shiftKey ? 0.0008 : 0.005))); render(); e.preventDefault();
       });
-      host.addEventListener('pointermove', function (ev) {
-        if (!dragging) return;
-        var dy = lastY - ev.clientY; lastY = ev.clientY;
-        var sens = ev.shiftKey ? 0.0008 : 0.005;
-        norm = Math.max(0, Math.min(1, norm + dy * sens));
-        render(); ev.preventDefault();
-      });
-      function up(ev) { dragging = false; }
-      host.addEventListener('pointerup', up);
-      host.addEventListener('pointercancel', up);
-      host.addEventListener('dblclick', function () {
-        norm = (cfg.def - cfg.min) / (cfg.max - cfg.min); render();
-      });
-
+      function up() { drag = false; }
+      host.addEventListener('pointerup', up); host.addEventListener('pointercancel', up);
+      host.addEventListener('dblclick', function () { norm = (cfg.def - cfg.min) / (cfg.max - cfg.min); render(); });
       render();
     }
 
-    // build voice knobs (first 7) + VEL
-    var grid = document.getElementById('knobs');
-    KNOBS.slice(0, 8).forEach(function (cfg) {
-      var wrap = document.createElement('div');
-      wrap.className = 'knob-wrap';
-      var kn = document.createElement('div'); kn.className = 'knob';
-      var lab = document.createElement('div'); lab.className = 'klabel'; lab.textContent = cfg.label;
-      var val = document.createElement('div'); val.className = 'kval';
-      wrap.appendChild(kn); wrap.appendChild(lab); wrap.appendChild(val);
-      grid.appendChild(wrap);
-      buildKnob(kn, cfg, function (v) {
-        state[cfg.p] = v;
-        val.innerHTML = cfg.fmt(v) + (cfg.unit ? ' <span class="u">' + cfg.unit + '</span>' : '');
-        if (cfg.p === 'vel') { velocity = v; return; }
-        if (node) node.parameters.get(cfg.p).setTargetAtTime(v, ctx.currentTime, 0.008);
+    var fInt = function(v){return v.toFixed(0);}, f2 = function(v){return v.toFixed(2);}, f1 = function(v){return v.toFixed(1);}, fMs = function(v){return (v*1000).toFixed(0);};
+    var KNOBSETS = {
+      kick: [
+        {p:'tune',label:'TUNE',min:24,max:160,def:52,unit:'Hz',fmt:fInt},
+        {p:'decay',label:'DECAY',min:0.05,max:2.0,def:0.50,unit:'s',fmt:f2},
+        {p:'pitchAmt',label:'PITCH',min:0,max:700,def:220,unit:'Hz',fmt:fInt},
+        {p:'pitchTime',label:'P.TIME',min:0.005,max:0.25,def:0.05,unit:'ms',fmt:fMs},
+        {p:'drive',label:'DRIVE',min:1,max:14,def:2.2,unit:'',fmt:f1},
+        {p:'click',label:'CLICK',min:0,max:1,def:0.35,unit:'',fmt:f2},
+        {p:'level',label:'LEVEL',min:0,max:1,def:0.85,unit:'',fmt:f2}
+      ],
+      snare: [
+        {p:'tune',label:'TUNE',min:100,max:400,def:180,unit:'Hz',fmt:fInt},
+        {p:'ratio',label:'RATIO',min:1.0,max:3.0,def:1.78,unit:'',fmt:f2},
+        {p:'sweep',label:'SWEEP',min:0,max:300,def:60,unit:'Hz',fmt:fInt},
+        {p:'bDecay',label:'B.DECAY',min:0.02,max:0.35,def:0.12,unit:'ms',fmt:fMs},
+        {p:'noiseAmt',label:'NOISE',min:0,max:1,def:0.7,unit:'',fmt:f2},
+        {p:'nTone',label:'N.TONE',min:800,max:9000,def:3000,unit:'Hz',fmt:fInt},
+        {p:'nDecay',label:'N.DECAY',min:0.02,max:0.4,def:0.16,unit:'ms',fmt:fMs},
+        {p:'drive',label:'DRIVE',min:1,max:10,def:2.0,unit:'',fmt:f1},
+        {p:'level',label:'LEVEL',min:0,max:1,def:0.80,unit:'',fmt:f2}
+      ],
+      hat: [
+        {p:'tune',label:'TUNE',min:0.5,max:2.0,def:1.0,unit:'x',fmt:f2},
+        {p:'spread',label:'SPREAD',min:0.5,max:1.5,def:1.0,unit:'',fmt:f2},
+        {p:'hpf',label:'HPF',min:3000,max:12000,def:7000,unit:'Hz',fmt:fInt},
+        {p:'decay',label:'DECAY',min:0.02,max:0.6,def:0.09,unit:'ms',fmt:fMs},
+        {p:'drive',label:'DRIVE',min:1,max:12,def:3.0,unit:'',fmt:f1},
+        {p:'tone',label:'TONE',min:2000,max:10000,def:5000,unit:'Hz',fmt:fInt},
+        {p:'level',label:'LEVEL',min:0,max:1,def:0.70,unit:'',fmt:f2}
+      ]
+    };
+
+    var activeTab = 'kick';
+    function buildPanel(tab) {
+      var grid = document.getElementById('knobs');
+      grid.innerHTML = '';
+      KNOBSETS[tab].forEach(function (cfg) {
+        var wrap = document.createElement('div'); wrap.className = 'knob-wrap';
+        var kn = document.createElement('div'); kn.className = 'knob';
+        var lab = document.createElement('div'); lab.className = 'klabel'; lab.textContent = cfg.label;
+        var val = document.createElement('div'); val.className = 'kval';
+        wrap.appendChild(kn); wrap.appendChild(lab); wrap.appendChild(val); grid.appendChild(wrap);
+        // initialise norm from CURRENT param value (so edits persist across tab switches)
+        var cur = P[tab][cfg.p];
+        var cfg2 = { min:cfg.min, max:cfg.max, def:cur, unit:cfg.unit, fmt:cfg.fmt };
+        buildKnob(kn, cfg2, function (v) {
+          val.innerHTML = cfg.fmt(v) + (cfg.unit ? ' <span class="u">' + cfg.unit + '</span>' : '');
+          P[tab][cfg.p] = v;
+        });
+      });
+    }
+    document.querySelectorAll('.tab').forEach(function (t) {
+      t.addEventListener('click', function () {
+        document.querySelectorAll('.tab').forEach(function (x) { x.classList.remove('on'); });
+        t.classList.add('on'); activeTab = t.getAttribute('data-tab'); buildPanel(activeTab);
       });
     });
 
-    // BPM knob (mini)
-    buildKnob(document.getElementById('bpmKnob'),
-      { min: 50, max: 200, def: 120 },
-      function (v) { bpm = Math.round(v); document.getElementById('bpmVal').textContent = bpm; });
+    // ===================== sequencer grid =====================
+    var cellRefs = { kick: [], snare: [], hat: [] };
+    function buildSeq() {
+      var seq = document.getElementById('seq');
+      var rows = [['kick','KICK','kk'],['snare','SNR','sn'],['hat','HAT','hh']];
+      rows.forEach(function (r) {
+        var voice = r[0];
+        var row = document.createElement('div'); row.className = 'seqrow';
+        var lab = document.createElement('div'); lab.className = 'seqlabel'; lab.textContent = r[1];
+        var cells = document.createElement('div'); cells.className = 'cells';
+        for (var s = 0; s < 16; s++) {
+          var c = document.createElement('button');
+          c.className = 'cell ' + r[2] + ((s % 4 === 3 && s < 15) ? ' g4' : '') + (pattern[voice][s] ? ' on' : '');
+          (function (vv, ss, el) {
+            el.addEventListener('click', function () {
+              pattern[vv][ss] = pattern[vv][ss] ? 0 : 1;
+              el.classList.toggle('on', !!pattern[vv][ss]);
+            });
+          })(voice, s, c);
+          cells.appendChild(c); cellRefs[voice].push(c);
+        }
+        row.appendChild(lab); row.appendChild(cells); seq.appendChild(row);
+      });
+    }
 
-    // ---------- transport ----------
-    var pad = document.getElementById('pad');
-    var runBtn = document.getElementById('run');
-
-    function trig(vel, when) {
+    // ===================== transport =====================
+    var playBtn = document.getElementById('play');
+    playBtn.addEventListener('click', function () {
       if (!node) return;
-      var t = (when == null) ? (ctx.currentTime + 0.005) : when;
-      node.port.postMessage({ type: 'trig', time: t, vel: vel });
-      flashPad(t);
-    }
-    function flashPad(at) {
-      var ms = node ? Math.max(0, (at - ctx.currentTime) * 1000) : 0;
-      setTimeout(function () {
-        pad.classList.add('hit');
-        setTimeout(function () { pad.classList.remove('hit'); }, 70);
-      }, ms);
-    }
-
-    pad.addEventListener('pointerdown', function (e) { e.preventDefault(); trig(velocity); });
-
-    // lookahead scheduler ("two clocks": setTimeout drives scheduling,
-    // but trigger times are AudioContext-scheduled => sample-accurate)
-    var running = false, nextTime = 0, beat = 0, schedTimer = null;
-    var LOOKAHEAD = 0.025, AHEAD = 0.12;
-    function scheduler() {
-      while (nextTime < ctx.currentTime + AHEAD) {
-        var v = (beat % 4 === 0) ? Math.min(1, velocity * 1.15) : velocity; // downbeat accent
-        trig(v, nextTime);
-        nextTime += 60 / bpm;
-        beat++;
-      }
-      schedTimer = setTimeout(scheduler, LOOKAHEAD * 1000);
-    }
-    runBtn.addEventListener('click', function () {
-      if (!node) return;
-      running = !running;
-      runBtn.classList.toggle('on', running);
-      if (running) { nextTime = ctx.currentTime + 0.1; beat = 0; scheduler(); }
-      else { clearTimeout(schedTimer); }
+      playing = !playing;
+      playBtn.classList.toggle('on', playing);
+      playBtn.textContent = playing ? 'STOP' : 'PLAY';
+      if (playing) { currentStep = 15; stepCountdown = 0; }
+      else { clearPlayhead(); }
+    });
+    document.getElementById('clear').addEventListener('click', function () {
+      ['kick','snare','hat'].forEach(function (v) {
+        for (var s = 0; s < 16; s++) { pattern[v][s] = 0; cellRefs[v][s].classList.remove('on'); }
+      });
     });
 
-    // ---------- audio start (iOS unlock) ----------
-    function showErr(msg) {
-      var e = document.getElementById('errLine');
-      e.style.display = 'block';
-      e.textContent = msg;
+    var lastShown = -1;
+    function clearPlayhead() {
+      ['kick','snare','hat'].forEach(function (v) { cellRefs[v].forEach(function (c) { c.classList.remove('cur'); }); });
+      lastShown = -1;
     }
-    async function loadModule(src) {
-      // Safari iOS: try Blob URL, fall back to data: URL (often succeeds where Blob fails)
-      var firstErr = null;
-      try {
-        var burl = URL.createObjectURL(new Blob([src], { type: 'text/javascript' }));
-        await ctx.audioWorklet.addModule(burl);
-        return 'blob';
-      } catch (e1) {
-        firstErr = e1;
+    function visualPoll() {
+      if (playing && currentStep !== lastShown) {
+        ['kick','snare','hat'].forEach(function (v) {
+          if (lastShown >= 0) cellRefs[v][lastShown].classList.remove('cur');
+          cellRefs[v][currentStep].classList.add('cur');
+        });
+        lastShown = currentStep;
       }
-      await ctx.audioWorklet.addModule('data:text/javascript;charset=utf-8,' + encodeURIComponent(src));
-      return 'data (blob a échoué: ' + (firstErr && firstErr.message ? firstErr.message : firstErr) + ')';
+      requestAnimationFrame(visualPoll);
     }
-    var starting = false;
+
+    // ===================== start (iOS unlock) =====================
+    function showErr(msg) { var e = document.getElementById('errLine'); e.style.display = 'block'; e.textContent = msg; }
     async function start() {
-      if (started || starting) return;
-      starting = true;
+      if (started || starting) return; starting = true;
       try {
         var AC = window.AudioContext || window.webkitAudioContext;
         if (!AC) throw new Error('AudioContext indisponible sur ce navigateur');
         ctx = new AC();
         if (ctx.state === 'suspended') { try { await ctx.resume(); } catch (e) {} }
-        if (!ctx.audioWorklet) throw new Error('AudioWorklet absent (contexte non sécurisé ? ouvre via http/https, pas file://)');
-        var src = document.getElementById('kick-worklet').textContent;
-        if (!src || !src.trim()) throw new Error('source du worklet vide');
-        await loadModule(src);
-        node = new AudioWorkletNode(ctx, 'kick-processor', { numberOfInputs: 0, numberOfOutputs: 1, outputChannelCount: [1] });
-        KNOBS.slice(0, 7).forEach(function (k) { node.parameters.get(k.p).value = state[k.p]; });
+        sr = ctx.sampleRate || 44100;
+        node = ctx.createScriptProcessor(512, 1, 1);
+        node.onaudioprocess = function (ev) { renderBlock(ev.outputBuffer.getChannelData(0), ev.outputBuffer.length); };
         node.connect(ctx.destination);
         if (ctx.state === 'suspended') { try { await ctx.resume(); } catch (e) {} }
         started = true;
         document.getElementById('overlay').style.display = 'none';
         document.getElementById('panel').style.visibility = 'visible';
+        requestAnimationFrame(visualPoll);
       } catch (err) {
         starting = false;
-        showErr('ÉCHEC DÉMARRAGE\n' + (err && err.message ? err.message : String(err)) + '\n(retape START pour réessayer)');
+        showErr('ECHEC DEMARRAGE\n' + (err && err.message ? err.message : String(err)) + '\n(retape START pour reessayer)');
         if (window.console) console.error(err);
       }
     }
+
+    // build UI immediately (works before audio starts; sound begins after START)
+    buildPanel('kick');
+    buildSeq();
+    buildKnob(document.getElementById('bpmKnob'), { min:50, max:200, def:90, unit:'', fmt:fInt },
+      function (v) { bpm = Math.round(v); document.getElementById('bpmVal').textContent = bpm; });
+    buildKnob(document.getElementById('swingKnob'), { min:0, max:0.3, def:0, unit:'', fmt:f2 },
+      function (v) { swing = v; document.getElementById('swingVal').textContent = Math.round(v * 200); });
     document.getElementById('startBtn').addEventListener('click', start);
   })();
   </script>
