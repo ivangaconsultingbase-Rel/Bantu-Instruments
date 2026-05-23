@@ -43,7 +43,7 @@
   .head .idx { font-size: 10px; color: #ff8c3a; letter-spacing: 2px; }
 
   /* transport */
-  .transport { display: grid; grid-template-columns: 1.3fr 1fr 1fr 0.9fr; gap: 8px; align-items: stretch; margin-bottom: 14px; }
+  .transport { display: grid; grid-template-columns: 1.15fr 1fr 1fr 1fr 1.15fr; gap: 7px; align-items: stretch; margin-bottom: 14px; }
   .btn {
     -webkit-appearance: none !important; appearance: none !important;
     background-color: #1c1f25; color: #9aa0a8; border: 1px solid #2c2f37; border-radius: 6px;
@@ -54,12 +54,12 @@
   .btn:active { border-color: #ff8c3a; }
   .mini { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
           background-color: #1c1f25; border: 1px solid #2c2f37; border-radius: 6px; padding: 5px; }
-  .mini .knob { max-width: 40px; }
+  .mini .knob { max-width: 38px; }
   .mini .klabel { font-size: 8px; letter-spacing: 1px; color: #9aa0a8; }
   .mini .klabel b { color: #e8e6e1; font-weight: 500; }
 
   /* tabs */
-  .tabs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-bottom: 12px; }
+  .tabs { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-bottom: 12px; }
   .tab {
     -webkit-appearance: none !important; appearance: none !important;
     background-color: #14161a; color: #6b6f76; border: 1px solid #24272e; border-radius: 6px;
@@ -82,9 +82,9 @@
   .kval .u { color: #565a61; }
 
   /* sequencer */
-  .seq { display: flex; flex-direction: column; gap: 7px; }
+  .seq { display: flex; flex-direction: column; gap: 6px; }
   .seqrow { display: flex; align-items: center; gap: 7px; }
-  .seqlabel { width: 30px; flex: none; font-size: 10px; font-weight: 600; letter-spacing: 1px; color: #9aa0a8; }
+  .seqlabel { width: 30px; flex: none; font-size: 9.5px; font-weight: 600; letter-spacing: 1px; color: #9aa0a8; }
   .cells { display: flex; gap: 3px; flex: 1; }
   .cell {
     -webkit-appearance: none !important; appearance: none !important;
@@ -93,11 +93,29 @@
     cursor: pointer; touch-action: manipulation; padding: 0;
   }
   .cell.g4 { margin-right: 6px; }
-  .cell.on { background-color: #ff8c3a; border-color: #ff8c3a; }
   .cell.kk.on { background-color: #ff8c3a; border-color: #ff8c3a; }
   .cell.sn.on { background-color: #ffb347; border-color: #ffb347; }
-  .cell.hh.on { background-color: #e0c068; border-color: #e0c068; }
+  .cell.hc.on { background-color: #e0c068; border-color: #e0c068; }
+  .cell.ho.on { background-color: #79c0d0; border-color: #79c0d0; }
+  .cell.acc { filter: brightness(1.5); }
   .cell.cur { box-shadow: inset 0 0 0 2px #5a6cff; }
+
+  /* bank: presets + memory slots */
+  .bank { margin-top: 16px; border-top: 1px solid #24272e; padding-top: 12px; display: flex; flex-direction: column; gap: 7px; }
+  .banklabel { font-size: 9px; letter-spacing: 2px; color: #565a61; }
+  .banklabel span { color: #ff8c3a; letter-spacing: 1px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chip {
+    -webkit-appearance: none !important; appearance: none !important;
+    background-color: #1a1c21; color: #9aa0a8; border: 1px solid #26292f; border-radius: 5px;
+    font-family: inherit; font-size: 10px; font-weight: 500; letter-spacing: 1px; padding: 8px 11px;
+    cursor: pointer; touch-action: manipulation;
+  }
+  .chip:active { border-color: #ff8c3a; }
+  .chip.slot { width: 34px; text-align: center; padding: 8px 0; }
+  .chip.slot.used { color: #b6e26a; border-color: #3c5224; background-color: #1d2218; }
+  .chip.save { color: #ff8c3a; }
+  .chip.save.armed { background-color: #ff8c3a; color: #0d0e11; border-color: #ff8c3a; }
 </style>
 </head>
 <body>
@@ -105,7 +123,7 @@
   <div id="overlay">
     <div class="ttl">ERICA-INSPIRED · ANALOG MODEL</div>
     <div class="big">ANALOG-3</div>
-    <div class="sub">Trois voix analogiques modelisees (kick / snare / hi-hat) + sequenceur 16 pas. Touche pour demarrer.</div>
+    <div class="sub">Trois voix analogiques modelisees + sequenceur 16 pas, accents et hi-hat closed/open avec choke. Touche pour demarrer.</div>
     <button id="startBtn">START</button>
     <div class="sub" id="errLine" style="color:#ff6b6b; display:none; white-space:pre-wrap;"></div>
   </div>
@@ -119,19 +137,34 @@
     <div class="transport">
       <button class="btn play" id="play">PLAY</button>
       <div class="mini"><div class="knob" id="bpmKnob"></div><div class="klabel">BPM <b id="bpmVal">90</b></div></div>
-      <div class="mini"><div class="knob" id="swingKnob"></div><div class="klabel">SWING <b id="swingVal">0</b></div></div>
+      <div class="mini"><div class="knob" id="swingKnob"></div><div class="klabel">SWG <b id="swingVal">0</b></div></div>
+      <div class="mini"><div class="knob" id="accKnob"></div><div class="klabel">ACC <b id="accVal">70</b></div></div>
       <button class="btn" id="clear">CLEAR</button>
     </div>
 
     <div class="tabs" id="tabs">
       <button class="tab on" data-tab="kick">KICK</button>
       <button class="tab" data-tab="snare">SNARE</button>
-      <button class="tab" data-tab="hat">HI-HAT</button>
+      <button class="tab" data-tab="hat">HAT</button>
+      <button class="tab" data-tab="fx">FX</button>
     </div>
 
     <div class="knobs" id="knobs"></div>
 
     <div class="seq" id="seq"></div>
+
+    <div class="bank">
+      <div class="banklabel">PRESETS</div>
+      <div class="chips" id="presets"></div>
+      <div class="banklabel">MEMOIRE<span id="bankStatus"></span></div>
+      <div class="chips">
+        <button class="chip save" id="saveBtn">SAVE</button>
+        <button class="chip slot" data-slot="1">1</button>
+        <button class="chip slot" data-slot="2">2</button>
+        <button class="chip slot" data-slot="3">3</button>
+        <button class="chip slot" data-slot="4">4</button>
+      </div>
+    </div>
   </div>
 
   <!-- ============ MAIN (ScriptProcessor engine: CSP blocks AudioWorklet module loading) ============ -->
@@ -144,31 +177,43 @@
     var P = {
       kick:  { tune:52, decay:0.50, pitchAmt:220, pitchTime:0.05, drive:2.2, click:0.35, level:0.85 },
       snare: { tune:180, ratio:1.78, sweep:60, bDecay:0.12, noiseAmt:0.7, nTone:3000, nDecay:0.16, drive:2.0, level:0.80 },
-      hat:   { tune:1.0, spread:1.0, hpf:7000, decay:0.09, drive:3.0, tone:5000, level:0.70 }
+      hat:   { tune:1.0, spread:1.0, hpf:7000, cDecay:0.05, oDecay:0.40, drive:3.0, tone:5000, level:0.70 },
+      fx:    { drive:1.4, cutoff:6000, reso:0.25, env:0.4, mode:0, mix:0.3, out:1.0, age:0 }
     };
-    var bpm = 90, swing = 0;          // swing 0..0.3
-    var STEP_VEL = 0.9;
+    var bpm = 90, swing = 0, accent = 0.7;       // accent 0..1 -> velocity spread
 
-    // ===================== sequencer pattern =====================
+    function stepVel(state) { return state === 2 ? (0.6 + 0.4 * accent) : 0.6; }
+
+    // ===================== sequencer pattern (0=off, 1=normal, 2=accent) =====================
     var pattern = {
-      kick:  [1,0,0,0, 0,0,0,0, 1,0,1,0, 0,0,0,0],
-      snare: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
-      hat:   [1,0,1,0, 1,0,1,0, 1,0,1,0, 1,0,1,0]
+      kick:  [2,0,0,0, 0,0,0,0, 1,0,1,0, 0,0,0,0],
+      snare: [0,0,0,0, 2,0,0,0, 0,0,0,0, 2,0,0,0],
+      hatC:  [2,0,1,0, 2,0,1,0, 2,0,1,0, 2,0,0,0],   // closed
+      hatO:  [0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,1,0]    // open (choked by next closed)
     };
     var playing = false, stepCountdown = 0, currentStep = 15;
 
     // ===================== voice DSP state =====================
-    // kick
-    var kAct=false,kT=0,kVel=1, kic1=0,kic2=0, khpIn=0,khpOut=0;
-    // snare
-    var sAct=false,sT=0,sVel=1, si1a=0,si2a=0,si1b=0,si2b=0, sni1=0,sni2=0;
-    // hat
+    var kAct=false,kT=0,kVel=1, kic1=0,kic2=0, khpIn=0,khpOut=0, kAgeT=1,kAgeD=1,kAgeL=1;
+    var sAct=false,sT=0,sVel=1, si1a=0,si2a=0,si1b=0,si2b=0, sni1=0,sni2=0, sAgeT=1,sAgeD=1,sAgeL=1;
     var HOS=2, HBASE=[263,400,421,474,587,845], HLOW=263;
-    var hAct=false,hT=0,hVel=1, hph=[0,0,0,0,0,0], hfr=[0,0,0,0,0,0], hh1=0,hh2=0,ht1=0,ht2=0,hd1=0,hd2=0;
+    var hAct=false,hT=0,hVel=1, hDecayCur=0.05, hph=[0,0,0,0,0,0], hfr=[0,0,0,0,0,0], hh1=0,hh2=0,ht1=0,ht2=0,hd1=0,hd2=0, hAgeT=1,hAgeL=1;
+    // master FX (Sherman-style resonant filter + envelope follower)
+    var fxic1=0, fxic2=0, fxEnv=0;
+    // component aging / instability
+    var driftK=0, driftS=0, driftH=0, rail=1, humPh=0;
+    function RND(){ return Math.random() * 2 - 1; }
 
-    function fireKick(v){ kAct=true; kT=0; kVel=v; khpIn=0; khpOut=0; }
-    function fireSnare(v){ sAct=true; sT=0; sVel=v; }
-    function fireHat(v){ hAct=true; hT=0; hVel=v; }
+    function fireKick(v){ kAct=true; kT=0; kVel=v; khpIn=0; khpOut=0;
+      var a=P.fx.age; kAgeT=1+a*RND()*0.05; kAgeD=1+a*RND()*0.18; kAgeL=1+a*RND()*0.15; }
+    function fireSnare(v){ sAct=true; sT=0; sVel=v;
+      var a=P.fx.age; sAgeT=1+a*RND()*0.05; sAgeD=1+a*RND()*0.18; sAgeL=1+a*RND()*0.15; }
+    // closed & open share the same oscillator bank/voice; a new trigger resets the
+    // envelope -> a closed hit naturally CHOKES a ringing open hat (real hi-hat behaviour)
+    function fireHatClosed(v){ hAct=true; hT=0; hVel=v;
+      var a=P.fx.age; hAgeT=1+a*RND()*0.05; hAgeL=1+a*RND()*0.15; hDecayCur=P.hat.cDecay*(1+a*RND()*0.18); }
+    function fireHatOpen(v){ hAct=true; hT=0; hVel=v;
+      var a=P.fx.age; hAgeT=1+a*RND()*0.05; hAgeL=1+a*RND()*0.15; hDecayCur=P.hat.oDecay*(1+a*RND()*0.18); }
 
     function polyBlep(t, dt){
       if (t < dt) { t /= dt; return t + t - t*t - 1; }
@@ -179,66 +224,75 @@
     function renderBlock(out, n) {
       var piSr = Math.PI / sr, tauTrig = 0.0016, fMax = sr * 0.45;
 
-      // ---- KICK per-block ----
+      var ag = P.fx.age;
+      if (ag > 0) {
+        driftK += -driftK*0.02 + RND()*0.05; if (driftK>3) driftK=3; else if (driftK<-3) driftK=-3;
+        driftS += -driftS*0.02 + RND()*0.05; if (driftS>3) driftS=3; else if (driftS<-3) driftS=-3;
+        driftH += -driftH*0.02 + RND()*0.05; if (driftH>3) driftH=3; else if (driftH<-3) driftH=-3;
+      }
+
       var K = P.kick;
-      var kQ = Math.max(0.5, Math.PI * K.tune * K.decay * 1.4), kk = 1 / kQ, kPre = 28;
-      // ---- SNARE per-block ----
+      var kTuneE = K.tune * kAgeT * (1 + ag * driftK * 0.03), kDecE = K.decay * kAgeD;
+      var kQ = Math.max(0.5, Math.PI * kTuneE * kDecE * 1.4), kk = 1 / kQ, kPre = 28;
       var S = P.snare;
-      var sk1 = 1 / Math.max(0.5, Math.PI * S.tune * S.bDecay);
-      var sk2 = 1 / Math.max(0.5, Math.PI * S.tune * S.ratio * S.bDecay * 0.8);
+      var sTuneE = S.tune * sAgeT * (1 + ag * driftS * 0.03);
+      var sk1 = 1 / Math.max(0.5, Math.PI * sTuneE * S.bDecay * sAgeD);
+      var sk2 = 1 / Math.max(0.5, Math.PI * sTuneE * S.ratio * S.bDecay * sAgeD * 0.8);
       var sPre = 24, sNG = 0.9, sKn = 1/1.2, sSweepT = 0.035;
       var sgn = Math.tan(piSr * Math.min(S.nTone, fMax));
       var sna1 = 1/(1+sgn*(sgn+sKn)), sna2 = sgn*sna1, sna3 = sgn*sgn*sna1;
-      // ---- HAT per-block ----
-      var H = P.hat;
+      var H = P.hat, hTuneM = hAgeT * (1 + ag * driftH * 0.03);
       var Ri = HOS * sr, piRi = Math.PI / Ri, hniq = Ri * 0.45, kH = 1.2, makeup = 2.0, ta = 0.0003;
       for (var q = 0; q < 6; q++) hfr[q] = HLOW * H.tune * Math.pow(HBASE[q] / HLOW, H.spread);
       var gH = Math.tan(piRi*Math.min(H.hpf,hniq)), aH1=1/(1+gH*(gH+kH)), aH2=gH*aH1, aH3=gH*gH*aH1;
       var gT = Math.tan(piRi*Math.min(H.tone,hniq)), aT1=1/(1+gT*(gT+kH)), aT2=gT*aT1, aT3=gT*gT*aT1;
       var kD = 1.41, gD = Math.tan(piRi*Math.min(sr*0.46,hniq)), aD1=1/(1+gD*(gD+kD)), aD2=gD*aD1, aD3=gD*gD*aD1;
 
-      // ---- clock ----
-      var stepBase = (60 / bpm) * sr / 4;   // 16th-note length in samples
+      // ---- master FX per-block ----
+      var F = P.fx, fxDrive = F.drive, fxCut = F.cutoff, fxEnvAmt = F.env, fxMix = F.mix, fxOut = F.out, fxMode = Math.round(F.mode);
+      var fxK = Math.max(0.07, 1.8 - 1.72 * F.reso);
+      var fxAA = 1 - Math.exp(-1 / (0.003 * sr)), fxAR = 1 - Math.exp(-1 / (0.120 * sr));
+      var railDip = 1 - Math.exp(-1 / (0.004 * sr)), railRec = 1 - Math.exp(-1 / (0.150 * sr)), humInc = 50 / sr;
+
+      var stepBase = (60 / bpm) * sr / 4;
 
       for (var i = 0; i < n; i++) {
-        // sequencer advance (sample-accurate)
         if (playing) {
           if (stepCountdown <= 0) {
             currentStep = (currentStep + 1) % 16;
-            if (pattern.kick[currentStep])  fireKick(STEP_VEL);
-            if (pattern.snare[currentStep]) fireSnare(STEP_VEL);
-            if (pattern.hat[currentStep])   fireHat(STEP_VEL);
-            // swing: extend even steps, shorten odd -> tempo preserved
+            var ksS = pattern.kick[currentStep];  if (ksS) fireKick(stepVel(ksS));
+            var ssS = pattern.snare[currentStep]; if (ssS) fireSnare(stepVel(ssS));
+            var hoS = pattern.hatO[currentStep];  if (hoS) fireHatOpen(stepVel(hoS));   // open first...
+            var hcS = pattern.hatC[currentStep];  if (hcS) fireHatClosed(stepVel(hcS)); // ...closed chokes if same step
             var swf = (currentStep % 2 === 0) ? (1 + swing) : (1 - swing);
-            stepCountdown += Math.round(stepBase * swf);
+            var jit = ag > 0 ? Math.round(ag * RND() * 0.05 * stepBase) : 0;
+            stepCountdown += Math.round(stepBase * swf) + jit;
           }
           stepCountdown--;
         }
 
         var mix = 0, v1, v2, v3, ts;
 
-        // ---------- KICK ----------
         if (kAct) {
           ts = kT / sr;
-          var kf = K.tune + K.pitchAmt * Math.exp(-ts / K.pitchTime); if (kf > fMax) kf = fMax;
+          var kf = kTuneE + K.pitchAmt * Math.exp(-ts / K.pitchTime); if (kf > fMax) kf = fMax;
           var kexc = kVel * Math.exp(-ts / tauTrig);
           var kg = Math.tan(piSr * kf), ka1 = 1/(1+kg*(kg+kk)), ka2 = kg*ka1, ka3 = kg*ka2;
           v3 = kexc - kic2; v1 = ka1*kic1 + ka2*v3; v2 = kic2 + ka2*kic1 + ka3*v3;
           kic1 = 2*v1 - kic1; kic2 = 2*v2 - kic2;
           var ks = v1 * kk * kPre;
           khpOut = 0.90 * (khpOut + kexc - khpIn); khpIn = kexc;
-          mix += K.level * Math.tanh(K.drive * ks + K.click * khpOut);
+          mix += K.level * kAgeL * Math.tanh(K.drive * ks + K.click * khpOut);
           kT++;
           if (ts > 0.03 && Math.abs(kic1) < 1e-6 && Math.abs(kic2) < 1e-6) kAct = false;
           if (ts > 4.0) kAct = false;
         }
 
-        // ---------- SNARE ----------
         if (sAct) {
           ts = sT / sr;
           var sexc = sVel * Math.exp(-ts / tauTrig);
           var fenv = S.sweep * Math.exp(-ts / sSweepT);
-          var sf1 = S.tune + fenv; if (sf1 > fMax) sf1 = fMax;
+          var sf1 = sTuneE + fenv; if (sf1 > fMax) sf1 = fMax;
           var sf2 = sf1 * S.ratio; if (sf2 > fMax) sf2 = fMax;
           var sg1 = Math.tan(piSr*sf1), sa11 = 1/(1+sg1*(sg1+sk1)), sa21 = sg1*sa11, sa31 = sg1*sg1*sa11;
           v3 = sexc - si2a; v1 = sa11*si1a + sa21*v3; v2 = si2a + sa21*si1a + sa31*v3; si1a = 2*v1-si1a; si2a = 2*v2-si2a;
@@ -251,13 +305,12 @@
           v3 = white - sni2; v1 = sna1*sni1 + sna2*v3; v2 = sni2 + sna2*sni1 + sna3*v3; sni1 = 2*v1-sni1; sni2 = 2*v2-sni2;
           var nenv = sVel * Math.exp(-ts / S.nDecay);
           var smix = sbody + S.noiseAmt * v1 * sNG * nenv;
-          mix += S.level * Math.tanh(S.drive * smix);
+          mix += S.level * sAgeL * Math.tanh(S.drive * smix);
           sT++;
           if (ts > 0.04 && Math.abs(si1a)<1e-6 && Math.abs(si2a)<1e-6 && Math.abs(si1b)<1e-6 && Math.abs(si2b)<1e-6 && nenv<1e-3) sAct = false;
           if (ts > 4.0) sAct = false;
         }
 
-        // ---------- HI-HAT (2x oversampled) ----------
         if (hAct) {
           var outv = 0;
           for (var o = 0; o < HOS; o++) {
@@ -280,14 +333,23 @@
             outv = v2;
           }
           ts = hT / sr;
-          var henv = ts < ta ? ts/ta : Math.exp(-(ts-ta) / H.decay);
+          var henv = ts < ta ? ts/ta : Math.exp(-(ts-ta) / hDecayCur);   // closed (short) or open (long)
           mix += H.level * Math.tanh(outv * makeup) * henv * hVel;
           hT++;
           if (ts > ta && henv < 5e-4) hAct = false;
           if (ts > 5.0) hAct = false;
         }
 
-        out[i] = Math.tanh(0.9 * mix);   // master bus glue/limit
+        // ---------- MASTER FX (drive -> envelope-modulated resonant filter -> dry/wet) ----------
+        var driven = Math.tanh(fxDrive * mix);
+        var rect = driven < 0 ? -driven : driven;
+        fxEnv += (rect - fxEnv) * (rect > fxEnv ? fxAA : fxAR);          // envelope follower
+        var fc = fxCut * Math.pow(2, fxEnvAmt * fxEnv * 4);              // env opens the cutoff (up to 4 oct)
+        if (fc > fMax) fc = fMax; else if (fc < 20) fc = 20;
+        var fg = Math.tan(piSr * fc), fa1 = 1/(1+fg*(fg+fxK)), fa2 = fg*fa1, fa3 = fg*fg*fa1;
+        v3 = driven - fxic2; v1 = fa1*fxic1 + fa2*v3; v2 = fxic2 + fa2*fxic1 + fa3*v3; fxic1 = 2*v1-fxic1; fxic2 = 2*v2-fxic2;
+        var wet = (fxMode === 0 ? v2 : (fxMode === 1 ? v1 : (driven - fxK*v1 - v2))) * fxOut;
+        out[i] = Math.tanh(0.9 * (mix * (1 - fxMix) + wet * fxMix));
       }
     }
 
@@ -302,14 +364,17 @@
       host.innerHTML = '<svg viewBox="0 0 100 100"><path class="track" d="' + arcPath(R, A0, A0 + SW) + '"></path>' +
         '<path class="val"></path><line class="ptr"></line><circle class="hub" cx="50" cy="50" r="13"></circle></svg>';
       var valEl = host.querySelector('.val'), ptrEl = host.querySelector('.ptr');
-      var norm = (cfg.def - cfg.min) / (cfg.max - cfg.min);
+      var lg = !!cfg.log;
+      function n2v(nn) { return lg ? cfg.min * Math.pow(cfg.max / cfg.min, nn) : cfg.min + nn * (cfg.max - cfg.min); }
+      function v2n(vv) { return lg ? Math.log(vv / cfg.min) / Math.log(cfg.max / cfg.min) : (vv - cfg.min) / (cfg.max - cfg.min); }
+      var norm = v2n(cfg.def);
       function render() {
         var deg = A0 + norm * SW;
         valEl.setAttribute('d', arcPath(R, A0, deg));
         var inr = pt(deg, 16), outr = pt(deg, 33);
         ptrEl.setAttribute('x1', inr[0].toFixed(2)); ptrEl.setAttribute('y1', inr[1].toFixed(2));
         ptrEl.setAttribute('x2', outr[0].toFixed(2)); ptrEl.setAttribute('y2', outr[1].toFixed(2));
-        onChange(cfg.min + norm * (cfg.max - cfg.min));
+        onChange(n2v(norm));
       }
       var drag = false, ly = 0;
       host.addEventListener('pointerdown', function (e) { drag = true; ly = e.clientY; host.setPointerCapture(e.pointerId); e.preventDefault(); });
@@ -319,11 +384,13 @@
       });
       function up() { drag = false; }
       host.addEventListener('pointerup', up); host.addEventListener('pointercancel', up);
-      host.addEventListener('dblclick', function () { norm = (cfg.def - cfg.min) / (cfg.max - cfg.min); render(); });
+      host.addEventListener('dblclick', function () { norm = v2n(cfg.def); render(); });
       render();
+      return function (v) { norm = v2n(v); render(); };
     }
 
     var fInt = function(v){return v.toFixed(0);}, f2 = function(v){return v.toFixed(2);}, f1 = function(v){return v.toFixed(1);}, fMs = function(v){return (v*1000).toFixed(0);};
+    var fMode = function(v){ return ['LP','BP','HP'][Math.round(v)] || 'LP'; };
     var KNOBSETS = {
       kick: [
         {p:'tune',label:'TUNE',min:24,max:160,def:52,unit:'Hz',fmt:fInt},
@@ -349,10 +416,21 @@
         {p:'tune',label:'TUNE',min:0.5,max:2.0,def:1.0,unit:'x',fmt:f2},
         {p:'spread',label:'SPREAD',min:0.5,max:1.5,def:1.0,unit:'',fmt:f2},
         {p:'hpf',label:'HPF',min:3000,max:12000,def:7000,unit:'Hz',fmt:fInt},
-        {p:'decay',label:'DECAY',min:0.02,max:0.6,def:0.09,unit:'ms',fmt:fMs},
+        {p:'cDecay',label:'C.DECAY',min:0.01,max:0.2,def:0.05,unit:'ms',fmt:fMs},
+        {p:'oDecay',label:'O.DECAY',min:0.1,max:0.8,def:0.40,unit:'ms',fmt:fMs},
         {p:'drive',label:'DRIVE',min:1,max:12,def:3.0,unit:'',fmt:f1},
         {p:'tone',label:'TONE',min:2000,max:10000,def:5000,unit:'Hz',fmt:fInt},
         {p:'level',label:'LEVEL',min:0,max:1,def:0.70,unit:'',fmt:f2}
+      ],
+      fx: [
+        {p:'drive',label:'DRIVE',min:1,max:16,def:1.4,unit:'',fmt:f1},
+        {p:'cutoff',label:'CUTOFF',min:80,max:12000,def:6000,unit:'Hz',fmt:fInt,log:true},
+        {p:'reso',label:'RESO',min:0,max:1,def:0.25,unit:'',fmt:f2},
+        {p:'env',label:'ENV',min:0,max:1,def:0.4,unit:'',fmt:f2},
+        {p:'mode',label:'MODE',min:0,max:2,def:0,unit:'',fmt:fMode},
+        {p:'mix',label:'MIX',min:0,max:1,def:0.3,unit:'',fmt:f2},
+        {p:'out',label:'OUT',min:0,max:2,def:1.0,unit:'',fmt:f2},
+        {p:'age',label:'AGE',min:0,max:1,def:0,unit:'',fmt:f2}
       ]
     };
 
@@ -366,7 +444,6 @@
         var lab = document.createElement('div'); lab.className = 'klabel'; lab.textContent = cfg.label;
         var val = document.createElement('div'); val.className = 'kval';
         wrap.appendChild(kn); wrap.appendChild(lab); wrap.appendChild(val); grid.appendChild(wrap);
-        // initialise norm from CURRENT param value (so edits persist across tab switches)
         var cur = P[tab][cfg.p];
         var cfg2 = { min:cfg.min, max:cfg.max, def:cur, unit:cfg.unit, fmt:cfg.fmt };
         buildKnob(kn, cfg2, function (v) {
@@ -382,23 +459,26 @@
       });
     });
 
-    // ===================== sequencer grid =====================
-    var cellRefs = { kick: [], snare: [], hat: [] };
+    // ===================== sequencer grid (3-state cells) =====================
+    var cellRefs = { kick: [], snare: [], hatC: [], hatO: [] };
     function buildSeq() {
       var seq = document.getElementById('seq');
-      var rows = [['kick','KICK','kk'],['snare','SNR','sn'],['hat','HAT','hh']];
+      var rows = [['kick','KICK','kk'],['snare','SNR','sn'],['hatC','HC','hc'],['hatO','HO','ho']];
       rows.forEach(function (r) {
         var voice = r[0];
         var row = document.createElement('div'); row.className = 'seqrow';
         var lab = document.createElement('div'); lab.className = 'seqlabel'; lab.textContent = r[1];
         var cells = document.createElement('div'); cells.className = 'cells';
         for (var s = 0; s < 16; s++) {
+          var st = pattern[voice][s];
           var c = document.createElement('button');
-          c.className = 'cell ' + r[2] + ((s % 4 === 3 && s < 15) ? ' g4' : '') + (pattern[voice][s] ? ' on' : '');
+          c.className = 'cell ' + r[2] + ((s % 4 === 3 && s < 15) ? ' g4' : '') + (st >= 1 ? ' on' : '') + (st === 2 ? ' acc' : '');
           (function (vv, ss, el) {
             el.addEventListener('click', function () {
-              pattern[vv][ss] = pattern[vv][ss] ? 0 : 1;
-              el.classList.toggle('on', !!pattern[vv][ss]);
+              var v = (pattern[vv][ss] + 1) % 3;       // off -> normal -> accent -> off
+              pattern[vv][ss] = v;
+              el.classList.toggle('on', v >= 1);
+              el.classList.toggle('acc', v === 2);
             });
           })(voice, s, c);
           cells.appendChild(c); cellRefs[voice].push(c);
@@ -418,19 +498,19 @@
       else { clearPlayhead(); }
     });
     document.getElementById('clear').addEventListener('click', function () {
-      ['kick','snare','hat'].forEach(function (v) {
-        for (var s = 0; s < 16; s++) { pattern[v][s] = 0; cellRefs[v][s].classList.remove('on'); }
+      ['kick','snare','hatC','hatO'].forEach(function (v) {
+        for (var s = 0; s < 16; s++) { pattern[v][s] = 0; cellRefs[v][s].classList.remove('on'); cellRefs[v][s].classList.remove('acc'); }
       });
     });
 
     var lastShown = -1;
     function clearPlayhead() {
-      ['kick','snare','hat'].forEach(function (v) { cellRefs[v].forEach(function (c) { c.classList.remove('cur'); }); });
+      ['kick','snare','hatC','hatO'].forEach(function (v) { cellRefs[v].forEach(function (c) { c.classList.remove('cur'); }); });
       lastShown = -1;
     }
     function visualPoll() {
       if (playing && currentStep !== lastShown) {
-        ['kick','snare','hat'].forEach(function (v) {
+        ['kick','snare','hatC','hatO'].forEach(function (v) {
           if (lastShown >= 0) cellRefs[v][lastShown].classList.remove('cur');
           cellRefs[v][currentStep].classList.add('cur');
         });
@@ -464,13 +544,100 @@
       }
     }
 
-    // build UI immediately (works before audio starts; sound begins after START)
     buildPanel('kick');
     buildSeq();
-    buildKnob(document.getElementById('bpmKnob'), { min:50, max:200, def:90, unit:'', fmt:fInt },
+    var bpmSet = buildKnob(document.getElementById('bpmKnob'), { min:50, max:200, def:90, unit:'', fmt:fInt },
       function (v) { bpm = Math.round(v); document.getElementById('bpmVal').textContent = bpm; });
-    buildKnob(document.getElementById('swingKnob'), { min:0, max:0.3, def:0, unit:'', fmt:f2 },
+    var swingSet = buildKnob(document.getElementById('swingKnob'), { min:0, max:0.3, def:0, unit:'', fmt:f2 },
       function (v) { swing = v; document.getElementById('swingVal').textContent = Math.round(v * 200); });
+    var accSet = buildKnob(document.getElementById('accKnob'), { min:0, max:1, def:0.7, unit:'', fmt:f2 },
+      function (v) { accent = v; document.getElementById('accVal').textContent = Math.round(v * 100); });
+
+    // ===================== presets + memory =====================
+    var DEFAULTS = {
+      kick:  { tune:52, decay:0.50, pitchAmt:220, pitchTime:0.05, drive:2.2, click:0.35, level:0.85 },
+      snare: { tune:180, ratio:1.78, sweep:60, bDecay:0.12, noiseAmt:0.7, nTone:3000, nDecay:0.16, drive:2.0, level:0.80 },
+      hat:   { tune:1.0, spread:1.0, hpf:7000, cDecay:0.05, oDecay:0.40, drive:3.0, tone:5000, level:0.70 },
+      fx:    { drive:1.4, cutoff:6000, reso:0.25, env:0.4, mode:0, mix:0.3, out:1.0, age:0 }
+    };
+    function clone(o) { return JSON.parse(JSON.stringify(o)); }
+
+    var PRESETS = [
+      { name:'BOOM BAP', bpm:90, swing:0.14, accent:0.7, ov:{ kick:{decay:0.6} },
+        pat:{ kick:[2,0,0,0,0,0,0,0,1,0,1,0,0,0,0,0], snare:[0,0,0,0,2,0,0,0,0,0,0,0,2,0,0,0],
+              hatC:[2,0,1,0,2,0,1,0,2,0,1,0,2,0,0,0], hatO:[0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0] } },
+      { name:'4-FLOOR', bpm:124, swing:0, accent:0.6, ov:{ kick:{decay:0.32,tune:55,pitchAmt:140}, hat:{cDecay:0.04} },
+        pat:{ kick:[2,0,0,0,2,0,0,0,2,0,0,0,2,0,0,0], snare:[0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0],
+              hatC:[1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0], hatO:[0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0] } },
+      { name:'TRAP', bpm:140, swing:0, accent:0.8, ov:{ kick:{decay:0.75,tune:46,pitchAmt:120}, hat:{cDecay:0.03,tune:1.1} },
+        pat:{ kick:[2,0,0,0,0,0,1,0,0,0,0,0,0,1,0,0], snare:[0,0,0,0,0,0,0,0,2,0,0,0,0,0,0,0],
+              hatC:[2,1,2,1,2,1,2,2,2,1,2,1,2,2,2,2], hatO:[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0] } },
+      { name:'BREAK', bpm:96, swing:0.04, accent:0.85, ov:{ snare:{nDecay:0.2} },
+        pat:{ kick:[2,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0], snare:[0,0,0,1,2,0,0,1,0,0,2,0,0,0,1,0],
+              hatC:[1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0], hatO:[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0] } },
+      { name:'808', bpm:100, swing:0, accent:0.7, ov:{ kick:{decay:1.2,tune:45,pitchAmt:150} },
+        pat:{ kick:[2,0,0,0,0,0,0,0,0,0,2,0,0,0,0,0], snare:[0,0,0,0,2,0,0,0,0,0,0,0,2,0,0,0],
+              hatC:[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1], hatO:[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0] } }
+    ];
+
+    function refreshSeq() {
+      ['kick','snare','hatC','hatO'].forEach(function (v) {
+        for (var s = 0; s < 16; s++) { var st = pattern[v][s], c = cellRefs[v][s]; if (c) { c.classList.toggle('on', st >= 1); c.classList.toggle('acc', st === 2); } }
+      });
+    }
+    function snapshot() { return { bpm:bpm, swing:swing, accent:accent, P:clone(P), pattern:clone(pattern) }; }
+    function applySnapshot(snap) {
+      if (!snap) return;
+      ['kick','snare','hat','fx'].forEach(function (v) { if (snap.P && snap.P[v]) for (var k in snap.P[v]) P[v][k] = snap.P[v][k]; });
+      ['kick','snare','hatC','hatO'].forEach(function (v) { if (snap.pattern && snap.pattern[v]) for (var s = 0; s < 16; s++) pattern[v][s] = snap.pattern[v][s]; });
+      if (typeof snap.bpm === 'number') bpmSet(snap.bpm);
+      if (typeof snap.swing === 'number') swingSet(snap.swing);
+      if (typeof snap.accent === 'number') accSet(snap.accent);
+      buildPanel(activeTab); refreshSeq();
+    }
+    function applyPreset(pr) {
+      var snap = { bpm:pr.bpm, swing:pr.swing, accent:pr.accent, P:clone(DEFAULTS), pattern:clone(pr.pat) };
+      if (pr.ov) for (var v in pr.ov) for (var k in pr.ov[v]) snap.P[v][k] = pr.ov[v][k];
+      applySnapshot(snap);
+    }
+
+    function bankStatus(t) { var e = document.getElementById('bankStatus'); if (e) e.textContent = t ? ('  ' + t) : ''; }
+    function markSlot(n, occ) { var el = document.querySelector('.slot[data-slot="' + n + '"]'); if (el) el.classList.toggle('used', !!occ); }
+
+    var presetsEl = document.getElementById('presets');
+    PRESETS.forEach(function (pr) {
+      var b = document.createElement('button'); b.className = 'chip'; b.textContent = pr.name;
+      b.addEventListener('click', function () { applyPreset(pr); bankStatus(pr.name); });
+      presetsEl.appendChild(b);
+    });
+
+    var saveArmed = false, saveBtn = document.getElementById('saveBtn');
+    saveBtn.addEventListener('click', function () {
+      saveArmed = !saveArmed; saveBtn.classList.toggle('armed', saveArmed);
+      bankStatus(saveArmed ? 'choisis un slot...' : '');
+    });
+    document.querySelectorAll('.slot').forEach(function (el) {
+      el.addEventListener('click', function () {
+        var n = el.getAttribute('data-slot');
+        if (!window.storage) { bankStatus('STOCKAGE INDISPO'); return; }
+        if (saveArmed) {
+          saveArmed = false; saveBtn.classList.remove('armed');
+          window.storage.set('a3:slot:' + n, JSON.stringify(snapshot()), false)
+            .then(function () { markSlot(n, true); bankStatus('SLOT ' + n + ' ENREGISTRE'); })
+            .catch(function () { bankStatus('ECHEC SAVE'); });
+        } else {
+          window.storage.get('a3:slot:' + n, false)
+            .then(function (r) { if (r && r.value) { applySnapshot(JSON.parse(r.value)); bankStatus('SLOT ' + n + ' CHARGE'); } else bankStatus('SLOT ' + n + ' VIDE'); })
+            .catch(function () { bankStatus('SLOT ' + n + ' VIDE'); });
+        }
+      });
+    });
+    if (window.storage) {
+      for (var sn = 1; sn <= 4; sn++) (function (n) {
+        window.storage.get('a3:slot:' + n, false).then(function (r) { markSlot(n, !!(r && r.value)); }).catch(function () {});
+      })(sn);
+    }
+
     document.getElementById('startBtn').addEventListener('click', start);
   })();
   </script>
