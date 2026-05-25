@@ -178,7 +178,7 @@
       kick:  { tune:52, decay:0.50, pitchAmt:220, pitchTime:0.05, drive:2.2, click:0.35, level:0.85 },
       snare: { tune:180, ratio:1.78, sweep:60, bDecay:0.12, noiseAmt:0.7, nTone:3000, nDecay:0.16, drive:2.0, level:0.80 },
       hat:   { tune:1.0, spread:1.0, hpf:7000, cDecay:0.05, oDecay:0.40, drive:3.0, tone:5000, level:0.70 },
-      fx:    { drive:1.4, cutoff:6000, reso:0.25, env:0.4, mode:0, mix:0.3, out:1.0, age:0 }
+      fx:    { drive:1.4, cutoff:6000, reso:0.25, env:0.4, mode:0, mix:0.3, out:1.0, age:0, warmth:0.3, width:0.6 }
     };
     var bpm = 90, swing = 0, accent = 0.7;       // accent 0..1 -> velocity spread
 
@@ -195,13 +195,15 @@
 
     // ===================== voice DSP state =====================
     var kAct=false,kT=0,kVel=1, kic1=0,kic2=0, khpIn=0,khpOut=0, kAgeT=1,kAgeD=1,kAgeL=1;
-    var sAct=false,sT=0,sVel=1, si1a=0,si2a=0,si1b=0,si2b=0, sni1=0,sni2=0, sAgeT=1,sAgeD=1,sAgeL=1;
+    var sAct=false,sT=0,sVel=1, si1a=0,si2a=0,si1b=0,si2b=0,si1c=0,si2c=0, sni1=0,sni2=0, sAgeT=1,sAgeD=1,sAgeL=1;
     var HOS=2, HBASE=[263,400,421,474,587,845], HLOW=263;
     var hAct=false,hT=0,hVel=1, hDecayCur=0.05, hph=[0,0,0,0,0,0], hfr=[0,0,0,0,0,0], hh1=0,hh2=0,ht1=0,ht2=0,hd1=0,hd2=0, hAgeT=1,hAgeL=1;
     // master FX (Sherman-style resonant filter + envelope follower)
     var fxic1=0, fxic2=0, fxEnv=0;
     // component aging / instability
     var driftK=0, driftS=0, driftH=0, rail=1, humPh=0;
+    var mdcInL=0, mdcOutL=0, mdcInR=0, mdcOutR=0;   // master DC blockers (L/R coupling caps)
+    var fxic1R=0, fxic2R=0;                          // right-channel FX filter state (left reuses fxic1/fxic2)
     function RND(){ return Math.random() * 2 - 1; }
 
     function fireKick(v){ kAct=true; kT=0; kVel=v; khpIn=0; khpOut=0;
@@ -221,7 +223,7 @@
       return 0;
     }
 
-    function renderBlock(out, n) {
+    function renderBlock(outL, outR, n) {
       var piSr = Math.PI / sr, tauTrig = 0.0016, fMax = sr * 0.45;
 
       var ag = P.fx.age;
@@ -238,6 +240,7 @@
       var sTuneE = S.tune * sAgeT * (1 + ag * driftS * 0.03);
       var sk1 = 1 / Math.max(0.5, Math.PI * sTuneE * S.bDecay * sAgeD);
       var sk2 = 1 / Math.max(0.5, Math.PI * sTuneE * S.ratio * S.bDecay * sAgeD * 0.8);
+      var sk3 = 1 / Math.max(0.5, Math.PI * sTuneE * S.ratio * 1.35 * S.bDecay * sAgeD * 0.55); // 3rd membrane mode
       var sPre = 24, sNG = 0.9, sKn = 1/1.2, sSweepT = 0.035;
       var sgn = Math.tan(piSr * Math.min(S.nTone, fMax));
       var sna1 = 1/(1+sgn*(sgn+sKn)), sna2 = sgn*sna1, sna3 = sgn*sgn*sna1;
@@ -253,6 +256,14 @@
       var fxK = Math.max(0.07, 1.8 - 1.72 * F.reso);
       var fxAA = 1 - Math.exp(-1 / (0.003 * sr)), fxAR = 1 - Math.exp(-1 / (0.120 * sr));
       var railDip = 1 - Math.exp(-1 / (0.004 * sr)), railRec = 1 - Math.exp(-1 / (0.150 * sr)), humInc = 50 / sr;
+      var wNegGain = 1 - F.warmth * 0.45;
+      // per-voice stereo placement (kick centred, snare slightly right, hats left)
+      var wd = F.width;
+      var sPan = 0.25 * wd; if (sPan > 1) sPan = 1; else if (sPan < -1) sPan = -1;
+      var hPan = -0.4 * wd; if (hPan > 1) hPan = 1; else if (hPan < -1) hPan = -1;
+      var kPanL = 1, kPanR = 1;   // kick centred (cos/sin(pi/4)*sqrt2 = 1)
+      var sth = (sPan*0.5+0.5)*1.5707963, sPanL = Math.cos(sth)*1.4142136, sPanR = Math.sin(sth)*1.4142136;
+      var hth = (hPan*0.5+0.5)*1.5707963, hPanL = Math.cos(hth)*1.4142136, hPanR = Math.sin(hth)*1.4142136;
 
       var stepBase = (60 / bpm) * sr / 4;
 
@@ -271,18 +282,20 @@
           stepCountdown--;
         }
 
-        var mix = 0, v1, v2, v3, ts;
+        var mixL = 0, mixR = 0, v1, v2, v3, ts;
 
         if (kAct) {
           ts = kT / sr;
-          var kf = kTuneE + K.pitchAmt * Math.exp(-ts / K.pitchTime); if (kf > fMax) kf = fMax;
+          var pAmtV = K.pitchAmt * (0.65 + 0.5 * kVel);   // velocity -> pitch-sweep depth (dynamic give)
+          var kf = kTuneE + pAmtV * Math.exp(-ts / K.pitchTime); if (kf > fMax) kf = fMax;
           var kexc = kVel * Math.exp(-ts / tauTrig);
           var kg = Math.tan(piSr * kf), ka1 = 1/(1+kg*(kg+kk)), ka2 = kg*ka1, ka3 = kg*ka2;
           v3 = kexc - kic2; v1 = ka1*kic1 + ka2*v3; v2 = kic2 + ka2*kic1 + ka3*v3;
           kic1 = 2*v1 - kic1; kic2 = 2*v2 - kic2;
           var ks = v1 * kk * kPre;
           khpOut = 0.90 * (khpOut + kexc - khpIn); khpIn = kexc;
-          mix += K.level * kAgeL * Math.tanh(K.drive * ks + K.click * khpOut);
+          var ko = K.level * kAgeL * Math.tanh(K.drive * ks + K.click * khpOut);
+          mixL += ko * kPanL; mixR += ko * kPanR;
           kT++;
           if (ts > 0.03 && Math.abs(kic1) < 1e-6 && Math.abs(kic2) < 1e-6) kAct = false;
           if (ts > 4.0) kAct = false;
@@ -294,20 +307,25 @@
           var fenv = S.sweep * Math.exp(-ts / sSweepT);
           var sf1 = sTuneE + fenv; if (sf1 > fMax) sf1 = fMax;
           var sf2 = sf1 * S.ratio; if (sf2 > fMax) sf2 = fMax;
+          var sf3 = sf1 * S.ratio * 1.35; if (sf3 > fMax) sf3 = fMax;
           var sg1 = Math.tan(piSr*sf1), sa11 = 1/(1+sg1*(sg1+sk1)), sa21 = sg1*sa11, sa31 = sg1*sg1*sa11;
           v3 = sexc - si2a; v1 = sa11*si1a + sa21*v3; v2 = si2a + sa21*si1a + sa31*v3; si1a = 2*v1-si1a; si2a = 2*v2-si2a;
           var ss1 = v1 * sk1 * sPre;
           var sg2 = Math.tan(piSr*sf2), sa12 = 1/(1+sg2*(sg2+sk2)), sa22 = sg2*sa12, sa32 = sg2*sg2*sa12;
           v3 = sexc - si2b; v1 = sa12*si1b + sa22*v3; v2 = si2b + sa22*si1b + sa32*v3; si1b = 2*v1-si1b; si2b = 2*v2-si2b;
           var ss2 = v1 * sk2 * sPre;
-          var sbody = ss1 + 0.6*ss2;
+          var sg3 = Math.tan(piSr*sf3), sa13 = 1/(1+sg3*(sg3+sk3)), sa23 = sg3*sa13, sa33 = sg3*sg3*sa13;
+          v3 = sexc - si2c; v1 = sa13*si1c + sa23*v3; v2 = si2c + sa23*si1c + sa33*v3; si1c = 2*v1-si1c; si2c = 2*v2-si2c;
+          var ss3 = v1 * sk3 * sPre;
+          var sbody = ss1 + 0.6*ss2 + 0.3*ss3;
           var white = Math.random()*2 - 1;
           v3 = white - sni2; v1 = sna1*sni1 + sna2*v3; v2 = sni2 + sna2*sni1 + sna3*v3; sni1 = 2*v1-sni1; sni2 = 2*v2-sni2;
           var nenv = sVel * Math.exp(-ts / S.nDecay);
           var smix = sbody + S.noiseAmt * v1 * sNG * nenv;
-          mix += S.level * sAgeL * Math.tanh(S.drive * smix);
+          var so = S.level * sAgeL * Math.tanh(S.drive * smix);
+          mixL += so * sPanL; mixR += so * sPanR;
           sT++;
-          if (ts > 0.04 && Math.abs(si1a)<1e-6 && Math.abs(si2a)<1e-6 && Math.abs(si1b)<1e-6 && Math.abs(si2b)<1e-6 && nenv<1e-3) sAct = false;
+          if (ts > 0.04 && Math.abs(si1a)<1e-6 && Math.abs(si2a)<1e-6 && Math.abs(si1b)<1e-6 && Math.abs(si2b)<1e-6 && Math.abs(si1c)<1e-6 && Math.abs(si2c)<1e-6 && nenv<1e-3) sAct = false;
           if (ts > 4.0) sAct = false;
         }
 
@@ -316,7 +334,7 @@
           for (var o = 0; o < HOS; o++) {
             var sum = 0;
             for (var m = 0; m < 6; m++) {
-              var dt = hfr[m] / Ri, ph = hph[m];
+              var dt = hfr[m] * hTuneM / Ri, ph = hph[m];
               var sq = ph < 0.5 ? 1 : -1;
               sq += polyBlep(ph, dt);
               var p2 = ph + 0.5; if (p2 >= 1) p2 -= 1;
@@ -334,22 +352,46 @@
           }
           ts = hT / sr;
           var henv = ts < ta ? ts/ta : Math.exp(-(ts-ta) / hDecayCur);   // closed (short) or open (long)
-          mix += H.level * Math.tanh(outv * makeup) * henv * hVel;
+          var ho = H.level * hAgeL * Math.tanh(outv * makeup) * henv * hVel;
+          mixL += ho * hPanL; mixR += ho * hPanR;
           hT++;
           if (ts > ta && henv < 5e-4) hAct = false;
           if (ts > 5.0) hAct = false;
         }
 
-        // ---------- MASTER FX (drive -> envelope-modulated resonant filter -> dry/wet) ----------
-        var driven = Math.tanh(fxDrive * mix);
-        var rect = driven < 0 ? -driven : driven;
-        fxEnv += (rect - fxEnv) * (rect > fxEnv ? fxAA : fxAR);          // envelope follower
+        // ---------- MASTER FX (stereo: shared env-follower & cutoff, per-channel resonant filter) ----------
+        var mono = (mixL + mixR) * 0.5;
+        var drivenM = Math.tanh(fxDrive * mono);
+        var rect = drivenM < 0 ? -drivenM : drivenM;
+        fxEnv += (rect - fxEnv) * (rect > fxEnv ? fxAA : fxAR);          // envelope follower (shared)
         var fc = fxCut * Math.pow(2, fxEnvAmt * fxEnv * 4);              // env opens the cutoff (up to 4 oct)
         if (fc > fMax) fc = fMax; else if (fc < 20) fc = 20;
         var fg = Math.tan(piSr * fc), fa1 = 1/(1+fg*(fg+fxK)), fa2 = fg*fa1, fa3 = fg*fg*fa1;
-        v3 = driven - fxic2; v1 = fa1*fxic1 + fa2*v3; v2 = fxic2 + fa2*fxic1 + fa3*v3; fxic1 = 2*v1-fxic1; fxic2 = 2*v2-fxic2;
-        var wet = (fxMode === 0 ? v2 : (fxMode === 1 ? v1 : (driven - fxK*v1 - v2))) * fxOut;
-        out[i] = Math.tanh(0.9 * (mix * (1 - fxMix) + wet * fxMix));
+        // left channel
+        var dL = Math.tanh(fxDrive * mixL);
+        v3 = dL - fxic2; v1 = fa1*fxic1 + fa2*v3; v2 = fxic2 + fa2*fxic1 + fa3*v3; fxic1 = 2*v1-fxic1; fxic2 = 2*v2-fxic2;
+        var wetL = (fxMode === 0 ? v2 : (fxMode === 1 ? v1 : (dL - fxK*v1 - v2))) * fxOut;
+        var sigL = mixL * (1 - fxMix) + wetL * fxMix;
+        // right channel
+        var dR = Math.tanh(fxDrive * mixR);
+        v3 = dR - fxic2R; v1 = fa1*fxic1R + fa2*v3; v2 = fxic2R + fa2*fxic1R + fa3*v3; fxic1R = 2*v1-fxic1R; fxic2R = 2*v2-fxic2R;
+        var wetR = (fxMode === 0 ? v2 : (fxMode === 1 ? v1 : (dR - fxK*v1 - v2))) * fxOut;
+        var sigR = mixR * (1 - fxMix) + wetR * fxMix;
+        if (ag > 0) {                                       // hum (correlated) + decorrelated noise + shared PSU sag
+          humPh += humInc; if (humPh >= 1) humPh -= 1;
+          var hum = ag * 0.0009 * Math.sin(6.2831853 * humPh);
+          sigL += hum + ag * 0.0022 * RND();
+          sigR += hum + ag * 0.0022 * RND();
+          var ldL = sigL < 0 ? -sigL : sigL, ldR = sigR < 0 ? -sigR : sigR, ld = ldL > ldR ? ldL : ldR;
+          var rt = 1 - ag * 0.18 * (ld > 1 ? 1 : ld);
+          rail += (rt - rail) * (rt < rail ? railDip : railRec);
+          sigL *= rail; sigR *= rail;
+        }
+        // asymmetric output saturation (warmth) + DC-blocking coupling cap, per channel
+        var xL = 0.9 * sigL, yL = xL >= 0 ? Math.tanh(xL) : Math.tanh(xL * wNegGain);
+        mdcOutL = yL - mdcInL + 0.999 * mdcOutL; mdcInL = yL; outL[i] = mdcOutL;
+        var xR = 0.9 * sigR, yR = xR >= 0 ? Math.tanh(xR) : Math.tanh(xR * wNegGain);
+        mdcOutR = yR - mdcInR + 0.999 * mdcOutR; mdcInR = yR; outR[i] = mdcOutR;
       }
     }
 
@@ -430,7 +472,9 @@
         {p:'mode',label:'MODE',min:0,max:2,def:0,unit:'',fmt:fMode},
         {p:'mix',label:'MIX',min:0,max:1,def:0.3,unit:'',fmt:f2},
         {p:'out',label:'OUT',min:0,max:2,def:1.0,unit:'',fmt:f2},
-        {p:'age',label:'AGE',min:0,max:1,def:0,unit:'',fmt:f2}
+        {p:'age',label:'AGE',min:0,max:1,def:0,unit:'',fmt:f2},
+        {p:'warmth',label:'WARMTH',min:0,max:1,def:0.3,unit:'',fmt:f2},
+        {p:'width',label:'WIDTH',min:0,max:1.5,def:0.6,unit:'',fmt:f2}
       ]
     };
 
@@ -529,8 +573,8 @@
         ctx = new AC();
         if (ctx.state === 'suspended') { try { await ctx.resume(); } catch (e) {} }
         sr = ctx.sampleRate || 44100;
-        node = ctx.createScriptProcessor(512, 1, 1);
-        node.onaudioprocess = function (ev) { renderBlock(ev.outputBuffer.getChannelData(0), ev.outputBuffer.length); };
+        node = ctx.createScriptProcessor(512, 1, 2);
+        node.onaudioprocess = function (ev) { renderBlock(ev.outputBuffer.getChannelData(0), ev.outputBuffer.getChannelData(1), ev.outputBuffer.length); };
         node.connect(ctx.destination);
         if (ctx.state === 'suspended') { try { await ctx.resume(); } catch (e) {} }
         started = true;
@@ -558,7 +602,7 @@
       kick:  { tune:52, decay:0.50, pitchAmt:220, pitchTime:0.05, drive:2.2, click:0.35, level:0.85 },
       snare: { tune:180, ratio:1.78, sweep:60, bDecay:0.12, noiseAmt:0.7, nTone:3000, nDecay:0.16, drive:2.0, level:0.80 },
       hat:   { tune:1.0, spread:1.0, hpf:7000, cDecay:0.05, oDecay:0.40, drive:3.0, tone:5000, level:0.70 },
-      fx:    { drive:1.4, cutoff:6000, reso:0.25, env:0.4, mode:0, mix:0.3, out:1.0, age:0 }
+      fx:    { drive:1.4, cutoff:6000, reso:0.25, env:0.4, mode:0, mix:0.3, out:1.0, age:0, warmth:0.3, width:0.6 }
     };
     function clone(o) { return JSON.parse(JSON.stringify(o)); }
 
